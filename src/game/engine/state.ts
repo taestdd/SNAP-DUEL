@@ -60,5 +60,5 @@ export function createInitialState(): GameState {
     log: [],
   };
 
-
+  return state;
 }

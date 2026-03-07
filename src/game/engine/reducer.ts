@@ -2,7 +2,6 @@ import type { Action, GameState } from "./types";
 import { beginTurn, queueCard, resolveAll, checkGameOver, draw } from "./rules";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
-import { draw } from "./rules";
 
 
 function isP1TurnToPick(state: GameState): boolean {
