@@ -89,20 +89,6 @@ function applyTurnStartStatuses(state: GameState): GameState {
   return s;
 }
 
-function drawTurnCards(state: GameState): GameState {
-  let s = state;
-
-  const drawCount = s.turn === 1 ? 3 : 1;
-
-  s = draw(s, "P1", drawCount);
-  if (s.phase === "GAME_OVER") return s;
-
-  s = draw(s, "AI", drawCount);
-  if (s.phase === "GAME_OVER") return s;
-
-  return s;
-}
-
 function logTurnStart(state: GameState): GameState {
   return pushLog(
     state,
@@ -117,7 +103,6 @@ export function beginTurn(state: GameState): GameState {
   s = advanceTurnNumber(s);
   s = resetTurnFlags(s);
   s = applyTurnStartStatuses(s);
-  s = drawTurnCards(s);
   if (s.phase === "GAME_OVER") return s;
   s = logTurnStart(s);
 

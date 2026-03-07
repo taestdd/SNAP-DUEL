@@ -9,15 +9,15 @@ export default function Page() {
   const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
 
   useEffect(() => {
-    dispatch({ type: "INITIATIVE/RANDOMIZE" });
+    dispatch({ type: "GAME/INIT" });
   }, []);
     
   // ✅ StrictMode에서도 안전: TURN_START일 때만 시작
   useEffect(() => {
-    if (state.phase === "TURN_START") {
+    if (state.phase === "TURN_START" && state.P1.hand.length > 0 && state.AI.hand.length > 0) {
       dispatch({ type: "TURN/BEGIN" });
     }
-  }, [state.phase]);
+  }, [state.phase, state.P1.hand.length, state.AI.hand.length]);
 
   /**
    * ✅ SETUP 순서 강제:

@@ -85,4 +85,5 @@ export type Action =
   | { type: "RESOLVE/STEP" }
   | { type: "TURN/END" }
   | { type: "DEBUG/RESET" }
-  | { type: "INITIATIVE/RANDOMIZE" };
+  | { type: "INITIATIVE/RANDOMIZE" }
+  | { type: "GAME/INIT" };

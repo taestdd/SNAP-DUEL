@@ -1,5 +1,6 @@
 import type { Combatant, GameState, Status } from "./types";
 import { shuffle } from "./rng";
+import { draw } from "./rules";
 
 const emptyStatus = (): Status => ({
   attackBuff: 0,
@@ -35,7 +36,7 @@ function createCombatant(id: "P1" | "AI"): Combatant {
     block: 0,
     status: emptyStatus(),
 
-    deck: shuffle([...STARTER_DECK]),
+    deck: [...STARTER_DECK],
     hand: [],
     discard: [],
 
@@ -45,7 +46,7 @@ function createCombatant(id: "P1" | "AI"): Combatant {
 }
 
 export function createInitialState(): GameState {
-  return {
+  let state: GameState = {
     turn: 0,
     phase: "TURN_START",
     winner: null,
@@ -58,4 +59,6 @@ export function createInitialState(): GameState {
     selected: null,
     log: [],
   };
+
+
 }

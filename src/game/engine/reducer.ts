@@ -1,6 +1,9 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resolveAll, checkGameOver } from "./rules";
+import { beginTurn, queueCard, resolveAll, checkGameOver, draw } from "./rules";
 import { getCard } from "./cards";
+import { shuffle } from "./rng";
+import { draw } from "./rules";
+
 
 function isP1TurnToPick(state: GameState): boolean {
   if (state.phase === "SETUP_INIT") return state.initiative === "P1";
@@ -39,33 +42,43 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case "PLAYER/READY": {
       let s: GameState = state;
 
-      // ✅ SETUP 단계에서만 ready 처리
-      const inSetup = s.phase === "SETUP_INIT" || s.phase === "SETUP_OTHER";
+      const inSetup =
+        s.phase === "SETUP_INIT" || s.phase === "SETUP_OTHER";
       if (!inSetup) return s;
 
       if (action.player === "P1") {
         // ✅ P1은 자기 차례가 아니면 ready 불가
         if (!isP1TurnToPick(s)) return s;
 
-        // 선택 카드 있으면 먼저 예약(큐)
-        if (s.selected) {
-          s = queueCard(s, "P1", s.selected.cardId, s.selected.handIndex);
+        const picked = s.selected;
+
+        if (picked) {
+          // 선택 카드가 있으면 예약
+          s = queueCard(s, "P1", picked.cardId, picked.handIndex);
           s = { ...s, selected: null };
+        } else {
+          // ✅ 선택 카드가 없으면 pass + 1드로우
+          s = draw(s, "P1", 1);
+          if (s.phase === "GAME_OVER") return s;
+
+          s = {
+            ...s,
+            log: [`P1 passes and draws 1`, ...s.log].slice(0, 40),
+          };
         }
 
         // 그 다음 ready=true
         s = { ...s, P1: { ...s.P1, ready: true } };
       } else {
-        // ✅ AI는 자기 차례에서만 ready되도록 page.tsx가 호출해줄 예정이지만,
-        // 혹시라도 잘못 호출되면 안전하게 막아도 됨(선택).
+        // AI는 이 액션을 직접 타지 않는 구조라면 그대로 유지
         s = { ...s, AI: { ...s.AI, ready: true } };
       }
 
       // ✅ 단계 진행: INIT → OTHER → RESOLVE
       if (s.phase === "SETUP_INIT") {
-        // 다음 차례로 넘어갈 때 P1의 selected는 어차피 null이어야 안전
         return { ...s, phase: "SETUP_OTHER" };
       }
+
       if (s.phase === "SETUP_OTHER") {
         return { ...s, phase: "RESOLVE" };
       }
@@ -96,9 +109,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (candidates.length > 0) {
         const pick = candidates[0];
         s = queueCard(s, "AI", pick.id, pick.idx);
+      } else {
+        // ✅ AI도 pass하면 1드로우
+        s = draw(s, "AI", 1);
+        if (s.phase === "GAME_OVER") return s;
       }
 
-      // ✅ AI ready 처리 + 단계 전환
       s = { ...s, AI: { ...s.AI, ready: true } };
 
       if (s.phase === "SETUP_INIT") {
@@ -133,7 +149,28 @@ export function gameReducer(state: GameState, action: Action): GameState {
       // 클라이언트에서만 실행될 예정이지만, 혹시 GAME_OVER면 그대로 두는 것도 가능
       const init = Math.random() < 0.5 ? "P1" : "AI";
       return { ...state, initiative: init };
-    }    
+    }
+    
+    case "GAME/INIT": {
+      let s: GameState = {
+        ...state,
+        initiative: Math.random() < 0.5 ? "P1" : "AI",
+        P1: {
+          ...state.P1,
+          deck: shuffle([...state.P1.deck]),
+        },
+        AI: {
+          ...state.AI,
+          deck: shuffle([...state.AI.deck]),
+        },
+      };
+
+      s = draw(s, "P1", 3);
+      if (s.phase === "GAME_OVER") return s;
+
+      s = draw(s, "AI", 3);
+      return s;
+    }
     
   }
 }
