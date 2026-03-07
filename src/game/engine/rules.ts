@@ -189,6 +189,29 @@ function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   return s;
 }
 
+function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): GameState {
+  const card = getCard(cardId);
+  if (!card) return state;
+
+  const gain = card.gain ?? 0;
+  if (gain <= 0) return state;
+
+  let s = {
+    ...state,
+    [player]: {
+      ...state[player],
+      status: {
+        ...state[player].status,
+        speedBonusNext: (state[player].status.speedBonusNext ?? 0) + gain,
+      },
+    },
+  } as GameState;
+
+  s = pushLog(s, `${player} gains SPEED -${gain} next turn`);
+
+  return s;
+}
+
 /* -------------------------- */
 /* 상대 카드 캔슬 */
 /* -------------------------- */
@@ -258,12 +281,29 @@ export function resolveAll(state: GameState): GameState {
     if (hit) {
 
       s = applyInitiativeOnHit(s, it.player);
-
+      s = applyGainOnHit(s, it.player, it.cardId);
       s = applyCancelOnHit(s, it.player, unresolved);
+      
     }
   }
 
   return endTurnCleanup(s);
+}
+
+export function checkGameOver(state: GameState): GameState {
+  if (state.P1.hp <= 0 && state.AI.hp <= 0) {
+    return { ...state, phase: "GAME_OVER", winner: "DRAW" };
+  }
+
+  if (state.P1.hp <= 0) {
+    return { ...state, phase: "GAME_OVER", winner: "AI" };
+  }
+
+  if (state.AI.hp <= 0) {
+    return { ...state, phase: "GAME_OVER", winner: "P1" };
+  }
+
+  return state;
 }
 
 /* -------------------------- */

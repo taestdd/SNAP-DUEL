@@ -32,6 +32,7 @@ export default function CardView({
         <div className={styles.cost}>{card.cost}</div>
         <div className={styles.name}>{card.name}</div>
         <div className={styles.speed}>SPD {card.speed}</div>
+        <span className={styles.meta}>GAIN {card.gain}</span>
       </div>
 
       <div className={styles.body}>
