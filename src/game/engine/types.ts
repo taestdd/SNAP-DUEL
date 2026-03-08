@@ -45,6 +45,8 @@ export type Status = {
 
   speedBonus: number;
   speedBonusNext: number;
+
+  exhausted: boolean;
 };
 
 export type Combatant = {

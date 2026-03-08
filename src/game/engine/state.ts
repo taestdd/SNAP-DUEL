@@ -7,6 +7,7 @@ const emptyStatus = (): Status => ({
   burn: null,
   speedBonus: 0,
   speedBonusNext: 0,
+  exhausted: false,
 });
 
 const STARTER_DECK: string[] = [

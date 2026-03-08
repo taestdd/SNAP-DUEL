@@ -26,6 +26,10 @@ export default function PlayerBar({ me }: { me: Combatant }) {
             </span>
           ) : null}
 
+          {me.status.exhausted ? (
+            <span className={styles.badge}>EXHAUSTED</span>
+          ) : null}
+
           {me.status.speedBonus > 0 ? (
             <span className={styles.badge}>SPD-{me.status.speedBonus} now</span>
           ) : null}

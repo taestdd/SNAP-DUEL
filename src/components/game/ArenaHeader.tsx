@@ -26,6 +26,10 @@ export default function ArenaHeader({ ai }: { ai: Combatant }) {
             </span>
           ) : null}
 
+          {ai.status.exhausted ? (
+            <span className={styles.badge}>EXHAUSTED</span>
+          ) : null}
+
           {ai.status.speedBonus > 0 ? (
             <span className={styles.badge}>SPD-{ai.status.speedBonus} now</span>
           ) : null}

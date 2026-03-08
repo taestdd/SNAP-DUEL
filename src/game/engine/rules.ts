@@ -19,6 +19,33 @@ function pushLog(state: GameState, msg: string): GameState {
   };
 }
 
+function syncExhausted(state: GameState, player: PlayerId): GameState {
+  const me = state[player];
+  const exhausted = me.deck.length === 0;
+
+  if (me.status.exhausted === exhausted) {
+    return state;
+  }
+
+  let s = {
+    ...state,
+    [player]: {
+      ...me,
+      status: {
+        ...me.status,
+        exhausted,
+      },
+    },
+  } as GameState;
+
+  s = pushLog(
+    s,
+    exhausted ? `${player} is exhausted` : `${player} recovered from exhaustion`
+  );
+
+  return s;
+}
+
 function getEffectiveSpeed(
   state: GameState,
   player: PlayerId,
@@ -176,36 +203,32 @@ export function queueCard(
   if (!card) return state;
   if (me.ready) return state;
 
-  // handIndex 검증
   if (handIndex < 0 || handIndex >= me.hand.length) return state;
   if (me.hand[handIndex] !== cardId) return state;
 
-  // 덱 코스트 검사
   if (me.deck.length < card.cost) return state;
 
-  // 손패에서 제거
   const nextHand = [...me.hand];
   nextHand.splice(handIndex, 1);
 
-  // 덱에서 cost만큼 trash로 이동
   const costCards = me.deck.slice(0, card.cost);
   const remainingDeck = me.deck.slice(card.cost);
 
-  const nextMe = {
-    ...me,
-    hand: nextHand,
-    deck: remainingDeck,
-    trash: [...me.trash, ...costCards],
-    queue: [...me.queue, cardId],
-  };
+  let s = {
+    ...state,
+    [player]: {
+      ...me,
+      hand: nextHand,
+      deck: remainingDeck,
+      trash: [...me.trash, ...costCards],
+      queue: [...me.queue, cardId],
+    },
+  } as GameState;
 
-  return pushLog(
-    {
-      ...state,
-      [player]: nextMe,
-    } as GameState,
-    `${player} queued ${card.name} (cost: ${card.cost} cards)`
-  );
+  s = pushLog(s, `${player} queued ${card.name} (cost: ${card.cost} cards)`);
+  s = syncExhausted(s, player);
+
+  return s;
 }
 
 /* -------------------------- */
@@ -468,6 +491,36 @@ export function applyCardEffect(
   }
 }
 
+// 덱에 카드가 추가될때 탈진 풀림
+function addCardsToDeck(
+  state: GameState,
+  player: PlayerId,
+  cardIds: string[],
+  position: "top" | "bottom" = "bottom"
+): GameState {
+  if (cardIds.length === 0) return state;
+
+  const me = state[player];
+
+  let nextDeck: string[];
+  if (position === "top") {
+    nextDeck = [...cardIds, ...me.deck];
+  } else {
+    nextDeck = [...me.deck, ...cardIds];
+  }
+
+  let s = {
+    ...state,
+    [player]: {
+      ...me,
+      deck: nextDeck,
+    },
+  } as GameState;
+
+  s = syncExhausted(s, player);
+  return s;
+}
+
 /* -------------------------- */
 /* 데미지 / 드로우 / 게임오버 */
 /* -------------------------- */
@@ -512,15 +565,8 @@ export function draw(
     if (me.hand.length >= HAND_LIMIT) break;
 
     if (me.deck.length === 0) {
-      const winner = player === "P1" ? "AI" : "P1";
-      return pushLog(
-        {
-          ...s,
-          phase: "GAME_OVER",
-          winner,
-        } as GameState,
-        `${player} cannot draw (deck empty) → ${winner} wins`
-      );
+      s = syncExhausted(s, player);
+      break;
     }
 
     const top = me.deck[0];
@@ -533,6 +579,8 @@ export function draw(
         hand: [...me.hand, top],
       },
     } as GameState;
+
+    s = syncExhausted(s, player);
   }
 
   return s;

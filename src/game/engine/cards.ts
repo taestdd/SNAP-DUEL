@@ -5,7 +5,7 @@ export const CARDS: Record<string, Card> = {
   quick_strike: {
     id: "quick_strike",
     name: "Quick Strike",
-    cost: 1,
+    cost: 3,
     speed: 1,
     gain: 1,
     effect: "damage",
@@ -17,7 +17,7 @@ export const CARDS: Record<string, Card> = {
   minor_guard: {
     id: "minor_guard",
     name: "Minor Guard",
-    cost: 1,
+    cost: 3,
     speed: 2,
     gain: 0,
     effect: "block",
@@ -29,7 +29,7 @@ export const CARDS: Record<string, Card> = {
   peek: {
     id: "peek",
     name: "Peek",
-    cost: 1,
+    cost: 3,
     speed: 1,
     gain: 1,
     effect: "draw",
@@ -42,7 +42,7 @@ export const CARDS: Record<string, Card> = {
   heavy_slash: {
     id: "heavy_slash",
     name: "Heavy Slash",
-    cost: 2,
+    cost: 5,
     speed: 4,
     gain: 1,
     effect: "damage",
@@ -54,7 +54,7 @@ export const CARDS: Record<string, Card> = {
   piercing_strike: {
     id: "piercing_strike",
     name: "Piercing Strike",
-    cost: 2,
+    cost: 5,
     speed: 3,
     gain: 1,
     effect: "damage",
@@ -67,7 +67,7 @@ export const CARDS: Record<string, Card> = {
   power_strike: {
     id: "power_strike",
     name: "Power Strike",
-    cost: 3,
+    cost: 7,
     speed: 6,
     gain: 1,
     effect: "damage",
@@ -79,7 +79,7 @@ export const CARDS: Record<string, Card> = {
   crushing_blow: {
     id: "crushing_blow",
     name: "Crushing Blow",
-    cost: 3,
+    cost: 7,
     speed: 7,
     gain: 1,
     effect: "damage",
@@ -92,7 +92,7 @@ export const CARDS: Record<string, Card> = {
   execution_blade: {
     id: "execution_blade",
     name: "Execution Blade",
-    cost: 4,
+    cost: 10,
     speed: 8,
     gain: 0,
     effect: "damage",
@@ -104,7 +104,7 @@ export const CARDS: Record<string, Card> = {
   arcane_burst: {
     id: "arcane_burst",
     name: "Arcane Burst",
-    cost: 4,
+    cost: 10,
     speed: 7,
     gain: 0,
     effect: "damage",
@@ -116,7 +116,7 @@ export const CARDS: Record<string, Card> = {
   meteor_strike: {
     id: "meteor_strike",
     name: "Meteor Strike",
-    cost: 4,
+    cost: 10,
     speed: 9,
     gain: 0,
     effect: "damage",

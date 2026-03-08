@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import type { Action, Combatant, GameState } from "@/game/engine/types";
+import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import ArenaHeader from "./ArenaHeader";
 import PlayerBar from "./PlayerBar";
@@ -6,28 +10,23 @@ import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 
-function ZoneStat({
-  label,
-  count,
-  tone = "default",
-}: {
-  label: string;
-  count: number;
-  tone?: "default" | "accent" | "danger";
-}) {
-  const toneClass =
-    tone === "accent"
-      ? styles.zoneAccent
-      : tone === "danger"
-      ? styles.zoneDanger
-      : styles.zoneDefault;
-
-  return (
-    <div className={`${styles.zoneCard} ${toneClass}`}>
-      <div className={styles.zoneLabel}>{label}</div>
-      <div className={styles.zoneCount}>{count}</div>
-    </div>
-  );
+function effectLabel(effect: string) {
+  switch (effect) {
+    case "damage":
+      return "Damage";
+    case "block":
+      return "Block";
+    case "draw":
+      return "Draw";
+    case "heal":
+      return "Heal";
+    case "buff_attack":
+      return "ATK Buff";
+    case "burn":
+      return "Burn";
+    default:
+      return effect;
+  }
 }
 
 function QueuePreview({
@@ -37,12 +36,223 @@ function QueuePreview({
   title: string;
   me: Combatant;
 }) {
-  const queued = me.queue[0] ?? null;
+  const queuedId = me.queue[0];
+  const card = queuedId ? getCard(queuedId) : null;
 
   return (
     <div className={styles.queueBox}>
       <div className={styles.queueTitle}>{title}</div>
-      <div className={styles.queueValue}>{queued ?? "—"}</div>
+
+      {!card ? (
+        <div className={styles.queueEmpty}>—</div>
+      ) : (
+        <div className={styles.queueCard}>
+          <div className={styles.queueCardName}>{card.name}</div>
+
+          <div className={styles.queueStats}>
+            <span>Cost {card.cost}</span>
+            <span>Speed {card.speed}</span>
+            <span>Gain {card.gain}</span>
+          </div>
+
+          <div className={styles.queueEffectRow}>
+            <span className={styles.effectBadge}>{effectLabel(card.effect)}</span>
+            <span className={styles.effectValue}>
+              {card.value} · {card.target}
+            </span>
+          </div>
+
+          <div className={styles.queueText}>{card.text}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CardListPopover({
+  title,
+  ids,
+  onClose,
+}: {
+  title: string;
+  ids: string[];
+  onClose: () => void;
+}) {
+  const popRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handlePointerDown(e: MouseEvent) {
+      if (!popRef.current) return;
+      if (popRef.current.contains(e.target as Node)) return;
+      onClose();
+    }
+
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [onClose]);
+
+  return (
+    <div className={styles.popover} ref={popRef}>
+      <div className={styles.popoverHeader}>
+        <div className={styles.popoverTitle}>
+          {title} <span className={styles.popoverCount}>({ids.length})</span>
+        </div>
+
+        <button className={styles.popoverClose} onClick={onClose} type="button">
+          ✕
+        </button>
+      </div>
+
+      {ids.length === 0 ? (
+        <div className={styles.popoverEmpty}>No cards</div>
+      ) : (
+        <div className={styles.popoverList}>
+          {ids.map((id, idx) => {
+            const card = getCard(id);
+
+            if (!card) {
+              return (
+                <div key={`${id}-${idx}`} className={styles.popoverItem}>
+                  <div className={styles.popoverItemName}>{id}</div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={`${id}-${idx}`} className={styles.popoverItem}>
+                <div className={styles.popoverItemTop}>
+                  <div className={styles.popoverItemName}>{card.name}</div>
+                  <div className={styles.popoverItemMeta}>
+                    C{card.cost} · S{card.speed} · G{card.gain}
+                  </div>
+                </div>
+
+                <div className={styles.popoverItemBottom}>
+                  <span className={styles.effectBadge}>
+                    {effectLabel(card.effect)}
+                  </span>
+                  <span className={styles.popoverItemText}>{card.text}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ZoneStat({
+  label,
+  count,
+  tone = "default",
+  popoverTitle,
+  popoverIds,
+  activeKey,
+  statKey,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  tone?: "default" | "accent" | "danger";
+  popoverTitle?: string;
+  popoverIds?: string[];
+  activeKey: string | null;
+  statKey: string;
+  onToggle: (key: string | null) => void;
+}) {
+  const toneClass =
+    tone === "accent"
+      ? styles.zoneAccent
+      : tone === "danger"
+      ? styles.zoneDanger
+      : styles.zoneDefault;
+
+  const isOpen = activeKey === statKey;
+  const clickable = !!popoverTitle && !!popoverIds;
+
+  return (
+    <div className={styles.zoneWrap}>
+      <button
+        type="button"
+        className={`${styles.zoneCard} ${toneClass} ${
+          clickable ? styles.zoneButton : ""
+        }`}
+        onClick={() => {
+          if (!clickable) return;
+          onToggle(isOpen ? null : statKey);
+        }}
+      >
+        <div className={styles.zoneLabel}>{label}</div>
+        <div className={styles.zoneCount}>{count}</div>
+      </button>
+
+      {isOpen && popoverTitle && popoverIds ? (
+        <CardListPopover
+          title={popoverTitle}
+          ids={popoverIds}
+          onClose={() => onToggle(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function GraveyardSection({
+  ownerLabel,
+  me,
+  activeKey,
+  onToggle,
+}: {
+  ownerLabel: string;
+  me: Combatant;
+  activeKey: string | null;
+  onToggle: (key: string | null) => void;
+}) {
+  return (
+    <div className={styles.graveyardSection}>
+      <div className={styles.graveyardTitle}>{ownerLabel} Zones</div>
+
+      <div className={styles.zoneGrid}>
+        <ZoneStat
+          label={`${ownerLabel} Deck`}
+          count={me.deck.length}
+          activeKey={activeKey}
+          statKey={`${ownerLabel}-deck`}
+          onToggle={onToggle}
+        />
+
+        <ZoneStat
+          label={`${ownerLabel} Cooldown`}
+          count={me.cooldown.length}
+          tone="accent"
+          popoverTitle={`${ownerLabel} Cooldown`}
+          popoverIds={me.cooldown}
+          activeKey={activeKey}
+          statKey={`${ownerLabel}-cooldown`}
+          onToggle={onToggle}
+        />
+
+        <ZoneStat
+          label={`${ownerLabel} Trash`}
+          count={me.trash.length}
+          tone="danger"
+          popoverTitle={`${ownerLabel} Trash`}
+          popoverIds={me.trash}
+          activeKey={activeKey}
+          statKey={`${ownerLabel}-trash`}
+          onToggle={onToggle}
+        />
+      </div>
     </div>
   );
 }
@@ -54,11 +264,17 @@ export default function GameScreen({
   state: GameState;
   dispatch: React.Dispatch<Action>;
 }) {
+  const [openPopover, setOpenPopover] = useState<string | null>(null);
+
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
   const canAct = isSetup && !state.P1.ready && !isGameOver;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
+
+  useEffect(() => {
+    setOpenPopover(null);
+  }, [state.turn, state.phase]);
 
   return (
     <div className={styles.page}>
@@ -92,15 +308,19 @@ export default function GameScreen({
               <QueuePreview title="P1 Queue" me={state.P1} />
             </div>
 
-            <div className={styles.zoneGrid}>
-              <ZoneStat label="AI Deck" count={state.AI.deck.length} />
-              <ZoneStat label="AI Cooldown" count={state.AI.cooldown.length} tone="accent" />
-              <ZoneStat label="AI Trash" count={state.AI.trash.length} tone="danger" />
+            <GraveyardSection
+              ownerLabel="AI"
+              me={state.AI}
+              activeKey={openPopover}
+              onToggle={setOpenPopover}
+            />
 
-              <ZoneStat label="P1 Deck" count={state.P1.deck.length} />
-              <ZoneStat label="P1 Cooldown" count={state.P1.cooldown.length} tone="accent" />
-              <ZoneStat label="P1 Trash" count={state.P1.trash.length} tone="danger" />
-            </div>
+            <GraveyardSection
+              ownerLabel="P1"
+              me={state.P1}
+              activeKey={openPopover}
+              onToggle={setOpenPopover}
+            />
 
             <ActionLog log={state.log} />
           </section>

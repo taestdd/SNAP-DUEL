@@ -8,7 +8,7 @@
 }
 
 .shell {
-  width: min(1100px, 100%);
+  width: min(1180px, 100%);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -90,12 +90,81 @@
 .queueTitle {
   font-size: 12px;
   opacity: 0.72;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.queueValue {
-  font-size: 14px;
+.queueEmpty {
+  font-size: 18px;
+  opacity: 0.55;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.queueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queueCardName {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.queueStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.queueStats span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.queueEffectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.effectBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
   font-weight: 700;
+  background: rgba(89, 156, 255, 0.18);
+}
+
+.effectValue {
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.queueText {
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.graveyardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.graveyardTitle {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.9;
 }
 
 .zoneGrid {
@@ -104,10 +173,28 @@
   gap: 10px;
 }
 
+.zoneWrap {
+  position: relative;
+}
+
 .zoneCard {
+  width: 100%;
+  text-align: left;
   padding: 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.zoneButton {
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease,
+    background 120ms ease;
+}
+
+.zoneButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .zoneDefault {
@@ -133,6 +220,101 @@
   font-weight: 800;
 }
 
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(360px, 92vw);
+  z-index: 20;
+  padding: 12px;
+  border-radius: 14px;
+  background: #11182d;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.popoverTitle {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.popoverCount {
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.popoverClose {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.popoverClose:hover {
+  opacity: 1;
+}
+
+.popoverEmpty {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.popoverList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.popoverItem {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.popoverItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.popoverItemName {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.popoverItemMeta {
+  font-size: 11px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.popoverItemBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popoverItemText {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
 .player {
   padding: 12px;
   border-radius: 12px;
@@ -155,5 +337,9 @@
 
   .zoneGrid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .popover {
+    width: min(320px, 88vw);
   }
 }
