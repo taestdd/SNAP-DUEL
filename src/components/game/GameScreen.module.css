@@ -19,9 +19,9 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .title {
@@ -45,8 +45,8 @@
 .gameOver {
   padding: 8px 10px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 13px;
 }
 
@@ -59,23 +59,85 @@
 .arena {
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .center {
   min-height: 220px;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.centerTop {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.queueBox {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.queueTitle {
+  font-size: 12px;
+  opacity: 0.72;
+  margin-bottom: 6px;
+}
+
+.queueValue {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.zoneGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.zoneCard {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zoneDefault {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.zoneAccent {
+  background: rgba(89, 156, 255, 0.12);
+}
+
+.zoneDanger {
+  background: rgba(255, 99, 132, 0.12);
+}
+
+.zoneLabel {
+  font-size: 12px;
+  opacity: 0.76;
+  margin-bottom: 6px;
+}
+
+.zoneCount {
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .player {
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -84,4 +146,14 @@
 .controls {
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 760px) {
+  .centerTop {
+    grid-template-columns: 1fr;
+  }
+
+  .zoneGrid {
+    grid-template-columns: 1fr 1fr;
+  }
 }

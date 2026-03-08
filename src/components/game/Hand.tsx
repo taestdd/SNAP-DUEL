@@ -16,20 +16,17 @@ export default function Hand({
 }) {
   return (
     <div className={styles.wrap}>
-      <div className={styles.topRow}>
-        <div className={styles.label}>Hand ({me.hand.length}/6)</div>
-        {disabled ? (
-          <div className={styles.hint}>Setup only</div>
-        ) : (
-          <div className={styles.hint}>Select 1 card, then Ready</div>
-        )}
+      <div className={styles.top}>
+        <div className={styles.title}>Hand ({me.hand.length}/10)</div>
+        <div className={styles.help}>
+          {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
+        </div>
       </div>
 
-      <div className={styles.grid}>
+      <div className={styles.row}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
           const canSelect = !disabled && !!card && card.cost <= me.deck.length;
-
           const isSelected =
             selected?.cardId === cardId && selected?.handIndex === idx;
 

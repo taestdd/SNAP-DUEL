@@ -17,10 +17,10 @@ export type Card = {
   id: string;
   name: string;
 
-  //코스트 = 덱에서 소모할 카드 수
+  // 코스트 = 덱에서 소모할 카드 수
   cost: number;
 
-  //스피드 =  이상 정수, 0이 가장 빠름
+  // 스피드 = 이상 정수, 0이 가장 빠름
   speed: number;
   gain: number;
 
@@ -30,27 +30,52 @@ export type Card = {
   text: string;
 };
 
-export type SelectedCard = { cardId: string; handIndex: number };
+export type SelectedCard = {
+  cardId: string;
+  handIndex: number;
+};
 
 export type Status = {
   attackBuff: number;
-  burn: { turns: number; dmgPerTurn: number } | null;
+
+  burn: {
+    turns: number;
+    dmgPerTurn: number;
+  } | null;
+
   speedBonus: number;
   speedBonusNext: number;
-
 };
 
 export type Combatant = {
   id: PlayerId;
+
   hp: number;
   block: number;
+
   status: Status;
 
+  /**
+   * 카드 영역
+   */
   deck: string[];
   hand: string[];
-  discard: string[];
 
+  /**
+   * 코스트 지불 / 캔슬된 카드
+   */
+  trash: string[];
+
+  /**
+   * 정상적으로 사용된 카드
+   */
+  cooldown: string[];
+
+  /**
+   * 이번 턴 사용 대기 카드
+   */
   queue: string[];
+
   ready: boolean;
 };
 
@@ -65,14 +90,19 @@ export type TurnPhase =
 export type GameState = {
   turn: number;
   phase: TurnPhase;
+
   winner: PlayerId | "DRAW" | null;
 
-  initiative: PlayerId; // ✅ 주도권
+  /**
+   * 주도권 (속도 동률일 때 우선권)
+   */
+  initiative: PlayerId;
 
   P1: Combatant;
   AI: Combatant;
 
   selected: SelectedCard | null;
+
   log: string[];
 };
 

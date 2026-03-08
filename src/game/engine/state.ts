@@ -38,7 +38,9 @@ function createCombatant(id: "P1" | "AI"): Combatant {
 
     deck: [...STARTER_DECK],
     hand: [],
-    discard: [],
+
+    trash: [],
+    cooldown: [],
 
     queue: [],
     ready: false,

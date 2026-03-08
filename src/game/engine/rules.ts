@@ -13,7 +13,10 @@ function opponentOf(p: PlayerId): PlayerId {
 }
 
 function pushLog(state: GameState, msg: string): GameState {
-  return { ...state, log: [msg, ...state.log].slice(0, LOG_LIMIT) };
+  return {
+    ...state,
+    log: [msg, ...state.log].slice(0, LOG_LIMIT),
+  };
 }
 
 function getEffectiveSpeed(
@@ -26,6 +29,52 @@ function getEffectiveSpeed(
 
   const bonus = state[player].status.speedBonus ?? 0;
   return Math.max(0, c.speed - bonus);
+}
+
+function moveQueuedCardToCooldown(
+  state: GameState,
+  player: PlayerId,
+  cardId: string
+): GameState {
+  const me = state[player];
+  const nextQueue = [...me.queue];
+
+  const idx = nextQueue.indexOf(cardId);
+  if (idx >= 0) {
+    nextQueue.splice(idx, 1);
+  }
+
+  return {
+    ...state,
+    [player]: {
+      ...me,
+      queue: nextQueue,
+      cooldown: [...me.cooldown, cardId],
+    },
+  } as GameState;
+}
+
+function moveQueuedCardToTrash(
+  state: GameState,
+  player: PlayerId,
+  cardId: string
+): GameState {
+  const me = state[player];
+  const nextQueue = [...me.queue];
+
+  const idx = nextQueue.indexOf(cardId);
+  if (idx >= 0) {
+    nextQueue.splice(idx, 1);
+  }
+
+  return {
+    ...state,
+    [player]: {
+      ...me,
+      queue: nextQueue,
+      trash: [...me.trash, cardId],
+    },
+  } as GameState;
 }
 
 /* -------------------------- */
@@ -44,14 +93,12 @@ function resetTurnFlags(state: GameState): GameState {
     ...state,
     phase: "SETUP_INIT",
     selected: null,
-
     P1: {
       ...state.P1,
       block: 0,
       queue: [],
       ready: false,
     },
-
     AI: {
       ...state.AI,
       block: 0,
@@ -85,7 +132,6 @@ function applyTurnStartStatuses(state: GameState): GameState {
     },
   };
 
-  // burn 같은 턴 시작 효과는 나중에 여기 추가
   return s;
 }
 
@@ -103,9 +149,10 @@ export function beginTurn(state: GameState): GameState {
   s = advanceTurnNumber(s);
   s = resetTurnFlags(s);
   s = applyTurnStartStatuses(s);
-  if (s.phase === "GAME_OVER") return s;
-  s = logTurnStart(s);
 
+  if (s.phase === "GAME_OVER") return s;
+
+  s = logTurnStart(s);
   return s;
 }
 
@@ -140,7 +187,7 @@ export function queueCard(
   const nextHand = [...me.hand];
   nextHand.splice(handIndex, 1);
 
-  // 덱에서 cost만큼 discard로 이동
+  // 덱에서 cost만큼 trash로 이동
   const costCards = me.deck.slice(0, card.cost);
   const remainingDeck = me.deck.slice(card.cost);
 
@@ -148,12 +195,15 @@ export function queueCard(
     ...me,
     hand: nextHand,
     deck: remainingDeck,
-    discard: [...me.discard, ...costCards, cardId],
+    trash: [...me.trash, ...costCards],
     queue: [...me.queue, cardId],
   };
 
   return pushLog(
-    { ...state, [player]: nextMe } as GameState,
+    {
+      ...state,
+      [player]: nextMe,
+    } as GameState,
     `${player} queued ${card.name} (cost: ${card.cost} cards)`
   );
 }
@@ -180,6 +230,7 @@ function buildResolveOrder(state: GameState): { player: PlayerId; cardId: string
     // speed 동일이면 initiative 먼저
     if (a.player === state.initiative) return -1;
     if (b.player === state.initiative) return 1;
+
     return 0;
   });
 
@@ -207,7 +258,11 @@ function didDirectAttackHit(
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   if (state.initiative === player) return state;
 
-  let s = { ...state, initiative: player };
+  let s = {
+    ...state,
+    initiative: player,
+  };
+
   s = pushLog(s, `${player} takes initiative`);
   return s;
 }
@@ -244,27 +299,26 @@ function applyCancelOnHit(
   unresolved: Set<PlayerId>
 ): GameState {
   const other = opponentOf(attacker);
-
   if (!unresolved.has(other)) return state;
 
   const cancelledCard = state[other].queue[0];
+  if (!cancelledCard) return state;
 
-  let s = pushLog(
-    state,
-    `${other} was hit before resolving → cancel queued card (${cancelledCard ?? "?"})`
-  );
-
+  let s = moveQueuedCardToTrash(state, other, cancelledCard);
   s = {
     ...s,
     [other]: {
       ...s[other],
-      queue: [],
       ready: false,
     },
   } as GameState;
 
-  unresolved.delete(other);
+  s = pushLog(
+    s,
+    `${other} was hit before resolving → cancel queued card (${cancelledCard}) to trash`
+  );
 
+  unresolved.delete(other);
   return s;
 }
 
@@ -286,8 +340,8 @@ export function resolveAll(state: GameState): GameState {
 
   let s = state;
   const items = buildResolveOrder(s);
-
   const unresolved = new Set<PlayerId>();
+
   if (s.P1.queue[0]) unresolved.add("P1");
   if (s.AI.queue[0]) unresolved.add("AI");
 
@@ -295,14 +349,13 @@ export function resolveAll(state: GameState): GameState {
     if (!unresolved.has(it.player)) continue;
 
     const before = s;
-
     s = applyCardEffect(s, it.player, it.cardId);
     if (s.phase === "GAME_OVER") return s;
 
+    s = moveQueuedCardToCooldown(s, it.player, it.cardId);
     unresolved.delete(it.player);
 
     const hit = didDirectAttackHit(before, s, it.player, it.cardId);
-
     if (hit) {
       s = applyInitiativeOnHit(s, it.player);
       s = applyGainOnHit(s, it.player, it.cardId);
@@ -399,7 +452,10 @@ export function applyCardEffect(
           ...state[target],
           status: {
             ...state[target].status,
-            burn: { turns: 2, dmgPerTurn: card.value },
+            burn: {
+              turns: 2,
+              dmgPerTurn: card.value,
+            },
           },
         },
       } as GameState;
@@ -423,7 +479,6 @@ function dealDamage(
   label?: string
 ): GameState {
   const t = state[target];
-
   const blocked = Math.min(t.block, amount);
   const dmg = amount - blocked;
 
@@ -433,7 +488,11 @@ function dealDamage(
     hp: t.hp - dmg,
   };
 
-  const next = { ...state, [target]: nextTarget } as GameState;
+  const next = {
+    ...state,
+    [target]: nextTarget,
+  } as GameState;
+
   return pushLog(
     next,
     `${label ?? "Damage"} → ${target} takes ${dmg} (${blocked} blocked)`
@@ -454,9 +513,12 @@ export function draw(
 
     if (me.deck.length === 0) {
       const winner = player === "P1" ? "AI" : "P1";
-
       return pushLog(
-        { ...s, phase: "GAME_OVER", winner } as GameState,
+        {
+          ...s,
+          phase: "GAME_OVER",
+          winner,
+        } as GameState,
         `${player} cannot draw (deck empty) → ${winner} wins`
       );
     }
@@ -478,15 +540,27 @@ export function draw(
 
 export function checkGameOver(state: GameState): GameState {
   if (state.P1.hp <= 0 && state.AI.hp <= 0) {
-    return { ...state, phase: "GAME_OVER", winner: "DRAW" };
+    return {
+      ...state,
+      phase: "GAME_OVER",
+      winner: "DRAW",
+    };
   }
 
   if (state.P1.hp <= 0) {
-    return { ...state, phase: "GAME_OVER", winner: "AI" };
+    return {
+      ...state,
+      phase: "GAME_OVER",
+      winner: "AI",
+    };
   }
 
   if (state.AI.hp <= 0) {
-    return { ...state, phase: "GAME_OVER", winner: "P1" };
+    return {
+      ...state,
+      phase: "GAME_OVER",
+      winner: "P1",
+    };
   }
 
   return state;
