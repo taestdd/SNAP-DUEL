@@ -283,7 +283,7 @@ export default function GameScreen({
           <div>
             <h1 className={styles.title}>Snap Duel (MVP)</h1>
             <div className={styles.sub}>
-              Turn {state.turn} · Phase {state.phase} · Initiative{" "}
+              Round {state.round}/3 · Turn {state.turn} · Phase {state.phase} · Initiative{" "}
               {state.initiative}
             </div>
           </div>

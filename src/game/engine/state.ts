@@ -2,6 +2,8 @@ import type { Combatant, GameState, Status } from "./types";
 import { shuffle } from "./rng";
 import { draw } from "./rules";
 
+
+//기본 상태
 const emptyStatus = (): Status => ({
   attackBuff: 0,
   burn: null,
@@ -10,6 +12,7 @@ const emptyStatus = (): Status => ({
   exhausted: false,
 });
 
+//초기 덱
 const STARTER_DECK: string[] = [
   // 1 cost
   "quick_strike", "quick_strike", "quick_strike",
@@ -30,6 +33,7 @@ const STARTER_DECK: string[] = [
   "meteor_strike", "meteor_strike", "meteor_strike",
 ];
 
+//플레이어 셋팅
 function createCombatant(id: "P1" | "AI"): Combatant {
   return {
     id,
@@ -48,8 +52,10 @@ function createCombatant(id: "P1" | "AI"): Combatant {
   };
 }
 
+//턴 시작
 export function createInitialState(): GameState {
   let state: GameState = {
+    round: 1,
     turn: 0,
     phase: "TURN_START",
     winner: null,

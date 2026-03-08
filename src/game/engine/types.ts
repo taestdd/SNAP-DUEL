@@ -90,6 +90,7 @@ export type TurnPhase =
   | "GAME_OVER";
 
 export type GameState = {
+  round: number;
   turn: number;
   phase: TurnPhase;
 

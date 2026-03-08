@@ -1,5 +1,6 @@
 import type { GameState, PlayerId } from "./types";
 import { getCard } from "./cards";
+import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
 const LOG_LIMIT = 40;
@@ -104,6 +105,71 @@ function moveQueuedCardToTrash(
   } as GameState;
 }
 
+//라운드 종료 처리
+function handleRoundEnd(state: GameState): GameState {
+  let s = state;
+
+  s = pushLog(s, `Round ${s.round} ends`);
+
+  s = moveHandToTrash(s, "P1");
+  s = moveHandToTrash(s, "AI");
+
+  if (s.round >= 3) {
+    return decideWinnerByHp(s);
+  }
+
+  return prepareNextRound(s);
+}
+
+
+/* -------------------------- */
+/* 라운드 시작 처리 */
+/* -------------------------- */
+function prepareNextRound(state: GameState): GameState {
+  let s = state;
+
+  s = pushLog(s, `Round ${state.round + 1} begins`);
+
+  // 1) trash -> deck, shuffle
+  s = recycleTrashIntoDeck(s, "P1");
+  s = recycleTrashIntoDeck(s, "AI");
+
+  // 2) cooldown -> trash
+  s = moveCooldownToTrash(s, "P1");
+  s = moveCooldownToTrash(s, "AI");
+
+  // 다음 라운드 시작 상태로 리셋
+  const nextState: GameState = {
+    ...s,
+    round: state.round + 1,
+    turn: 0,
+    phase: "TURN_START",
+    selected: null,
+    P1: {
+      ...s.P1,
+      queue: [],
+      ready: false,
+      block: 0,
+    },
+    AI: {
+      ...s.AI,
+      queue: [],
+      ready: false,
+      block: 0,
+    },
+    // initiative는 건드리지 않음
+    // = 이전 라운드 마지막 상태 유지
+  };
+
+  s = syncExhausted(nextState, "P1");
+  s = syncExhausted(s, "AI");
+
+  // 1라운드 시작처럼 각자 시작 핸드 3장
+  s = draw(s, "P1", 3);
+  s = draw(s, "AI", 3);
+
+  return s;
+}
 /* -------------------------- */
 /* 턴 시작 처리 */
 /* -------------------------- */
@@ -350,12 +416,18 @@ function applyCancelOnHit(
 /* -------------------------- */
 
 function endTurnCleanup(state: GameState): GameState {
-  return {
+  const s: GameState = {
     ...state,
     P1: { ...state.P1, queue: [], ready: false },
     AI: { ...state.AI, queue: [], ready: false },
     phase: "TURN_END",
   };
+
+  if (areBothPlayersExhausted(s)) {
+    return handleRoundEnd(s);
+  }
+
+  return s;
 }
 
 export function resolveAll(state: GameState): GameState {
@@ -491,7 +563,12 @@ export function applyCardEffect(
   }
 }
 
-// 덱에 카드가 추가될때 탈진 풀림
+// 두 플레이어 탈진 체크
+function areBothPlayersExhausted(state: GameState): boolean {
+  return state.P1.status.exhausted && state.AI.status.exhausted;
+}
+
+// 덱에 카드가 추가될 때 탈진 풀림
 function addCardsToDeck(
   state: GameState,
   player: PlayerId,
@@ -519,6 +596,58 @@ function addCardsToDeck(
 
   s = syncExhausted(s, player);
   return s;
+}
+
+//핸드를 전부 트래시로 이동
+function moveHandToTrash(state: GameState, player: PlayerId): GameState {
+  const me = state[player];
+  if (me.hand.length === 0) return state;
+
+  return {
+    ...state,
+    [player]: {
+      ...me,
+      hand: [],
+      trash: [...me.trash, ...me.hand],
+    },
+  } as GameState;
+}
+
+//트래시 재활용
+function recycleTrashIntoDeck(state: GameState, player: PlayerId): GameState {
+  const me = state[player];
+  if (me.trash.length === 0) {
+    return syncExhausted(state, player);
+  }
+
+  const mergedDeck = shuffle([...me.deck, ...me.trash]);
+
+  let s = {
+    ...state,
+    [player]: {
+      ...me,
+      deck: mergedDeck,
+      trash: [],
+    },
+  } as GameState;
+
+  s = syncExhausted(s, player);
+  return s;
+}
+
+//쿨다운 재활용
+function moveCooldownToTrash(state: GameState, player: PlayerId): GameState {
+  const me = state[player];
+  if (me.cooldown.length === 0) return state;
+
+  return {
+    ...state,
+    [player]: {
+      ...me,
+      cooldown: [],
+      trash: [...me.trash, ...me.cooldown],
+    },
+  } as GameState;
 }
 
 /* -------------------------- */
@@ -586,6 +715,7 @@ export function draw(
   return s;
 }
 
+//게임오버 체크
 export function checkGameOver(state: GameState): GameState {
   if (state.P1.hp <= 0 && state.AI.hp <= 0) {
     return {
@@ -612,4 +742,29 @@ export function checkGameOver(state: GameState): GameState {
   }
 
   return state;
+}
+
+//3라운드 종료 후 승패판정
+function decideWinnerByHp(state: GameState): GameState {
+  if (state.P1.hp > state.AI.hp) {
+    return {
+      ...state,
+      phase: "GAME_OVER",
+      winner: "P1",
+    };
+  }
+
+  if (state.AI.hp > state.P1.hp) {
+    return {
+      ...state,
+      phase: "GAME_OVER",
+      winner: "AI",
+    };
+  }
+
+  return {
+    ...state,
+    phase: "GAME_OVER",
+    winner: "DRAW",
+  };
 }
