@@ -99,9 +99,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       // “가장 강력”: damage면 value 큰 것 우선, 그 다음 cost 큰 것
       candidates.sort((a, b) => {
-        const av = a.card!.effect === "damage" ? a.card!.value : 0;
-        const bv = b.card!.effect === "damage" ? b.card!.value : 0;
-        if (bv !== av) return bv - av;
+        const aDamage =
+          a.card!.effects
+            .filter((effect) => effect.type === "damage")
+            .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
+
+        const bDamage =
+          b.card!.effects
+            .filter((effect) => effect.type === "damage")
+            .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
+
+        if (bDamage !== aDamage) return bDamage - aDamage;
         return (b.card!.cost ?? 0) - (a.card!.cost ?? 0);
       });
 

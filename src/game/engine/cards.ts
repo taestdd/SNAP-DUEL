@@ -8,9 +8,9 @@ export const CARDS: Record<string, Card> = {
     cost: 3,
     speed: 1,
     gain: 1,
-    effect: "damage",
-    value: 2,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 2, target: "enemy" }
+    ],
     text: "Deal 2 damage.",
   },
 
@@ -20,9 +20,9 @@ export const CARDS: Record<string, Card> = {
     cost: 3,
     speed: 2,
     gain: 0,
-    effect: "block",
-    value: 2,
-    target: "self",
+    effects: [
+      { type: "block", value: 2, target: "self" }
+    ],
     text: "Gain 2 Block.",
   },
 
@@ -32,9 +32,9 @@ export const CARDS: Record<string, Card> = {
     cost: 3,
     speed: 1,
     gain: 1,
-    effect: "draw",
-    value: 1,
-    target: "self",
+    effects: [
+      { type: "draw", value: 1, target: "self" }
+    ],
     text: "Draw 1 card.",
   },
 
@@ -45,9 +45,9 @@ export const CARDS: Record<string, Card> = {
     cost: 5,
     speed: 4,
     gain: 1,
-    effect: "damage",
-    value: 6,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 6, target: "enemy" }
+    ],
     text: "Deal 6 damage.",
   },
 
@@ -57,9 +57,9 @@ export const CARDS: Record<string, Card> = {
     cost: 5,
     speed: 3,
     gain: 1,
-    effect: "damage",
-    value: 5,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 5, target: "enemy" }
+    ],
     text: "Deal 5 damage.",
   },
 
@@ -70,9 +70,9 @@ export const CARDS: Record<string, Card> = {
     cost: 7,
     speed: 6,
     gain: 1,
-    effect: "damage",
-    value: 9,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 9, target: "enemy" }
+    ],
     text: "Deal 9 damage.",
   },
 
@@ -82,9 +82,9 @@ export const CARDS: Record<string, Card> = {
     cost: 7,
     speed: 7,
     gain: 1,
-    effect: "damage",
-    value: 10,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 10, target: "enemy" }
+    ],
     text: "Deal 10 damage.",
   },
 
@@ -95,9 +95,10 @@ export const CARDS: Record<string, Card> = {
     cost: 10,
     speed: 8,
     gain: 0,
-    effect: "damage",
-    value: 14,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 14, target: "enemy" },
+      { type: "draw", value: 1, target: "self" }
+    ],
     text: "Deal 14 damage.",
   },
 
@@ -107,9 +108,10 @@ export const CARDS: Record<string, Card> = {
     cost: 10,
     speed: 7,
     gain: 0,
-    effect: "damage",
-    value: 12,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 12, target: "enemy" },
+      { type: "draw", value: 1, target: "self" }
+    ],
     text: "Deal 12 damage.",
   },
 
@@ -119,9 +121,10 @@ export const CARDS: Record<string, Card> = {
     cost: 10,
     speed: 9,
     gain: 0,
-    effect: "damage",
-    value: 16,
-    target: "enemy",
+    effects: [
+      { type: "damage", value: 16, target: "enemy" },
+      { type: "draw", value: 1, target: "self" }
+    ],
     text: "Deal 16 damage.",
   },
 };

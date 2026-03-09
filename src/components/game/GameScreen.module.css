@@ -343,3 +343,9 @@
     width: min(320px, 88vw);
   }
 }
+
+.effectList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

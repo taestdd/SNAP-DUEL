@@ -9,9 +9,16 @@ export type EffectType =
   | "draw"
   | "heal"
   | "buff_attack"
-  | "burn";
+  | "burn"
+  | "tag";
 
 export type Target = "self" | "enemy";
+
+export type CardEffect = {
+  type: EffectType;
+  value?: number;
+  target?: Target;
+};
 
 export type Card = {
   id: string;
@@ -24,9 +31,7 @@ export type Card = {
   speed: number;
   gain: number;
 
-  effect: EffectType;
-  value: number;
-  target: Target;
+  effects: CardEffect[];
   text: string;
 };
 

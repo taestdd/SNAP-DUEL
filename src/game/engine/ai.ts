@@ -1,41 +1,59 @@
-import { GameState } from "./types";
+import type { Card, GameState } from "./types";
 import { getCard } from "./cards";
+
+function getEffectValue(card: Card, type: Card["effects"][number]["type"]): number {
+  return card.effects
+    .filter((effect) => effect.type === type)
+    .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
+}
+
+function scoreCard(card: Card): number {
+  let score = 0;
+
+  const damage = getEffectValue(card, "damage");
+  const block = getEffectValue(card, "block");
+  const draw = getEffectValue(card, "draw");
+  const heal = getEffectValue(card, "heal");
+  const buffAttack = getEffectValue(card, "buff_attack");
+  const burn = getEffectValue(card, "burn");
+  const hasTag = card.effects.some((effect) => effect.type === "tag");
+
+  score += damage * 2.0;
+  score += block * 1.25;
+  score += draw * 1.0;
+  score += heal * 1.1;
+  score += buffAttack * 1.15;
+  score += burn * 1.4;
+
+  if (hasTag) {
+    score += 1.5;
+  }
+
+  score += card.gain * 0.9;
+  score += card.speed <= 0 ? 1.2 : Math.max(0, 1 - card.speed * 0.15);
+  score += card.cost * 0.15;
+
+  return score;
+}
 
 export function aiChooseCardToPlay(state: GameState): string | null {
   const ai = state.AI;
-  if (ai.energy <= 0) return null;
 
   const playable = ai.hand
-    .map(getCard)
-    .filter(Boolean)
-    .filter((c) => c.cost <= ai.energy);
+    .map((id) => getCard(id))
+    .filter((card): card is Card => !!card)
+    .filter((card) => card.cost <= ai.deck.length);
 
-  if (playable.length === 0) return null;
+  if (playable.length === 0) {
+    return null;
+  }
 
-  // 아주 단순한 점수화(추후 개선)
-  const scored = playable.map((c) => {
-    let score = 0;
-
-    if (c.effect === "damage") score += c.value * 2;
-    if (c.effect === "block") score += c.value * 1.5;
-    if (c.effect === "heal") score += c.value * 1.2;
-    if (c.effect === "draw") score += 1.0;
-    if (c.effect === "burn") score += c.value * 2.5;
-
-    // 막판(턴 5~6)은 공격 가중치
-    if (state.turn >= 5 && c.effect === "damage") score += 5;
-
-    // 에너지 효율
-    score += 0.2 * (10 - c.cost);
-
-    return { id: c.id, score };
-  });
+  const scored = playable.map((card) => ({
+    id: card.id,
+    score: scoreCard(card),
+  }));
 
   scored.sort((a, b) => b.score - a.score);
 
-  // 약간 랜덤성(매번 똑같지 않게)
-  const r = Math.random();
-  if (r < 0.15 && scored.length >= 2) return scored[1].id;
-
-  return scored[0].id;
+  return scored[0]?.id ?? null;
 }

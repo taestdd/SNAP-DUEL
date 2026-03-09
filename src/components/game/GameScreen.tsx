@@ -55,12 +55,15 @@ function QueuePreview({
             <span>Gain {card.gain}</span>
           </div>
 
-          <div className={styles.queueEffectRow}>
-            <span className={styles.effectBadge}>{effectLabel(card.effect)}</span>
-            <span className={styles.effectValue}>
-              {card.value} · {card.target}
+        <div className={styles.queueEffectRow}>
+          {card.effects.map((effect, idx) => (
+            <span key={`${card.id}-effect-${idx}`} className={styles.effectBadge}>
+              {effectLabel(effect.type)}
+              {effect.value !== undefined ? ` ${effect.value}` : ""}
+              {effect.target ? ` · ${effect.target}` : ""}
             </span>
-          </div>
+          ))}
+        </div>
 
           <div className={styles.queueText}>{card.text}</div>
         </div>
@@ -137,9 +140,19 @@ function CardListPopover({
                 </div>
 
                 <div className={styles.popoverItemBottom}>
-                  <span className={styles.effectBadge}>
-                    {effectLabel(card.effect)}
-                  </span>
+                  <div className={styles.effectList}>
+                    {card.effects.map((effect, effectIdx) => (
+                      <span
+                        key={`${card.id}-popover-effect-${effectIdx}`}
+                        className={styles.effectBadge}
+                      >
+                        {effectLabel(effect.type)}
+                        {effect.value !== undefined ? ` ${effect.value}` : ""}
+                        {effect.target ? ` · ${effect.target}` : ""}
+                      </span>
+                    ))}
+                  </div>
+
                   <span className={styles.popoverItemText}>{card.text}</span>
                 </div>
               </div>

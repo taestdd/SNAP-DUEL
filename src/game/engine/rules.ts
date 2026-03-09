@@ -121,6 +121,140 @@ function handleRoundEnd(state: GameState): GameState {
   return prepareNextRound(s);
 }
 
+//카드 효과 단일 적용
+function applySingleEffect(
+  state: GameState,
+  player: PlayerId,
+  effect: { type: string; value?: number; target?: "self" | "enemy" }
+): GameState {
+  const target =
+    effect.target === "self"
+      ? player
+      : effect.target === "enemy"
+      ? opponentOf(player)
+      : player;
+
+  switch (effect.type) {
+    case "damage": {
+      const amount = effect.value ?? 0;
+      const bonus = state[player].status.attackBuff ?? 0;
+      const total = amount + bonus;
+
+      let next = dealDamage(state, target, total, "Damage");
+
+      next = {
+        ...next,
+        [player]: {
+          ...next[player],
+          status: {
+            ...next[player].status,
+            attackBuff: 0,
+          },
+        },
+      } as GameState;
+
+      return next;
+    }
+
+    case "block": {
+      const amount = effect.value ?? 0;
+
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            block: state[target].block + amount,
+          },
+        } as GameState,
+        `${target} gains ${amount} Block`
+      );
+    }
+
+    case "draw": {
+      return draw(state, target, effect.value ?? 0);
+    }
+
+    case "heal": {
+      const amount = effect.value ?? 0;
+
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            hp: state[target].hp + amount,
+          },
+        } as GameState,
+        `${target} heals ${amount}`
+      );
+    }
+
+    case "buff_attack": {
+      const amount = effect.value ?? 0;
+
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            status: {
+              ...state[target].status,
+              attackBuff: (state[target].status.attackBuff ?? 0) + amount,
+            },
+          },
+        } as GameState,
+        `${target} gains ATK +${amount}`
+      );
+    }
+
+    case "burn": {
+      const amount = effect.value ?? 0;
+
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            status: {
+              ...state[target].status,
+              burn: {
+                turns: 2,
+                dmgPerTurn: amount,
+              },
+            },
+          },
+        } as GameState,
+        `${target} is Burned (${amount}/turn)`
+      );
+    }
+
+    case "tag": {
+      return pushLog(state, `${player} tags`);
+    }
+
+    default:
+      return state;
+  }
+}
+
+function applyCardEffects(
+  state: GameState,
+  player: PlayerId,
+  cardId: string
+): GameState {
+  const card = getCard(cardId);
+  if (!card) return state;
+
+  let s = state;
+
+  for (const effect of card.effects) {
+    s = applySingleEffect(s, player, effect);
+    if (s.phase === "GAME_OVER") return s;
+  }
+
+  return s;
+}
 
 /* -------------------------- */
 /* 라운드 시작 처리 */
@@ -338,12 +472,13 @@ function didDirectAttackHit(
 ): boolean {
   const card = getCard(cardId);
   if (!card) return false;
-  if (card.effect !== "damage") return false;
+
+  const hasDamageEffect = card.effects.some((effect) => effect.type === "damage");
+  if (!hasDamageEffect) return false;
 
   const other = opponentOf(player);
   return stateAfter[other].hp < stateBefore[other].hp;
 }
-
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   if (state.initiative === player) return state;
 
@@ -415,6 +550,8 @@ function applyCancelOnHit(
 /* resolve 메인 */
 /* -------------------------- */
 
+
+
 function endTurnCleanup(state: GameState): GameState {
   const s: GameState = {
     ...state,
@@ -470,97 +607,7 @@ export function applyCardEffect(
   player: PlayerId,
   cardId: string
 ): GameState {
-  const card = getCard(cardId);
-  if (!card) return state;
-
-  const target = card.target === "self" ? player : opponentOf(player);
-
-  switch (card.effect) {
-    case "damage": {
-      const bonus = state[player].status.attackBuff ?? 0;
-      const total = card.value + bonus;
-
-      let next = dealDamage(state, target, total, card.name);
-
-      // 공격 버프 1회 소모
-      next = {
-        ...next,
-        [player]: {
-          ...next[player],
-          status: {
-            ...next[player].status,
-            attackBuff: 0,
-          },
-        },
-      } as GameState;
-
-      return next;
-    }
-
-    case "block": {
-      const next = {
-        ...state,
-        [target]: {
-          ...state[target],
-          block: state[target].block + card.value,
-        },
-      } as GameState;
-
-      return pushLog(next, `${target} gains ${card.value} Block`);
-    }
-
-    case "draw": {
-      return draw(state, target, card.value);
-    }
-
-    case "heal": {
-      const next = {
-        ...state,
-        [target]: {
-          ...state[target],
-          hp: state[target].hp + card.value,
-        },
-      } as GameState;
-
-      return pushLog(next, `${target} heals ${card.value}`);
-    }
-
-    case "buff_attack": {
-      const next = {
-        ...state,
-        [target]: {
-          ...state[target],
-          status: {
-            ...state[target].status,
-            attackBuff: (state[target].status.attackBuff ?? 0) + card.value,
-          },
-        },
-      } as GameState;
-
-      return pushLog(next, `${target} gains ATK +${card.value}`);
-    }
-
-    case "burn": {
-      const next = {
-        ...state,
-        [target]: {
-          ...state[target],
-          status: {
-            ...state[target].status,
-            burn: {
-              turns: 2,
-              dmgPerTurn: card.value,
-            },
-          },
-        },
-      } as GameState;
-
-      return pushLog(next, `${target} is Burned (${card.value}/turn)`);
-    }
-
-    default:
-      return state;
-  }
+  return applyCardEffects(state, player, cardId);
 }
 
 // 두 플레이어 탈진 체크
