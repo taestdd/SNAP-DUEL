@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resolveAll, checkGameOver, draw } from "./rules";
+import { beginTurn, queueCard, resolveAll, checkGameOver, draw, canUseCard } from "./rules";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 
@@ -29,6 +29,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.P1.ready) return state;
 
       const { cardId, handIndex } = action;
+
+      // useCondition 불충족 시 선택 불가
+      if (!canUseCard(state, "P1", cardId)) return state;
 
       const same =
         state.selected &&
@@ -92,10 +95,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       let s = state;
 
-      // 후보: 코스트(=덱 소모) 가능한 카드만
+      // 후보: 코스트 가능 + useCondition 충족 카드만
       const candidates = s.AI.hand
         .map((id, idx) => ({ id, idx, card: getCard(id) }))
-        .filter((x) => x.card && x.card.cost <= s.AI.deck.length);
+        .filter((x) => x.card && x.card.cost <= s.AI.deck.length && canUseCard(s, "AI", x.id));
 
       // “가장 강력”: damage면 value 큰 것 우선, 그 다음 cost 큰 것
       candidates.sort((a, b) => {

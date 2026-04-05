@@ -46,6 +46,7 @@ function createCombatant(id: "P1" | "AI"): Combatant {
 
     activeCharacter: "A",
     characterHp: { A: CHARACTERS.A.maxHp, B: CHARACTERS.B.maxHp },
+    airborneStack: 0,
 
     status: emptyStatus(),
 

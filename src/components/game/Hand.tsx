@@ -26,7 +26,13 @@ export default function Hand({
       <div className={styles.row}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
-          const canSelect = !disabled && !!card && card.cost <= me.deck.length;
+          const costOk = !!card && card.cost <= me.deck.length;
+          const conditionMet =
+            !card?.useCondition ||
+            (card.useCondition === "ground" && me.airborneStack === 0) ||
+            (card.useCondition === "airborne" && me.airborneStack >= 1);
+          const canSelect = !disabled && costOk && conditionMet;
+          const conditionBlocked = !disabled && costOk && !conditionMet;
           const isSelected =
             selected?.cardId === cardId && selected?.handIndex === idx;
 
@@ -35,6 +41,7 @@ export default function Hand({
               key={`${cardId}-${idx}`}
               cardId={cardId}
               disabled={!canSelect}
+              conditionBlocked={conditionBlocked}
               selected={isSelected}
               onClick={() => onSelectCard(cardId, idx)}
             />

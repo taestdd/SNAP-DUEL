@@ -200,11 +200,23 @@ function applySingleEffect(
 
   switch (effect.type) {
     case "damage": {
+      const dt = (effect as import("./types").CardEffect).damageType;
+      const targetStack = state[target].airborneStack;
+
+      // ground: 상대가 체공 상태면 무효
+      if (dt === "ground" && targetStack >= 1) {
+        return pushLog(state, `Damage (ground) blocked — ${target} is airborne`);
+      }
+      // anti-air: 상대가 지상 상태면 무효
+      if (dt === "anti-air" && targetStack === 0) {
+        return pushLog(state, `Damage (anti-air) missed — ${target} is grounded`);
+      }
+
       const amount = effect.value ?? 0;
       const bonus = state[player].status.attackBuff ?? 0;
       const total = amount + bonus;
 
-      let next = dealDamage(state, target, total, "Damage");
+      let next = dealDamage(state, target, total, dt ? `Damage(${dt})` : "Damage");
 
       next = {
         ...next,
@@ -298,6 +310,20 @@ function applySingleEffect(
 
     case "tag": {
       return applyTagSwitch(state, player);
+    }
+
+    case "airborne": {
+      const stack = effect.value ?? 0;
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            airborneStack: stack,
+          },
+        } as GameState,
+        `${target} airborneStack set to ${stack}`
+      );
     }
 
     default:
@@ -407,6 +433,7 @@ function applyTurnStartStatuses(state: GameState): GameState {
   let s = state;
 
   // 다음 턴 speed bonus를 이번 턴 bonus로 이동
+  // 체공 스택 1 감소 (최소 0)
   s = {
     ...s,
     P1: {
@@ -416,6 +443,7 @@ function applyTurnStartStatuses(state: GameState): GameState {
         speedBonus: s.P1.status.speedBonusNext ?? 0,
         speedBonusNext: 0,
       },
+      airborneStack: Math.max(0, s.P1.airborneStack - 1),
     },
     AI: {
       ...s.AI,
@@ -424,6 +452,7 @@ function applyTurnStartStatuses(state: GameState): GameState {
         speedBonus: s.AI.status.speedBonusNext ?? 0,
         speedBonusNext: 0,
       },
+      airborneStack: Math.max(0, s.AI.airborneStack - 1),
     },
   };
 
@@ -452,6 +481,21 @@ export function beginTurn(state: GameState): GameState {
 }
 
 /* -------------------------- */
+/* 카드 사용 조건 체크 */
+/* -------------------------- */
+
+export function canUseCard(state: GameState, player: PlayerId, cardId: string): boolean {
+  const card = getCard(cardId);
+  if (!card) return false;
+  if (!card.useCondition) return true;
+
+  const stack = state[player].airborneStack;
+  if (card.useCondition === "ground") return stack === 0;
+  if (card.useCondition === "airborne") return stack >= 1;
+  return true;
+}
+
+/* -------------------------- */
 /* 카드 예약 */
 /* -------------------------- */
 
@@ -475,6 +519,7 @@ export function queueCard(
   if (me.hand[handIndex] !== cardId) return state;
 
   if (me.deck.length < card.cost) return state;
+  if (!canUseCard(state, player, cardId)) return state;
 
   const nextHand = [...me.hand];
   nextHand.splice(handIndex, 1);

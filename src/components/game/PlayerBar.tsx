@@ -1,21 +1,48 @@
 import type { Combatant } from "@/game/engine/types";
+import { CHARACTERS } from "@/game/engine/characters";
 import styles from "./PlayerBar.module.css";
 
 export default function PlayerBar({ me }: { me: Combatant }) {
   const burn = me.status.burn;
+  const isAirborne = me.airborneStack >= 1;
 
   return (
     <div className={styles.wrap}>
       <div>
         <div className={styles.name}>YOU</div>
+
+        <div className={styles.charRow}>
+          {(["A", "B"] as const).map((charId) => {
+            const isActive = me.activeCharacter === charId;
+            const hp = me.characterHp[charId];
+            const maxHp = CHARACTERS[charId].maxHp;
+            return (
+              <div
+                key={charId}
+                className={`${styles.charSlot} ${isActive ? styles.charActive : ""}`}
+              >
+                <span className={styles.charLabel}>
+                  {isActive ? "● " : ""}Char {charId}
+                </span>
+                <span className={styles.charHp}>{hp}/{maxHp}</span>
+              </div>
+            );
+          })}
+        </div>
+
         <div className={styles.meta}>
-          <span>HP: {me.hp}</span>
           <span>Block: {me.block}</span>
         </div>
       </div>
 
       <div className={styles.right}>
         <div className={styles.badges}>
+          {isAirborne ? (
+            <span className={`${styles.badge} ${styles.badgeAirborne}`}>
+              AIR ×{me.airborneStack}
+            </span>
+          ) : null}
+
           {me.status.attackBuff > 0 ? (
             <span className={styles.badge}>ATK+ {me.status.attackBuff}</span>
           ) : null}
