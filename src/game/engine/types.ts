@@ -1,5 +1,16 @@
 export type PlayerId = "P1" | "AI";
 
+export type CharacterId = "A" | "B";
+
+export type CharacterDef = {
+  id: CharacterId;
+  maxHp: number;
+  /** 이 캐릭터로 교체될 때 발동 */
+  entryEffect: CardEffect | null;
+  /** 이 캐릭터에서 다른 캐릭터로 교체될 때 발동 */
+  exitEffect: CardEffect | null;
+};
+
 /**
  * 카드 효과 타입
  */
@@ -59,6 +70,11 @@ export type Combatant = {
 
   hp: number;
   block: number;
+
+  /** 현재 활성 캐릭터 */
+  activeCharacter: CharacterId;
+  /** 캐릭터별 현재 HP */
+  characterHp: Record<CharacterId, number>;
 
   status: Status;
 

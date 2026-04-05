@@ -127,6 +127,33 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 16 damage.",
   },
+
+  // 복수 효과 예시 카드
+  life_drain: {
+    id: "life_drain",
+    name: "Life Drain",
+    cost: 4,
+    speed: 4,
+    gain: 1,
+    effects: [
+      { type: "heal", value: 1, target: "self" },
+      { type: "damage", value: 1, target: "enemy" },
+    ],
+    text: "Heal 1, then deal 1 damage.",
+  },
+
+  // 태그 카드
+  tag_switch: {
+    id: "tag_switch",
+    name: "Tag",
+    cost: 2,
+    speed: 3,
+    gain: 0,
+    effects: [
+      { type: "tag" }
+    ],
+    text: "Switch active character. Exit effect triggers first, then entry effect.",
+  },
 };
 
 /**
