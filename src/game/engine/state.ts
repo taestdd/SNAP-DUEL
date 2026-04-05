@@ -1,6 +1,7 @@
 import type { Combatant, GameState, Status } from "./types";
 import { shuffle } from "./rng";
 import { draw } from "./rules";
+import { CHARACTERS } from "./characters";
 
 
 //기본 상태
@@ -31,14 +32,21 @@ const STARTER_DECK: string[] = [
   "execution_blade", "execution_blade", "execution_blade",
   "arcane_burst", "arcane_burst", "arcane_burst",
   "meteor_strike", "meteor_strike", "meteor_strike",
+
+  // 태그
+  "tag_switch", "tag_switch",
 ];
 
 //플레이어 셋팅
 function createCombatant(id: "P1" | "AI"): Combatant {
   return {
     id,
-    hp: 25,
+    hp: CHARACTERS.A.maxHp,
     block: 0,
+
+    activeCharacter: "A",
+    characterHp: { A: CHARACTERS.A.maxHp, B: CHARACTERS.B.maxHp },
+
     status: emptyStatus(),
 
     deck: [...STARTER_DECK],

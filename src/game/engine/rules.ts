@@ -1,5 +1,6 @@
-import type { GameState, PlayerId } from "./types";
+import type { CharacterId, GameState, PlayerId } from "./types";
 import { getCard } from "./cards";
+import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
@@ -121,6 +122,69 @@ function handleRoundEnd(state: GameState): GameState {
   return prepareNextRound(s);
 }
 
+/* -------------------------- */
+/* 태그 (캐릭터 교체) */
+/* -------------------------- */
+
+/**
+ * 태그 처리 순서:
+ * 1. 현재 캐릭터 탈출 효과
+ * 2. 캐릭터 교체
+ * 3. 새 캐릭터 진입 효과
+ */
+function applyTagSwitch(state: GameState, player: PlayerId): GameState {
+  const me = state[player];
+  const currentChar = me.activeCharacter;
+  const newChar: CharacterId = currentChar === "A" ? "B" : "A";
+
+  const currentDef = CHARACTERS[currentChar];
+  const newDef = CHARACTERS[newChar];
+
+  // hp를 characterHp에 반영 (동기화)
+  let s: GameState = {
+    ...state,
+    [player]: {
+      ...me,
+      characterHp: { ...me.characterHp, [currentChar]: me.hp },
+    },
+  } as GameState;
+
+  // 1. 탈출 효과
+  if (currentDef.exitEffect) {
+    s = applySingleEffect(s, player, currentDef.exitEffect);
+    if (s.phase === "GAME_OVER") return s;
+    // 탈출 효과 후 hp를 다시 characterHp에 반영
+    s = {
+      ...s,
+      [player]: {
+        ...s[player],
+        characterHp: { ...s[player].characterHp, [currentChar]: s[player].hp },
+      },
+    } as GameState;
+  }
+
+  // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환
+  const newHp = s[player].characterHp[newChar];
+  s = {
+    ...s,
+    [player]: {
+      ...s[player],
+      activeCharacter: newChar,
+      hp: newHp,
+    },
+  } as GameState;
+
+  s = pushLog(s, `${player} tags out Char ${currentChar} → tags in Char ${newChar} (HP: ${newHp})`);
+
+  // 3. 진입 효과
+  if (newDef.entryEffect) {
+    s = applySingleEffect(s, player, newDef.entryEffect);
+    if (s.phase === "GAME_OVER") return s;
+  }
+
+  return s;
+}
+
 //카드 효과 단일 적용
 function applySingleEffect(
   state: GameState,
@@ -177,16 +241,19 @@ function applySingleEffect(
 
     case "heal": {
       const amount = effect.value ?? 0;
+      const t = state[target];
+      const newHp = t.hp + amount;
 
       return pushLog(
         {
           ...state,
           [target]: {
-            ...state[target],
-            hp: state[target].hp + amount,
+            ...t,
+            hp: newHp,
+            characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
           },
         } as GameState,
-        `${target} heals ${amount}`
+        `${target} (Char ${t.activeCharacter}) heals ${amount}`
       );
     }
 
@@ -230,7 +297,7 @@ function applySingleEffect(
     }
 
     case "tag": {
-      return pushLog(state, `${player} tags`);
+      return applyTagSwitch(state, player);
     }
 
     default:
@@ -250,6 +317,7 @@ function applyCardEffects(
 
   for (const effect of card.effects) {
     s = applySingleEffect(s, player, effect);
+    s = checkGameOver(s);
     if (s.phase === "GAME_OVER") return s;
   }
 
@@ -710,11 +778,13 @@ function dealDamage(
   const t = state[target];
   const blocked = Math.min(t.block, amount);
   const dmg = amount - blocked;
+  const newHp = t.hp - dmg;
 
   const nextTarget = {
     ...t,
     block: t.block - blocked,
-    hp: t.hp - dmg,
+    hp: newHp,
+    characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
   };
 
   const next = {
@@ -724,7 +794,7 @@ function dealDamage(
 
   return pushLog(
     next,
-    `${label ?? "Damage"} → ${target} takes ${dmg} (${blocked} blocked)`
+    `${label ?? "Damage"} → ${target} (Char ${t.activeCharacter}) takes ${dmg} (${blocked} blocked)`
   );
 }
 
@@ -762,56 +832,36 @@ export function draw(
   return s;
 }
 
-//게임오버 체크
+//게임오버 체크 (어느 캐릭터든 HP ≤ 0이면 즉시 패배)
 export function checkGameOver(state: GameState): GameState {
-  if (state.P1.hp <= 0 && state.AI.hp <= 0) {
-    return {
-      ...state,
-      phase: "GAME_OVER",
-      winner: "DRAW",
-    };
-  }
+  const p1Dead =
+    state.P1.characterHp.A <= 0 || state.P1.characterHp.B <= 0;
+  const aiDead =
+    state.AI.characterHp.A <= 0 || state.AI.characterHp.B <= 0;
 
-  if (state.P1.hp <= 0) {
-    return {
-      ...state,
-      phase: "GAME_OVER",
-      winner: "AI",
-    };
+  if (p1Dead && aiDead) {
+    return { ...state, phase: "GAME_OVER", winner: "DRAW" };
   }
-
-  if (state.AI.hp <= 0) {
-    return {
-      ...state,
-      phase: "GAME_OVER",
-      winner: "P1",
-    };
+  if (p1Dead) {
+    return { ...state, phase: "GAME_OVER", winner: "AI" };
+  }
+  if (aiDead) {
+    return { ...state, phase: "GAME_OVER", winner: "P1" };
   }
 
   return state;
 }
 
-//3라운드 종료 후 승패판정
+//3라운드 종료 후 승패판정 (양측 캐릭터 HP 합산 비교)
 function decideWinnerByHp(state: GameState): GameState {
-  if (state.P1.hp > state.AI.hp) {
-    return {
-      ...state,
-      phase: "GAME_OVER",
-      winner: "P1",
-    };
-  }
+  const p1Total = state.P1.characterHp.A + state.P1.characterHp.B;
+  const aiTotal = state.AI.characterHp.A + state.AI.characterHp.B;
 
-  if (state.AI.hp > state.P1.hp) {
-    return {
-      ...state,
-      phase: "GAME_OVER",
-      winner: "AI",
-    };
+  if (p1Total > aiTotal) {
+    return { ...state, phase: "GAME_OVER", winner: "P1" };
   }
-
-  return {
-    ...state,
-    phase: "GAME_OVER",
-    winner: "DRAW",
-  };
+  if (aiTotal > p1Total) {
+    return { ...state, phase: "GAME_OVER", winner: "AI" };
+  }
+  return { ...state, phase: "GAME_OVER", winner: "DRAW" };
 }
