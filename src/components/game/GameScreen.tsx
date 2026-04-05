@@ -10,22 +10,19 @@ import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 
-function effectLabel(effect: string) {
+function effectLabel(effect: string, damageType?: string) {
+  if (effect === "damage" && damageType === "ground") return "⬇ Ground";
+  if (effect === "damage" && damageType === "anti-air") return "⬆ Anti-Air";
   switch (effect) {
-    case "damage":
-      return "Damage";
-    case "block":
-      return "Block";
-    case "draw":
-      return "Draw";
-    case "heal":
-      return "Heal";
-    case "buff_attack":
-      return "ATK Buff";
-    case "burn":
-      return "Burn";
-    default:
-      return effect;
+    case "damage":   return "Damage";
+    case "block":    return "Block";
+    case "draw":     return "Draw";
+    case "heal":     return "Heal";
+    case "buff_attack": return "ATK Buff";
+    case "burn":     return "Burn";
+    case "tag":      return "⇄ Tag";
+    case "airborne": return "⬆ Launch";
+    default:         return effect;
   }
 }
 
@@ -58,9 +55,8 @@ function QueuePreview({
         <div className={styles.queueEffectRow}>
           {card.effects.map((effect, idx) => (
             <span key={`${card.id}-effect-${idx}`} className={styles.effectBadge}>
-              {effectLabel(effect.type)}
+              {effectLabel(effect.type, effect.damageType)}
               {effect.value !== undefined ? ` ${effect.value}` : ""}
-              {effect.target ? ` · ${effect.target}` : ""}
             </span>
           ))}
         </div>
