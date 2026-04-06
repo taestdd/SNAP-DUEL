@@ -8,6 +8,7 @@ import { CHARACTERS } from "./characters";
 const emptyStatus = (): Status => ({
   attackBuff: 0,
   burn: null,
+  airborne: false,
   speedBonus: 0,
   speedBonusNext: 0,
   exhausted: false,

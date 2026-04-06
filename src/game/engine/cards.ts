@@ -185,6 +185,43 @@ export const CARDS: Record<string, Card> = {
     useCondition: "airborne",
   },
 
+  // 에어본 카드
+  launcher_kick: {
+    id: "launcher_kick",
+    name: "Launcher Kick",
+    cost: 4,
+    speed: 3,
+    gain: 1,
+    effects: [
+      { type: "launcher", target: "enemy" }
+    ],
+    text: "Launch the enemy airborne.",
+  },
+
+  anti_air_strike: {
+    id: "anti_air_strike",
+    name: "Anti-Air Strike",
+    cost: 4,
+    speed: 2,
+    gain: 1,
+    effects: [
+      { type: "anti_air_strike", value: 6, target: "enemy" }
+    ],
+    text: "Deal 6 damage if target is airborne.",
+  },
+
+  aerial_combo: {
+    id: "aerial_combo",
+    name: "Aerial Combo",
+    cost: 5,
+    speed: 4,
+    gain: 1,
+    effects: [
+      { type: "aerial_combo", value: 7, target: "enemy" }
+    ],
+    text: "Deal 7 damage if you are airborne.",
+  },
+
   // 태그 카드
   tag_switch: {
     id: "tag_switch",

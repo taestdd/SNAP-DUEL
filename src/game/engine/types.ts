@@ -75,6 +75,8 @@ export type Status = {
     dmgPerTurn: number;
   } | null;
 
+  airborne: boolean;
+
   speedBonus: number;
   speedBonusNext: number;
 
