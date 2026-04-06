@@ -75,8 +75,6 @@ export type Status = {
     dmgPerTurn: number;
   } | null;
 
-  airborne: boolean;
-
   speedBonus: number;
   speedBonusNext: number;
 
@@ -148,6 +146,14 @@ export type GameState = {
   selected: SelectedCard | null;
 
   log: string[];
+};
+
+/** 게임 시작 전 셋업 설정 */
+export type SetupConfig = {
+  /** [0] = 선발, [1] = 후발 */
+  characters: [CharacterId, CharacterId];
+  /** DECK_REGISTRY 키 */
+  deckId: string;
 };
 
 export type Action =
