@@ -43,3 +43,40 @@
   font-size: 12px;
   opacity: 0.75;
 }
+
+.charRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.charSlot {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 12px;
+  opacity: 0.55;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.charActive {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
+}
+
+.charLabel {
+  font-weight: 700;
+}
+
+.charHp {
+  opacity: 0.85;
+}
+
+.badgeAirborne {
+  background: rgba(255, 180, 50, 0.18);
+  border-color: rgba(255, 180, 50, 0.45);
+  color: #ffcc66;
+}

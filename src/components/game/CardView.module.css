@@ -68,21 +68,69 @@
 .footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  opacity: 0.9;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.effectRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .tag {
   font-size: 11px;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
 }
 
-.val {
-  font-size: 12px;
-  font-weight: 800;
+/* ground 데미지 — 초록 계열 */
+.tagGround {
+  background: rgba(80, 200, 120, 0.15);
+  border-color: rgba(80, 200, 120, 0.40);
+  color: #7ee8a2;
+}
+
+/* anti-air 데미지 — 주황 계열 */
+.tagAntiAir {
+  background: rgba(255, 150, 60, 0.15);
+  border-color: rgba(255, 150, 60, 0.40);
+  color: #ffb366;
+}
+
+/* 태그 카드 */
+.tagTag {
+  background: rgba(160, 120, 255, 0.15);
+  border-color: rgba(160, 120, 255, 0.40);
+  color: #c4a8ff;
+}
+
+/* airborne 효과 */
+.tagAirborne {
+  background: rgba(255, 180, 50, 0.15);
+  border-color: rgba(255, 180, 50, 0.40);
+  color: #ffcc66;
+}
+
+/* 사용 조건 배지 */
+.conditionTag {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(110, 180, 255, 0.12);
+  border: 1px solid rgba(110, 180, 255, 0.35);
+  color: #88c8ff;
+}
+
+/* 조건 불충족으로 비활성 (코스트 부족과 구분) */
+.conditionBlocked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: rgba(110, 180, 255, 0.25);
+  background: rgba(110, 180, 255, 0.04);
 }
 
 .selected {

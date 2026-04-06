@@ -22,9 +22,12 @@ export type EffectType =
   | "buff_attack"
   | "burn"
   | "tag"
-  | "launcher"       // 대상을 체공 상태로 만듦
-  | "anti_air_strike" // 체공 중인 대상에게 피해
-  | "aerial_combo";  // 자신이 체공 상태일 때 피해
+  | "airborne";
+
+/** damage 효과의 적중 조건 */
+export type DamageType =
+  | "ground"    // 상대 airborneStack === 0 일 때만 적용
+  | "anti-air"; // 상대 airborneStack >= 1 일 때만 적용
 
 export type Target = "self" | "enemy";
 
@@ -32,7 +35,14 @@ export type CardEffect = {
   type: EffectType;
   value?: number;
   target?: Target;
+  /** damage 효과에만 사용. 미지정 시 항상 적용 */
+  damageType?: DamageType;
 };
+
+/** 카드 사용 가능 조건 */
+export type UseCondition =
+  | "ground"   // 자신의 airborneStack === 0 일 때만 사용 가능
+  | "airborne"; // 자신의 airborneStack >= 1 일 때만 사용 가능
 
 export type Card = {
   id: string;
@@ -47,6 +57,9 @@ export type Card = {
 
   effects: CardEffect[];
   text: string;
+
+  /** 미지정 시 항상 사용 가능 */
+  useCondition?: UseCondition;
 };
 
 export type SelectedCard = {
@@ -80,6 +93,8 @@ export type Combatant = {
   activeCharacter: CharacterId;
   /** 캐릭터별 현재 HP */
   characterHp: Record<CharacterId, number>;
+  /** 현재 활성 캐릭터의 체공 스택 (0이면 일반, ≥1이면 체공 상태) */
+  airborneStack: number;
 
   status: Status;
 

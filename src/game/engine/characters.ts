@@ -11,6 +11,6 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: "B",
     maxHp: 20,
     entryEffect: null,
-    exitEffect: { type: "heal", value: 1, target: "self" },
+    exitEffect: { type: "heal", value: 2, target: "self" },
   },
 };
