@@ -21,7 +21,10 @@ export type EffectType =
   | "heal"
   | "buff_attack"
   | "burn"
-  | "tag";
+  | "tag"
+  | "launcher"       // 대상을 체공 상태로 만듦
+  | "anti_air_strike" // 체공 중인 대상에게 피해
+  | "aerial_combo";  // 자신이 체공 상태일 때 피해
 
 export type Target = "self" | "enemy";
 
@@ -58,6 +61,8 @@ export type Status = {
     turns: number;
     dmgPerTurn: number;
   } | null;
+
+  airborne: boolean;
 
   speedBonus: number;
   speedBonusNext: number;

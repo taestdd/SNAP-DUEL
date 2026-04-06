@@ -8,6 +8,7 @@ import { CHARACTERS } from "./characters";
 const emptyStatus = (): Status => ({
   attackBuff: 0,
   burn: null,
+  airborne: false,
   speedBonus: 0,
   speedBonusNext: 0,
   exhausted: false,
@@ -35,6 +36,31 @@ const STARTER_DECK: string[] = [
 
   // 태그
   "tag_switch", "tag_switch",
+];
+
+// 테스트 덱 – 모든 효과 타입을 2장씩 포함 (20장)
+// 커버: ground damage, block, draw, heal, tag, launcher, anti_air_strike, aerial_combo, damage+draw
+export const TEST_DECK: string[] = [
+  // ground damage
+  "quick_strike", "quick_strike",
+  // block
+  "minor_guard", "minor_guard",
+  // draw
+  "peek", "peek",
+  // heal + damage
+  "life_drain", "life_drain",
+  // tag
+  "tag_switch", "tag_switch",
+  // launcher (체공 유발)
+  "launcher_kick", "launcher_kick",
+  // anti-air damage (대공 피해)
+  "anti_air_strike", "anti_air_strike",
+  // aerial combo (체공 전용)
+  "aerial_combo", "aerial_combo",
+  // mid ground damage
+  "heavy_slash", "heavy_slash",
+  // damage + draw
+  "execution_blade", "execution_blade",
 ];
 
 //플레이어 셋팅

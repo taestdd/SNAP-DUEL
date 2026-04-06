@@ -300,6 +300,52 @@ function applySingleEffect(
       return applyTagSwitch(state, player);
     }
 
+    case "launcher": {
+      return pushLog(
+        {
+          ...state,
+          [target]: {
+            ...state[target],
+            status: {
+              ...state[target].status,
+              airborne: true,
+            },
+          },
+        } as GameState,
+        `${target} is launched airborne!`
+      );
+    }
+
+    case "anti_air_strike": {
+      const amount = effect.value ?? 0;
+      const isAirborne = state[target].status.airborne;
+
+      if (!isAirborne) {
+        return pushLog(state, `Anti-Air Strike missed — ${target} is not airborne`);
+      }
+
+      let next = dealDamage(state, target, amount, "Anti-Air Strike");
+      next = {
+        ...next,
+        [target]: {
+          ...next[target],
+          status: { ...next[target].status, airborne: false },
+        },
+      } as GameState;
+      return next;
+    }
+
+    case "aerial_combo": {
+      const amount = effect.value ?? 0;
+      const selfAirborne = state[player].status.airborne;
+
+      if (!selfAirborne) {
+        return pushLog(state, `Aerial Combo missed — ${player} is not airborne`);
+      }
+
+      return dealDamage(state, target, amount, "Aerial Combo");
+    }
+
     default:
       return state;
   }

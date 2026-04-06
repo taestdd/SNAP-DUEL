@@ -46,9 +46,9 @@ export const CARDS: Record<string, Card> = {
     speed: 4,
     gain: 1,
     effects: [
-      { type: "damage", value: 6, target: "enemy" }
+      { type: "damage", value: 5, target: "enemy" }
     ],
-    text: "Deal 6 damage.",
+    text: "Deal 5 damage.",
   },
 
   piercing_strike: {
@@ -58,9 +58,9 @@ export const CARDS: Record<string, Card> = {
     speed: 3,
     gain: 1,
     effects: [
-      { type: "damage", value: 5, target: "enemy" }
+      { type: "damage", value: 4, target: "enemy" }
     ],
-    text: "Deal 5 damage.",
+    text: "Deal 4 damage.",
   },
 
   // 3 cost
@@ -71,9 +71,9 @@ export const CARDS: Record<string, Card> = {
     speed: 6,
     gain: 1,
     effects: [
-      { type: "damage", value: 9, target: "enemy" }
+      { type: "damage", value: 6, target: "enemy" }
     ],
-    text: "Deal 9 damage.",
+    text: "Deal 6 damage.",
   },
 
   crushing_blow: {
@@ -83,9 +83,9 @@ export const CARDS: Record<string, Card> = {
     speed: 7,
     gain: 1,
     effects: [
-      { type: "damage", value: 10, target: "enemy" }
+      { type: "damage", value: 7, target: "enemy" }
     ],
-    text: "Deal 10 damage.",
+    text: "Deal 7 damage.",
   },
 
   // 4 cost
@@ -96,10 +96,10 @@ export const CARDS: Record<string, Card> = {
     speed: 8,
     gain: 0,
     effects: [
-      { type: "damage", value: 14, target: "enemy" },
+      { type: "damage", value: 6, target: "enemy" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 14 damage.",
+    text: "Deal 6 damage. Draw 1.",
   },
 
   arcane_burst: {
@@ -109,10 +109,10 @@ export const CARDS: Record<string, Card> = {
     speed: 7,
     gain: 0,
     effects: [
-      { type: "damage", value: 12, target: "enemy" },
+      { type: "damage", value: 5, target: "enemy" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 12 damage.",
+    text: "Deal 5 damage. Draw 1.",
   },
 
   meteor_strike: {
@@ -122,10 +122,10 @@ export const CARDS: Record<string, Card> = {
     speed: 9,
     gain: 0,
     effects: [
-      { type: "damage", value: 16, target: "enemy" },
+      { type: "damage", value: 7, target: "enemy" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 16 damage.",
+    text: "Deal 7 damage. Draw 1.",
   },
 
   // 복수 효과 예시 카드
@@ -140,6 +140,43 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 1, target: "enemy" },
     ],
     text: "Heal 1, then deal 1 damage.",
+  },
+
+  // 에어본 카드
+  launcher_kick: {
+    id: "launcher_kick",
+    name: "Launcher Kick",
+    cost: 4,
+    speed: 3,
+    gain: 1,
+    effects: [
+      { type: "launcher", target: "enemy" }
+    ],
+    text: "Launch the enemy airborne.",
+  },
+
+  anti_air_strike: {
+    id: "anti_air_strike",
+    name: "Anti-Air Strike",
+    cost: 4,
+    speed: 2,
+    gain: 1,
+    effects: [
+      { type: "anti_air_strike", value: 6, target: "enemy" }
+    ],
+    text: "Deal 6 damage if target is airborne.",
+  },
+
+  aerial_combo: {
+    id: "aerial_combo",
+    name: "Aerial Combo",
+    cost: 5,
+    speed: 4,
+    gain: 1,
+    effects: [
+      { type: "aerial_combo", value: 7, target: "enemy" }
+    ],
+    text: "Deal 7 damage if you are airborne.",
   },
 
   // 태그 카드
