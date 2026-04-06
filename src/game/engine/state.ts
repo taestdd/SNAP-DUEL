@@ -37,6 +37,38 @@ const STARTER_DECK: string[] = [
   "tag_switch", "tag_switch",
 ];
 
+// 모든 카드 타입을 골고루 포함하는 테스트 덱
+// ground damage / anti-air damage / block / draw / heal / airborne / tag / useCondition 전부 포함
+export const DEBUG_DECK: string[] = [
+  // ground damage (저~고 코스트)
+  "quick_strike",
+  "heavy_slash",
+  "power_strike",
+  "crushing_blow",
+  "meteor_strike",
+
+  // block + draw
+  "minor_guard",
+  "minor_guard",
+  "peek",
+  "peek",
+
+  // heal + damage 복합
+  "life_drain",
+  "life_drain",
+
+  // 에어본 유발 + 대공 콤보
+  "launcher",
+  "launcher",
+  "anti_air_strike",
+  "anti_air_strike",
+  "aerial_combo",  // useCondition: airborne
+
+  // 태그
+  "tag_switch",
+  "tag_switch",
+];
+
 //플레이어 셋팅
 function createCombatant(id: "P1" | "AI"): Combatant {
   return {

@@ -11,7 +11,7 @@ export const CARDS: Record<string, Card> = {
     effects: [
       { type: "damage", value: 2, target: "enemy", damageType: "ground" }
     ],
-    text: "Deal 2 damage.",
+    text: "Deal 2 ground damage.",
   },
 
   minor_guard: {
@@ -21,9 +21,9 @@ export const CARDS: Record<string, Card> = {
     speed: 2,
     gain: 0,
     effects: [
-      { type: "block", value: 2, target: "self" }
+      { type: "block", value: 3, target: "self" }
     ],
-    text: "Gain 2 Block.",
+    text: "Gain 3 Block.",
   },
 
   peek: {
@@ -46,9 +46,9 @@ export const CARDS: Record<string, Card> = {
     speed: 4,
     gain: 1,
     effects: [
-      { type: "damage", value: 6, target: "enemy", damageType: "ground" }
+      { type: "damage", value: 4, target: "enemy", damageType: "ground" }
     ],
-    text: "Deal 6 damage.",
+    text: "Deal 4 ground damage.",
   },
 
   piercing_strike: {
@@ -58,9 +58,9 @@ export const CARDS: Record<string, Card> = {
     speed: 3,
     gain: 1,
     effects: [
-      { type: "damage", value: 5, target: "enemy", damageType: "ground" }
+      { type: "damage", value: 4, target: "enemy", damageType: "ground" }
     ],
-    text: "Deal 5 damage.",
+    text: "Deal 4 ground damage.",
   },
 
   // 3 cost
@@ -71,9 +71,9 @@ export const CARDS: Record<string, Card> = {
     speed: 6,
     gain: 1,
     effects: [
-      { type: "damage", value: 9, target: "enemy", damageType: "ground" }
+      { type: "damage", value: 6, target: "enemy", damageType: "ground" }
     ],
-    text: "Deal 9 damage.",
+    text: "Deal 6 ground damage.",
   },
 
   crushing_blow: {
@@ -83,9 +83,9 @@ export const CARDS: Record<string, Card> = {
     speed: 7,
     gain: 1,
     effects: [
-      { type: "damage", value: 10, target: "enemy", damageType: "ground" }
+      { type: "damage", value: 7, target: "enemy", damageType: "ground" }
     ],
-    text: "Deal 10 damage.",
+    text: "Deal 7 ground damage.",
   },
 
   // 4 cost
@@ -96,10 +96,10 @@ export const CARDS: Record<string, Card> = {
     speed: 8,
     gain: 0,
     effects: [
-      { type: "damage", value: 14, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 10, target: "enemy", damageType: "ground" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 14 damage.",
+    text: "Deal 10 ground damage. Draw 1.",
   },
 
   arcane_burst: {
@@ -109,10 +109,10 @@ export const CARDS: Record<string, Card> = {
     speed: 7,
     gain: 0,
     effects: [
-      { type: "damage", value: 12, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 9, target: "enemy", damageType: "ground" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 12 damage.",
+    text: "Deal 9 ground damage. Draw 1.",
   },
 
   meteor_strike: {
@@ -122,13 +122,13 @@ export const CARDS: Record<string, Card> = {
     speed: 9,
     gain: 0,
     effects: [
-      { type: "damage", value: 16, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 12, target: "enemy", damageType: "ground" },
       { type: "draw", value: 1, target: "self" }
     ],
-    text: "Deal 16 damage.",
+    text: "Deal 12 ground damage. Draw 1.",
   },
 
-  // 복수 효과 예시 카드
+  // 복합 효과 카드
   life_drain: {
     id: "life_drain",
     name: "Life Drain",
@@ -136,15 +136,15 @@ export const CARDS: Record<string, Card> = {
     speed: 4,
     gain: 1,
     effects: [
-      { type: "heal", value: 1, target: "self" },
-      { type: "damage", value: 1, target: "enemy", damageType: "ground" },
+      { type: "heal", value: 2, target: "self" },
+      { type: "damage", value: 2, target: "enemy", damageType: "ground" },
     ],
-    text: "Heal 1, then deal 1 damage.",
+    text: "Heal 2, then deal 2 ground damage.",
   },
 
-  // 에어본 시스템 예시 카드
+  // 에어본 시스템 카드
 
-  // 체공 유발 카드: 상대에게 airborneStack 2 부여
+  // 체공 유발 카드: 상대에게 airborneStack 부여
   launcher: {
     id: "launcher",
     name: "Launcher",
@@ -152,13 +152,13 @@ export const CARDS: Record<string, Card> = {
     speed: 4,
     gain: 1,
     effects: [
-      { type: "damage", value: 3, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 2, target: "enemy", damageType: "ground" },
       { type: "airborne", value: 2, target: "enemy" },
     ],
-    text: "Deal 3 ground damage and launch the opponent (airborneStack 2).",
+    text: "Deal 2 ground damage and launch the opponent (airborneStack 2).",
   },
 
-  // 대공 데미지 카드: 상대가 체공 상태일 때만 큰 피해
+  // 대공 데미지 카드: 상대가 체공 상태일 때만 피해
   anti_air_strike: {
     id: "anti_air_strike",
     name: "Anti-Air Strike",
@@ -166,9 +166,9 @@ export const CARDS: Record<string, Card> = {
     speed: 2,
     gain: 1,
     effects: [
-      { type: "damage", value: 8, target: "enemy", damageType: "anti-air" },
+      { type: "damage", value: 6, target: "enemy", damageType: "anti-air" },
     ],
-    text: "Deal 8 damage — only hits airborne targets.",
+    text: "Deal 6 anti-air damage — only hits airborne targets.",
   },
 
   // 사용 조건 있는 카드: 체공 상태에서만 사용 가능
@@ -179,9 +179,9 @@ export const CARDS: Record<string, Card> = {
     speed: 2,
     gain: 1,
     effects: [
-      { type: "damage", value: 5, target: "enemy", damageType: "anti-air" },
+      { type: "damage", value: 4, target: "enemy", damageType: "anti-air" },
     ],
-    text: "Only usable while airborne. Deal 5 anti-air damage.",
+    text: "Only usable while airborne. Deal 4 anti-air damage.",
     useCondition: "airborne",
   },
 
