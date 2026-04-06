@@ -1,4 +1,4 @@
-import type { Combatant, GameState, Status } from "./types";
+import type { CharacterId, Combatant, GameState, SetupConfig, Status } from "./types";
 import { shuffle } from "./rng";
 import { draw } from "./rules";
 import { CHARACTERS } from "./characters";
@@ -8,7 +8,6 @@ import { CHARACTERS } from "./characters";
 const emptyStatus = (): Status => ({
   attackBuff: 0,
   burn: null,
-  airborne: false,
   speedBonus: 0,
   speedBonusNext: 0,
   exhausted: false,
@@ -40,7 +39,7 @@ const STARTER_DECK: string[] = [
 
 // 모든 카드 타입을 골고루 포함하는 테스트 덱
 // ground damage / anti-air damage / block / draw / heal / airborne / tag / useCondition 전부 포함
-export const DEBUG_DECK: string[] = [
+const DEBUG_DECK: string[] = [
   // ground damage (저~고 코스트)
   "quick_strike",
   "heavy_slash",
@@ -70,20 +69,30 @@ export const DEBUG_DECK: string[] = [
   "tag_switch",
 ];
 
+/** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
+export const DECK_REGISTRY: Record<string, { name: string; cards: string[] }> = {
+  STARTER: { name: "Starter Deck", cards: STARTER_DECK },
+  DEBUG: { name: "Debug Deck", cards: DEBUG_DECK },
+};
+
 //플레이어 셋팅
-function createCombatant(id: "P1" | "AI"): Combatant {
+function createCombatant(
+  id: "P1" | "AI",
+  activeChar: CharacterId,
+  deck: string[]
+): Combatant {
   return {
     id,
-    hp: CHARACTERS.A.maxHp,
+    hp: CHARACTERS[activeChar].maxHp,
     block: 0,
 
-    activeCharacter: "A",
+    activeCharacter: activeChar,
     characterHp: { A: CHARACTERS.A.maxHp, B: CHARACTERS.B.maxHp },
     airborneStack: 0,
 
     status: emptyStatus(),
 
-    deck: [...STARTER_DECK],
+    deck: [...deck],
     hand: [],
 
     trash: [],
@@ -95,8 +104,10 @@ function createCombatant(id: "P1" | "AI"): Combatant {
 }
 
 //턴 시작
-export function createInitialState(): GameState {
-  let state: GameState = {
+export function createInitialState(config: SetupConfig): GameState {
+  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? STARTER_DECK;
+
+  const state: GameState = {
     round: 1,
     turn: 0,
     phase: "TURN_START",
@@ -104,8 +115,8 @@ export function createInitialState(): GameState {
 
     initiative: "P1",
 
-    P1: createCombatant("P1"),
-    AI: createCombatant("AI"),
+    P1: createCombatant("P1", config.characters[0], p1Deck),
+    AI: createCombatant("AI", "A", STARTER_DECK),
 
     selected: null,
     log: [],
