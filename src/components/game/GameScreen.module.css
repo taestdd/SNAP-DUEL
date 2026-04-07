@@ -8,95 +8,104 @@
 }
 
 .shell {
-  width: min(1180px, 100%);
+  width: min(1280px, 100%);
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+/* ── Top row: Player | Title | AI ── */
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 14px;
+}
+
+.topPanel {
   padding: 14px 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.topCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  gap: 6px;
 }
 
 .title {
   margin: 0;
   font-size: 18px;
+  font-weight: 800;
   letter-spacing: 0.2px;
 }
 
 .sub {
-  margin-top: 6px;
-  opacity: 0.85;
+  opacity: 0.75;
   font-size: 13px;
 }
 
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .gameOver {
-  padding: 8px 10px;
+  padding: 6px 12px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 13px;
+  font-weight: 700;
+  margin-top: 4px;
 }
 
-.main {
+/* ── Middle row: P1 Queue | Action Log | AI Queue ── */
+.middleRow {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1.4fr 1fr;
   gap: 14px;
+  min-height: 300px;
 }
 
-.arena {
-  padding: 12px;
-  border-radius: 12px;
+.queuePanel {
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
 
-.center {
-  min-height: 220px;
-  padding: 12px;
-  border-radius: 12px;
+.actionLogPanel {
   border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  padding: 12px;
 }
 
-.centerTop {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
+/* ── Queue ── */
 .queueBox {
   padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .queueTitle {
   font-size: 12px;
+  font-weight: 700;
   opacity: 0.72;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .queueEmpty {
   font-size: 18px;
   opacity: 0.55;
-  min-height: 80px;
+  flex: 1;
   display: flex;
   align-items: center;
 }
@@ -144,208 +153,19 @@
   background: rgba(89, 156, 255, 0.18);
 }
 
-.effectValue {
-  font-size: 12px;
-  opacity: 0.82;
-}
-
 .queueText {
   font-size: 13px;
   line-height: 1.45;
   opacity: 0.92;
 }
 
-.graveyardSection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.graveyardTitle {
-  font-size: 13px;
-  font-weight: 700;
-  opacity: 0.9;
-}
-
-.zoneGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.zoneWrap {
-  position: relative;
-}
-
-.zoneCard {
-  width: 100%;
-  text-align: left;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: inherit;
-}
-
-.zoneButton {
-  cursor: pointer;
-  transition: transform 120ms ease, border-color 120ms ease,
-    background 120ms ease;
-}
-
-.zoneButton:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.zoneDefault {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.zoneAccent {
-  background: rgba(89, 156, 255, 0.12);
-}
-
-.zoneDanger {
-  background: rgba(255, 99, 132, 0.12);
-}
-
-.zoneLabel {
-  font-size: 12px;
-  opacity: 0.76;
-  margin-bottom: 6px;
-}
-
-.zoneCount {
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  width: min(360px, 92vw);
-  z-index: 20;
-  padding: 12px;
-  border-radius: 14px;
-  background: #11182d;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}
-
-.popoverHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.popoverTitle {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.popoverCount {
-  opacity: 0.65;
-  font-weight: 500;
-}
-
-.popoverClose {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font-size: 16px;
-  opacity: 0.8;
-}
-
-.popoverClose:hover {
-  opacity: 1;
-}
-
-.popoverEmpty {
-  font-size: 13px;
-  opacity: 0.6;
-}
-
-.popoverList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 280px;
-  overflow: auto;
-  padding-right: 4px;
-}
-
-.popoverItem {
-  padding: 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.popoverItemTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.popoverItemName {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.popoverItemMeta {
-  font-size: 11px;
-  opacity: 0.7;
-  white-space: nowrap;
-}
-
-.popoverItemBottom {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.popoverItemText {
-  font-size: 12px;
-  opacity: 0.85;
-  line-height: 1.4;
-}
-
-.player {
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.controls {
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 760px) {
-  .centerTop {
+@media (max-width: 860px) {
+  .topRow,
+  .middleRow {
     grid-template-columns: 1fr;
   }
 
-  .zoneGrid {
-    grid-template-columns: 1fr 1fr;
+  .middleRow {
+    min-height: auto;
   }
-
-  .popover {
-    width: min(320px, 88vw);
-  }
-}
-
-.effectList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }

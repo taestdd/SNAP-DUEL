@@ -1,78 +1,38 @@
 .wrap {
   display: flex;
-  justify-content: space-between;
-  gap: 14px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .name {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
 }
 
-.meta {
-  margin-top: 6px;
+.stats {
   display: flex;
-  gap: 10px;
-  opacity: 0.9;
+  gap: 16px;
   font-size: 13px;
 }
 
-.right {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.zones {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .badges {
   display: flex;
   gap: 6px;
-  justify-content: flex-end;
   flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 .badge {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-}
-
-.small {
-  font-size: 12px;
-  opacity: 0.75;
-}
-
-.charRow {
-  display: flex;
-  gap: 6px;
-  margin-top: 7px;
-}
-
-.charSlot {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  font-size: 12px;
-  opacity: 0.55;
+  font-size: 11px;
   padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-}
-
-.charActive {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
-}
-
-.charLabel {
-  font-weight: 700;
-}
-
-.charHp {
-  opacity: 0.85;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .badgeAirborne {
