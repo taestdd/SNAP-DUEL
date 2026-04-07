@@ -145,12 +145,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case "SELECTION/CONFIRM": {
-      if (state.phase !== "WAITING_SELECTION") return state;
-      return resumeResolve(state, action.cardIds);
+      if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return state;
+      return resumeResolve(state, action.selectedCards);
     }
 
     case "SELECTION/SKIP": {
-      if (state.phase !== "WAITING_SELECTION") return state;
+      if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return state;
       return resumeResolve(state, []);
     }
 

@@ -11,13 +11,14 @@
 .modal {
   background: #1a1a2e;
   border: 1px solid #3a3a5c;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 24px;
   width: min(480px, 90vw);
   max-height: 80vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .header {
@@ -29,20 +30,13 @@
 .title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #e2e2f0;
+  color: #e8e8f0;
   margin: 0;
 }
 
 .subtitle {
   font-size: 0.8rem;
-  color: #8888aa;
-}
-
-.empty {
-  text-align: center;
-  color: #666688;
-  padding: 24px 0;
-  font-size: 0.9rem;
+  color: #888;
 }
 
 .cardList {
@@ -53,31 +47,41 @@
   max-height: 320px;
 }
 
-.cardBtn {
-  all: unset;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: #12122a;
-  border: 2px solid #2a2a48;
+.empty {
+  color: #666;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 16px;
+}
+
+.cardItem {
+  background: #16213e;
+  border: 1px solid #2a2a4a;
   border-radius: 8px;
   padding: 10px 14px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.cardBtn:hover:not(.disabled) {
-  border-color: #5555aa;
-  background: #1a1a3a;
+.cardItem:hover:not(.cardDisabled) {
+  border-color: #5a5a9c;
+  background: #1e2a50;
 }
 
-.cardBtn.selected {
-  border-color: #6666ff;
-  background: #1e1e44;
+.cardSelected {
+  border-color: #6c63ff;
+  background: #1e1a3a;
 }
 
-.cardBtn.disabled {
+.cardSelected:hover {
+  border-color: #8a80ff !important;
+}
+
+.cardDisabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -85,18 +89,17 @@
 .cardName {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #d0d0ee;
+  color: #e0e0f0;
 }
 
-.cardStats {
+.cardMeta {
   font-size: 0.75rem;
-  color: #8888aa;
+  color: #888;
 }
 
 .cardText {
-  font-size: 0.8rem;
-  color: #9999bb;
-  margin-top: 2px;
+  font-size: 0.78rem;
+  color: #aaa;
 }
 
 .actions {
@@ -106,11 +109,11 @@
 }
 
 .confirmBtn {
-  all: unset;
-  background: #4444cc;
+  background: #6c63ff;
   color: #fff;
-  padding: 8px 18px;
+  border: none;
   border-radius: 6px;
+  padding: 8px 20px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -118,27 +121,26 @@
 }
 
 .confirmBtn:hover:not(:disabled) {
-  background: #5555ee;
+  background: #5a52e0;
 }
 
 .confirmBtn:disabled {
-  background: #2a2a55;
-  color: #5555aa;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .skipBtn {
-  all: unset;
-  background: #2a2a3e;
-  color: #aaaacc;
-  padding: 8px 16px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #3a3a5c;
   border-radius: 6px;
+  padding: 8px 16px;
   font-size: 0.9rem;
   cursor: pointer;
-  border: 1px solid #3a3a5c;
-  transition: background 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 
 .skipBtn:hover {
-  background: #33334a;
+  color: #ccc;
+  border-color: #5a5a7c;
 }

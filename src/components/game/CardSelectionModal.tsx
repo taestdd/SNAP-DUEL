@@ -1,119 +1,96 @@
 "use client";
 
 import { useState } from "react";
-import type { Action, GameState } from "@/game/engine/types";
+import type { PendingSelection } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./CardSelectionModal.module.css";
 
-export default function CardSelectionModal({
-  state,
-  dispatch,
-}: {
-  state: GameState;
-  dispatch: React.Dispatch<Action>;
-}) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+interface Props {
+  pendingSelection: PendingSelection;
+  onConfirm: (selectedCards: string[]) => void;
+  onSkip: () => void;
+}
 
-  const pending = state.pendingSelection;
-  if (state.phase !== "WAITING_SELECTION" || !pending) return null;
+export default function CardSelectionModal({ pendingSelection, onConfirm, onSkip }: Props) {
+  const [selected, setSelected] = useState<string[]>([]);
 
-  const zone = (() => {
-    const owner = state[pending.fromOwner];
-    switch (pending.fromZone) {
-      case "deck":     return owner.deck;
-      case "hand":     return owner.hand;
-      case "trash":    return owner.trash;
-      case "cooldown": return owner.cooldown;
-    }
-  })();
+  const { candidates, count, fromZone, toZone } = pendingSelection;
 
-  function toggle(cardId: string, idx: number) {
-    const key = `${cardId}:${idx}`;
-    if (selectedIds.includes(key)) {
-      setSelectedIds(selectedIds.filter(k => k !== key));
-    } else if (selectedIds.length < pending!.count) {
-      setSelectedIds([...selectedIds, key]);
-    }
+  function toggleCard(cardId: string, listIndex: number) {
+    // Use "cardId::listIndex" as a unique key to handle duplicates in the list
+    const key = `${cardId}::${listIndex}`;
+    setSelected((prev) => {
+      if (prev.includes(key)) return prev.filter((k) => k !== key);
+      if (prev.length >= count) return prev;
+      return [...prev, key];
+    });
   }
 
   function handleConfirm() {
-    const cardIds = selectedIds.map(k => k.split(":")[0]);
-    dispatch({ type: "SELECTION/CONFIRM", cardIds });
-    setSelectedIds([]);
+    // Extract the actual cardId from the key
+    const actualCardIds = selected.map((key) => key.split("::")[0]);
+    onConfirm(actualCardIds);
   }
 
-  function handleSkip() {
-    dispatch({ type: "SELECTION/SKIP" });
-    setSelectedIds([]);
-  }
-
-  const zoneLabel: Record<string, string> = {
-    deck: "덱",
-    hand: "패",
-    trash: "트래시",
-    cooldown: "쿨다운",
-  };
+  const selectedCount = selected.length;
 
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {zoneLabel[pending.fromZone]}에서 카드 선택
+            Select {count} card{count !== 1 ? "s" : ""} from {fromZone}
           </h2>
           <div className={styles.subtitle}>
-            최대 {pending.count}장 선택 → {zoneLabel[pending.toZone]}으로 이동
+            Selected cards will be returned to your {toZone}.
           </div>
         </div>
 
-        {zone.length === 0 ? (
-          <div className={styles.empty}>선택 가능한 카드가 없습니다.</div>
-        ) : (
-          <div className={styles.cardList}>
-            {zone.map((cardId, idx) => {
+        <div className={styles.cardList}>
+          {candidates.length === 0 ? (
+            <div className={styles.empty}>No cards available in {fromZone}.</div>
+          ) : (
+            candidates.map((cardId, idx) => {
               const card = getCard(cardId);
-              const key = `${cardId}:${idx}`;
-              const isSelected = selectedIds.includes(key);
-              const isDisabled = !isSelected && selectedIds.length >= pending.count;
+              const key = `${cardId}::${idx}`;
+              const isSelected = selected.includes(key);
+              const isDisabled = !isSelected && selectedCount >= count;
 
               return (
                 <button
                   key={key}
                   type="button"
-                  className={`${styles.cardBtn} ${isSelected ? styles.selected : ""} ${isDisabled ? styles.disabled : ""}`}
-                  onClick={() => !isDisabled && toggle(cardId, idx)}
-                  disabled={isDisabled}
+                  className={`${styles.cardItem} ${isSelected ? styles.cardSelected : ""} ${isDisabled ? styles.cardDisabled : ""}`}
+                  onClick={() => !isDisabled && toggleCard(cardId, idx)}
                 >
                   <div className={styles.cardName}>{card?.name ?? cardId}</div>
                   {card && (
-                    <>
-                      <div className={styles.cardStats}>
-                        Cost {card.cost} · Speed {card.speed}
-                      </div>
-                      <div className={styles.cardText}>{card.text}</div>
-                    </>
+                    <div className={styles.cardMeta}>
+                      C{card.cost} · S{card.speed}
+                    </div>
                   )}
+                  {card && <div className={styles.cardText}>{card.text}</div>}
                 </button>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
 
         <div className={styles.actions}>
           <button
             type="button"
             className={styles.confirmBtn}
-            disabled={selectedIds.length === 0}
+            disabled={selectedCount === 0}
             onClick={handleConfirm}
           >
-            확인 ({selectedIds.length}/{pending.count})
+            Confirm ({selectedCount}/{count})
           </button>
           <button
             type="button"
             className={styles.skipBtn}
-            onClick={handleSkip}
+            onClick={onSkip}
           >
-            건너뛰기
+            Skip
           </button>
         </div>
       </div>

@@ -11,6 +11,29 @@ export type CharacterDef = {
   exitEffect: CardEffect | null;
 };
 
+/** 카드가 위치할 수 있는 영역 */
+export type CardZone = "hand" | "deck" | "trash" | "cooldown" | "queue";
+
+/** 덱에 카드를 삽입할 위치 */
+export type DeckInsertPosition = "top" | "bottom" | "random";
+
+/** 카드 필터 조건 (추후 확장 가능) */
+export type CardCondition = {
+  // Future: filter by card properties
+};
+
+/**
+ * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
+ * 새 태그 추가 시 이 한 곳만 수정하면 됨
+ */
+export type CardTag =
+  | "마법"
+  | "검술"
+  | "격투"
+  | "방어"
+  | "방패"
+  | "한손검";
+
 /**
  * 카드 효과 타입
  */
@@ -25,12 +48,6 @@ export type EffectType =
   | "airborne"
   | "move_cards";
 
-/** 카드가 속할 수 있는 존 */
-export type CardZone = "deck" | "hand" | "trash" | "cooldown";
-
-/** 덱에 카드를 삽입할 위치 */
-export type DeckInsertPosition = "top" | "bottom";
-
 /** damage 효과의 적중 조건 */
 export type DamageType =
   | "ground"    // 상대 airborneStack === 0 일 때만 적용
@@ -44,13 +61,16 @@ export type CardEffect = {
   target?: Target;
   /** damage 효과에만 사용. 미지정 시 항상 적용 */
   damageType?: DamageType;
-  /** move_cards 효과 전용 */
-  from?: CardZone;
-  to?: CardZone;
+  /** move_cards: 카드를 가져올 영역 */
+  fromZone?: CardZone;
+  /** move_cards: 카드를 보낼 영역 */
+  toZone?: CardZone;
+  /** move_cards: 덱에 넣을 위치 */
+  toPosition?: DeckInsertPosition;
+  /** move_cards: 이동할 카드 수 */
   count?: number;
-  deckPosition?: DeckInsertPosition;
-  /** true 이면 P1이 직접 선택, false/미지정이면 자동(첫 번째 카드) */
-  playerChooses?: boolean;
+  /** move_cards: P1이 직접 선택 (AI는 자동 선택) */
+  userSelects?: boolean;
 };
 
 /** 카드 사용 가능 조건 */
@@ -74,6 +94,9 @@ export type Card = {
 
   /** 미지정 시 항상 사용 가능 */
   useCondition?: UseCondition;
+
+  /** 카드 분류 태그. 미지정 시 태그 없음 */
+  tags?: CardTag[];
 };
 
 export type SelectedCard = {
@@ -143,21 +166,31 @@ export type TurnPhase =
   | "TURN_END"
   | "GAME_OVER";
 
-/** move_cards 효과로 인해 P1이 카드를 선택해야 할 때의 대기 상태 */
+/**
+ * 카드 선택 대기 상태 (move_cards + userSelects 효과 처리 중)
+ */
 export type PendingSelection = {
-  fromZone: CardZone;
-  fromOwner: PlayerId;
-  toZone: CardZone;
-  toOwner: PlayerId;
+  /** 선택하는 플레이어 */
+  selectingPlayer: PlayerId;
+  /** 선택 가능한 카드 id 목록 */
+  candidates: string[];
+  /** 선택해야 할 최대 카드 수 */
   count: number;
-  deckPosition?: DeckInsertPosition;
-  /** 선택 완료 후 이어서 처리할 resolve 아이템 */
+  /** 카드를 가져올 영역 */
+  fromZone: CardZone;
+  fromPlayerId: PlayerId;
+  /** 카드를 보낼 영역 */
+  toZone: CardZone;
+  toPlayerId: PlayerId;
+  toPosition: DeckInsertPosition;
+  /** 이 선택을 유발한 카드 */
+  sourcePlayer: PlayerId;
+  sourceCardId: string;
+  /** resolve 재개용 컨텍스트 */
   resolveItems: { player: PlayerId; cardId: string }[];
-  /** 선택 완료 후 처리할 unresolved 플레이어 목록 */
-  resolveUnresolved: PlayerId[];
-  /** 이 선택을 유발한 카드 정보 (선택 후 cooldown으로 이동) */
-  triggerPlayer: PlayerId;
-  triggerCardId: string;
+  resolveNextIndex: number;
+  /** 선택 대기 이후 아직 처리 안 된 플레이어 (sourcePlayer 제외) */
+  unresolvedPlayers: PlayerId[];
 };
 
 export type GameState = {
@@ -177,7 +210,7 @@ export type GameState = {
 
   selected: SelectedCard | null;
 
-  /** WAITING_SELECTION 페이즈일 때 설정되는 선택 대기 정보 */
+  /** WAITING_SELECTION 페이즈일 때 설정됨 */
   pendingSelection: PendingSelection | null;
 
   log: string[];
@@ -202,5 +235,5 @@ export type Action =
   | { type: "DEBUG/RESET" }
   | { type: "INITIATIVE/RANDOMIZE" }
   | { type: "GAME/INIT" }
-  | { type: "SELECTION/CONFIRM"; cardIds: string[] }
+  | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
   | { type: "SELECTION/SKIP" };

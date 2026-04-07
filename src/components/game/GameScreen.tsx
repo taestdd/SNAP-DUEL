@@ -366,6 +366,16 @@ export default function GameScreen({
           </section>
         </main>
       </div>
+
+      {state.phase === "WAITING_SELECTION" && state.pendingSelection && (
+        <CardSelectionModal
+          pendingSelection={state.pendingSelection}
+          onConfirm={(selectedCards) =>
+            dispatch({ type: "SELECTION/CONFIRM", selectedCards })
+          }
+          onSkip={() => dispatch({ type: "SELECTION/SKIP" })}
+        />
+      )}
     </div>
   );
 }

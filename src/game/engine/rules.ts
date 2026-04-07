@@ -1,4 +1,4 @@
-import type { CardZone, CharacterId, Combatant, GameState, PendingSelection, PlayerId } from "./types";
+import type { CardZone, CharacterId, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
@@ -348,60 +348,47 @@ function applySingleEffect(
       );
     }
 
-    case "move_cards": {
-      const fromOwner: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
-      const toOwner: PlayerId = fromOwner;
-      const fromZone = effect.from!;
-      const toZone = effect.to!;
-      const count = effect.count ?? 1;
+    case "draw_tagged": {
+      const tag = effect.tag;
+      const count = effect.value ?? 1;
+      const zone = effect.zone ?? "deck";
 
-      // P1이 직접 선택해야 하는 경우 → WAITING_SELECTION으로 페이즈 전환 (resolveAll에서 context 채움)
-      if (effect.playerChooses && fromOwner === "P1") {
-        const pendingSelection: PendingSelection = {
-          fromZone,
-          fromOwner,
-          toZone,
-          toOwner,
-          count,
-          deckPosition: effect.deckPosition,
-          resolveItems: [],
-          resolveUnresolved: [],
-          triggerPlayer: player,
-          triggerCardId: "",
-        };
-        return {
-          ...state,
-          phase: "WAITING_SELECTION",
-          pendingSelection,
-        };
+      if (!tag) return state;
+
+      const me = state[target];
+      const pool = zone === "cooldown" ? me.cooldown : me.deck;
+
+      // 태그를 가진 카드 인덱스 목록
+      const matchedIndices: number[] = [];
+      for (let i = 0; i < pool.length; i++) {
+        const c = getCard(pool[i]);
+        if (c?.tags?.includes(tag)) matchedIndices.push(i);
       }
 
-      // 자동 선택 (AI 또는 playerChooses 미지정): 존에서 앞에서부터 count개
-      const sourceArr = getZone(state[fromOwner], fromZone);
-      const toMove = sourceArr.slice(0, count);
-      if (toMove.length === 0) {
-        return pushLog(state, `${player} has no cards in ${fromZone} to move`);
+      if (matchedIndices.length === 0) {
+        return pushLog(state, `draw_tagged(${tag}): no matching cards in ${zone}`);
       }
 
-      const remaining = sourceArr.slice(count);
-      let s: GameState = {
+      // 앞에서부터 count장 드로우
+      const toDraw = matchedIndices.slice(0, count);
+      const newPool = pool.filter((_, i) => !toDraw.includes(i));
+      const drawnIds = toDraw.map((i) => pool[i]);
+
+      const newHand = [...me.hand, ...drawnIds].slice(0, 10);
+
+      const nextState: GameState = {
         ...state,
-        [fromOwner]: setZone(state[fromOwner], fromZone, remaining),
-      } as GameState;
+        [target]: {
+          ...me,
+          ...(zone === "cooldown" ? { cooldown: newPool } : { deck: newPool }),
+          hand: newHand,
+        },
+      };
 
-      if (toZone === "deck") {
-        s = addCardsToDeck(s, toOwner, toMove, effect.deckPosition ?? "bottom");
-      } else {
-        const targetArr = getZone(s[toOwner], toZone);
-        s = {
-          ...s,
-          [toOwner]: setZone(s[toOwner], toZone, [...targetArr, ...toMove]),
-        } as GameState;
-      }
-
-      s = pushLog(s, `${player} moves ${toMove.length} card(s) from ${fromZone} to ${toZone}`);
-      s = syncExhausted(s, fromOwner);
-      return s;
+      return pushLog(
+        nextState,
+        `${target} draws ${drawnIds.length} tagged card(s) [${tag}] from ${zone}`
+      );
     }
 
     default:
@@ -420,6 +407,77 @@ function applyCardEffects(
   let s = state;
 
   for (const effect of card.effects) {
+    s = applySingleEffect(s, player, effect);
+    s = checkGameOver(s);
+    if (s.phase === "GAME_OVER") return s;
+  }
+
+  return s;
+}
+
+/**
+ * 카드 효과를 순서대로 적용하되, move_cards+userSelects 효과를 만나면
+ * WAITING_SELECTION 페이즈로 전환하고 resolve 컨텍스트를 저장한다.
+ * AI가 사용하는 경우에는 자동으로 첫 번째 후보를 선택한다.
+ */
+function applyCardEffectsWithPause(
+  state: GameState,
+  player: PlayerId,
+  cardId: string,
+  resolveItems: { player: PlayerId; cardId: string }[],
+  resolveNextIndex: number,
+  currentUnresolved: PlayerId[]
+): GameState {
+  const card = getCard(cardId);
+  if (!card) return state;
+
+  let s = state;
+
+  for (const effect of card.effects) {
+    if (effect.type === "move_cards") {
+      const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+      const toPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+      const fromZone: CardZone = effect.fromZone ?? "trash";
+      const toZone: CardZone = effect.toZone ?? "hand";
+      const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
+      const count = effect.count ?? 1;
+
+      const candidates = filterCards(s[fromPlayerId][fromZone] as string[]);
+
+      if (effect.userSelects && player === "P1") {
+        // P1은 직접 선택 — resolution 일시정지
+        const pendingSelection: PendingSelection = {
+          selectingPlayer: "P1",
+          candidates: [...candidates],
+          count,
+          fromZone,
+          fromPlayerId,
+          toZone,
+          toPlayerId,
+          toPosition,
+          sourcePlayer: player,
+          sourceCardId: cardId,
+          resolveItems,
+          resolveNextIndex,
+          unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
+        };
+
+        return {
+          ...s,
+          phase: "WAITING_SELECTION",
+          pendingSelection,
+        } as GameState;
+      }
+
+      // AI 또는 userSelects=false: 자동으로 앞에서 count장 선택
+      const autoSelected = candidates.slice(0, count);
+      if (autoSelected.length > 0) {
+        s = moveCardsBetweenZones(s, fromPlayerId, fromZone, toPlayerId, toZone, autoSelected, toPosition);
+        s = pushLog(s, `${player} moves ${autoSelected.length} card(s) from ${fromZone} to ${toZone}`);
+      }
+      continue;
+    }
+
     s = applySingleEffect(s, player, effect);
     s = checkGameOver(s);
     if (s.phase === "GAME_OVER") return s;
@@ -623,6 +681,76 @@ export function queueCard(
 }
 
 /* -------------------------- */
+/* 존 간 카드 이동 */
+/* -------------------------- */
+
+/** 조건에 맞는 카드만 필터 (현재는 전체 반환, 추후 확장) */
+export function filterCards(cards: string[]): string[] {
+  return cards;
+}
+
+function moveCardsBetweenZones(
+  state: GameState,
+  fromPlayer: PlayerId,
+  fromZone: CardZone,
+  toPlayer: PlayerId,
+  toZone: CardZone,
+  cardIds: string[],
+  toPosition: DeckInsertPosition = "bottom"
+): GameState {
+  if (cardIds.length === 0) return state;
+
+  // Remove from source zone
+  const sourceArr = state[fromPlayer][fromZone] as string[];
+  const cardIdSet = new Set(cardIds);
+  // Remove only first occurrence of each id (handles duplicates in deck)
+  const remaining = [...sourceArr];
+  for (const id of cardIds) {
+    const idx = remaining.indexOf(id);
+    if (idx >= 0) remaining.splice(idx, 1);
+  }
+  void cardIdSet; // suppress unused warning
+
+  let s: GameState = {
+    ...state,
+    [fromPlayer]: {
+      ...state[fromPlayer],
+      [fromZone]: remaining,
+    },
+  } as GameState;
+
+  // Add to target zone
+  const targetArr = s[toPlayer][toZone] as string[];
+  let newTargetArr: string[];
+
+  if (toZone === "deck" && toPosition === "top") {
+    newTargetArr = [...cardIds, ...targetArr];
+  } else if (toZone === "deck" && toPosition === "random") {
+    newTargetArr = [...targetArr];
+    for (const id of cardIds) {
+      const pos = Math.floor(Math.random() * (newTargetArr.length + 1));
+      newTargetArr.splice(pos, 0, id);
+    }
+  } else {
+    newTargetArr = [...targetArr, ...cardIds];
+  }
+
+  s = {
+    ...s,
+    [toPlayer]: {
+      ...s[toPlayer],
+      [toZone]: newTargetArr,
+    },
+  } as GameState;
+
+  // Sync exhausted if deck was affected
+  if (fromZone === "deck") s = syncExhausted(s, fromPlayer);
+  if (toZone === "deck") s = syncExhausted(s, toPlayer);
+
+  return s;
+}
+
+/* -------------------------- */
 /* resolve 순서 생성 */
 /* -------------------------- */
 
@@ -758,41 +886,23 @@ function endTurnCleanup(state: GameState): GameState {
   return s;
 }
 
-export function resolveAll(state: GameState): GameState {
-  if (state.phase !== "RESOLVE") return state;
-
+function resolveItems(
+  state: GameState,
+  items: { player: PlayerId; cardId: string }[],
+  startIndex: number,
+  unresolved: Set<PlayerId>
+): GameState {
   let s = state;
-  const items = buildResolveOrder(s);
-  const unresolved = new Set<PlayerId>();
 
-  if (s.P1.queue[0]) unresolved.add("P1");
-  if (s.AI.queue[0]) unresolved.add("AI");
-
-  for (let i = 0; i < items.length; i++) {
+  for (let i = startIndex; i < items.length; i++) {
     const it = items[i];
     if (!unresolved.has(it.player)) continue;
 
     const before = s;
-    s = applyCardEffect(s, it.player, it.cardId);
-    if (s.phase === "GAME_OVER") return s;
+    s = applyCardEffectsWithPause(s, it.player, it.cardId, items, i + 1, [...unresolved]);
 
-    // move_cards with playerChooses=true 가 P1 선택을 요구할 때 일시 정지
-    if (s.phase === "WAITING_SELECTION") {
-      const unresolvedAfter = new Set(unresolved);
-      unresolvedAfter.delete(it.player);
-      const remainingItems = items.slice(i + 1).filter(rem => unresolvedAfter.has(rem.player));
-      s = {
-        ...s,
-        pendingSelection: {
-          ...s.pendingSelection!,
-          resolveItems: remainingItems,
-          resolveUnresolved: [...unresolvedAfter],
-          triggerPlayer: it.player,
-          triggerCardId: it.cardId,
-        },
-      };
-      return s;
-    }
+    if (s.phase === "WAITING_SELECTION") return s; // P1 선택 대기 중
+    if (s.phase === "GAME_OVER") return s;
 
     s = moveQueuedCardToCooldown(s, it.player, it.cardId);
     unresolved.delete(it.player);
@@ -808,74 +918,43 @@ export function resolveAll(state: GameState): GameState {
   return endTurnCleanup(s);
 }
 
-/**
- * WAITING_SELECTION 이후 선택 완료/스킵 시 resolve 재개
- * selectedCardIds: CONFIRM 시 선택된 카드 ID 목록, SKIP 시 빈 배열
- */
-export function resumeResolve(state: GameState, selectedCardIds: string[]): GameState {
-  if (state.phase !== "WAITING_SELECTION") return state;
-  const pending = state.pendingSelection!;
+export function resolveAll(state: GameState): GameState {
+  if (state.phase !== "RESOLVE") return state;
 
-  let s: GameState = { ...state, phase: "RESOLVE", pendingSelection: null };
+  const items = buildResolveOrder(state);
+  const unresolved = new Set<PlayerId>();
+  if (state.P1.queue[0]) unresolved.add("P1");
+  if (state.AI.queue[0]) unresolved.add("AI");
+
+  return resolveItems(state, items, 0, unresolved);
+}
+
+/**
+ * SELECTION/CONFIRM 또는 SELECTION/SKIP 후 resolve를 재개한다.
+ * selectedCards가 빈 배열이면 카드 이동 없이 재개 (skip).
+ */
+export function resumeResolve(state: GameState, selectedCards: string[]): GameState {
+  if (!state.pendingSelection) return state;
+  const ps = state.pendingSelection;
+
+  let s: GameState = {
+    ...state,
+    phase: "RESOLVE",
+    pendingSelection: null,
+  };
 
   // 선택된 카드 이동
-  if (selectedCardIds.length > 0) {
-    const sourceArr = getZone(s[pending.fromOwner], pending.fromZone);
-    const validIds = selectedCardIds
-      .filter(id => sourceArr.includes(id))
-      .slice(0, pending.count);
-
-    if (validIds.length > 0) {
-      const remaining = sourceArr.filter(id => !validIds.includes(id));
-      s = {
-        ...s,
-        [pending.fromOwner]: setZone(s[pending.fromOwner], pending.fromZone, remaining),
-      } as GameState;
-
-      if (pending.toZone === "deck") {
-        s = addCardsToDeck(s, pending.toOwner, validIds, pending.deckPosition ?? "bottom");
-      } else {
-        const targetArr = getZone(s[pending.toOwner], pending.toZone);
-        s = {
-          ...s,
-          [pending.toOwner]: setZone(s[pending.toOwner], pending.toZone, [...targetArr, ...validIds]),
-        } as GameState;
-      }
-
-      s = pushLog(s, `P1 recovers ${validIds.map(id => getCard(id)?.name ?? id).join(", ")} to ${pending.toZone}`);
-      s = syncExhausted(s, pending.fromOwner);
-      if (pending.toOwner !== pending.fromOwner) s = syncExhausted(s, pending.toOwner);
-    }
-  } else {
-    s = pushLog(s, `P1 skips recovery`);
+  if (selectedCards.length > 0) {
+    s = moveCardsBetweenZones(s, ps.fromPlayerId, ps.fromZone, ps.toPlayerId, ps.toZone, selectedCards, ps.toPosition);
+    s = pushLog(s, `${ps.sourcePlayer} returns ${selectedCards.length} card(s) from ${ps.fromZone} to ${ps.toZone}`);
   }
 
-  // 트리거 카드 cooldown으로 이동
-  s = moveQueuedCardToCooldown(s, pending.triggerPlayer, pending.triggerCardId);
+  // 원인 카드를 쿨다운으로 이동
+  s = moveQueuedCardToCooldown(s, ps.sourcePlayer, ps.sourceCardId);
 
-  // 남은 resolve 아이템 처리
-  const items = pending.resolveItems;
-  const unresolved = new Set<PlayerId>(pending.resolveUnresolved);
-
-  for (const it of items) {
-    if (!unresolved.has(it.player)) continue;
-
-    const before = s;
-    s = applyCardEffect(s, it.player, it.cardId);
-    if (s.phase === "GAME_OVER") return s;
-
-    s = moveQueuedCardToCooldown(s, it.player, it.cardId);
-    unresolved.delete(it.player);
-
-    const hit = didDirectAttackHit(before, s, it.player, it.cardId);
-    if (hit) {
-      s = applyInitiativeOnHit(s, it.player);
-      s = applyGainOnHit(s, it.player, it.cardId);
-      s = applyCancelOnHit(s, it.player, unresolved);
-    }
-  }
-
-  return endTurnCleanup(s);
+  // 나머지 아이템 이어서 처리
+  const unresolved = new Set<PlayerId>(ps.unresolvedPlayers);
+  return resolveItems(s, ps.resolveItems, ps.resolveNextIndex, unresolved);
 }
 
 /* -------------------------- */
