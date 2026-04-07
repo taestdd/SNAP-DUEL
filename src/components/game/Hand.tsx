@@ -8,19 +8,26 @@ export default function Hand({
   selected,
   disabled,
   onSelectCard,
+  endTurnButton,
 }: {
   me: Combatant;
   selected: SelectedCard | null;
   disabled: boolean;
   onSelectCard: (cardId: string, handIndex: number) => void;
+  endTurnButton?: React.ReactNode;
 }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.top}>
-        <div className={styles.title}>Hand ({me.hand.length}/10)</div>
-        <div className={styles.help}>
-          {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
+        <div className={styles.topLeft}>
+          <div className={styles.title}>Hand ({me.hand.length}/10)</div>
+          <div className={styles.help}>
+            {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
+          </div>
         </div>
+        {endTurnButton && (
+          <div className={styles.topRight}>{endTurnButton}</div>
+        )}
       </div>
 
       <div className={styles.row}>
