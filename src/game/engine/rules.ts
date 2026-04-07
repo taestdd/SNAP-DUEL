@@ -326,6 +326,49 @@ function applySingleEffect(
       );
     }
 
+    case "draw_tagged": {
+      const tag = effect.tag;
+      const count = effect.value ?? 1;
+      const zone = effect.zone ?? "deck";
+
+      if (!tag) return state;
+
+      const me = state[target];
+      const pool = zone === "cooldown" ? me.cooldown : me.deck;
+
+      // 태그를 가진 카드 인덱스 목록
+      const matchedIndices: number[] = [];
+      for (let i = 0; i < pool.length; i++) {
+        const c = getCard(pool[i]);
+        if (c?.tags?.includes(tag)) matchedIndices.push(i);
+      }
+
+      if (matchedIndices.length === 0) {
+        return pushLog(state, `draw_tagged(${tag}): no matching cards in ${zone}`);
+      }
+
+      // 앞에서부터 count장 드로우
+      const toDraw = matchedIndices.slice(0, count);
+      const newPool = pool.filter((_, i) => !toDraw.includes(i));
+      const drawnIds = toDraw.map((i) => pool[i]);
+
+      const newHand = [...me.hand, ...drawnIds].slice(0, 10);
+
+      const nextState: GameState = {
+        ...state,
+        [target]: {
+          ...me,
+          ...(zone === "cooldown" ? { cooldown: newPool } : { deck: newPool }),
+          hand: newHand,
+        },
+      };
+
+      return pushLog(
+        nextState,
+        `${target} draws ${drawnIds.length} tagged card(s) [${tag}] from ${zone}`
+      );
+    }
+
     default:
       return state;
   }

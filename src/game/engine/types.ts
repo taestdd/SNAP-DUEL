@@ -12,6 +12,18 @@ export type CharacterDef = {
 };
 
 /**
+ * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
+ * 새 태그 추가 시 이 한 곳만 수정하면 됨
+ */
+export type CardTag =
+  | "마법"
+  | "검술"
+  | "격투"
+  | "방어"
+  | "방패"
+  | "한손검";
+
+/**
  * 카드 효과 타입
  */
 export type EffectType =
@@ -22,7 +34,8 @@ export type EffectType =
   | "buff_attack"
   | "burn"
   | "tag"
-  | "airborne";
+  | "airborne"
+  | "draw_tagged"; // 특정 태그를 가진 카드를 덱/쿨다운에서 드로우
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -37,6 +50,13 @@ export type CardEffect = {
   target?: Target;
   /** damage 효과에만 사용. 미지정 시 항상 적용 */
   damageType?: DamageType;
+  /**
+   * draw_tagged 효과에만 사용.
+   * 어느 존에서 탐색할지 지정 (미지정 시 "deck")
+   * 예: { type: "draw_tagged", tag: "검술", zone: "deck", value: 1 }
+   */
+  tag?: CardTag;
+  zone?: "deck" | "cooldown";
 };
 
 /** 카드 사용 가능 조건 */
@@ -60,6 +80,9 @@ export type Card = {
 
   /** 미지정 시 항상 사용 가능 */
   useCondition?: UseCondition;
+
+  /** 카드 분류 태그. 미지정 시 태그 없음 */
+  tags?: CardTag[];
 };
 
 export type SelectedCard = {
