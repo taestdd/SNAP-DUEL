@@ -1,0 +1,144 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #1a1a2e;
+  border: 1px solid #3a3a5c;
+  border-radius: 10px;
+  padding: 24px;
+  width: min(480px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e2e2f0;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #8888aa;
+}
+
+.empty {
+  text-align: center;
+  color: #666688;
+  padding: 24px 0;
+  font-size: 0.9rem;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.cardBtn {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #12122a;
+  border: 2px solid #2a2a48;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+
+.cardBtn:hover:not(.disabled) {
+  border-color: #5555aa;
+  background: #1a1a3a;
+}
+
+.cardBtn.selected {
+  border-color: #6666ff;
+  background: #1e1e44;
+}
+
+.cardBtn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cardName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #d0d0ee;
+}
+
+.cardStats {
+  font-size: 0.75rem;
+  color: #8888aa;
+}
+
+.cardText {
+  font-size: 0.8rem;
+  color: #9999bb;
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirmBtn {
+  all: unset;
+  background: #4444cc;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: #5555ee;
+}
+
+.confirmBtn:disabled {
+  background: #2a2a55;
+  color: #5555aa;
+  cursor: not-allowed;
+}
+
+.skipBtn {
+  all: unset;
+  background: #2a2a3e;
+  color: #aaaacc;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #3a3a5c;
+  transition: background 0.15s;
+}
+
+.skipBtn:hover {
+  background: #33334a;
+}

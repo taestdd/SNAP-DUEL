@@ -22,7 +22,14 @@ export type EffectType =
   | "buff_attack"
   | "burn"
   | "tag"
-  | "airborne";
+  | "airborne"
+  | "move_cards";
+
+/** 카드가 속할 수 있는 존 */
+export type CardZone = "deck" | "hand" | "trash" | "cooldown";
+
+/** 덱에 카드를 삽입할 위치 */
+export type DeckInsertPosition = "top" | "bottom";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -37,6 +44,13 @@ export type CardEffect = {
   target?: Target;
   /** damage 효과에만 사용. 미지정 시 항상 적용 */
   damageType?: DamageType;
+  /** move_cards 효과 전용 */
+  from?: CardZone;
+  to?: CardZone;
+  count?: number;
+  deckPosition?: DeckInsertPosition;
+  /** true 이면 P1이 직접 선택, false/미지정이면 자동(첫 번째 카드) */
+  playerChooses?: boolean;
 };
 
 /** 카드 사용 가능 조건 */
@@ -125,8 +139,26 @@ export type TurnPhase =
   | "SETUP_INIT"
   | "SETUP_OTHER"
   | "RESOLVE"
+  | "WAITING_SELECTION"
   | "TURN_END"
   | "GAME_OVER";
+
+/** move_cards 효과로 인해 P1이 카드를 선택해야 할 때의 대기 상태 */
+export type PendingSelection = {
+  fromZone: CardZone;
+  fromOwner: PlayerId;
+  toZone: CardZone;
+  toOwner: PlayerId;
+  count: number;
+  deckPosition?: DeckInsertPosition;
+  /** 선택 완료 후 이어서 처리할 resolve 아이템 */
+  resolveItems: { player: PlayerId; cardId: string }[];
+  /** 선택 완료 후 처리할 unresolved 플레이어 목록 */
+  resolveUnresolved: PlayerId[];
+  /** 이 선택을 유발한 카드 정보 (선택 후 cooldown으로 이동) */
+  triggerPlayer: PlayerId;
+  triggerCardId: string;
+};
 
 export type GameState = {
   round: number;
@@ -144,6 +176,9 @@ export type GameState = {
   AI: Combatant;
 
   selected: SelectedCard | null;
+
+  /** WAITING_SELECTION 페이즈일 때 설정되는 선택 대기 정보 */
+  pendingSelection: PendingSelection | null;
 
   log: string[];
 };
@@ -166,4 +201,6 @@ export type Action =
   | { type: "TURN/END" }
   | { type: "DEBUG/RESET" }
   | { type: "INITIATIVE/RANDOMIZE" }
-  | { type: "GAME/INIT" };
+  | { type: "GAME/INIT" }
+  | { type: "SELECTION/CONFIRM"; cardIds: string[] }
+  | { type: "SELECTION/SKIP" };

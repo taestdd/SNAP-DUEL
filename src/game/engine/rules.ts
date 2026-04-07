@@ -1,10 +1,32 @@
-import type { CharacterId, GameState, PlayerId } from "./types";
+import type { CardZone, CharacterId, Combatant, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
 const LOG_LIMIT = 40;
+
+/* -------------------------- */
+/* 존 헬퍼 */
+/* -------------------------- */
+
+function getZone(combatant: Combatant, zone: CardZone): string[] {
+  switch (zone) {
+    case "deck":     return combatant.deck;
+    case "hand":     return combatant.hand;
+    case "trash":    return combatant.trash;
+    case "cooldown": return combatant.cooldown;
+  }
+}
+
+function setZone(combatant: Combatant, zone: CardZone, cards: string[]): Combatant {
+  switch (zone) {
+    case "deck":     return { ...combatant, deck: cards };
+    case "hand":     return { ...combatant, hand: cards };
+    case "trash":    return { ...combatant, trash: cards };
+    case "cooldown": return { ...combatant, cooldown: cards };
+  }
+}
 
 /* -------------------------- */
 /* 공통 유틸 */
@@ -189,7 +211,7 @@ function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 function applySingleEffect(
   state: GameState,
   player: PlayerId,
-  effect: { type: string; value?: number; target?: "self" | "enemy" }
+  effect: import("./types").CardEffect
 ): GameState {
   const target =
     effect.target === "self"
@@ -324,6 +346,62 @@ function applySingleEffect(
         } as GameState,
         `${target} airborneStack set to ${stack}`
       );
+    }
+
+    case "move_cards": {
+      const fromOwner: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+      const toOwner: PlayerId = fromOwner;
+      const fromZone = effect.from!;
+      const toZone = effect.to!;
+      const count = effect.count ?? 1;
+
+      // P1이 직접 선택해야 하는 경우 → WAITING_SELECTION으로 페이즈 전환 (resolveAll에서 context 채움)
+      if (effect.playerChooses && fromOwner === "P1") {
+        const pendingSelection: PendingSelection = {
+          fromZone,
+          fromOwner,
+          toZone,
+          toOwner,
+          count,
+          deckPosition: effect.deckPosition,
+          resolveItems: [],
+          resolveUnresolved: [],
+          triggerPlayer: player,
+          triggerCardId: "",
+        };
+        return {
+          ...state,
+          phase: "WAITING_SELECTION",
+          pendingSelection,
+        };
+      }
+
+      // 자동 선택 (AI 또는 playerChooses 미지정): 존에서 앞에서부터 count개
+      const sourceArr = getZone(state[fromOwner], fromZone);
+      const toMove = sourceArr.slice(0, count);
+      if (toMove.length === 0) {
+        return pushLog(state, `${player} has no cards in ${fromZone} to move`);
+      }
+
+      const remaining = sourceArr.slice(count);
+      let s: GameState = {
+        ...state,
+        [fromOwner]: setZone(state[fromOwner], fromZone, remaining),
+      } as GameState;
+
+      if (toZone === "deck") {
+        s = addCardsToDeck(s, toOwner, toMove, effect.deckPosition ?? "bottom");
+      } else {
+        const targetArr = getZone(s[toOwner], toZone);
+        s = {
+          ...s,
+          [toOwner]: setZone(s[toOwner], toZone, [...targetArr, ...toMove]),
+        } as GameState;
+      }
+
+      s = pushLog(s, `${player} moves ${toMove.length} card(s) from ${fromZone} to ${toZone}`);
+      s = syncExhausted(s, fromOwner);
+      return s;
     }
 
     default:
@@ -689,6 +767,95 @@ export function resolveAll(state: GameState): GameState {
 
   if (s.P1.queue[0]) unresolved.add("P1");
   if (s.AI.queue[0]) unresolved.add("AI");
+
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (!unresolved.has(it.player)) continue;
+
+    const before = s;
+    s = applyCardEffect(s, it.player, it.cardId);
+    if (s.phase === "GAME_OVER") return s;
+
+    // move_cards with playerChooses=true 가 P1 선택을 요구할 때 일시 정지
+    if (s.phase === "WAITING_SELECTION") {
+      const unresolvedAfter = new Set(unresolved);
+      unresolvedAfter.delete(it.player);
+      const remainingItems = items.slice(i + 1).filter(rem => unresolvedAfter.has(rem.player));
+      s = {
+        ...s,
+        pendingSelection: {
+          ...s.pendingSelection!,
+          resolveItems: remainingItems,
+          resolveUnresolved: [...unresolvedAfter],
+          triggerPlayer: it.player,
+          triggerCardId: it.cardId,
+        },
+      };
+      return s;
+    }
+
+    s = moveQueuedCardToCooldown(s, it.player, it.cardId);
+    unresolved.delete(it.player);
+
+    const hit = didDirectAttackHit(before, s, it.player, it.cardId);
+    if (hit) {
+      s = applyInitiativeOnHit(s, it.player);
+      s = applyGainOnHit(s, it.player, it.cardId);
+      s = applyCancelOnHit(s, it.player, unresolved);
+    }
+  }
+
+  return endTurnCleanup(s);
+}
+
+/**
+ * WAITING_SELECTION 이후 선택 완료/스킵 시 resolve 재개
+ * selectedCardIds: CONFIRM 시 선택된 카드 ID 목록, SKIP 시 빈 배열
+ */
+export function resumeResolve(state: GameState, selectedCardIds: string[]): GameState {
+  if (state.phase !== "WAITING_SELECTION") return state;
+  const pending = state.pendingSelection!;
+
+  let s: GameState = { ...state, phase: "RESOLVE", pendingSelection: null };
+
+  // 선택된 카드 이동
+  if (selectedCardIds.length > 0) {
+    const sourceArr = getZone(s[pending.fromOwner], pending.fromZone);
+    const validIds = selectedCardIds
+      .filter(id => sourceArr.includes(id))
+      .slice(0, pending.count);
+
+    if (validIds.length > 0) {
+      const remaining = sourceArr.filter(id => !validIds.includes(id));
+      s = {
+        ...s,
+        [pending.fromOwner]: setZone(s[pending.fromOwner], pending.fromZone, remaining),
+      } as GameState;
+
+      if (pending.toZone === "deck") {
+        s = addCardsToDeck(s, pending.toOwner, validIds, pending.deckPosition ?? "bottom");
+      } else {
+        const targetArr = getZone(s[pending.toOwner], pending.toZone);
+        s = {
+          ...s,
+          [pending.toOwner]: setZone(s[pending.toOwner], pending.toZone, [...targetArr, ...validIds]),
+        } as GameState;
+      }
+
+      s = pushLog(s, `P1 recovers ${validIds.map(id => getCard(id)?.name ?? id).join(", ")} to ${pending.toZone}`);
+      s = syncExhausted(s, pending.fromOwner);
+      if (pending.toOwner !== pending.fromOwner) s = syncExhausted(s, pending.toOwner);
+    }
+  } else {
+    s = pushLog(s, `P1 skips recovery`);
+  }
+
+  // 트리거 카드 cooldown으로 이동
+  s = moveQueuedCardToCooldown(s, pending.triggerPlayer, pending.triggerCardId);
+
+  // 남은 resolve 아이템 처리
+  const items = pending.resolveItems;
+  const unresolved = new Set<PlayerId>(pending.resolveUnresolved);
 
   for (const it of items) {
     if (!unresolved.has(it.player)) continue;

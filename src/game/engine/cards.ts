@@ -185,6 +185,26 @@ export const CARDS: Record<string, Card> = {
     useCondition: "airborne",
   },
 
+  // 카드 회수 카드
+  reclaim_blade: {
+    id: "reclaim_blade",
+    name: "Reclaim Blade",
+    cost: 2,
+    speed: 3,
+    gain: 0,
+    effects: [
+      {
+        type: "move_cards",
+        target: "self",
+        from: "trash",
+        to: "hand",
+        count: 1,
+        playerChooses: true,
+      },
+    ],
+    text: "트래시에서 카드 1장을 선택해 패로 회수한다.",
+  },
+
   // 태그 카드
   tag_switch: {
     id: "tag_switch",

@@ -9,6 +9,7 @@ import PlayerBar from "./PlayerBar";
 import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
+import CardSelectionModal from "./CardSelectionModal";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -287,6 +288,13 @@ export default function GameScreen({
 
   return (
     <div className={styles.page}>
+      {state.phase === "WAITING_SELECTION" && (
+        <CardSelectionModal
+          key={JSON.stringify(state.pendingSelection?.fromZone)}
+          state={state}
+          dispatch={dispatch}
+        />
+      )}
       <div className={styles.shell}>
         <header className={styles.header}>
           <div>
