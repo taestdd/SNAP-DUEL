@@ -9,6 +9,7 @@ import PlayerBar from "./PlayerBar";
 import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
+import CardSelectionModal from "./CardSelectionModal";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -358,6 +359,16 @@ export default function GameScreen({
           </section>
         </main>
       </div>
+
+      {state.phase === "WAITING_SELECTION" && state.pendingSelection && (
+        <CardSelectionModal
+          pendingSelection={state.pendingSelection}
+          onConfirm={(selectedCards) =>
+            dispatch({ type: "SELECTION/CONFIRM", selectedCards })
+          }
+          onSkip={() => dispatch({ type: "SELECTION/SKIP" })}
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,17 @@ export type CharacterDef = {
   exitEffect: CardEffect | null;
 };
 
+/** 카드가 위치할 수 있는 영역 */
+export type CardZone = "hand" | "deck" | "trash" | "cooldown" | "queue";
+
+/** 덱에 카드를 삽입할 위치 */
+export type DeckInsertPosition = "top" | "bottom" | "random";
+
+/** 카드 필터 조건 (추후 확장 가능) */
+export type CardCondition = {
+  // Future: filter by card properties
+};
+
 /**
  * 카드 효과 타입
  */
@@ -22,7 +33,8 @@ export type EffectType =
   | "buff_attack"
   | "burn"
   | "tag"
-  | "airborne";
+  | "airborne"
+  | "move_cards";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -37,6 +49,16 @@ export type CardEffect = {
   target?: Target;
   /** damage 효과에만 사용. 미지정 시 항상 적용 */
   damageType?: DamageType;
+  /** move_cards: 카드를 가져올 영역 */
+  fromZone?: CardZone;
+  /** move_cards: 카드를 보낼 영역 */
+  toZone?: CardZone;
+  /** move_cards: 덱에 넣을 위치 */
+  toPosition?: DeckInsertPosition;
+  /** move_cards: 이동할 카드 수 */
+  count?: number;
+  /** move_cards: P1이 직접 선택 (AI는 자동 선택) */
+  userSelects?: boolean;
 };
 
 /** 카드 사용 가능 조건 */
@@ -125,8 +147,36 @@ export type TurnPhase =
   | "SETUP_INIT"
   | "SETUP_OTHER"
   | "RESOLVE"
+  | "WAITING_SELECTION"
   | "TURN_END"
   | "GAME_OVER";
+
+/**
+ * 카드 선택 대기 상태 (move_cards + userSelects 효과 처리 중)
+ */
+export type PendingSelection = {
+  /** 선택하는 플레이어 */
+  selectingPlayer: PlayerId;
+  /** 선택 가능한 카드 id 목록 */
+  candidates: string[];
+  /** 선택해야 할 최대 카드 수 */
+  count: number;
+  /** 카드를 가져올 영역 */
+  fromZone: CardZone;
+  fromPlayerId: PlayerId;
+  /** 카드를 보낼 영역 */
+  toZone: CardZone;
+  toPlayerId: PlayerId;
+  toPosition: DeckInsertPosition;
+  /** 이 선택을 유발한 카드 */
+  sourcePlayer: PlayerId;
+  sourceCardId: string;
+  /** resolve 재개용 컨텍스트 */
+  resolveItems: { player: PlayerId; cardId: string }[];
+  resolveNextIndex: number;
+  /** 선택 대기 이후 아직 처리 안 된 플레이어 (sourcePlayer 제외) */
+  unresolvedPlayers: PlayerId[];
+};
 
 export type GameState = {
   round: number;
@@ -144,6 +194,9 @@ export type GameState = {
   AI: Combatant;
 
   selected: SelectedCard | null;
+
+  /** WAITING_SELECTION 페이즈일 때 설정됨 */
+  pendingSelection: PendingSelection | null;
 
   log: string[];
 };
@@ -166,4 +219,6 @@ export type Action =
   | { type: "TURN/END" }
   | { type: "DEBUG/RESET" }
   | { type: "INITIATIVE/RANDOMIZE" }
-  | { type: "GAME/INIT" };
+  | { type: "GAME/INIT" }
+  | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
+  | { type: "SELECTION/SKIP" };

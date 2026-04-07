@@ -119,6 +119,7 @@ export function createInitialState(config: SetupConfig): GameState {
     AI: createCombatant("AI", "A", STARTER_DECK),
 
     selected: null,
+    pendingSelection: null,
     log: [],
   };
 

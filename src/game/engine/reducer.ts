@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resolveAll, checkGameOver, draw, canUseCard } from "./rules";
+import { beginTurn, queueCard, resolveAll, resumeResolve, checkGameOver, draw, canUseCard } from "./rules";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 
@@ -140,7 +140,18 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case "RESOLVE/STEP": {
       const s1 = resolveAll(state);
       if (s1.phase === "GAME_OVER") return s1;
+      if (s1.phase === "WAITING_SELECTION") return s1;
       return checkGameOver(s1);
+    }
+
+    case "SELECTION/CONFIRM": {
+      if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return state;
+      return resumeResolve(state, action.selectedCards);
+    }
+
+    case "SELECTION/SKIP": {
+      if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return state;
+      return resumeResolve(state, []);
     }
 
     case "TURN/END": {
