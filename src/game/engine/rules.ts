@@ -7,6 +7,28 @@ const HAND_LIMIT = 6;
 const LOG_LIMIT = 40;
 
 /* -------------------------- */
+/* 존 헬퍼 */
+/* -------------------------- */
+
+function getZone(combatant: Combatant, zone: CardZone): string[] {
+  switch (zone) {
+    case "deck":     return combatant.deck;
+    case "hand":     return combatant.hand;
+    case "trash":    return combatant.trash;
+    case "cooldown": return combatant.cooldown;
+  }
+}
+
+function setZone(combatant: Combatant, zone: CardZone, cards: string[]): Combatant {
+  switch (zone) {
+    case "deck":     return { ...combatant, deck: cards };
+    case "hand":     return { ...combatant, hand: cards };
+    case "trash":    return { ...combatant, trash: cards };
+    case "cooldown": return { ...combatant, cooldown: cards };
+  }
+}
+
+/* -------------------------- */
 /* 공통 유틸 */
 /* -------------------------- */
 
@@ -189,7 +211,7 @@ function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 function applySingleEffect(
   state: GameState,
   player: PlayerId,
-  effect: { type: string; value?: number; target?: "self" | "enemy" }
+  effect: import("./types").CardEffect
 ): GameState {
   const target =
     effect.target === "self"

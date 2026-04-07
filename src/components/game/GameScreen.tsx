@@ -288,6 +288,13 @@ export default function GameScreen({
 
   return (
     <div className={styles.page}>
+      {state.phase === "WAITING_SELECTION" && (
+        <CardSelectionModal
+          key={JSON.stringify(state.pendingSelection?.fromZone)}
+          state={state}
+          dispatch={dispatch}
+        />
+      )}
       <div className={styles.shell}>
         <header className={styles.header}>
           <div>

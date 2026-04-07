@@ -67,6 +67,10 @@ const DEBUG_DECK: string[] = [
   // 태그
   "tag_switch",
   "tag_switch",
+
+  // 카드 회수
+  "reclaim_blade",
+  "reclaim_blade",
 ];
 
 /** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
