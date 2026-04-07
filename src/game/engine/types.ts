@@ -23,6 +23,18 @@ export type CardCondition = {
 };
 
 /**
+ * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
+ * 새 태그 추가 시 이 한 곳만 수정하면 됨
+ */
+export type CardTag =
+  | "마법"
+  | "검술"
+  | "격투"
+  | "방어"
+  | "방패"
+  | "한손검";
+
+/**
  * 카드 효과 타입
  */
 export type EffectType =
@@ -82,6 +94,9 @@ export type Card = {
 
   /** 미지정 시 항상 사용 가능 */
   useCondition?: UseCondition;
+
+  /** 카드 분류 태그. 미지정 시 태그 없음 */
+  tags?: CardTag[];
 };
 
 export type SelectedCard = {

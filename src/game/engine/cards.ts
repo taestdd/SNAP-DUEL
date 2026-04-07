@@ -12,6 +12,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 2, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 2 ground damage.",
+    tags: ["검술", "한손검"],
   },
 
   minor_guard: {
@@ -24,6 +25,7 @@ export const CARDS: Record<string, Card> = {
       { type: "block", value: 3, target: "self" }
     ],
     text: "Gain 3 Block.",
+    tags: ["방어", "방패"],
   },
 
   peek: {
@@ -36,6 +38,7 @@ export const CARDS: Record<string, Card> = {
       { type: "draw", value: 1, target: "self" }
     ],
     text: "Draw 1 card.",
+    tags: ["마법"],
   },
 
   // 2 cost
@@ -49,6 +52,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 4, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 4 ground damage.",
+    tags: ["검술", "한손검"],
   },
 
   piercing_strike: {
@@ -61,6 +65,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 4, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 4 ground damage.",
+    tags: ["검술", "한손검"],
   },
 
   // 3 cost
@@ -74,6 +79,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 6, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 6 ground damage.",
+    tags: ["격투"],
   },
 
   crushing_blow: {
@@ -86,6 +92,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 7, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 7 ground damage.",
+    tags: ["격투"],
   },
 
   // 4 cost
@@ -100,6 +107,7 @@ export const CARDS: Record<string, Card> = {
       { type: "draw", value: 1, target: "self" }
     ],
     text: "Deal 10 ground damage. Draw 1.",
+    tags: ["검술", "한손검"],
   },
 
   arcane_burst: {
@@ -113,6 +121,7 @@ export const CARDS: Record<string, Card> = {
       { type: "draw", value: 1, target: "self" }
     ],
     text: "Deal 9 ground damage. Draw 1.",
+    tags: ["마법"],
   },
 
   meteor_strike: {
@@ -126,6 +135,7 @@ export const CARDS: Record<string, Card> = {
       { type: "draw", value: 1, target: "self" }
     ],
     text: "Deal 12 ground damage. Draw 1.",
+    tags: ["마법"],
   },
 
   // 복합 효과 카드
@@ -140,6 +150,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 2, target: "enemy", damageType: "ground" },
     ],
     text: "Heal 2, then deal 2 ground damage.",
+    tags: ["마법"],
   },
 
   // 에어본 시스템 카드
@@ -156,6 +167,7 @@ export const CARDS: Record<string, Card> = {
       { type: "airborne", value: 2, target: "enemy" },
     ],
     text: "Deal 2 ground damage and launch the opponent (airborneStack 2).",
+    tags: ["격투"],
   },
 
   // 대공 데미지 카드: 상대가 체공 상태일 때만 피해
@@ -169,6 +181,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 6, target: "enemy", damageType: "anti-air" },
     ],
     text: "Deal 6 anti-air damage — only hits airborne targets.",
+    tags: ["검술"],
   },
 
   // 사용 조건 있는 카드: 체공 상태에서만 사용 가능
@@ -182,6 +195,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 4, target: "enemy", damageType: "anti-air" },
     ],
     text: "Only usable while airborne. Deal 4 anti-air damage.",
+    tags: ["격투"],
     useCondition: "airborne",
   },
 

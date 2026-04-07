@@ -61,6 +61,14 @@ export default function CardView({
         <div className={styles.text}>{card.text}</div>
       </div>
 
+      {card.tags && card.tags.length > 0 && (
+        <div className={styles.tagRow}>
+          {card.tags.map((t) => (
+            <span key={t} className={styles.cardTagBadge}>#{t}</span>
+          ))}
+        </div>
+      )}
+
       <div className={styles.footer}>
         <div className={styles.effectRow}>
           {card.effects.map((eff, i) => (
