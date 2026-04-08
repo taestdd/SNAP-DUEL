@@ -550,6 +550,7 @@ function resetTurnFlags(state: GameState): GameState {
     ...state,
     phase: "SETUP_INIT",
     selected: null,
+    recentlyCancelledId: null,
     P1: {
       ...state.P1,
       block: 0,
@@ -850,6 +851,7 @@ function applyCancelOnHit(
   let s = moveQueuedCardToTrash(state, other, cancelledCard);
   s = {
     ...s,
+    recentlyCancelledId: cancelledCard,
     [other]: {
       ...s[other],
       ready: false,
