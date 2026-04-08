@@ -65,9 +65,11 @@ function QueuePreview({ title, me }: { title: string; me: Combatant }) {
 export default function GameScreen({
   state,
   dispatch,
+  isAiThinking,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
+  isAiThinking: boolean;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -108,7 +110,7 @@ export default function GameScreen({
           </div>
 
           <div className={styles.topPanel}>
-            <ArenaHeader ai={state.AI} />
+            <ArenaHeader ai={state.AI} isThinking={isAiThinking} />
           </div>
         </div>
 

@@ -162,6 +162,7 @@ export type TurnPhase =
   | "SETUP_INIT"
   | "SETUP_OTHER"
   | "RESOLVE"
+  | "RESOLVING"
   | "WAITING_SELECTION"
   | "TURN_END"
   | "GAME_OVER";
@@ -214,6 +215,13 @@ export type GameState = {
   pendingSelection: PendingSelection | null;
 
   log: string[];
+
+  /** RESOLVING 페이즈: 처리할 카드 순서 목록 */
+  resolveQueue: { player: PlayerId; cardId: string }[];
+  /** RESOLVING 페이즈: 다음에 처리할 인덱스 */
+  resolveIndex: number;
+  /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
+  resolveUnresolved: PlayerId[];
 };
 
 /** 게임 시작 전 셋업 설정 */
