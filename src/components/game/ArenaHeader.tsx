@@ -1,9 +1,34 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import type { CharacterId, Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import styles from "./ArenaHeader.module.css";
 
 export default function ArenaHeader({ ai }: { ai: Combatant }) {
   const burn = ai.status.burn;
+
+  const prevHpRef = useRef<Record<CharacterId, number>>(ai.characterHp);
+  const [damagedChars, setDamagedChars] = useState<Set<CharacterId>>(new Set());
+
+  useEffect(() => {
+    const prev = prevHpRef.current;
+    const damaged = new Set<CharacterId>();
+
+    (["A", "B"] as CharacterId[]).forEach((charId) => {
+      if (ai.characterHp[charId] < prev[charId]) {
+        damaged.add(charId);
+      }
+    });
+
+    prevHpRef.current = ai.characterHp;
+
+    if (damaged.size > 0) {
+      setDamagedChars(damaged);
+      const timer = setTimeout(() => setDamagedChars(new Set()), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [ai.characterHp]);
 
   return (
     <div className={styles.wrap}>
@@ -15,7 +40,10 @@ export default function ArenaHeader({ ai }: { ai: Combatant }) {
           const charHp = ai.characterHp[charId];
           const maxHp = CHARACTERS[charId].maxHp;
           return (
-            <div key={charId} className={`${styles.charSlot} ${isActive ? styles.charActive : ""}`}>
+            <div
+              key={charId}
+              className={`${styles.charSlot} ${isActive ? styles.charActive : ""} ${damagedChars.has(charId) ? styles.charDamaged : ""}`}
+            >
               <span className={styles.charName}>{charId}</span>
               <span className={styles.charHp}>{charHp}/{maxHp}</span>
               {isActive && ai.airborneStack >= 1 && (

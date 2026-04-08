@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { Action, Combatant, GameState } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
@@ -26,18 +27,49 @@ function effectLabel(effect: string, damageType?: string) {
   }
 }
 
-function QueuePreview({ title, me }: { title: string; me: Combatant }) {
+function QueuePreview({
+  title,
+  me,
+  phase,
+  recentlyCancelledId,
+}: {
+  title: string;
+  me: Combatant;
+  phase: string;
+  recentlyCancelledId: string | null;
+}) {
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
+
+  // Cancel detection: track previous queued id
+  const prevQueuedIdRef = useRef<string | undefined>(queuedId);
+  const [showCancel, setShowCancel] = useState(false);
+
+  useEffect(() => {
+    const prev = prevQueuedIdRef.current;
+    prevQueuedIdRef.current = queuedId;
+
+    if (!queuedId && recentlyCancelledId && prev === recentlyCancelledId) {
+      setShowCancel(true);
+      const timer = setTimeout(() => setShowCancel(false), 850);
+      return () => clearTimeout(timer);
+    }
+  }, [queuedId, recentlyCancelledId]);
+
+  const isResolving = phase === "RESOLVE";
 
   return (
     <div className={styles.queueBox}>
       <div className={styles.queueTitle}>{title}</div>
 
       {!card ? (
-        <div className={styles.queueEmpty}>—</div>
+        <div className={`${styles.queueEmpty} ${showCancel ? styles.queueCancelAnim : ""}`}>
+          {showCancel ? (
+            <div className={`${styles.cancelOverlay}`} style={{ position: "relative", width: "100%", height: "40px" }} />
+          ) : "—"}
+        </div>
       ) : (
-        <div className={styles.queueCard}>
+        <div key={queuedId} className={`${styles.queueCard} ${styles.queueCardAnim}`}>
           <div className={styles.queueCardName}>{card.name}</div>
 
           <div className={styles.queueStats}>
@@ -48,7 +80,10 @@ function QueuePreview({ title, me }: { title: string; me: Combatant }) {
 
           <div className={styles.queueEffectRow}>
             {card.effects.map((effect, idx) => (
-              <span key={`${card.id}-effect-${idx}`} className={styles.effectBadge}>
+              <span
+                key={`${card.id}-effect-${idx}`}
+                className={`${styles.effectBadge} ${isResolving ? styles.effectBadgePulse : ""}`}
+              >
                 {effectLabel(effect.type, effect.damageType)}
                 {effect.value !== undefined ? ` ${effect.value}` : ""}
               </span>
@@ -115,7 +150,7 @@ export default function GameScreen({
         {/* Middle row: P1 Queue | Action Log | AI Queue */}
         <div className={styles.middleRow}>
           <div className={styles.queuePanel}>
-            <QueuePreview title="P1 Queue" me={state.P1} />
+            <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
           </div>
 
           <div className={styles.actionLogPanel}>
@@ -123,7 +158,7 @@ export default function GameScreen({
           </div>
 
           <div className={styles.queuePanel}>
-            <QueuePreview title="AI Queue" me={state.AI} />
+            <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
           </div>
         </div>
 
