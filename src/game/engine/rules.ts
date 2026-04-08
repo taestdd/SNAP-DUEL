@@ -930,6 +930,115 @@ export function resolveAll(state: GameState): GameState {
 }
 
 /**
+ * RESOLVE 페이즈 진입 시 호출.
+ * resolveQueue를 구성하고 phase를 RESOLVING으로 전환만 한다 (즉시 처리 없음).
+ */
+export function enterResolving(state: GameState): GameState {
+  if (state.phase !== "RESOLVE") return state;
+
+  const items = buildResolveOrder(state);
+  const unresolvedArr: PlayerId[] = [];
+  if (state.P1.queue[0]) unresolvedArr.push("P1");
+  if (state.AI.queue[0]) unresolvedArr.push("AI");
+
+  if (items.length === 0) {
+    return endTurnCleanup({
+      ...state,
+      resolveQueue: [],
+      resolveIndex: 0,
+      resolveUnresolved: [],
+    });
+  }
+
+  return {
+    ...state,
+    phase: "RESOLVING",
+    resolveQueue: items,
+    resolveIndex: 0,
+    resolveUnresolved: unresolvedArr,
+  };
+}
+
+/**
+ * RESOLVING 페이즈에서 카드 한 장 처리.
+ * 처리 후 남은 카드가 있으면 RESOLVING 유지, 없으면 TURN_END.
+ */
+export function resolveOneStep(state: GameState): GameState {
+  if (state.phase !== "RESOLVING") return state;
+
+  const items = state.resolveQueue;
+  const unresolved = new Set<PlayerId>(state.resolveUnresolved);
+
+  // 현재 인덱스부터 처리 가능한 다음 아이템 탐색
+  let idx = state.resolveIndex;
+  while (idx < items.length && !unresolved.has(items[idx].player)) {
+    idx++;
+  }
+
+  if (idx >= items.length) {
+    return endTurnCleanup({
+      ...state,
+      resolveQueue: [],
+      resolveIndex: 0,
+      resolveUnresolved: [],
+    });
+  }
+
+  const it = items[idx];
+  const before = state;
+
+  let s = applyCardEffectsWithPause(
+    state,
+    it.player,
+    it.cardId,
+    items,
+    idx + 1,
+    [...unresolved]
+  );
+
+  if (s.phase === "WAITING_SELECTION") {
+    return { ...s, resolveIndex: idx };
+  }
+  if (s.phase === "GAME_OVER") return s;
+
+  s = moveQueuedCardToCooldown(s, it.player, it.cardId);
+  unresolved.delete(it.player);
+
+  const hit = didDirectAttackHit(before, s, it.player, it.cardId);
+  if (hit) {
+    s = applyInitiativeOnHit(s, it.player);
+    s = applyGainOnHit(s, it.player, it.cardId);
+    s = applyCancelOnHit(s, it.player, unresolved);
+  }
+
+  const nextIdx = idx + 1;
+
+  let hasMore = false;
+  for (let i = nextIdx; i < items.length; i++) {
+    if (unresolved.has(items[i].player)) {
+      hasMore = true;
+      break;
+    }
+  }
+
+  if (hasMore) {
+    return {
+      ...s,
+      phase: "RESOLVING",
+      resolveIndex: nextIdx,
+      resolveUnresolved: [...unresolved],
+    };
+  }
+
+  return endTurnCleanup({
+    ...s,
+    resolveQueue: [],
+    resolveIndex: 0,
+    resolveUnresolved: [],
+  });
+}
+
+/**
  * SELECTION/CONFIRM 또는 SELECTION/SKIP 후 resolve를 재개한다.
  * selectedCards가 빈 배열이면 카드 이동 없이 재개 (skip).
  */
@@ -939,7 +1048,7 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
 
   let s: GameState = {
     ...state,
-    phase: "RESOLVE",
+    phase: "RESOLVING",
     pendingSelection: null,
   };
 
@@ -952,9 +1061,34 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
   // 원인 카드를 쿨다운으로 이동
   s = moveQueuedCardToCooldown(s, ps.sourcePlayer, ps.sourceCardId);
 
-  // 나머지 아이템 이어서 처리
+  // 남은 아이템 확인 후 RESOLVING으로 재개 (step-by-step)
   const unresolved = new Set<PlayerId>(ps.unresolvedPlayers);
-  return resolveItems(s, ps.resolveItems, ps.resolveNextIndex, unresolved);
+  const items = ps.resolveItems;
+
+  let hasMore = false;
+  for (let i = ps.resolveNextIndex; i < items.length; i++) {
+    if (unresolved.has(items[i].player)) {
+      hasMore = true;
+      break;
+    }
+  }
+
+  if (!hasMore) {
+    return endTurnCleanup({
+      ...s,
+      resolveQueue: [],
+      resolveIndex: 0,
+      resolveUnresolved: [],
+    });
+  }
+
+  return {
+    ...s,
+    phase: "RESOLVING",
+    resolveQueue: items,
+    resolveIndex: ps.resolveNextIndex,
+    resolveUnresolved: ps.unresolvedPlayers,
+  };
 }
 
 /* -------------------------- */

@@ -4,9 +4,30 @@
   gap: 6px;
 }
 
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .name {
   font-weight: 800;
   font-size: 14px;
+}
+
+.thinking {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 220, 50, 0.15);
+  border: 1px solid rgba(255, 220, 50, 0.35);
+  color: #ffdc32;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .charRow {

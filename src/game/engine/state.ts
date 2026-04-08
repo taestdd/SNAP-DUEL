@@ -125,6 +125,10 @@ export function createInitialState(config: SetupConfig): GameState {
     selected: null,
     pendingSelection: null,
     log: [],
+
+    resolveQueue: [],
+    resolveIndex: 0,
+    resolveUnresolved: [],
   };
 
   return state;

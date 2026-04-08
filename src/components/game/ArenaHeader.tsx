@@ -2,12 +2,15 @@ import type { CharacterId, Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import styles from "./ArenaHeader.module.css";
 
-export default function ArenaHeader({ ai }: { ai: Combatant }) {
+export default function ArenaHeader({ ai, isThinking }: { ai: Combatant; isThinking?: boolean }) {
   const burn = ai.status.burn;
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.name}>AI</div>
+      <div className={styles.nameRow}>
+        <div className={styles.name}>AI</div>
+        {isThinking && <span className={styles.thinking}>🤔 Thinking…</span>}
+      </div>
 
       <div className={styles.charRow}>
         {(["A", "B"] as CharacterId[]).map((charId) => {
