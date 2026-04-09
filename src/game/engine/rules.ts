@@ -6,27 +6,7 @@ import { shuffle } from "./rng";
 const HAND_LIMIT = 6;
 const LOG_LIMIT = 40;
 
-/* -------------------------- */
-/* 존 헬퍼 */
-/* -------------------------- */
 
-function getZone(combatant: Combatant, zone: CardZone): string[] {
-  switch (zone) {
-    case "deck":     return combatant.deck;
-    case "hand":     return combatant.hand;
-    case "trash":    return combatant.trash;
-    case "cooldown": return combatant.cooldown;
-  }
-}
-
-function setZone(combatant: Combatant, zone: CardZone, cards: string[]): Combatant {
-  switch (zone) {
-    case "deck":     return { ...combatant, deck: cards };
-    case "hand":     return { ...combatant, hand: cards };
-    case "trash":    return { ...combatant, trash: cards };
-    case "cooldown": return { ...combatant, cooldown: cards };
-  }
-}
 
 /* -------------------------- */
 /* 공통 유틸 */
@@ -686,6 +666,7 @@ export function queueCard(
 /* -------------------------- */
 
 /** 조건에 맞는 카드만 필터 (현재는 전체 반환, 추후 확장) */
+// TODO: CardCondition 파라미터 추가 후 실제 필터링 구현
 export function filterCards(cards: string[]): string[] {
   return cards;
 }
@@ -920,16 +901,6 @@ function resolveItems(
   return endTurnCleanup(s);
 }
 
-export function resolveAll(state: GameState): GameState {
-  if (state.phase !== "RESOLVE") return state;
-
-  const items = buildResolveOrder(state);
-  const unresolved = new Set<PlayerId>();
-  if (state.P1.queue[0]) unresolved.add("P1");
-  if (state.AI.queue[0]) unresolved.add("AI");
-
-  return resolveItems(state, items, 0, unresolved);
-}
 
 /**
  * RESOLVE 페이즈 진입 시 호출.
@@ -1097,48 +1068,12 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
 /* 카드 효과 */
 /* -------------------------- */
 
-export function applyCardEffect(
-  state: GameState,
-  player: PlayerId,
-  cardId: string
-): GameState {
-  return applyCardEffects(state, player, cardId);
-}
 
 // 두 플레이어 탈진 체크
 function areBothPlayersExhausted(state: GameState): boolean {
   return state.P1.status.exhausted && state.AI.status.exhausted;
 }
 
-// 덱에 카드가 추가될 때 탈진 풀림
-function addCardsToDeck(
-  state: GameState,
-  player: PlayerId,
-  cardIds: string[],
-  position: "top" | "bottom" = "bottom"
-): GameState {
-  if (cardIds.length === 0) return state;
-
-  const me = state[player];
-
-  let nextDeck: string[];
-  if (position === "top") {
-    nextDeck = [...cardIds, ...me.deck];
-  } else {
-    nextDeck = [...me.deck, ...cardIds];
-  }
-
-  let s = {
-    ...state,
-    [player]: {
-      ...me,
-      deck: nextDeck,
-    },
-  } as GameState;
-
-  s = syncExhausted(s, player);
-  return s;
-}
 
 //핸드를 전부 트래시로 이동
 function moveHandToTrash(state: GameState, player: PlayerId): GameState {
