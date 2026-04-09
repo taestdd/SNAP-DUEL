@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resolveAll, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep } from "./rules";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 
@@ -170,16 +170,12 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return state;
     }
 
-    default: {
-      return state;
-    }
-
     case "INITIATIVE/RANDOMIZE": {
       // 클라이언트에서만 실행될 예정이지만, 혹시 GAME_OVER면 그대로 두는 것도 가능
       const init = Math.random() < 0.5 ? "P1" : "AI";
       return { ...state, initiative: init };
     }
-    
+
     case "GAME/INIT": {
       let s: GameState = {
         ...state,
@@ -200,6 +196,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
       s = draw(s, "AI", 3);
       return s;
     }
-    
+
+    default: {
+      return state;
+    }
   }
 }

@@ -18,6 +18,7 @@ export type CardZone = "hand" | "deck" | "trash" | "cooldown" | "queue";
 export type DeckInsertPosition = "top" | "bottom" | "random";
 
 /** 카드 필터 조건 (추후 확장 가능) */
+// TODO: 태그, 코스트, 타입 등 필터 프로퍼티 추가
 export type CardCondition = {
   // Future: filter by card properties
 };
@@ -41,6 +42,7 @@ export type EffectType =
   | "damage"
   | "block"
   | "draw"
+  | "draw_tagged"
   | "heal"
   | "buff_attack"
   | "burn"
@@ -71,6 +73,10 @@ export type CardEffect = {
   count?: number;
   /** move_cards: P1이 직접 선택 (AI는 자동 선택) */
   userSelects?: boolean;
+  /** draw_tagged: 드로우할 카드의 태그 */
+  tag?: CardTag;
+  /** draw_tagged: 드로우할 영역 (기본값: "deck") */
+  zone?: CardZone;
 };
 
 /** 카드 사용 가능 조건 */
