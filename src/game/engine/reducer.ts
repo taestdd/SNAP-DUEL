@@ -162,6 +162,44 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return resumeResolve(state, []);
     }
 
+    case "DISCARD/CONFIRM": {
+      if (state.phase !== "WAITING_DISCARD" || !state.pendingDiscard) return state;
+
+      const { discardCards } = action;
+      const pd = state.pendingDiscard;
+
+      // 정확히 count장을 선택해야 함
+      if (discardCards.length !== pd.count) return state;
+
+      // discardCards는 "cardId::handIndex" 형식 키 배열
+      const discardIndices = new Set(discardCards.map((key) => Number(key.split("::")[1])));
+      const me = state.P1;
+      const remainingHand: string[] = [];
+      const discardedIds: string[] = [];
+
+      me.hand.forEach((cardId, idx) => {
+        if (discardIndices.has(idx)) {
+          discardedIds.push(cardId);
+        } else {
+          remainingHand.push(cardId);
+        }
+      });
+
+      const s: GameState = {
+        ...state,
+        P1: {
+          ...me,
+          hand: remainingHand,
+          trash: [...me.trash, ...discardedIds],
+        },
+        pendingDiscard: null,
+        phase: "TURN_END",
+        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, 40),
+      };
+
+      return s;
+    }
+
     case "TURN/END": {
       return { ...state, phase: "TURN_END" };
     }

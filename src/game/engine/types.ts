@@ -164,8 +164,19 @@ export type TurnPhase =
   | "RESOLVE"
   | "RESOLVING"
   | "WAITING_SELECTION"
+  | "WAITING_DISCARD"
   | "TURN_END"
   | "GAME_OVER";
+
+/**
+ * 턴 종료 시 핸드 사이즈 초과로 인한 버리기 대기 상태
+ */
+export type PendingDiscard = {
+  /** 버려야 할 카드 수 */
+  count: number;
+  /** 현재 P1 핸드 카드 목록 (선택 대상) */
+  candidates: string[];
+};
 
 /**
  * 카드 선택 대기 상태 (move_cards + userSelects 효과 처리 중)
@@ -214,6 +225,9 @@ export type GameState = {
   /** WAITING_SELECTION 페이즈일 때 설정됨 */
   pendingSelection: PendingSelection | null;
 
+  /** WAITING_DISCARD 페이즈일 때 설정됨 (턴 종료 핸드 사이즈 초과 버리기) */
+  pendingDiscard: PendingDiscard | null;
+
   /** 캔슬된 카드 id (애니메이션 트리거용). 다음 턴 시작 시 null로 클리어. */
   recentlyCancelledId: string | null;
 
@@ -247,4 +261,5 @@ export type Action =
   | { type: "INITIATIVE/RANDOMIZE" }
   | { type: "GAME/INIT" }
   | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
-  | { type: "SELECTION/SKIP" };
+  | { type: "SELECTION/SKIP" }
+  | { type: "DISCARD/CONFIRM"; discardCards: string[] };

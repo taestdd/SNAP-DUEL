@@ -1,4 +1,4 @@
-import type { CardZone, CharacterId, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
+import type { CardZone, CharacterId, DeckInsertPosition, GameState, PendingDiscard, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
@@ -873,19 +873,51 @@ function applyCancelOnHit(
 
 
 
-function endTurnCleanup(state: GameState): GameState {
+/** AI의 핸드 초과 카드를 자동으로 trash로 버린다 */
+function discardAIExcess(state: GameState): GameState {
+  const excess = state.AI.hand.length - HAND_LIMIT;
+  if (excess <= 0) return state;
+
+  // 마지막 N장을 버린다 (가장 최근 드로우한 카드)
+  const newHand = state.AI.hand.slice(0, HAND_LIMIT);
+  const discarded = state.AI.hand.slice(HAND_LIMIT);
+
   const s: GameState = {
+    ...state,
+    AI: {
+      ...state.AI,
+      hand: newHand,
+      trash: [...state.AI.trash, ...discarded],
+    },
+  };
+  return pushLog(s, `AI discards ${excess} card(s) to hand limit`);
+}
+
+function endTurnCleanup(state: GameState): GameState {
+  let s: GameState = {
     ...state,
     P1: { ...state.P1, queue: [], ready: false },
     AI: { ...state.AI, queue: [], ready: false },
-    phase: "TURN_END",
   };
 
   if (areBothPlayersExhausted(s)) {
     return handleRoundEnd(s);
   }
 
-  return s;
+  // AI 핸드 초과 자동 버리기
+  s = discardAIExcess(s);
+
+  // P1 핸드 초과 → 버리기 선택 UI 대기
+  const p1Excess = s.P1.hand.length - HAND_LIMIT;
+  if (p1Excess > 0) {
+    const pendingDiscard: PendingDiscard = {
+      count: p1Excess,
+      candidates: [...s.P1.hand],
+    };
+    return { ...s, phase: "WAITING_DISCARD", pendingDiscard };
+  }
+
+  return { ...s, phase: "TURN_END" };
 }
 
 function resolveItems(
@@ -1234,8 +1266,6 @@ export function draw(
 
   for (let i = 0; i < n; i++) {
     const me = s[player];
-
-    if (me.hand.length >= HAND_LIMIT) break;
 
     if (me.deck.length === 0) {
       s = syncExhausted(s, player);
