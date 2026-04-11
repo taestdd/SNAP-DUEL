@@ -11,6 +11,7 @@ import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
+import ToastMessage from "./ToastMessage";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -186,8 +187,42 @@ export default function GameScreen({
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
+  const prevPhaseRef = useRef(state.phase);
+  const toastKeyRef = useRef(0);
+  const [toastKey, setToastKey] = useState(0);
+  const [toastText, setToastText] = useState("");
+
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    const curr = state.phase;
+    prevPhaseRef.current = curr;
+
+    if (prev === curr) return;
+
+    let msg = "";
+    if (curr === "SETUP_INIT") {
+      msg = `Turn ${state.turn} 시작`;
+    } else if (curr === "RESOLVE") {
+      msg = "전투 시작!";
+    } else if (curr === "WAITING_DISCARD") {
+      msg = "손패 초과 - 카드를 버리세요";
+    } else if (curr === "GAME_OVER") {
+      if (state.winner === "P1") msg = "승리!";
+      else if (state.winner === "AI") msg = "패배";
+      else msg = "무승부";
+    }
+
+    if (msg) {
+      toastKeyRef.current += 1;
+      setToastKey(toastKeyRef.current);
+      setToastText(msg);
+    }
+  }, [state.phase, state.turn, state.winner]);
+
   return (
     <div className={styles.page}>
+      {toastText && <ToastMessage key={toastKey} message={toastText} />}
+
       {state.phase === "WAITING_SELECTION" && state.pendingSelection && (
         <CardSelectionModal
           pendingSelection={state.pendingSelection}
