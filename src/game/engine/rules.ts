@@ -829,6 +829,11 @@ function applyCancelOnHit(
   const cancelledCard = state[other].queue[0];
   if (!cancelledCard) return state;
 
+  // 캔슬 대상 카드가 공격 카드(데미지 효과 보유)가 아니면 캔슬 불가
+  const cancelledCardDef = getCard(cancelledCard);
+  const isCancellable = cancelledCardDef?.effects.some((e) => e.type === "damage") ?? false;
+  if (!isCancellable) return state;
+
   let s = moveQueuedCardToTrash(state, other, cancelledCard);
   s = {
     ...s,
