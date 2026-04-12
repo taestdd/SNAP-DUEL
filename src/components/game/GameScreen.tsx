@@ -12,7 +12,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage, { type AnimViewState } from "./ArenaStage";
+import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -241,65 +241,38 @@ export default function GameScreen({
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
 
-  const [playerView, setPlayerView] = useState<AnimViewState>(DEFAULT_VIEW);
-  const [aiView, setAiView] = useState<AnimViewState>(DEFAULT_VIEW);
-  const prevResolveIndexRef = useRef(-1);
+  // Stage effects
   const prevP1HpRef = useRef(state.P1.hp);
   const prevAiHpRef = useRef(state.AI.hp);
+  const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
+  const [hitSide, setHitSide] = useState<HitSide>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (state.phase !== "RESOLVING") {
-      if (prevResolveIndexRef.current !== -1) {
-        setPlayerView(DEFAULT_VIEW);
-        setAiView(DEFAULT_VIEW);
-        prevResolveIndexRef.current = -1;
-      }
-      return;
-    }
-
-    const currIdx = state.resolveIndex;
-    const prevIdx = prevResolveIndexRef.current;
-    if (currIdx === prevIdx) return;
-    prevResolveIndexRef.current = currIdx;
-
-    if (currIdx === 0) {
-      // Just entered RESOLVING — sync HP baseline
-      prevP1HpRef.current = state.P1.hp;
-      prevAiHpRef.current = state.AI.hp;
-      return;
-    }
-
-    const processedItem = state.resolveQueue[currIdx - 1];
-    const p1HpDropped = state.P1.hp < prevP1HpRef.current;
-    const aiHpDropped = state.AI.hp < prevAiHpRef.current;
+    const prevP1 = prevP1HpRef.current;
+    const prevAi = prevAiHpRef.current;
     prevP1HpRef.current = state.P1.hp;
     prevAiHpRef.current = state.AI.hp;
 
-    if (processedItem) {
-      const { player, cardId } = processedItem;
-      const card = getCard(cardId);
-      const attackPose = actionTagToPose(card?.actionTag);
+    const p1Damage = prevP1 - state.P1.hp;
+    const aiDamage = prevAi - state.AI.hp;
 
-      if (player === "P1") {
-        setPlayerView((prev) => ({ ...prev, pose: attackPose, poseKey: prev.poseKey + 1 }));
-        if (aiHpDropped) {
-          setAiView((prev) => ({ pose: "hit", poseKey: prev.poseKey + 1, impactTick: prev.impactTick + 1 }));
-        }
-      } else {
-        setAiView((prev) => ({ ...prev, pose: attackPose, poseKey: prev.poseKey + 1 }));
-        if (p1HpDropped) {
-          setPlayerView((prev) => ({ pose: "hit", poseKey: prev.poseKey + 1, impactTick: prev.impactTick + 1 }));
-        }
-      }
+    if (p1Damage > 0 || aiDamage > 0) {
+      const maxDamage = Math.max(p1Damage, aiDamage);
+      const newShake: ShakeLevel = maxDamage >= 6 ? "heavy" : "light";
+      const shakeDuration = newShake === "heavy" ? 850 : 480;
+
+      setShakeLevel(newShake);
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
+
+      const side: HitSide = p1Damage >= aiDamage ? "player" : "ai";
+      setHitSide(side);
+      if (hitTimerRef.current) clearTimeout(hitTimerRef.current);
+      hitTimerRef.current = setTimeout(() => setHitSide(null), 300);
     }
-
-    const t = setTimeout(() => {
-      setPlayerView((prev) => ({ ...prev, pose: "idle", poseKey: prev.poseKey + 1 }));
-      setAiView((prev) => ({ ...prev, pose: "idle", poseKey: prev.poseKey + 1 }));
-    }, 500);
-
-    return () => clearTimeout(t);
-  }, [state.phase, state.resolveIndex]);
+  }, [state.P1.hp, state.AI.hp]);
 
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -418,7 +391,7 @@ export default function GameScreen({
         </div>
 
         {/* Arena stage: fighters face each other */}
-        <ArenaStage playerView={playerView} aiView={aiView} />
+        <ArenaStage shakeLevel={shakeLevel} hitSide={hitSide} />
 
         {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>

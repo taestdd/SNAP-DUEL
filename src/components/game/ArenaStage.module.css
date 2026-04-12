@@ -29,8 +29,37 @@
   );
 }
 
+/* ─── Shake animations ─── */
+
+.shakeLight {
+  animation: shakeLight 150ms ease-in-out 3;
+}
+
+.shakeHeavy {
+  animation: shakeHeavy 200ms ease-in-out 4;
+}
+
+@keyframes shakeLight {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  75%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shakeHeavy {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-8px, -4px); }
+  40%  { transform: translate(8px, 4px); }
+  60%  { transform: translate(-6px, -2px); }
+  80%  { transform: translate(6px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ─── Fighters ─── */
+
 .fighterLeft,
 .fighterRight {
   display: flex;
   align-items: flex-end;
+  position: relative;
 }

@@ -1,28 +1,38 @@
 "use client";
 
 import FighterSprite from "./FighterSprite";
+import HitSpark from "./HitSpark";
 import styles from "./ArenaStage.module.css";
 import type { FighterPose } from "@/game/engine/types";
 
-export interface AnimViewState {
-  pose: FighterPose;
-  poseKey: number;
-  impactTick: number;
-}
+export type ShakeLevel = "none" | "light" | "heavy";
+export type HitSide = "player" | "ai" | null;
 
 interface ArenaStageProps {
-  playerView: AnimViewState;
-  aiView: AnimViewState;
+  shakeLevel?: ShakeLevel;
+  hitSide?: HitSide;
 }
 
-export default function ArenaStage({ playerView, aiView }: ArenaStageProps) {
+export default function ArenaStage({
+  shakeLevel = "none",
+  hitSide = null,
+}: ArenaStageProps) {
+  const shakeClass =
+    shakeLevel === "light"
+      ? styles.shakeLight
+      : shakeLevel === "heavy"
+        ? styles.shakeHeavy
+        : "";
+
   return (
-    <div className={styles.arena}>
+    <div className={`${styles.arena} ${shakeClass}`}>
       <div className={styles.fighterLeft}>
-        <FighterSprite pose={playerView.pose} poseKey={playerView.poseKey} flip={false} />
+        <FighterSprite pose="idle" poseKey="p1-idle" flip={false} />
+        <HitSpark active={hitSide === "player"} />
       </div>
       <div className={styles.fighterRight}>
-        <FighterSprite pose={aiView.pose} poseKey={aiView.poseKey} flip={true} />
+        <FighterSprite pose="idle" poseKey="ai-idle" flip={true} />
+        <HitSpark active={hitSide === "ai"} />
       </div>
     </div>
   );
