@@ -173,6 +173,39 @@ function DiscardModal({
   );
 }
 
+function DeckCardRows({ cards }: { cards: string[] }) {
+  return (
+    <div className={styles.deckCardList}>
+      {cards.length === 0 ? (
+        <div className={styles.deckEmpty}>비어 있습니다.</div>
+      ) : (
+        cards.map((cardId, idx) => {
+          const card = getCard(cardId);
+          if (!card) return null;
+          return (
+            <div key={`${cardId}-${idx}`} className={styles.deckCardRow}>
+              <div className={styles.deckCardName}>{card.name}</div>
+              <div className={styles.deckCardMeta}>
+                {card.tags?.map((tag) => (
+                  <span key={tag} className={styles.deckCardTag}>{tag}</span>
+                ))}
+                <div className={styles.deckCardEffects}>
+                  {card.effects.map((e, i) => (
+                    <span key={i} className={styles.deckCardEffect}>
+                      {effectLabel(e.type, e.damageType)}{e.value !== undefined ? ` ${e.value}` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.deckCardText}>{card.text}</div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
 export default function GameScreen({
   state,
   dispatch,
@@ -192,6 +225,28 @@ export default function GameScreen({
   const toastKeyRef = useRef(0);
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
+
+  const [logOpen, setLogOpen] = useState(false);
+  const [deckOpen, setDeckOpen] = useState(false);
+  const logPopoverRef = useRef<HTMLDivElement>(null);
+  const deckPopoverRef = useRef<HTMLDivElement>(null);
+  const logBtnRef = useRef<HTMLButtonElement>(null);
+  const deckBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!logOpen && !deckOpen) return;
+    function handleMouseDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (logOpen && logPopoverRef.current && !logPopoverRef.current.contains(target) && logBtnRef.current && !logBtnRef.current.contains(target)) {
+        setLogOpen(false);
+      }
+      if (deckOpen && deckPopoverRef.current && !deckPopoverRef.current.contains(target) && deckBtnRef.current && !deckBtnRef.current.contains(target)) {
+        setDeckOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [logOpen, deckOpen]);
 
   useEffect(() => {
     const prev = prevPhaseRef.current;
@@ -262,6 +317,24 @@ export default function GameScreen({
                 Winner: {state.winner === "DRAW" ? "DRAW" : state.winner}
               </div>
             )}
+            <div className={styles.popoverBtnRow}>
+              <button
+                ref={logBtnRef}
+                type="button"
+                className={`${styles.popoverBtn} ${logOpen ? styles.active : ""}`}
+                onClick={() => { setLogOpen((v) => !v); setDeckOpen(false); }}
+              >
+                📋 로그
+              </button>
+              <button
+                ref={deckBtnRef}
+                type="button"
+                className={`${styles.popoverBtn} ${deckOpen ? styles.active : ""}`}
+                onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
+              >
+                🃏 덱
+              </button>
+            </div>
           </div>
 
           <div className={styles.topPanel}>
@@ -272,20 +345,51 @@ export default function GameScreen({
         {/* Arena stage: fighters face each other */}
         <ArenaStage />
 
-        {/* Middle row: P1 Queue | Action Log | AI Queue */}
+        {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>
           <div className={styles.queuePanel}>
             <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
-          </div>
-
-          <div className={styles.actionLogPanel}>
-            <ActionLog log={state.log} />
           </div>
 
           <div className={styles.queuePanel}>
             <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
           </div>
         </div>
+
+        {/* Popovers */}
+        {logOpen && (
+          <div ref={logPopoverRef} className={styles.popover}>
+            <div className={styles.popoverHeader}>
+              <span className={styles.popoverTitle}>📋 액션 로그</span>
+              <button type="button" className={styles.popoverClose} onClick={() => setLogOpen(false)}>✕</button>
+            </div>
+            <div className={styles.popoverBody}>
+              <ActionLog log={state.log} />
+            </div>
+          </div>
+        )}
+        {deckOpen && (
+          <div ref={deckPopoverRef} className={styles.popover}>
+            <div className={styles.popoverHeader}>
+              <span className={styles.popoverTitle}>🃏 덱 트레커</span>
+              <button type="button" className={styles.popoverClose} onClick={() => setDeckOpen(false)}>✕</button>
+            </div>
+            <div className={styles.popoverBody}>
+              <div className={styles.deckSection}>
+                <div className={styles.deckSectionTitle}>내 덱 ({state.P1.deck.length}장)</div>
+                <DeckCardRows cards={state.P1.deck} />
+              </div>
+              <div className={styles.deckSection}>
+                <div className={styles.deckSectionTitle}>내 묘지 ({state.P1.trash.length}장)</div>
+                <DeckCardRows cards={state.P1.trash} />
+              </div>
+              <div className={styles.deckSection}>
+                <div className={styles.deckSectionTitle}>AI 덱</div>
+                <div className={styles.aiDeckCount}>잔여 {state.AI.deck.length}장 (목록 숨김)</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Bottom: Hand section */}
         <Hand
