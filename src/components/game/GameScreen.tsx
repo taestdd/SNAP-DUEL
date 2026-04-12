@@ -12,7 +12,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage from "./ArenaStage";
+import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -226,6 +226,39 @@ export default function GameScreen({
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
 
+  // Stage effects
+  const prevP1HpRef = useRef(state.P1.hp);
+  const prevAiHpRef = useRef(state.AI.hp);
+  const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
+  const [hitSide, setHitSide] = useState<HitSide>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const prevP1 = prevP1HpRef.current;
+    const prevAi = prevAiHpRef.current;
+    prevP1HpRef.current = state.P1.hp;
+    prevAiHpRef.current = state.AI.hp;
+
+    const p1Damage = prevP1 - state.P1.hp;
+    const aiDamage = prevAi - state.AI.hp;
+
+    if (p1Damage > 0 || aiDamage > 0) {
+      const maxDamage = Math.max(p1Damage, aiDamage);
+      const newShake: ShakeLevel = maxDamage >= 6 ? "heavy" : "light";
+      const shakeDuration = newShake === "heavy" ? 850 : 480;
+
+      setShakeLevel(newShake);
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
+
+      const side: HitSide = p1Damage >= aiDamage ? "player" : "ai";
+      setHitSide(side);
+      if (hitTimerRef.current) clearTimeout(hitTimerRef.current);
+      hitTimerRef.current = setTimeout(() => setHitSide(null), 300);
+    }
+  }, [state.P1.hp, state.AI.hp]);
+
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
   const logPopoverRef = useRef<HTMLDivElement>(null);
@@ -343,7 +376,7 @@ export default function GameScreen({
         </div>
 
         {/* Arena stage: fighters face each other */}
-        <ArenaStage />
+        <ArenaStage shakeLevel={shakeLevel} hitSide={hitSide} />
 
         {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>
