@@ -1,0 +1,10 @@
+.sprite {
+  width: 180px;
+  height: 180px;
+  background-image: url("/sprites/sheet.png");
+  background-size: 1080px 900px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transition: transform 0.12s ease;
+  flex-shrink: 0;
+}

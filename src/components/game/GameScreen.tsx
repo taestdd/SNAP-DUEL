@@ -12,6 +12,8 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
+import FighterSprite from "./FighterSprite";
+import type { FighterViewState } from "@/game/engine/types";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -183,6 +185,8 @@ export default function GameScreen({
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
+
+  const idleViewState: FighterViewState = { pose: "idle", poseKey: 0, hold: false, impactTick: 0 };
   const canAct = isSetup && !state.P1.ready && !isGameOver;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
@@ -265,6 +269,17 @@ export default function GameScreen({
 
           <div className={styles.topPanel}>
             <ArenaHeader ai={state.AI} isThinking={isAiThinking} />
+          </div>
+        </div>
+
+        {/* Arena row: Fighter sprites */}
+        <div className={styles.arenaRow}>
+          <div className={styles.arenaFighter}>
+            <FighterSprite viewState={idleViewState} flip={false} />
+          </div>
+          <div className={styles.arenaCenter} />
+          <div className={styles.arenaFighter}>
+            <FighterSprite viewState={idleViewState} flip={true} />
           </div>
         </div>
 

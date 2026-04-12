@@ -13,6 +13,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage.",
     tags: ["검술", "한손검"],
+    actionTag: "punch",
   },
 
   minor_guard: {
@@ -26,6 +27,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Gain 3 Block.",
     tags: ["방어", "방패"],
+    actionTag: "guard",
   },
 
   peek: {
@@ -39,6 +41,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Draw 1 card.",
     tags: ["마법"],
+    actionTag: "utility",
   },
 
   // 2 cost
@@ -53,6 +56,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 4 ground damage.",
     tags: ["검술", "한손검"],
+    actionTag: "slash",
   },
 
   piercing_strike: {
@@ -66,6 +70,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 4 ground damage.",
     tags: ["검술", "한손검"],
+    actionTag: "slash",
   },
 
   // 3 cost
@@ -80,6 +85,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 6 ground damage.",
     tags: ["격투"],
+    actionTag: "punch",
   },
 
   crushing_blow: {
@@ -93,6 +99,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 7 ground damage.",
     tags: ["격투"],
+    actionTag: "kick",
   },
 
   // 4 cost
@@ -108,6 +115,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 10 ground damage. Draw 1.",
     tags: ["검술", "한손검"],
+    actionTag: "slash",
   },
 
   arcane_burst: {
@@ -122,6 +130,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 9 ground damage. Draw 1.",
     tags: ["마법"],
+    actionTag: "punch",
   },
 
   meteor_strike: {
@@ -136,6 +145,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 12 ground damage. Draw 1.",
     tags: ["마법"],
+    actionTag: "kick",
   },
 
   // 복합 효과 카드
@@ -151,6 +161,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Heal 2, then deal 2 ground damage.",
     tags: ["마법"],
+    actionTag: "heal",
   },
 
   // 에어본 시스템 카드
@@ -168,6 +179,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and launch the opponent (airborneStack 2).",
     tags: ["격투"],
+    actionTag: "punch",
   },
 
   // 대공 데미지 카드: 상대가 체공 상태일 때만 피해
@@ -182,6 +194,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 6 anti-air damage — only hits airborne targets.",
     tags: ["검술"],
+    actionTag: "special_attack",
   },
 
   // 사용 조건 있는 카드: 체공 상태에서만 사용 가능
@@ -197,6 +210,7 @@ export const CARDS: Record<string, Card> = {
     text: "Only usable while airborne. Deal 4 anti-air damage.",
     tags: ["격투"],
     useCondition: "airborne",
+    actionTag: "special_attack",
   },
 
   // move_cards 카드
@@ -217,6 +231,7 @@ export const CARDS: Record<string, Card> = {
       }
     ],
     text: "Choose 1 card from your trash and return it to your hand.",
+    actionTag: "utility",
   },
 
   // 태그 카드
@@ -230,6 +245,7 @@ export const CARDS: Record<string, Card> = {
       { type: "tag" }
     ],
     text: "Switch active character. Exit effect triggers first, then entry effect.",
+    actionTag: "tag_attack",
   },
 };
 

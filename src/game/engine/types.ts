@@ -103,6 +103,12 @@ export type Card = {
 
   /** 카드 분류 태그. 미지정 시 태그 없음 */
   tags?: CardTag[];
+
+  /** 전투 애니메이션 분류 태그 */
+  actionTag: ActionTag;
+
+  /** 히트 이펙트 발생 타이밍 (ms). 미지정 시 애니메이션 엔진이 자동 결정 */
+  hitTimings?: number[];
 };
 
 export type SelectedCard = {
@@ -253,6 +259,42 @@ export type SetupConfig = {
   characters: [CharacterId, CharacterId];
   /** DECK_REGISTRY 키 */
   deckId: string;
+};
+
+export type ActionTag =
+  | 'punch'
+  | 'kick'
+  | 'slash'
+  | 'guard'
+  | 'special_attack'
+  | 'tag_attack'
+  | 'heal'
+  | 'utility';
+
+export type FighterPose =
+  | 'idle'
+  | 'punch'
+  | 'kick'
+  | 'slash'
+  | 'guard'
+  | 'special_attack'
+  | 'tag_attack'
+  | 'hit_light'
+  | 'hit_heavy'
+  | 'airborne';
+
+export type FighterViewState = {
+  pose: FighterPose;
+  poseKey: number;
+  hold: boolean;
+  impactTick: number;
+};
+
+export type CombatAnimationEvent = {
+  kind: 'action_start' | 'visual_hit' | 'damage_resolve' | 'action_end';
+  actor: 'player' | 'ai';
+  cardId: string;
+  delay: number;
 };
 
 export type Action =
