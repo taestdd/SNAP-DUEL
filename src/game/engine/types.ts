@@ -37,12 +37,26 @@ export interface FighterViewState {
 }
 
 /**
- * 전투 애니메이션 이벤트
+ * 전투 애니메이션 이벤트 (이벤트 큐 파이프라인용)
+ *
+ * type:
+ *   action_start   — 공격자 포즈 전환
+ *   visual_hit     — 피격자 hit 포즈
+ *   damage_resolve — 실제 HP 반영 타이밍 마커
+ *   action_end     — idle 복귀
+ *
+ * delay: 큐 시작 시점으로부터의 절대 지연 (ms)
  */
 export interface CombatAnimationEvent {
-  type: "attack" | "hit" | "block" | "airborne" | "ko";
+  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end";
+  /** 큐 시작 시점으로부터의 절대 지연 (ms) */
+  delay: number;
+  /** 행동하는 플레이어 (action_start, action_end) */
+  actor?: PlayerId;
+  /** 피격자 (visual_hit) */
+  target?: PlayerId;
+  /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
-  target: PlayerId;
 }
 
 export type CharacterId = "A" | "B";

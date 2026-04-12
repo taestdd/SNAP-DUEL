@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Action, ActionTag, Combatant, FighterPose, GameState } from "@/game/engine/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  Action,
+  ActionTag,
+  Combatant,
+  CombatAnimationEvent,
+  FighterPose,
+  GameState,
+} from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
+import { makeQueue } from "@/game/animation/makeQueue";
+import { useAnimQueue } from "@/game/animation/useAnimQueue";
 import styles from "./GameScreen.module.css";
 import modalStyles from "./CardSelectionModal.module.css";
 import ArenaHeader from "./ArenaHeader";
@@ -13,6 +22,18 @@ import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
+
+function actionTagToPose(tag?: ActionTag): FighterPose {
+  switch (tag) {
+    case "slash":    return "attack_slash";
+    case "strike":   return "attack_strike";
+    case "magic":    return "attack_magic";
+    case "block":    return "block";
+    case "launch":
+    case "aerial":   return "airborne";
+    default:         return "attack_slash";
+  }
+}
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -241,38 +262,83 @@ export default function GameScreen({
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
 
-  // Stage effects
-  const prevP1HpRef = useRef(state.P1.hp);
-  const prevAiHpRef = useRef(state.AI.hp);
-  const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
-  const [hitSide, setHitSide] = useState<HitSide>(null);
-  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── 파이터 포즈 상태 ──────────────────────────────────────────
+  const [playerPose, setPlayerPose] = useState<FighterPose>("idle");
+  const [playerPoseKey, setPlayerPoseKey] = useState<number>(0);
+  const [aiPose, setAiPose] = useState<FighterPose>("idle");
+  const [aiPoseKey, setAiPoseKey] = useState<number>(0);
 
+  const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
+  const [animRunning, setAnimRunning] = useState(false);
+
+  // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
-    const prevP1 = prevP1HpRef.current;
-    const prevAi = prevAiHpRef.current;
-    prevP1HpRef.current = state.P1.hp;
-    prevAiHpRef.current = state.AI.hp;
-
-    const p1Damage = prevP1 - state.P1.hp;
-    const aiDamage = prevAi - state.AI.hp;
-
-    if (p1Damage > 0 || aiDamage > 0) {
-      const maxDamage = Math.max(p1Damage, aiDamage);
-      const newShake: ShakeLevel = maxDamage >= 6 ? "heavy" : "light";
-      const shakeDuration = newShake === "heavy" ? 850 : 480;
-
-      setShakeLevel(newShake);
-      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-      shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
-
-      const side: HitSide = p1Damage >= aiDamage ? "player" : "ai";
-      setHitSide(side);
-      if (hitTimerRef.current) clearTimeout(hitTimerRef.current);
-      hitTimerRef.current = setTimeout(() => setHitSide(null), 300);
+    if (state.phase !== "RESOLVING") {
+      setAnimRunning(false);
+      return;
     }
-  }, [state.P1.hp, state.AI.hp]);
+
+    const p1Entry = state.resolveQueue.find((e) => e.player === "P1");
+    const aiEntry = state.resolveQueue.find((e) => e.player === "AI");
+    const playerCard = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
+    const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
+    const initiative = state.initiative === "P1" ? "player" : "ai";
+
+    const queue = makeQueue(playerCard, aiCard, initiative, false, false);
+    setAnimQueue(queue);
+    setAnimRunning(true);
+  // resolveQueue 내용이 같아도 phase가 RESOLVING으로 바뀔 때만 재생성
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase]);
+
+  // GAME_OVER 시 KO 포즈
+  useEffect(() => {
+    if (state.phase !== "GAME_OVER") return;
+    if (state.winner === "AI") {
+      setPlayerPose("ko");
+      setPlayerPoseKey((k) => k + 1);
+    } else if (state.winner === "P1") {
+      setAiPose("ko");
+      setAiPoseKey((k) => k + 1);
+    }
+  }, [state.phase, state.winner]);
+
+  const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
+    switch (event.type) {
+      case "action_start":
+        if (event.actor === "P1") {
+          setPlayerPose(actionTagToPose(event.actionTag));
+          setPlayerPoseKey((k) => k + 1);
+        } else if (event.actor === "AI") {
+          setAiPose(actionTagToPose(event.actionTag));
+          setAiPoseKey((k) => k + 1);
+        }
+        break;
+      case "visual_hit":
+        if (event.target === "P1") {
+          setPlayerPose("hit");
+          setPlayerPoseKey((k) => k + 1);
+        } else if (event.target === "AI") {
+          setAiPose("hit");
+          setAiPoseKey((k) => k + 1);
+        }
+        break;
+      case "action_end":
+        if (event.actor === "P1") {
+          setPlayerPose("idle");
+          setPlayerPoseKey((k) => k + 1);
+        } else if (event.actor === "AI") {
+          setAiPose("idle");
+          setAiPoseKey((k) => k + 1);
+        }
+        break;
+      case "damage_resolve":
+        // HP 반영은 게임 상태(resolveOneStep)가 자동 처리
+        break;
+    }
+  }, []);
+
+  useAnimQueue(animQueue, handleAnimEvent, animRunning);
 
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -391,7 +457,12 @@ export default function GameScreen({
         </div>
 
         {/* Arena stage: fighters face each other */}
-        <ArenaStage shakeLevel={shakeLevel} hitSide={hitSide} />
+        <ArenaStage
+          playerPose={playerPose}
+          playerPoseKey={playerPoseKey}
+          aiPose={aiPose}
+          aiPoseKey={aiPoseKey}
+        />
 
         {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>
