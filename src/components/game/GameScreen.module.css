@@ -16,7 +16,7 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto 1fr 240px;
+  grid-template-rows: auto auto 1fr 240px;
   overflow: hidden;
 }
 
