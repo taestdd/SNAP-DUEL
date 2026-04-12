@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Action, Combatant, GameState } from "@/game/engine/types";
+import type { Action, ActionTag, Combatant, FighterPose, GameState } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import modalStyles from "./CardSelectionModal.module.css";
@@ -12,7 +12,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage from "./ArenaStage";
+import ArenaStage, { type AnimViewState } from "./ArenaStage";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -206,6 +206,21 @@ function DeckCardRows({ cards }: { cards: string[] }) {
   );
 }
 
+const DEFAULT_VIEW: AnimViewState = { pose: "idle", poseKey: 0, impactTick: 0 };
+
+function actionTagToPose(tag?: ActionTag): FighterPose {
+  switch (tag) {
+    case "slash":     return "attack_slash";
+    case "strike":    return "attack_strike";
+    case "magic":     return "attack_magic";
+    case "block":     return "block";
+    case "launch":    return "attack_strike";
+    case "anti_air":  return "attack_slash";
+    case "aerial":    return "airborne";
+    default:          return "idle";
+  }
+}
+
 export default function GameScreen({
   state,
   dispatch,
@@ -225,6 +240,66 @@ export default function GameScreen({
   const toastKeyRef = useRef(0);
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
+
+  const [playerView, setPlayerView] = useState<AnimViewState>(DEFAULT_VIEW);
+  const [aiView, setAiView] = useState<AnimViewState>(DEFAULT_VIEW);
+  const prevResolveIndexRef = useRef(-1);
+  const prevP1HpRef = useRef(state.P1.hp);
+  const prevAiHpRef = useRef(state.AI.hp);
+
+  useEffect(() => {
+    if (state.phase !== "RESOLVING") {
+      if (prevResolveIndexRef.current !== -1) {
+        setPlayerView(DEFAULT_VIEW);
+        setAiView(DEFAULT_VIEW);
+        prevResolveIndexRef.current = -1;
+      }
+      return;
+    }
+
+    const currIdx = state.resolveIndex;
+    const prevIdx = prevResolveIndexRef.current;
+    if (currIdx === prevIdx) return;
+    prevResolveIndexRef.current = currIdx;
+
+    if (currIdx === 0) {
+      // Just entered RESOLVING — sync HP baseline
+      prevP1HpRef.current = state.P1.hp;
+      prevAiHpRef.current = state.AI.hp;
+      return;
+    }
+
+    const processedItem = state.resolveQueue[currIdx - 1];
+    const p1HpDropped = state.P1.hp < prevP1HpRef.current;
+    const aiHpDropped = state.AI.hp < prevAiHpRef.current;
+    prevP1HpRef.current = state.P1.hp;
+    prevAiHpRef.current = state.AI.hp;
+
+    if (processedItem) {
+      const { player, cardId } = processedItem;
+      const card = getCard(cardId);
+      const attackPose = actionTagToPose(card?.actionTag);
+
+      if (player === "P1") {
+        setPlayerView((prev) => ({ ...prev, pose: attackPose, poseKey: prev.poseKey + 1 }));
+        if (aiHpDropped) {
+          setAiView((prev) => ({ pose: "hit", poseKey: prev.poseKey + 1, impactTick: prev.impactTick + 1 }));
+        }
+      } else {
+        setAiView((prev) => ({ ...prev, pose: attackPose, poseKey: prev.poseKey + 1 }));
+        if (p1HpDropped) {
+          setPlayerView((prev) => ({ pose: "hit", poseKey: prev.poseKey + 1, impactTick: prev.impactTick + 1 }));
+        }
+      }
+    }
+
+    const t = setTimeout(() => {
+      setPlayerView((prev) => ({ ...prev, pose: "idle", poseKey: prev.poseKey + 1 }));
+      setAiView((prev) => ({ ...prev, pose: "idle", poseKey: prev.poseKey + 1 }));
+    }, 500);
+
+    return () => clearTimeout(t);
+  }, [state.phase, state.resolveIndex]);
 
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -343,7 +418,7 @@ export default function GameScreen({
         </div>
 
         {/* Arena stage: fighters face each other */}
-        <ArenaStage />
+        <ArenaStage playerView={playerView} aiView={aiView} />
 
         {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>
