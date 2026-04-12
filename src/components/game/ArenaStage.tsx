@@ -3,6 +3,7 @@
 import FighterSprite from "./FighterSprite";
 import HitSpark from "./HitSpark";
 import styles from "./ArenaStage.module.css";
+import type { FighterPose } from "@/game/engine/types";
 
 export type ShakeLevel = "none" | "light" | "heavy";
 export type HitSide = "player" | "ai" | null;

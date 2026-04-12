@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Action, Combatant, GameState } from "@/game/engine/types";
+import type { Action, ActionTag, Combatant, FighterPose, GameState } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import modalStyles from "./CardSelectionModal.module.css";
@@ -204,6 +204,21 @@ function DeckCardRows({ cards }: { cards: string[] }) {
       )}
     </div>
   );
+}
+
+const DEFAULT_VIEW: AnimViewState = { pose: "idle", poseKey: 0, impactTick: 0 };
+
+function actionTagToPose(tag?: ActionTag): FighterPose {
+  switch (tag) {
+    case "slash":     return "attack_slash";
+    case "strike":    return "attack_strike";
+    case "magic":     return "attack_magic";
+    case "block":     return "block";
+    case "launch":    return "attack_strike";
+    case "anti_air":  return "attack_slash";
+    case "aerial":    return "airborne";
+    default:          return "idle";
+  }
 }
 
 export default function GameScreen({
