@@ -1,5 +1,63 @@
 export type PlayerId = "P1" | "AI";
 
+/**
+ * 카드 액션 태그 — 스프라이트 애니메이션 포즈 결정에 사용
+ */
+export type ActionTag =
+  | "punch"
+  | "kick"
+  | "slash"
+  | "guard"
+  | "special_attack"
+  | "tag_attack"
+  | "heal"
+  | "utility";
+
+/**
+ * 전투 애니메이션 이벤트 종류
+ */
+export type CombatAnimationEventKind =
+  | "action_start"
+  | "visual_hit"
+  | "damage_resolve"
+  | "action_end";
+
+export interface CombatAnimationEvent {
+  kind: CombatAnimationEventKind;
+  actor: "player" | "ai";
+  cardId: string;
+  /** 이전 이벤트로부터 대기 ms */
+  delay: number;
+}
+
+/**
+ * 파이터 포즈 종류
+ */
+export type FighterPose =
+  | "idle"
+  | "punch"
+  | "kick"
+  | "slash"
+  | "guard"
+  | "special_attack"
+  | "tag_attack"
+  | "hit_light"
+  | "hit_heavy"
+  | "airborne";
+
+/**
+ * 파이터 뷰 상태 — 스프라이트 렌더링 및 애니메이션 제어
+ */
+export interface FighterViewState {
+  pose: FighterPose;
+  /** 변경마다 증가 → 애니메이션 재시작 트리거 */
+  poseKey: number;
+  /** true면 마지막 프레임에서 홀드 */
+  hold: boolean;
+  /** 히트 시 증가 → 넉백 트리거 */
+  impactTick: number;
+}
+
 export type CharacterId = "A" | "B";
 
 export type CharacterDef = {
@@ -103,6 +161,12 @@ export type Card = {
 
   /** 카드 분류 태그. 미지정 시 태그 없음 */
   tags?: CardTag[];
+
+  /** 스프라이트 애니메이션 포즈 결정용 액션 태그 */
+  actionTag: ActionTag;
+
+  /** 멀티히트 타이밍 (ms). 미지정 시 단일 히트 */
+  hitTimings?: number[];
 };
 
 export type SelectedCard = {

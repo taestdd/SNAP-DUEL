@@ -16,7 +16,7 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto 1fr 240px;
+  grid-template-rows: auto auto 1fr 240px;
   overflow: hidden;
 }
 
@@ -68,6 +68,35 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 13px;
   font-weight: 700;
+}
+
+/* ── Arena row: Fighter sprites ── */
+.arenaRow {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 10px;
+  margin-bottom: 6px;
+  height: 180px;
+}
+
+.arenaFighterLeft {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-right: 12px;
+}
+
+.arenaFighterRight {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 12px;
+}
+
+.arenaCenter {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ── Middle row: P1 Queue | Action Log | AI Queue ── */

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Action, Combatant, GameState } from "@/game/engine/types";
+import type { Action, Combatant, FighterViewState, GameState } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import modalStyles from "./CardSelectionModal.module.css";
@@ -12,6 +12,14 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
+import FighterSprite from "./FighterSprite";
+
+const IDLE_VIEW_STATE: FighterViewState = {
+  pose: "idle",
+  poseKey: 0,
+  hold: false,
+  impactTick: 0,
+};
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -265,6 +273,17 @@ export default function GameScreen({
 
           <div className={styles.topPanel}>
             <ArenaHeader ai={state.AI} isThinking={isAiThinking} />
+          </div>
+        </div>
+
+        {/* Arena row: Fighter sprites */}
+        <div className={styles.arenaRow}>
+          <div className={styles.arenaFighterLeft}>
+            <FighterSprite viewState={IDLE_VIEW_STATE} flip={false} />
+          </div>
+          <div className={styles.arenaCenter} />
+          <div className={styles.arenaFighterRight}>
+            <FighterSprite viewState={IDLE_VIEW_STATE} flip={true} />
           </div>
         </div>
 

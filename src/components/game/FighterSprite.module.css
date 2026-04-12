@@ -1,0 +1,26 @@
+.sprite {
+  display: block;
+  flex-shrink: 0;
+}
+
+@keyframes knockbackRight {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(18px); }
+  70%  { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes knockbackLeft {
+  0%   { transform: scaleX(-1) translateX(0); }
+  30%  { transform: scaleX(-1) translateX(18px); }
+  70%  { transform: scaleX(-1) translateX(6px); }
+  100% { transform: scaleX(-1) translateX(0); }
+}
+
+.knockbackRight {
+  animation: knockbackRight 0.3s ease-out;
+}
+
+.knockbackLeft {
+  animation: knockbackLeft 0.3s ease-out;
+}
