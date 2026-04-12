@@ -1,0 +1,52 @@
+.spark {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Each rayWrapper is rotated to the target angle, origin at spark center */
+.rayWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+/* The actual line radiates outward from the center */
+.ray {
+  position: absolute;
+  top: -2px;
+  left: 6px;
+  width: 32px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #ffe566 0%,
+    #ff9900 55%,
+    transparent 100%
+  );
+  border-radius: 2px;
+  transform-origin: left center;
+  animation: rayBurst 300ms ease-out forwards;
+}
+
+@keyframes rayBurst {
+  0% {
+    opacity: 1;
+    transform: scaleX(0.05);
+  }
+  45% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1.15);
+  }
+}
