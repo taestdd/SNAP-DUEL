@@ -1,5 +1,50 @@
 export type PlayerId = "P1" | "AI";
 
+/**
+ * 카드 액션 태그 — 애니메이션 포즈 결정에 사용
+ */
+export type ActionTag =
+  | "slash"
+  | "strike"
+  | "magic"
+  | "block"
+  | "draw"
+  | "launch"
+  | "anti_air"
+  | "aerial"
+  | "tag_switch"
+  | "reclaim";
+
+/**
+ * 파이터 포즈 — 스프라이트 시퀀스 키
+ */
+export type FighterPose =
+  | "idle"
+  | "attack_slash"
+  | "attack_strike"
+  | "attack_magic"
+  | "block"
+  | "hit"
+  | "airborne"
+  | "ko";
+
+/**
+ * 파이터 뷰 상태 (렌더링용)
+ */
+export interface FighterViewState {
+  pose: FighterPose;
+  flip: boolean;
+}
+
+/**
+ * 전투 애니메이션 이벤트
+ */
+export interface CombatAnimationEvent {
+  type: "attack" | "hit" | "block" | "airborne" | "ko";
+  actionTag?: ActionTag;
+  target: PlayerId;
+}
+
 export type CharacterId = "A" | "B";
 
 export type CharacterDef = {
@@ -103,6 +148,12 @@ export type Card = {
 
   /** 카드 분류 태그. 미지정 시 태그 없음 */
   tags?: CardTag[];
+
+  /** 애니메이션 액션 태그. 미지정 시 idle 유지 */
+  actionTag?: ActionTag;
+
+  /** 히트 타이밍 (ms). 애니메이션 중 피격 판정 시점 */
+  hitTimings?: number[];
 };
 
 export type SelectedCard = {
