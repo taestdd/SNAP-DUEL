@@ -1,5 +1,18 @@
 export type PlayerId = "P1" | "AI";
 
+/**
+ * 카드가 실행될 때 파이터에게 요청하는 액션 종류
+ * 스프라이트 애니메이션 포즈 선택에 사용
+ */
+export type ActionTag =
+  | "slash"   // 검술 계열 공격
+  | "strike"  // 격투 계열 공격
+  | "magic"   // 마법 계열 공격 / 유틸
+  | "block"   // 방어 / 방패
+  | "launch"  // 상대 띄우기
+  | "aerial"  // 체공 중 공격
+  | "tag";    // 캐릭터 교체
+
 export type CharacterId = "A" | "B";
 
 export type CharacterDef = {
@@ -103,6 +116,15 @@ export type Card = {
 
   /** 카드 분류 태그. 미지정 시 태그 없음 */
   tags?: CardTag[];
+
+  /** 스프라이트 애니메이션에 사용할 액션 태그. 미지정 시 idle 유지 */
+  actionTag?: ActionTag;
+
+  /**
+   * 애니메이션 중 히트 판정이 발생하는 프레임 인덱스 목록
+   * (FighterPose 시퀀스 내 0-based 인덱스)
+   */
+  hitTimings?: number[];
 };
 
 export type SelectedCard = {
@@ -245,6 +267,44 @@ export type GameState = {
   resolveIndex: number;
   /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
   resolveUnresolved: PlayerId[];
+};
+
+// ── 스프라이트 / 애니메이션 ────────────────────────────────────────────────
+
+/**
+ * 파이터 스프라이트가 취할 수 있는 포즈
+ * spriteMap.ts 에서 각 포즈별 프레임 시퀀스를 정의
+ */
+export type FighterPose =
+  | "idle"
+  | "slash"
+  | "strike"
+  | "magic"
+  | "block"
+  | "hit"
+  | "launch"
+  | "aerial"
+  | "tag"
+  | "victory"
+  | "defeat";
+
+/** 파이터 스프라이트 렌더링에 필요한 뷰 상태 */
+export type FighterViewState = {
+  pose: FighterPose;
+  /** 좌우 반전 여부 (AI 쪽은 true) */
+  flip: boolean;
+  /** 동일 포즈라도 이 값이 바뀌면 애니메이션을 처음부터 다시 재생 */
+  poseKey: number;
+  /** true 이면 마지막 프레임에서 멈춤 (액션 완료 후 홀드) */
+  hold: boolean;
+};
+
+/** 전투 중 특정 플레이어에게 애니메이션을 요청하는 이벤트 */
+export type CombatAnimationEvent = {
+  player: PlayerId;
+  pose: FighterPose;
+  /** 애니메이션 지속 시간(ms). 미지정 시 spriteMap 기본값 사용 */
+  durationMs?: number;
 };
 
 /** 게임 시작 전 셋업 설정 */

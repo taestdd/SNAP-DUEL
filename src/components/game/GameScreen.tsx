@@ -12,6 +12,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
+import FighterSprite from "./FighterSprite";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -271,6 +272,9 @@ export default function GameScreen({
         {/* Middle row: P1 Queue | Action Log | AI Queue */}
         <div className={styles.middleRow}>
           <div className={styles.queuePanel}>
+            <div className={styles.spriteArea}>
+              <FighterSprite pose="idle" />
+            </div>
             <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
           </div>
 
@@ -279,6 +283,9 @@ export default function GameScreen({
           </div>
 
           <div className={styles.queuePanel}>
+            <div className={styles.spriteArea}>
+              <FighterSprite pose="idle" flip />
+            </div>
             <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
           </div>
         </div>

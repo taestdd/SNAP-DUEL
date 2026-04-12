@@ -98,6 +98,13 @@
   overflow: hidden;
 }
 
+/* ── Sprite ── */
+.spriteArea {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+
 /* ── Queue ── */
 .queueBox {
   padding: 12px;
