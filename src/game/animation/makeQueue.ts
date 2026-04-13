@@ -9,7 +9,7 @@ import type { Card, CombatAnimationEvent, PlayerId } from "@/game/engine/types";
  *   t=  0  action_start (공격자)
  *   t=300  visual_hit   (피격자)
  *   t=400  damage_resolve
- *   t=800  action_end   (공격자 idle 복귀)
+ *   t=800  action_end   (공격자 포즈 유지)
  *
  * 양측 모두 카드 있음 + 이니셔티브 우위 (선공자 먼저):
  *   t=  0  action_start (선공자)

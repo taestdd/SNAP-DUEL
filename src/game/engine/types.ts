@@ -43,7 +43,7 @@ export interface FighterViewState {
  *   action_start   — 공격자 포즈 전환
  *   visual_hit     — 피격자 hit 포즈
  *   damage_resolve — 실제 HP 반영 타이밍 마커
- *   action_end     — idle 복귀
+ *   action_end     — 마지막 포즈 유지 (idle 복귀는 라운드 경계에서만)
  *
  * delay: 큐 시작 시점으로부터의 절대 지연 (ms)
  */
