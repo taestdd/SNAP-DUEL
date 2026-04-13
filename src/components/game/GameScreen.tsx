@@ -21,7 +21,20 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage from "./ArenaStage";
+import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
+
+function actionTagToPose(tag?: ActionTag): FighterPose {
+  switch (tag) {
+    case "slash":     return "attack_slash";
+    case "strike":    return "attack_strike";
+    case "magic":     return "attack_magic";
+    case "block":     return "block";
+    case "launch":    return "attack_strike";
+    case "anti_air":  return "attack_slash";
+    case "aerial":    return "airborne";
+    default:          return "idle";
+  }
+}
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -215,18 +228,6 @@ function DeckCardRows({ cards }: { cards: string[] }) {
   );
 }
 
-function actionTagToPose(tag?: ActionTag): FighterPose {
-  switch (tag) {
-    case "slash":     return "attack_slash";
-    case "strike":    return "attack_strike";
-    case "magic":     return "attack_magic";
-    case "block":     return "block";
-    case "launch":    return "attack_strike";
-    case "anti_air":  return "attack_slash";
-    case "aerial":    return "airborne";
-    default:          return "idle";
-  }
-}
 
 export default function GameScreen({
   state,
@@ -253,6 +254,10 @@ export default function GameScreen({
   const [playerPoseKey, setPlayerPoseKey] = useState<number>(0);
   const [aiPose, setAiPose] = useState<FighterPose>("idle");
   const [aiPoseKey, setAiPoseKey] = useState<number>(0);
+  const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
+
+  const prevP1HpRef = useRef(state.P1.hp);
+  const prevAiHpRef = useRef(state.AI.hp);
 
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
@@ -289,6 +294,30 @@ export default function GameScreen({
     }
   }, [state.phase, state.winner]);
 
+  // 라운드 경계에서 양쪽 idle 리셋
+  useEffect(() => {
+    if (state.phase === "TURN_END" || state.phase === "TURN_START") {
+      setPlayerPose("idle");
+      setPlayerPoseKey((k) => k + 1);
+      setAiPose("idle");
+      setAiPoseKey((k) => k + 1);
+    }
+  }, [state.phase]);
+
+  // HP 변화 감지 → 화면 흔들림
+  useEffect(() => {
+    const p1Dmg = prevP1HpRef.current - state.P1.hp;
+    const aiDmg = prevAiHpRef.current - state.AI.hp;
+    prevP1HpRef.current = state.P1.hp;
+    prevAiHpRef.current = state.AI.hp;
+    const maxDmg = Math.max(p1Dmg, aiDmg);
+    if (maxDmg <= 0) return;
+    const level: ShakeLevel = maxDmg <= 5 ? "light" : "heavy";
+    setShakeLevel(level);
+    const timer = setTimeout(() => setShakeLevel("none"), 300);
+    return () => clearTimeout(timer);
+  }, [state.P1.hp, state.AI.hp]);
+
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
       case "action_start":
@@ -310,13 +339,7 @@ export default function GameScreen({
         }
         break;
       case "action_end":
-        if (event.actor === "P1") {
-          setPlayerPose("idle");
-          setPlayerPoseKey((k) => k + 1);
-        } else if (event.actor === "AI") {
-          setAiPose("idle");
-          setAiPoseKey((k) => k + 1);
-        }
+        // hold last pose — idle reset happens on TURN_END / TURN_START
         break;
       case "damage_resolve":
         // HP 반영은 게임 상태(resolveOneStep)가 자동 처리
@@ -448,6 +471,7 @@ export default function GameScreen({
           playerPoseKey={playerPoseKey}
           aiPose={aiPose}
           aiPoseKey={aiPoseKey}
+          shakeLevel={shakeLevel}
         />
 
         {/* Middle row: P1 Queue | AI Queue */}
