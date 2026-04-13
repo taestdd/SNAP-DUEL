@@ -333,4 +333,5 @@ export type Action =
   | { type: "GAME/INIT" }
   | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
   | { type: "SELECTION/SKIP" }
-  | { type: "DISCARD/CONFIRM"; discardCards: string[] };
+  | { type: "DISCARD/CONFIRM"; discardCards: string[] }
+  | { type: "TURN/TAG" };
