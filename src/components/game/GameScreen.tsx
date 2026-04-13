@@ -25,13 +25,14 @@ import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 
 function actionTagToPose(tag?: ActionTag): FighterPose {
   switch (tag) {
-    case "slash":    return "attack_slash";
-    case "strike":   return "attack_strike";
-    case "magic":    return "attack_magic";
-    case "block":    return "block";
-    case "launch":
-    case "aerial":   return "airborne";
-    default:         return "attack_slash";
+    case "slash":     return "attack_slash";
+    case "strike":    return "attack_strike";
+    case "magic":     return "attack_magic";
+    case "block":     return "block";
+    case "launch":    return "attack_strike";
+    case "anti_air":  return "attack_slash";
+    case "aerial":    return "airborne";
+    default:          return "idle";
   }
 }
 
@@ -226,6 +227,7 @@ function DeckCardRows({ cards }: { cards: string[] }) {
     </div>
   );
 }
+
 
 export default function GameScreen({
   state,
