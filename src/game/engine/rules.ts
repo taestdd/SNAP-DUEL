@@ -134,7 +134,7 @@ function handleRoundEnd(state: GameState): GameState {
  * 2. 캐릭터 교체
  * 3. 새 캐릭터 진입 효과
  */
-function applyTagSwitch(state: GameState, player: PlayerId): GameState {
+export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
   const me = state[player];
   const currentChar = me.activeCharacter;
   const newChar: CharacterId = currentChar === "A" ? "B" : "A";

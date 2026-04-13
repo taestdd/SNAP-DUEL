@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch } from "./rules";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 
@@ -88,12 +88,49 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return s;
     }
 
+    case "TURN/TAG": {
+      const inSetupTag =
+        state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
+      if (!inSetupTag) return state;
+      if (!isP1TurnToPick(state)) return state;
+      if (state.P1.ready) return state;
+
+      const benchCharP1 = state.P1.activeCharacter === "A" ? "B" : "A";
+      if (state.P1.characterHp[benchCharP1] <= 0) return state;
+
+      let s = applyTagSwitch(state, "P1");
+      if (s.phase === "GAME_OVER") return s;
+
+      s = {
+        ...s,
+        P1: { ...s.P1, ready: true },
+        selected: null,
+        log: [`P1 tags without a card`, ...s.log].slice(0, 40),
+      };
+
+      if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
+      if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
+      return s;
+    }
+
     case "AI/SETUP_AUTO": {
       // ✅ AI 자동 선택은 SETUP 단계에서만
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
       if (state.AI.ready) return state;
 
       let s = state;
+
+      // AI 태그 고려: 벤치 캐릭터 HP가 현재보다 높으면 태그
+      const aiBenchChar = s.AI.activeCharacter === "A" ? "B" : "A";
+      const aiBenchHp = s.AI.characterHp[aiBenchChar];
+      if (aiBenchHp > s.AI.hp) {
+        s = applyTagSwitch(s, "AI");
+        if (s.phase === "GAME_OVER") return s;
+        s = { ...s, AI: { ...s.AI, ready: true } };
+        if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
+        if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
+        return s;
+      }
 
       // 후보: 코스트 가능 + useCondition 충족 카드만
       const candidates = s.AI.hand

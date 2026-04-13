@@ -529,11 +529,23 @@ export default function GameScreen({
             dispatch({ type: "CARD/SELECT", cardId, handIndex })
           }
           endTurnButton={
-            <EndTurnButton
-              label={readyLabel}
-              disabled={!isSetup || state.P1.ready || isGameOver}
-              onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
-            />
+            <>
+              <EndTurnButton
+                label={readyLabel}
+                disabled={!isSetup || state.P1.ready || isGameOver}
+                onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
+              />
+              <EndTurnButton
+                label="Tag"
+                disabled={
+                  !isSetup ||
+                  state.P1.ready ||
+                  isGameOver ||
+                  state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
+                }
+                onClick={() => dispatch({ type: "TURN/TAG" })}
+              />
+            </>
           }
         />
       </div>
