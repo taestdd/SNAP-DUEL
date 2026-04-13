@@ -2,28 +2,10 @@
 
 import type { FighterPose } from "@/game/engine/types";
 import FighterSprite from "./FighterSprite";
-import HitSpark from "./HitSpark";
 import styles from "./ArenaStage.module.css";
-import type { FighterPose } from "@/game/engine/types";
 
 export type ShakeLevel = "none" | "light" | "heavy";
 export type HitSide = "player" | "ai" | null;
-
-interface ArenaStageProps {
-  shakeLevel?: ShakeLevel;
-  hitSide?: HitSide;
-}
-
-export default function ArenaStage({
-  shakeLevel = "none",
-  hitSide = null,
-}: ArenaStageProps) {
-  const shakeClass =
-    shakeLevel === "light"
-      ? styles.shakeLight
-      : shakeLevel === "heavy"
-        ? styles.shakeHeavy
-        : "";
 
 interface ArenaStageProps {
   playerPose?: FighterPose;
@@ -39,7 +21,7 @@ export default function ArenaStage({
   aiPoseKey = "ai-idle",
 }: ArenaStageProps) {
   return (
-    <div className={`${styles.arena} ${shakeClass}`}>
+    <div className={styles.arena}>
       <div className={styles.fighterLeft}>
         <FighterSprite pose={playerPose} poseKey={playerPoseKey} flip={false} />
       </div>

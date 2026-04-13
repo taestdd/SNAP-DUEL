@@ -21,19 +21,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
-
-function actionTagToPose(tag?: ActionTag): FighterPose {
-  switch (tag) {
-    case "slash":    return "attack_slash";
-    case "strike":   return "attack_strike";
-    case "magic":    return "attack_magic";
-    case "block":    return "block";
-    case "launch":
-    case "aerial":   return "airborne";
-    default:         return "attack_slash";
-  }
-}
+import ArenaStage from "./ArenaStage";
 
 function effectLabel(effect: string, damageType?: string) {
   if (effect === "damage" && damageType === "ground") return "⬇ Ground";
@@ -226,8 +214,6 @@ function DeckCardRows({ cards }: { cards: string[] }) {
     </div>
   );
 }
-
-const DEFAULT_VIEW: AnimViewState = { pose: "idle", poseKey: 0, impactTick: 0 };
 
 function actionTagToPose(tag?: ActionTag): FighterPose {
   switch (tag) {
