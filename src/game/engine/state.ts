@@ -73,10 +73,27 @@ const DEBUG_DECK: string[] = [
   "reclaim_blade",
 ];
 
+const PROTOTYPE_DECK: string[] = [
+  "week_punch", "week_punch", "week_punch",
+  "strong_punch", "strong_punch", "strong_punch",
+  "week_kick", "week_kick", "week_kick",
+  "strong_kick", "strong_kick", "strong_kick",
+  "dragon_kick", "dragon_kick",
+  "rising_punch", "rising_punch",
+  "hadouken", "hadouken",
+
+  "item_a", "item_a",
+  "item_b", "item_b",
+  "item_c", "item_c",
+
+  "guard", "guard"
+];
+
 /** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
 export const DECK_REGISTRY: Record<string, { name: string; cards: string[] }> = {
   STARTER: { name: "Starter Deck", cards: STARTER_DECK },
   DEBUG: { name: "Debug Deck", cards: DEBUG_DECK },
+  PROTOTYPE: { name: "Prototype Deck", cards: PROTOTYPE_DECK },
 };
 
 //플레이어 셋팅
@@ -109,7 +126,7 @@ function createCombatant(
 
 //턴 시작
 export function createInitialState(config: SetupConfig): GameState {
-  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? STARTER_DECK;
+  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
 
   const state: GameState = {
     round: 1,
@@ -120,7 +137,7 @@ export function createInitialState(config: SetupConfig): GameState {
     initiative: "P1",
 
     P1: createCombatant("P1", config.characters[0], p1Deck),
-    AI: createCombatant("AI", "A", STARTER_DECK),
+    AI: createCombatant("AI", "A", PROTOTYPE_DECK),
 
     selected: null,
     pendingSelection: null,

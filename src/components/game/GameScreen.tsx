@@ -23,7 +23,7 @@ import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 
-function actionTagToPose(tag?: ActionTag): FighterPose {
+function actionTagToPose(tag?: ActionTag): FighterPose | null {
   switch (tag) {
     case "slash":     return "attack_slash";
     case "strike":    return "attack_strike";
@@ -32,7 +32,16 @@ function actionTagToPose(tag?: ActionTag): FighterPose {
     case "launch":    return "attack_strike";
     case "anti_air":  return "attack_slash";
     case "aerial":    return "airborne";
-    default:          return "idle";
+    case "week_punch":   return "attack_week_punch";
+    case "strong_punch": return "attack_strong_punch";
+    case "week_kick":    return "attack_week_kick";
+    case "strong_kick":  return "attack_strong_kick";
+    case "dragon_kick":  return "attack_dragon_kick";
+    case "rising_punch": return "attack_rising_punch";
+    case "hadouken":     return "attack_hadouken";
+    case "use_item":     return "use_item";
+
+    default:          return null;
   }
 }
 
@@ -290,6 +299,9 @@ export default function GameScreen({
     const queue = makeQueue(playerCard, aiCard, initiative, false, false);
     setAnimQueue(queue);
     setAnimRunning(true);
+    // 마지막 이벤트 delay 기준으로 애니메이션 종료 시각 기록
+    const maxDelay = queue.reduce((acc, ev) => Math.max(acc, ev.delay), 0);
+    animEndTimeRef.current = Date.now() + maxDelay;
   // resolveQueue 내용이 같아도 phase가 RESOLVING으로 바뀔 때만 재생성
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
@@ -306,14 +318,18 @@ export default function GameScreen({
     }
   }, [state.phase, state.winner]);
 
-  // 라운드 경계에서 양쪽 idle 리셋
+  // 라운드 경계에서 양쪽 idle 리셋 (애니메이션 완료 후 수행)
   useEffect(() => {
-    if (state.phase === "TURN_END" || state.phase === "TURN_START") {
+    if (state.phase !== "TURN_END" && state.phase !== "TURN_START") return;
+    // 애니메이션이 아직 진행 중이면 완료 시점까지 대기
+    const remaining = Math.max(0, animEndTimeRef.current - Date.now());
+    const t = setTimeout(() => {
       setPlayerPose("idle");
       setPlayerPoseKey((k) => k + 1);
       setAiPose("idle");
       setAiPoseKey((k) => k + 1);
-    }
+    }, remaining);
+    return () => clearTimeout(t);
   }, [state.phase]);
 
   // HP 변화 감지 → 화면 흔들림
@@ -343,6 +359,7 @@ export default function GameScreen({
           setAiPoseKey((k) => k + 1);
         }
         break;
+      }
       case "visual_hit":
         if (event.target === "P1") {
           setPlayerPose("hit");

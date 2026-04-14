@@ -7,7 +7,7 @@ export const SHEET = {
   frameH: 360,
   /** 시트 열/행 수 */
   cols: 6,
-  rows: 5,
+  rows: 6,
   /** 화면에 표시할 크기 (px) */
   displayW: 180,
   displayH: 180,
@@ -54,7 +54,7 @@ export type PoseEntry = {
  */
 export const SPRITE_MAP: Record<FighterPose, PoseEntry> = {
   idle: {
-    frames: [0, 1, 2, 3],
+    frames: [0, 1],
     fps: 8,
     hold: false,
   },
@@ -74,12 +74,12 @@ export const SPRITE_MAP: Record<FighterPose, PoseEntry> = {
     hold: true,
   },
   block: {
-    frames: [22, 23],
+    frames: [27],
     fps: 8,
     hold: true,
   },
   hit: {
-    frames: [12, 13, 14],
+    frames: [30, 31],
     fps: 12,
     hold: true,
   },
@@ -93,4 +93,53 @@ export const SPRITE_MAP: Record<FighterPose, PoseEntry> = {
     fps: 10,
     hold: true,
   },
+
+  attack_week_punch: {
+    frames: [2,3],
+    fps: 12,
+    hold: true,
+  },
+
+  attack_strong_punch: {
+    frames: [4,5],
+    fps: 14,
+    hold: true,
+  },
+
+  attack_week_kick: {
+    frames: [6, 7, 8],
+    fps: 12,
+    hold: true,
+  },
+
+  attack_strong_kick: {
+    frames: [9, 10, 11],
+    fps: 14,
+    hold: true,
+  },
+
+  attack_dragon_kick: {
+    frames: [12, 13, 14],
+    fps: 16,
+    hold: true,
+  },
+
+  attack_rising_punch: {
+    frames: [15, 16, 17, 18, 19, 20, 21],
+    fps: 12,
+    hold: true,
+  },
+
+  attack_hadouken: {
+    frames: [22,23,24,25,26],
+    fps: 10,
+    hold: true,
+  },
+
+  use_item: {
+    frames: [28,29],
+    fps: 12,
+    hold: true,
+  },
+
 };
