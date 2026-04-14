@@ -32,6 +32,15 @@ function actionTagToPose(tag?: ActionTag): FighterPose {
     case "launch":    return "attack_strike";
     case "anti_air":  return "attack_slash";
     case "aerial":    return "airborne";
+    case "week_punch":   return "attack_week_punch";
+    case "strong_punch": return "attack_strong_punch";
+    case "week_kick":    return "attack_week_kick";
+    case "strong_kick":  return "attack_strong_kick";
+    case "dragon_kick":  return "attack_dragon_kick";
+    case "rising_punch": return "attack_rising_punch";
+    case "hadouken":     return "attack_hadouken";
+    case "use_item":     return "use_item";
+
     default:          return "idle";
   }
 }

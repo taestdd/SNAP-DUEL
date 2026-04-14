@@ -13,7 +13,15 @@ export type ActionTag =
   | "anti_air"
   | "aerial"
   | "tag_switch"
-  | "reclaim";
+  | "reclaim"
+  | "week_punch"
+  | "strong_punch"
+  | "week_kick"
+  | "strong_kick"
+  | "dragon_kick"
+  | "rising_punch"
+  | "hadouken"
+  | "use_item";
 
 /**
  * 파이터 포즈 — 스프라이트 시퀀스 키
@@ -26,7 +34,15 @@ export type FighterPose =
   | "block"
   | "hit"
   | "airborne"
-  | "ko";
+  | "ko"
+  | "attack_week_punch"
+  | "attack_strong_punch"
+  | "attack_week_kick"
+  | "attack_strong_kick"
+  | "attack_dragon_kick"
+  | "attack_rising_punch"
+  | "attack_hadouken"
+  | "use_item";
 
 /**
  * 파이터 뷰 상태 (렌더링용)

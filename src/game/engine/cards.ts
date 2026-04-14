@@ -1,3 +1,4 @@
+import { it } from "node:test";
 import type { Card } from "./types";
 
 export const CARDS: Record<string, Card> = {
@@ -45,7 +46,6 @@ export const CARDS: Record<string, Card> = {
     actionTag: "draw",
   },
 
-  // 2 cost
   heavy_slash: {
     id: "heavy_slash",
     name: "Heavy Slash",
@@ -76,7 +76,6 @@ export const CARDS: Record<string, Card> = {
     hitTimings: [300],
   },
 
-  // 3 cost
   power_strike: {
     id: "power_strike",
     name: "Power Strike",
@@ -107,7 +106,6 @@ export const CARDS: Record<string, Card> = {
     hitTimings: [450],
   },
 
-  // 4 cost
   execution_blade: {
     id: "execution_blade",
     name: "Execution Blade",
@@ -259,6 +257,148 @@ export const CARDS: Record<string, Card> = {
     text: "Switch active character. Exit effect triggers first, then entry effect.",
     actionTag: "tag_switch",
   },
+
+  //본격 카드
+
+    week_punch: {
+    id: "week_punch",
+    name: "Weak Punch",
+    cost: 3,
+    speed: 2,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 1, target: "enemy", damageType: "ground" }
+    ],
+    text: "Deal 1 ground damage.",
+    actionTag: "week_punch",
+  },
+
+  strong_punch: {
+    id: "strong_punch",
+    name: "Strong Punch",
+    cost: 3,
+    speed: 3,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 3, target: "enemy", damageType: "ground" }
+    ],
+    text: "Deal 3 ground damage.",
+    actionTag: "strong_punch",
+  },
+
+  week_kick: {
+    id: "week_kick",
+    name: "Weak Kick",
+    cost: 3,
+    speed: 3,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 2, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 1, target: "enemy", damageType: "anti-air" }
+    ],
+    text: "Deal 2 ground damage and 1 anti-air damage.",
+    actionTag: "week_kick",
+  },
+  
+  strong_kick: {
+    id: "strong_kick",
+    name: "Strong Kick",
+    cost: 3,
+    speed: 4,
+    gain: 1,
+    effects: [
+      { type: "damage", value: 3, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 1, target: "enemy", damageType: "anti-air" }
+    ],
+    text: "Deal 3 ground damage and 1 anti-air damage.",
+    actionTag: "strong_kick",
+  },
+
+  dragon_kick: {
+    id: "dragon_kick",
+    name: "Dragon Kick",
+    cost: 4,
+    speed: 4,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 2, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 4, target: "enemy", damageType: "anti-air" },
+      { type: "airborne", value: 2, target: "enemy" },
+      { type: "airborne", value: 3, target: "self" },
+    ],
+    text: "Deal 4 ground damage and 2 anti-air damage. Launch the opponent (airborneStack 2) and boost your own airborneStack by 3.",
+    actionTag: "dragon_kick",
+  },
+  
+  rising_punch: {
+    id: "rising_punch",
+    name: "Rising Punch",
+    cost: 5,
+    speed: 3,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 2, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 3, target: "enemy", damageType: "anti-air" },
+      { type: "airborne", value: 3, target: "enemy" },
+    ],
+    text: "Deal 2 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 3).",
+    actionTag: "rising_punch",
+  },
+
+  hadouken: {
+    id: "hadouken",
+    name: "Hadouken",
+    cost: 5,
+    speed: 4,
+    gain: 0,
+    effects: [
+      { type: "damage", value: 4, target: "enemy", damageType: "ground" },
+      { type: "damage", value: 4, target: "enemy", damageType: "anti-air" },
+      { type: "airborne", value: 2, target: "enemy" },
+    ],
+    text: "Deal 4 ground damage and 4 anti-air damage. Launch the opponent (airborneStack 2).",
+    actionTag: "hadouken",
+  },
+
+  item_a : {
+    id: "item_a",
+    name: "Item A",
+    cost: 0,
+    speed: 1,
+    gain: 0,
+    effects: [
+      { type: "move_cards", target: "self", fromZone: "deck", toZone: "hand", count: 2, userSelects: true }
+    ],
+    text: "Gain 2 cards from your deck.",
+    actionTag: "use_item",
+  },
+
+  item_b : {
+    id: "item_b",
+    name: "Item B",
+    cost: 1,
+    speed: 1,
+    gain: 0,
+    effects: [
+      { type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 2, userSelects: true }
+    ],
+    text: "Return 2 cards from your trash to your hand.",
+    actionTag: "use_item",
+  }, 
+
+  item_c : {
+    id: "item_c",
+    name: "Item C",
+    cost: 0,
+    speed: 0,
+    gain: 0,
+    effects: [
+      {type: "move_cards", target: "self", fromZone: "trash", toZone: "deck", count: 3, userSelects: true }
+    ],
+    text: "Return 3 cards from your trash to your deck.",
+    actionTag: "use_item",
+  }, 
+    
 };
 
 /**
