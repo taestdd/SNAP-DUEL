@@ -1,24 +1,26 @@
 @keyframes toastFade {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-  12%  { opacity: 1; transform: translateX(-50%) translateY(0); }
-  72%  { opacity: 1; transform: translateX(-50%) translateY(0); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+  10%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
 }
 
 .toast {
   position: fixed;
-  top: 24px;
+  top: 40%;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15, 22, 48, 0.93);
-  color: #e9ecf5;
-  padding: 10px 28px;
-  border-radius: 10px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+  background: rgba(10, 14, 35, 0.88);
+  color: #f0f4ff;
+  padding: 20px 52px;
+  border-radius: 14px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 2px solid rgba(120, 160, 255, 0.45);
+  box-shadow: 0 0 40px rgba(80, 120, 255, 0.3), 0 8px 40px rgba(0, 0, 0, 0.6);
   animation: toastFade 2.4s ease forwards;
   pointer-events: none;
   z-index: 9999;
