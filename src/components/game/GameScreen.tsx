@@ -261,6 +261,18 @@ export default function GameScreen({
 
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
+  // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
+  const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
+
+  useEffect(() => {
+    if (state.phase !== "RESOLVING") {
+      cancelledActorRef.current = null;
+      return;
+    }
+    if (!state.recentlyCancelledId) return;
+    const entry = state.resolveQueue.find((e) => e.cardId === state.recentlyCancelledId);
+    cancelledActorRef.current = entry?.player ?? null;
+  }, [state.phase, state.recentlyCancelledId, state.resolveQueue]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
@@ -321,6 +333,8 @@ export default function GameScreen({
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
       case "action_start":
+        // 캔슬된 플레이어의 action_start는 스킵
+        if (cancelledActorRef.current === event.actor) break;
         if (event.actor === "P1") {
           setPlayerPose(actionTagToPose(event.actionTag));
           setPlayerPoseKey((k) => k + 1);

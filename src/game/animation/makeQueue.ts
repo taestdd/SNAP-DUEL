@@ -15,11 +15,11 @@ import type { Card, CombatAnimationEvent, PlayerId } from "@/game/engine/types";
  *   t=  0  action_start (선공자)
  *   t=300  visual_hit   (상대방)
  *   t=400  damage_resolve
- *   t=600  action_start (후공자)          ← 600ms 게임 스텝과 일치
- *   t=900  visual_hit   (선공자)
- *   t=1000 damage_resolve
- *   t=1100 action_end   (선공자, hold-frame 유지)
- *   t=1300 action_end   (후공자)
+ *   t=700  action_start (후공자)          ← 600ms 게임 스텝 + 100ms 버퍼 (캔슬 감지 선행)
+ *   t=1000 visual_hit   (선공자)
+ *   t=1100 damage_resolve
+ *   t=1200 action_end   (선공자, hold-frame 유지)
+ *   t=1500 action_end   (후공자)
  *
  * 동시 공격 (tie):
  *   t=  0  action_start (P1 + AI 동시)
@@ -68,10 +68,10 @@ export function makeQueue(
   const firstCard = initiative === "player" ? playerCard! : aiCard!;
   const secondCard = initiative === "player" ? aiCard! : playerCard!;
 
-  // 선공자 시퀀스 (hold-frame: action_end를 t=1100까지 지연)
-  pushSequenceWithHold(events, first, second, firstCard.actionTag, 0, 1100);
-  // 후공자 시퀀스 (t=600 오프셋)
-  pushSequence(events, second, first, secondCard.actionTag, 600);
+  // 선공자 시퀀스 (hold-frame: action_end를 t=1200까지 지연)
+  pushSequenceWithHold(events, first, second, firstCard.actionTag, 0, 1200);
+  // 후공자 시퀀스 (t=700 오프셋 — 600ms 게임 스텝 후 100ms 버퍼로 캔슬 감지 선행)
+  pushSequence(events, second, first, secondCard.actionTag, 700);
 
   return events;
 }
