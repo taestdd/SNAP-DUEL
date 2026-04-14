@@ -126,7 +126,7 @@ function createCombatant(
 
 //턴 시작
 export function createInitialState(config: SetupConfig): GameState {
-  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? STARTER_DECK;
+  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
 
   const state: GameState = {
     round: 1,
@@ -137,7 +137,7 @@ export function createInitialState(config: SetupConfig): GameState {
     initiative: "P1",
 
     P1: createCombatant("P1", config.characters[0], p1Deck),
-    AI: createCombatant("AI", "A", STARTER_DECK),
+    AI: createCombatant("AI", "A", PROTOTYPE_DECK),
 
     selected: null,
     pendingSelection: null,
