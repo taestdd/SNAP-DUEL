@@ -23,7 +23,7 @@ import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 
-function actionTagToPose(tag?: ActionTag): FighterPose {
+function actionTagToPose(tag?: ActionTag): FighterPose | null {
   switch (tag) {
     case "slash":     return "attack_slash";
     case "strike":    return "attack_strike";
@@ -32,7 +32,7 @@ function actionTagToPose(tag?: ActionTag): FighterPose {
     case "launch":    return "attack_strike";
     case "anti_air":  return "attack_slash";
     case "aerial":    return "airborne";
-    default:          return "idle";
+    default:          return null;
   }
 }
 
@@ -320,15 +320,19 @@ export default function GameScreen({
 
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
-      case "action_start":
-        if (event.actor === "P1") {
-          setPlayerPose(actionTagToPose(event.actionTag));
-          setPlayerPoseKey((k) => k + 1);
-        } else if (event.actor === "AI") {
-          setAiPose(actionTagToPose(event.actionTag));
-          setAiPoseKey((k) => k + 1);
+      case "action_start": {
+        const pose = actionTagToPose(event.actionTag);
+        if (pose !== null) {
+          if (event.actor === "P1") {
+            setPlayerPose(pose);
+            setPlayerPoseKey((k) => k + 1);
+          } else if (event.actor === "AI") {
+            setAiPose(pose);
+            setAiPoseKey((k) => k + 1);
+          }
         }
         break;
+      }
       case "visual_hit":
         if (event.target === "P1") {
           setPlayerPose("hit");
