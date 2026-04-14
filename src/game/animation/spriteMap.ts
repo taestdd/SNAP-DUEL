@@ -7,7 +7,7 @@ export const SHEET = {
   frameH: 360,
   /** 시트 열/행 수 */
   cols: 6,
-  rows: 5,
+  rows: 6,
   /** 화면에 표시할 크기 (px) */
   displayW: 180,
   displayH: 180,
