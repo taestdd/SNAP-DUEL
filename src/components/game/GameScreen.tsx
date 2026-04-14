@@ -270,8 +270,18 @@ export default function GameScreen({
 
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
-  // 애니메이션 종료 예상 시각 (ms, Date.now() 기준) — TURN_END idle 리셋 지연용
-  const animEndTimeRef = useRef<number>(0);
+  // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
+  const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
+
+  useEffect(() => {
+    if (state.phase !== "RESOLVING") {
+      cancelledActorRef.current = null;
+      return;
+    }
+    if (!state.recentlyCancelledId) return;
+    const entry = state.resolveQueue.find((e) => e.cardId === state.recentlyCancelledId);
+    cancelledActorRef.current = entry?.player ?? null;
+  }, [state.phase, state.recentlyCancelledId, state.resolveQueue]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
@@ -338,16 +348,15 @@ export default function GameScreen({
 
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
-      case "action_start": {
-        const pose = actionTagToPose(event.actionTag);
-        if (pose !== null) {
-          if (event.actor === "P1") {
-            setPlayerPose(pose);
-            setPlayerPoseKey((k) => k + 1);
-          } else if (event.actor === "AI") {
-            setAiPose(pose);
-            setAiPoseKey((k) => k + 1);
-          }
+      case "action_start":
+        // 캔슬된 플레이어의 action_start는 스킵
+        if (cancelledActorRef.current === event.actor) break;
+        if (event.actor === "P1") {
+          setPlayerPose(actionTagToPose(event.actionTag));
+          setPlayerPoseKey((k) => k + 1);
+        } else if (event.actor === "AI") {
+          setAiPose(actionTagToPose(event.actionTag));
+          setAiPoseKey((k) => k + 1);
         }
         break;
       }
