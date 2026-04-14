@@ -489,6 +489,7 @@ function prepareNextRound(state: GameState): GameState {
     turn: 0,
     phase: "TURN_START",
     selected: null,
+    recentlyCancelledId: null,
     P1: {
       ...s.P1,
       queue: [],
@@ -776,6 +777,8 @@ function didDirectAttackHit(
 
   const hasDamageEffect = card.effects.some((effect) => effect.type === "damage");
   if (!hasDamageEffect) return false;
+
+  if (card.effects.some((e) => e.type === "tag")) return false;
 
   const other = opponentOf(player);
   return stateAfter[other].hp < stateBefore[other].hp;
