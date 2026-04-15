@@ -133,6 +133,11 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
+.logPopover {
+  width: min(600px, 96vw);
+  max-height: 88vh;
+}
+
 .popoverHeader {
   display: flex;
   align-items: center;

@@ -4,7 +4,7 @@ import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
-const LOG_LIMIT = 40;
+const LOG_LIMIT = 120;
 
 
 
@@ -176,7 +176,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
     },
   } as GameState;
 
-  s = pushLog(s, `${player} tags out Char ${currentChar} → tags in Char ${newChar} (HP: ${newHp})`);
+  s = pushLog(s, `🔄 ${player} TAG: Char${currentChar} → Char${newChar} (HP: ${newHp})`);
 
   // 3. 진입 효과
   if (newDef.entryEffect) {
@@ -207,11 +207,11 @@ function applySingleEffect(
 
       // ground: 상대가 체공 상태면 무효
       if (dt === "ground" && targetStack >= 1) {
-        return pushLog(state, `Damage (ground) blocked — ${target} is airborne`);
+        return pushLog(state, `⚔️ Damage(ground) MISS — ${target} is airborne`);
       }
       // anti-air: 상대가 지상 상태면 무효
       if (dt === "anti-air" && targetStack === 0) {
-        return pushLog(state, `Damage (anti-air) missed — ${target} is grounded`);
+        return pushLog(state, `⚔️ Damage(anti-air) MISS — ${target} is grounded`);
       }
 
       const amount = effect.value ?? 0;
@@ -245,7 +245,7 @@ function applySingleEffect(
             block: state[target].block + amount,
           },
         } as GameState,
-        `${target} gains ${amount} Block`
+        `🛡️ ${target} +${amount} Block`
       );
     }
 
@@ -256,6 +256,7 @@ function applySingleEffect(
     case "heal": {
       const amount = effect.value ?? 0;
       const t = state[target];
+      const prevHp = t.hp;
       const newHp = t.hp + amount;
 
       return pushLog(
@@ -267,7 +268,7 @@ function applySingleEffect(
             characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
           },
         } as GameState,
-        `${target} (Char ${t.activeCharacter}) heals ${amount}`
+        `💚 ${target} (Char${t.activeCharacter}) HP ${prevHp} → ${newHp} (+${amount})`
       );
     }
 
@@ -306,7 +307,7 @@ function applySingleEffect(
             },
           },
         } as GameState,
-        `${target} is Burned (${amount}/turn)`
+        `🔥 ${target} Burn (${amount}/turn × 2)`
       );
     }
 
@@ -324,7 +325,7 @@ function applySingleEffect(
             airborneStack: stack,
           },
         } as GameState,
-        `${target} airborneStack set to ${stack}`
+        `🌀 ${target} airborne → ${stack}`
       );
     }
 
@@ -367,7 +368,7 @@ function applySingleEffect(
 
       return pushLog(
         nextState,
-        `${target} draws ${drawnIds.length} tagged card(s) [${tag}] from ${zone}`
+        `✨ ${target} tagged draw [${tag}] ×${drawnIds.length} from ${zone}`
       );
     }
 
@@ -580,7 +581,7 @@ function applyTurnStartStatuses(state: GameState): GameState {
 function logTurnStart(state: GameState): GameState {
   return pushLog(
     state,
-    `Turn ${state.turn} begins (initiative: ${state.initiative})`
+    `--- Turn ${state.turn} (initiative: ${state.initiative}) ---`
   );
 }
 
@@ -656,7 +657,7 @@ export function queueCard(
     },
   } as GameState;
 
-  s = pushLog(s, `${player} queued ${card.name} (cost: ${card.cost} cards)`);
+  s = pushLog(s, `🂠 ${player} queued ${card.name} (spd:${card.speed}, cost:${card.cost})`);
   s = syncExhausted(s, player);
 
   return s;
@@ -791,7 +792,7 @@ function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
     initiative: player,
   };
 
-  s = pushLog(s, `${player} takes initiative`);
+  s = pushLog(s, `⚡ Initiative → ${player}`);
   return s;
 }
 
@@ -849,7 +850,7 @@ function applyCancelOnHit(
 
   s = pushLog(
     s,
-    `${other} was hit before resolving → cancel queued card (${cancelledCard}) to trash`
+    `❌ ${other}: ${cancelledCardDef?.name ?? cancelledCard} CANCELLED (${attacker} landed first)`
   );
 
   unresolved.delete(other);
@@ -998,10 +999,12 @@ export function resolveOneStep(state: GameState): GameState {
   }
 
   const it = items[idx];
-  const before = state;
+  const playCard = getCard(it.cardId);
+  let s = pushLog(state, `▶ ${it.player} plays ${playCard?.name ?? it.cardId}`);
+  const before = s;
 
-  let s = applyCardEffectsWithPause(
-    state,
+  s = applyCardEffectsWithPause(
+    s,
     it.player,
     it.cardId,
     items,
@@ -1194,9 +1197,10 @@ function dealDamage(
     [target]: nextTarget,
   } as GameState;
 
+  const blockedStr = blocked > 0 ? `, ${blocked} blocked` : "";
   return pushLog(
     next,
-    `${label ?? "Damage"} → ${target} (Char ${t.activeCharacter}) takes ${dmg} (${blocked} blocked)`
+    `⚔️ ${label ?? "Damage"} → ${target} (Char${t.activeCharacter}) HP ${t.hp} → ${newHp} (-${dmg}${blockedStr})`
   );
 }
 
@@ -1206,6 +1210,7 @@ export function draw(
   n: number
 ): GameState {
   let s = state;
+  let drawn = 0;
 
   for (let i = 0; i < n; i++) {
     const me = s[player];
@@ -1226,7 +1231,12 @@ export function draw(
       },
     } as GameState;
 
+    drawn++;
     s = syncExhausted(s, player);
+  }
+
+  if (drawn > 0) {
+    s = pushLog(s, `✨ ${player} draws ${drawn} card(s)`);
   }
 
   return s;

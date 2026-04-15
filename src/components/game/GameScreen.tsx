@@ -518,7 +518,7 @@ export default function GameScreen({
 
         {/* Popovers */}
         {logOpen && (
-          <div ref={logPopoverRef} className={styles.popover}>
+          <div ref={logPopoverRef} className={`${styles.popover} ${styles.logPopover}`}>
             <div className={styles.popoverHeader}>
               <span className={styles.popoverTitle}>📋 액션 로그</span>
               <button type="button" className={styles.popoverClose} onClick={() => setLogOpen(false)}>✕</button>

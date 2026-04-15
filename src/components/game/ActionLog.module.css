@@ -2,31 +2,32 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.title {
-  font-weight: 800;
-  font-size: 13px;
 }
 
 .box {
   flex: 1;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.18);
-  overflow: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .line {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
   font-size: 12px;
-  padding: 6px 0;
-  border-bottom: 1px dashed rgba(255,255,255,0.10);
-  opacity: 0.92;
+  line-height: 1.7;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.line:last-child {
+  border-bottom: none;
 }
 
 .empty {
+  font-family: ui-monospace, monospace;
   font-size: 12px;
-  opacity: 0.6;
+  opacity: 0.5;
+  padding: 8px 0;
 }
