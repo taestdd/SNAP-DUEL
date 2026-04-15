@@ -4,7 +4,7 @@ import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
-const LOG_LIMIT = 40;
+const LOG_LIMIT = 200;
 
 
 
@@ -316,6 +316,7 @@ function applySingleEffect(
 
     case "airborne": {
       const stack = effect.value ?? 0;
+      const prevStack = state[target].airborneStack;
       return pushLog(
         {
           ...state,
@@ -324,7 +325,7 @@ function applySingleEffect(
             airborneStack: stack,
           },
         } as GameState,
-        `${target} airborneStack set to ${stack}`
+        `${target} airborne ${prevStack}→${stack}`
       );
     }
 
@@ -411,7 +412,7 @@ function applyCardEffectsWithPause(
   const card = getCard(cardId);
   if (!card) return state;
 
-  let s = state;
+  let s = pushLog(state, `${player} resolves "${card.name}"`);
 
   for (const effect of card.effects) {
     if (effect.type === "move_cards") {
@@ -578,10 +579,7 @@ function applyTurnStartStatuses(state: GameState): GameState {
 }
 
 function logTurnStart(state: GameState): GameState {
-  return pushLog(
-    state,
-    `Turn ${state.turn} begins (initiative: ${state.initiative})`
-  );
+  return pushLog(state, `━━ Turn ${state.turn} | Initiative: ${state.initiative} ━━`);
 }
 
 export function beginTurn(state: GameState): GameState {
@@ -786,12 +784,13 @@ function didDirectAttackHit(
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   if (state.initiative === player) return state;
 
+  const prev = state.initiative;
   let s = {
     ...state,
     initiative: player,
   };
 
-  s = pushLog(s, `${player} takes initiative`);
+  s = pushLog(s, `${player} takes initiative (from ${prev})`);
   return s;
 }
 
@@ -849,7 +848,7 @@ function applyCancelOnHit(
 
   s = pushLog(
     s,
-    `${other} was hit before resolving → cancel queued card (${cancelledCard}) to trash`
+    `${other} cancelled — "${cancelledCardDef?.name ?? cancelledCard}" sent to trash`
   );
 
   unresolved.delete(other);
@@ -1180,7 +1179,8 @@ function dealDamage(
   const t = state[target];
   const blocked = Math.min(t.block, amount);
   const dmg = amount - blocked;
-  const newHp = t.hp - dmg;
+  const hpBefore = t.hp;
+  const newHp = hpBefore - dmg;
 
   const nextTarget = {
     ...t,
@@ -1194,9 +1194,10 @@ function dealDamage(
     [target]: nextTarget,
   } as GameState;
 
+  const blockedStr = blocked > 0 ? `, ${blocked} blocked` : "";
   return pushLog(
     next,
-    `${label ?? "Damage"} → ${target} (Char ${t.activeCharacter}) takes ${dmg} (${blocked} blocked)`
+    `${label ?? "Damage"} → ${target} (Char ${t.activeCharacter}) ${dmg}dmg [${hpBefore}→${newHp} HP]${blockedStr}`
   );
 }
 
@@ -1206,6 +1207,7 @@ export function draw(
   n: number
 ): GameState {
   let s = state;
+  let drawnCount = 0;
 
   for (let i = 0; i < n; i++) {
     const me = s[player];
@@ -1227,6 +1229,11 @@ export function draw(
     } as GameState;
 
     s = syncExhausted(s, player);
+    drawnCount++;
+  }
+
+  if (drawnCount > 0) {
+    s = pushLog(s, `${player} draws ${drawnCount} card(s)`);
   }
 
   return s;

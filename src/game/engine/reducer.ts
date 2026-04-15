@@ -65,7 +65,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
           s = {
             ...s,
-            log: [`P1 passes and draws 1`, ...s.log].slice(0, 40),
+            log: [`P1 passes and draws 1`, ...s.log].slice(0, 200),
           };
         }
 
@@ -105,7 +105,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         ...s,
         P1: { ...s.P1, ready: true },
         selected: null,
-        log: [`P1 tags without a card`, ...s.log].slice(0, 40),
+        log: [`P1 tags without a card`, ...s.log].slice(0, 200),
       };
 
       if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
@@ -231,7 +231,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         },
         pendingDiscard: null,
         phase: "TURN_END",
-        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, 40),
+        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, 200),
       };
 
       return s;
