@@ -270,6 +270,7 @@ export default function GameScreen({
 
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
+  const [animLog, setAnimLog] = useState<string[]>([]);
   // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
   const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
   const animEndTimeRef = useRef(0);
@@ -300,6 +301,7 @@ export default function GameScreen({
     const queue = makeQueue(playerCard, aiCard, initiative, false, false);
     setAnimQueue(queue);
     setAnimRunning(true);
+    setAnimLog([]);
     // 마지막 이벤트 delay 기준으로 애니메이션 종료 시각 기록
     const maxDelay = queue.reduce((acc, ev) => Math.max(acc, ev.delay), 0);
     animEndTimeRef.current = Date.now() + maxDelay;
@@ -359,6 +361,10 @@ export default function GameScreen({
           setAiPose(actionTagToPose(event.actionTag) ?? "idle");
           setAiPoseKey((k) => k + 1);
         }
+        setAnimLog((prev) => [
+          ...prev,
+          `action_start: ${event.actor ?? "?"}${event.actionTag ? ` [${event.actionTag}]` : ""}`,
+        ]);
         break;
       case "visual_hit":
         if (event.target === "P1") {
@@ -368,6 +374,7 @@ export default function GameScreen({
           setAiPose("hit");
           setAiPoseKey((k) => k + 1);
         }
+        setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} hit`]);
         break;
       case "action_end":
         // hold last pose — idle reset happens on TURN_END / TURN_START
@@ -524,7 +531,7 @@ export default function GameScreen({
               <button type="button" className={styles.popoverClose} onClick={() => setLogOpen(false)}>✕</button>
             </div>
             <div className={styles.popoverBody}>
-              <ActionLog log={state.log} />
+              <ActionLog log={state.log} animEntries={animLog} />
             </div>
           </div>
         )}
