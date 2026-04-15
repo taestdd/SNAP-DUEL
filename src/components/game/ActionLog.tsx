@@ -30,29 +30,44 @@ function getLogStyle(line: string): LogStyle {
   return { icon: "•", colorClass: styles.dim };
 }
 
-export default function ActionLog({ log }: { log: string[] }) {
+export default function ActionLog({
+  log,
+  animEntries = [],
+}: {
+  log: string[];
+  animEntries?: string[];
+}) {
+  const isEmpty = log.length === 0 && animEntries.length === 0;
   return (
     <div className={styles.wrap}>
       <div className={styles.box}>
-        {log.length === 0 ? (
+        {isEmpty ? (
           <div className={styles.empty}>No actions yet.</div>
         ) : (
-          log.map((line, idx) => {
-            const { icon, colorClass } = getLogStyle(line);
-            if (colorClass === styles.divider) {
+          <>
+            {log.map((line, idx) => {
+              const { icon, colorClass } = getLogStyle(line);
+              if (colorClass === styles.divider) {
+                return (
+                  <div key={`g${idx}`} className={styles.divider}>
+                    {line}
+                  </div>
+                );
+              }
               return (
-                <div key={idx} className={styles.divider}>
-                  {line}
+                <div key={`g${idx}`} className={`${styles.line} ${colorClass}`}>
+                  {icon && <span className={styles.icon}>{icon}</span>}
+                  <span className={styles.text}>{line}</span>
                 </div>
               );
-            }
-            return (
-              <div key={idx} className={`${styles.line} ${colorClass}`}>
-                {icon && <span className={styles.icon}>{icon}</span>}
+            })}
+            {animEntries.map((line, idx) => (
+              <div key={`a${idx}`} className={`${styles.line} ${styles.purple}`}>
+                <span className={styles.icon}>🎬</span>
                 <span className={styles.text}>{line}</span>
               </div>
-            );
-          })
+            ))}
+          </>
         )}
       </div>
     </div>
