@@ -123,8 +123,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 200;
-  width: min(420px, 90vw);
-  max-height: 70vh;
+  width: min(560px, 94vw);
+  height: min(82vh, 760px);
   background: #141929;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;

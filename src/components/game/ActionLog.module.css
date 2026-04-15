@@ -2,31 +2,61 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.title {
-  font-weight: 800;
-  font-size: 13px;
 }
 
 .box {
   flex: 1;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.18);
-  overflow: auto;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .line {
-  font-size: 12px;
-  padding: 6px 0;
-  border-bottom: 1px dashed rgba(255,255,255,0.10);
-  opacity: 0.92;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  line-height: 1.45;
+}
+
+.icon {
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.text {
+  flex: 1;
+  word-break: break-all;
+}
+
+.divider {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+  font-size: 10px;
+  padding: 6px 6px 4px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.03em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
 }
 
 .empty {
   font-size: 12px;
   opacity: 0.6;
+  padding: 6px;
 }
+
+/* event colors */
+.red   { color: #ff8787; }
+.green { color: #69db7c; }
+.blue  { color: #74c0fc; }
+.yellow { color: #ffd43b; }
+.gray  { color: #868e96; }
+.orange { color: #ffa94d; }
+.sky   { color: #66d9e8; }
+.dim   { color: rgba(255, 255, 255, 0.65); }
