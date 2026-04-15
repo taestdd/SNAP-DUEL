@@ -30,26 +30,49 @@ function getLogStyle(line: string): LogStyle {
   return { icon: "•", colorClass: styles.dim };
 }
 
-export default function ActionLog({ log }: { log: string[] }) {
+type CombinedEntry =
+  | { source: "game"; line: string; key: string }
+  | { source: "anim"; line: string; key: string };
+
+export default function ActionLog({
+  log,
+  animEntries = [],
+}: {
+  log: string[];
+  animEntries?: string[];
+}) {
+  const combined: CombinedEntry[] = [
+    ...log.map((line, idx) => ({ source: "game" as const, line, key: `g-${idx}` })),
+    ...animEntries.map((line, idx) => ({ source: "anim" as const, line, key: `a-${idx}` })),
+  ];
+
   return (
     <div className={styles.wrap}>
       <div className={styles.box}>
-        {log.length === 0 ? (
+        {combined.length === 0 ? (
           <div className={styles.empty}>No actions yet.</div>
         ) : (
-          log.map((line, idx) => {
-            const { icon, colorClass } = getLogStyle(line);
+          combined.map((entry) => {
+            if (entry.source === "anim") {
+              return (
+                <div key={entry.key} className={`${styles.line} ${styles.purple}`}>
+                  <span className={styles.icon}>🟣</span>
+                  <span className={styles.text}>{entry.line}</span>
+                </div>
+              );
+            }
+            const { icon, colorClass } = getLogStyle(entry.line);
             if (colorClass === styles.divider) {
               return (
-                <div key={idx} className={styles.divider}>
-                  {line}
+                <div key={entry.key} className={styles.divider}>
+                  {entry.line}
                 </div>
               );
             }
             return (
-              <div key={idx} className={`${styles.line} ${colorClass}`}>
+              <div key={entry.key} className={`${styles.line} ${colorClass}`}>
                 {icon && <span className={styles.icon}>{icon}</span>}
-                <span className={styles.text}>{line}</span>
+                <span className={styles.text}>{entry.line}</span>
               </div>
             );
           })
