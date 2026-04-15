@@ -272,6 +272,7 @@ export default function GameScreen({
   const [animRunning, setAnimRunning] = useState(false);
   // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
   const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
+  const animEndTimeRef = useRef(0);
 
   useEffect(() => {
     if (state.phase !== "RESOLVING") {
@@ -352,14 +353,13 @@ export default function GameScreen({
         // 캔슬된 플레이어의 action_start는 스킵
         if (cancelledActorRef.current === event.actor) break;
         if (event.actor === "P1") {
-          setPlayerPose(actionTagToPose(event.actionTag));
+          setPlayerPose(actionTagToPose(event.actionTag) ?? "idle");
           setPlayerPoseKey((k) => k + 1);
         } else if (event.actor === "AI") {
-          setAiPose(actionTagToPose(event.actionTag));
+          setAiPose(actionTagToPose(event.actionTag) ?? "idle");
           setAiPoseKey((k) => k + 1);
         }
         break;
-      }
       case "visual_hit":
         if (event.target === "P1") {
           setPlayerPose("hit");
