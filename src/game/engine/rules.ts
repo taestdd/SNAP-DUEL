@@ -491,6 +491,7 @@ function prepareNextRound(state: GameState): GameState {
     phase: "TURN_START",
     selected: null,
     recentlyCancelledId: null,
+    recentlyCancelledPlayer: null,
     pendingCancelFlags: { playerCancelled: false, aiCancelled: false },
     P1: {
       ...s.P1,
@@ -534,6 +535,7 @@ function resetTurnFlags(state: GameState): GameState {
     phase: "SETUP_INIT",
     selected: null,
     recentlyCancelledId: null,
+    recentlyCancelledPlayer: null,
     pendingCancelFlags: { playerCancelled: false, aiCancelled: false },
     P1: {
       ...state.P1,
@@ -897,6 +899,7 @@ function applyCancelOnHit(
   s = {
     ...s,
     recentlyCancelledId: cancelledCard,
+    recentlyCancelledPlayer: other,
     [other]: {
       ...s[other],
       ready: false,

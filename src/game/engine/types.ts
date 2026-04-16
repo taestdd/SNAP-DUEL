@@ -318,6 +318,9 @@ export type GameState = {
   /** 캔슬된 카드 id (애니메이션 트리거용). 다음 턴 시작 시 null로 클리어. */
   recentlyCancelledId: string | null;
 
+  /** 캔슬된 카드의 소유 플레이어. 다음 턴 시작 시 null로 클리어. */
+  recentlyCancelledPlayer: PlayerId | null;
+
   log: string[];
 
   /** RESOLVING 페이즈: 처리할 카드 순서 목록 */

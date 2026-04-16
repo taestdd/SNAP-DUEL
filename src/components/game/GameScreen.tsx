@@ -65,30 +65,25 @@ function QueuePreview({
   title,
   me,
   phase,
-  recentlyCancelledId,
+  recentlyCancelledPlayer,
 }: {
   title: string;
   me: Combatant;
   phase: string;
-  recentlyCancelledId: string | null;
+  recentlyCancelledPlayer: "P1" | "AI" | null;
 }) {
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
 
-  // Cancel detection: track previous queued id
-  const prevQueuedIdRef = useRef<string | undefined>(queuedId);
   const [showCancel, setShowCancel] = useState(false);
 
   useEffect(() => {
-    const prev = prevQueuedIdRef.current;
-    prevQueuedIdRef.current = queuedId;
-
-    if (!queuedId && recentlyCancelledId && prev === recentlyCancelledId) {
+    if (recentlyCancelledPlayer === me.id) {
       setShowCancel(true);
       const timer = setTimeout(() => setShowCancel(false), 850);
       return () => clearTimeout(timer);
     }
-  }, [queuedId, recentlyCancelledId]);
+  }, [recentlyCancelledPlayer, me.id]);
 
   const isResolving = phase === "RESOLVE";
 
@@ -280,10 +275,8 @@ export default function GameScreen({
       cancelledActorRef.current = null;
       return;
     }
-    if (!state.recentlyCancelledId) return;
-    const entry = state.resolveQueue.find((e) => e.cardId === state.recentlyCancelledId);
-    cancelledActorRef.current = entry?.player ?? null;
-  }, [state.phase, state.recentlyCancelledId, state.resolveQueue]);
+    cancelledActorRef.current = state.recentlyCancelledPlayer ?? null;
+  }, [state.phase, state.recentlyCancelledPlayer]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
@@ -516,11 +509,11 @@ export default function GameScreen({
         {/* Middle row: P1 Queue | AI Queue */}
         <div className={styles.middleRow}>
           <div className={styles.queuePanel}>
-            <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
+            <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledPlayer={state.recentlyCancelledPlayer} />
           </div>
 
           <div className={styles.queuePanel}>
-            <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledId={state.recentlyCancelledId} />
+            <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledPlayer={state.recentlyCancelledPlayer} />
           </div>
         </div>
 
