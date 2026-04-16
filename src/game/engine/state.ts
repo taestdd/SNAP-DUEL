@@ -143,6 +143,7 @@ export function createInitialState(config: SetupConfig): GameState {
     pendingSelection: null,
     pendingDiscard: null,
     recentlyCancelledId: null,
+    recentlyCancelledPlayer: null,
     log: [],
 
     resolveQueue: [],
