@@ -326,6 +326,9 @@ export type GameState = {
   resolveIndex: number;
   /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
   resolveUnresolved: PlayerId[];
+
+  /** RESOLVING 애니메이션용 캔슬 예측 플래그 (enterResolving에서 계산, 다음 턴 시작 시 리셋) */
+  pendingCancelFlags: { playerCancelled: boolean; aiCancelled: boolean };
 };
 
 /** 게임 시작 전 셋업 설정 */
