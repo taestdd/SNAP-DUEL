@@ -298,7 +298,8 @@ export default function GameScreen({
     const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
     const initiative = state.initiative === "P1" ? "player" : "ai";
 
-    const queue = makeQueue(playerCard, aiCard, initiative, false, false);
+    const { playerCancelled, aiCancelled } = state.pendingCancelFlags;
+    const queue = makeQueue(playerCard, aiCard, initiative, playerCancelled, aiCancelled);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
