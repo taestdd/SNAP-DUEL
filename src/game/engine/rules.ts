@@ -492,7 +492,6 @@ function prepareNextRound(state: GameState): GameState {
     selected: null,
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
-    pendingCancelFlags: { playerCancelled: false, aiCancelled: false },
     P1: {
       ...s.P1,
       queue: [],
@@ -536,7 +535,6 @@ function resetTurnFlags(state: GameState): GameState {
     selected: null,
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
-    pendingCancelFlags: { playerCancelled: false, aiCancelled: false },
     P1: {
       ...state.P1,
       block: 0,
@@ -733,61 +731,6 @@ function moveCardsBetweenZones(
   if (toZone === "deck") s = syncExhausted(s, toPlayer);
 
   return s;
-}
-
-/* -------------------------- */
-/* 캔슬 예측 (애니메이션용, 상태 비변이) */
-/* -------------------------- */
-
-function predictCancelFlags(state: GameState): { playerCancelled: boolean; aiCancelled: boolean } {
-  const p1CardId = state.P1.queue[0];
-  const aiCardId = state.AI.queue[0];
-
-  if (!p1CardId || !aiCardId) {
-    return { playerCancelled: false, aiCancelled: false };
-  }
-
-  const p1Card = getCard(p1CardId);
-  const aiCard = getCard(aiCardId);
-
-  if (!p1Card || !aiCard) {
-    return { playerCancelled: false, aiCancelled: false };
-  }
-
-  const p1Speed = getEffectiveSpeed(state, "P1", p1CardId);
-  const aiSpeed = getEffectiveSpeed(state, "AI", aiCardId);
-
-  let first: PlayerId;
-  let second: PlayerId;
-
-  if (p1Speed < aiSpeed) {
-    first = "P1"; second = "AI";
-  } else if (aiSpeed < p1Speed) {
-    first = "AI"; second = "P1";
-  } else {
-    first = state.initiative;
-    second = state.initiative === "P1" ? "AI" : "P1";
-  }
-
-  const firstCard = first === "P1" ? p1Card : aiCard;
-  const secondCard = second === "P1" ? p1Card : aiCard;
-
-  // 선공 카드가 직접 공격(데미지 효과 있고, 태그 효과 없음)인지 확인
-  const firstIsDirect =
-    firstCard.effects.some((e) => e.type === "damage") &&
-    !firstCard.effects.some((e) => e.type === "tag");
-
-  // 후공 카드가 캔슬 가능한 공격 카드인지 확인
-  const secondIsCancellable = secondCard.effects.some((e) => e.type === "damage");
-
-  if (firstIsDirect && secondIsCancellable) {
-    return {
-      playerCancelled: second === "P1",
-      aiCancelled: second === "AI",
-    };
-  }
-
-  return { playerCancelled: false, aiCancelled: false };
 }
 
 /* -------------------------- */
@@ -1022,15 +965,12 @@ export function enterResolving(state: GameState): GameState {
     });
   }
 
-  const pendingCancelFlags = predictCancelFlags(state);
-
   return {
     ...state,
     phase: "RESOLVING",
     resolveQueue: items,
     resolveIndex: 0,
     resolveUnresolved: unresolvedArr,
-    pendingCancelFlags,
   };
 }
 

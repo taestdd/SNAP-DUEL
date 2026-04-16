@@ -149,7 +149,6 @@ export function createInitialState(config: SetupConfig): GameState {
     resolveQueue: [],
     resolveIndex: 0,
     resolveUnresolved: [],
-    pendingCancelFlags: { playerCancelled: false, aiCancelled: false },
   };
 
   return state;
