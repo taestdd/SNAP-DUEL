@@ -284,16 +284,18 @@ export default function GameScreen({
       return;
     }
 
-    const p1Entry = state.resolveQueue.find((e) => e.player === "P1");
-    const aiEntry = state.resolveQueue.find((e) => e.player === "AI");
+    // WAITING_SELECTION 복귀 시 이미 처리된 카드를 재생하지 않도록 resolveIndex부터 탐색
+    const remainingQueue = state.resolveQueue.slice(state.resolveIndex);
+    const p1Entry = remainingQueue.find((e) => e.player === "P1");
+    const aiEntry = remainingQueue.find((e) => e.player === "AI");
     const playerCard = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
     const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
 
     // resolveQueue 순서(speed 기준)로 선공자 결정 — state.initiative는 동속도 타이브레이커일 뿐
     let animInitiative: "player" | "ai" | "tie";
     if (p1Entry && aiEntry) {
-      const p1Idx = state.resolveQueue.indexOf(p1Entry);
-      const aiIdx = state.resolveQueue.indexOf(aiEntry);
+      const p1Idx = remainingQueue.indexOf(p1Entry);
+      const aiIdx = remainingQueue.indexOf(aiEntry);
       animInitiative = p1Idx < aiIdx ? "player" : "ai";
     } else {
       animInitiative = state.initiative === "P1" ? "player" : "ai";
