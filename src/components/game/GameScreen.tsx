@@ -268,7 +268,6 @@ export default function GameScreen({
   const [animLog, setAnimLog] = useState<string[]>([]);
   // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
   const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
-  const animEndTimeRef = useRef(0);
 
   useEffect(() => {
     if (state.phase !== "RESOLVING") {
@@ -295,9 +294,6 @@ export default function GameScreen({
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
-    // 마지막 이벤트 delay 기준으로 애니메이션 종료 시각 기록
-    const maxDelay = queue.reduce((acc, ev) => Math.max(acc, ev.delay), 0);
-    animEndTimeRef.current = Date.now() + maxDelay;
   // resolveQueue 내용이 같아도 phase가 RESOLVING으로 바뀔 때만 재생성
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
@@ -314,18 +310,13 @@ export default function GameScreen({
     }
   }, [state.phase, state.winner]);
 
-  // 라운드 경계에서 양쪽 idle 리셋 (애니메이션 완료 후 수행)
+  // 라운드 시작 시 양쪽 idle 리셋
   useEffect(() => {
-    if (state.phase !== "TURN_END" && state.phase !== "TURN_START") return;
-    // 애니메이션이 아직 진행 중이면 완료 시점까지 대기
-    const remaining = Math.max(0, animEndTimeRef.current - Date.now());
-    const t = setTimeout(() => {
-      setPlayerPose("idle");
-      setPlayerPoseKey((k) => k + 1);
-      setAiPose("idle");
-      setAiPoseKey((k) => k + 1);
-    }, remaining);
-    return () => clearTimeout(t);
+    if (state.phase !== "TURN_START") return;
+    setPlayerPose("idle");
+    setPlayerPoseKey((k) => k + 1);
+    setAiPose("idle");
+    setAiPoseKey((k) => k + 1);
   }, [state.phase]);
 
   // HP 변화 감지 → 화면 흔들림
@@ -348,11 +339,11 @@ export default function GameScreen({
         // 캔슬된 플레이어의 action_start는 스킵
         if (cancelledActorRef.current === event.actor) break;
         if (event.actor === "P1") {
-          setPlayerPose(actionTagToPose(event.actionTag) ?? "idle");
-          setPlayerPoseKey((k) => k + 1);
+          const pose = actionTagToPose(event.actionTag);
+          if (pose) { setPlayerPose(pose); setPlayerPoseKey((k) => k + 1); }
         } else if (event.actor === "AI") {
-          setAiPose(actionTagToPose(event.actionTag) ?? "idle");
-          setAiPoseKey((k) => k + 1);
+          const pose = actionTagToPose(event.actionTag);
+          if (pose) { setAiPose(pose); setAiPoseKey((k) => k + 1); }
         }
         setAnimLog((prev) => [
           ...prev,
@@ -370,7 +361,7 @@ export default function GameScreen({
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} hit`]);
         break;
       case "action_end":
-        // hold last pose — idle reset happens on TURN_END / TURN_START
+        // hold last pose — idle reset happens on TURN_START
         break;
       case "damage_resolve":
         // HP 반영은 게임 상태(resolveOneStep)가 자동 처리
