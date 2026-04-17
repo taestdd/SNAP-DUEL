@@ -289,9 +289,18 @@ export default function GameScreen({
     const aiEntry = state.resolveQueue.find((e) => e.player === "AI");
     const playerCard = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
     const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
-    const initiative = state.initiative === "P1" ? "player" : "ai";
 
-    const queue = makeQueue(playerCard, aiCard, initiative, false, false);
+    // resolveQueue 순서(speed 기준)로 선공자 결정 — state.initiative는 동속도 타이브레이커일 뿐
+    let animInitiative: "player" | "ai" | "tie";
+    if (p1Entry && aiEntry) {
+      const p1Idx = state.resolveQueue.indexOf(p1Entry);
+      const aiIdx = state.resolveQueue.indexOf(aiEntry);
+      animInitiative = p1Idx < aiIdx ? "player" : "ai";
+    } else {
+      animInitiative = state.initiative === "P1" ? "player" : "ai";
+    }
+
+    const queue = makeQueue(playerCard, aiCard, animInitiative, false, false);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
