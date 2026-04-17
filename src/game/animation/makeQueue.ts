@@ -29,6 +29,10 @@ import type { Card, CombatAnimationEvent, PlayerId } from "@/game/engine/types";
  *
  * 캔슬된 카드: action_start 생략, action_end 즉시(t=0) 처리.
  */
+function hasDamage(card: Card): boolean {
+  return card.effects.some((e) => e.type === "damage");
+}
+
 export function makeQueue(
   playerCard: Card | null,
   aiCard: Card | null,
@@ -45,21 +49,21 @@ export function makeQueue(
 
   if (p1Acts && !aiActs) {
     // P1만 공격
-    pushSequence(events, "P1", "AI", playerCard!.actionTag, 0);
+    pushSequence(events, "P1", "AI", playerCard!.actionTag, 0, hasDamage(playerCard!));
     return events;
   }
 
   if (!p1Acts && aiActs) {
     // AI만 공격
-    pushSequence(events, "AI", "P1", aiCard!.actionTag, 0);
+    pushSequence(events, "AI", "P1", aiCard!.actionTag, 0, hasDamage(aiCard!));
     return events;
   }
 
   // 양측 모두 공격
   if (initiative === "tie") {
     // 동시 공격
-    pushSequence(events, "P1", "AI", playerCard!.actionTag, 0);
-    pushSequence(events, "AI", "P1", aiCard!.actionTag, 0);
+    pushSequence(events, "P1", "AI", playerCard!.actionTag, 0, hasDamage(playerCard!));
+    pushSequence(events, "AI", "P1", aiCard!.actionTag, 0, hasDamage(aiCard!));
     return events;
   }
 
@@ -69,22 +73,23 @@ export function makeQueue(
   const secondCard = initiative === "player" ? aiCard! : playerCard!;
 
   // 선공자 시퀀스 (hold-frame: action_end를 t=1200까지 지연)
-  pushSequenceWithHold(events, first, second, firstCard.actionTag, 0, 1200);
+  pushSequenceWithHold(events, first, second, firstCard.actionTag, 0, 1200, hasDamage(firstCard));
   // 후공자 시퀀스 (t=700 오프셋 — 600ms 게임 스텝 후 100ms 버퍼로 캔슬 감지 선행)
-  pushSequence(events, second, first, secondCard.actionTag, 700);
+  pushSequence(events, second, first, secondCard.actionTag, 700, hasDamage(secondCard));
 
   return events;
 }
 
-/** 기본 시퀀스: action_start → visual_hit → damage_resolve → action_end */
+/** 기본 시퀀스: action_start → (visual_hit → damage_resolve)? → action_end */
 function pushSequence(
   events: CombatAnimationEvent[],
   actor: PlayerId,
   target: PlayerId,
   actionTag: Card["actionTag"],
   offset: number,
+  showHit: boolean,
 ): void {
-  pushSequenceWithHold(events, actor, target, actionTag, offset, offset + 800);
+  pushSequenceWithHold(events, actor, target, actionTag, offset, offset + 800, showHit);
 }
 
 /** hold-frame 지원 시퀀스: action_end를 endDelay(절대값)로 지정 */
@@ -95,6 +100,7 @@ function pushSequenceWithHold(
   actionTag: Card["actionTag"],
   offset: number,
   endDelay: number,
+  showHit: boolean,
 ): void {
   events.push({
     type: "action_start",
@@ -102,15 +108,17 @@ function pushSequenceWithHold(
     actor,
     actionTag,
   });
-  events.push({
-    type: "visual_hit",
-    delay: offset + 300,
-    target,
-  });
-  events.push({
-    type: "damage_resolve",
-    delay: offset + 400,
-  });
+  if (showHit) {
+    events.push({
+      type: "visual_hit",
+      delay: offset + 300,
+      target,
+    });
+    events.push({
+      type: "damage_resolve",
+      delay: offset + 400,
+    });
+  }
   events.push({
     type: "action_end",
     delay: endDelay,
