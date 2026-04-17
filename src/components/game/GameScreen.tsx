@@ -74,16 +74,7 @@ function QueuePreview({
 }) {
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
-
-  const [showCancel, setShowCancel] = useState(false);
-
-  useEffect(() => {
-    if (recentlyCancelledPlayer === me.id) {
-      setShowCancel(true);
-      const timer = setTimeout(() => setShowCancel(false), 850);
-      return () => clearTimeout(timer);
-    }
-  }, [recentlyCancelledPlayer, me.id]);
+  const showCancel = recentlyCancelledPlayer === me.id;
 
   const isResolving = phase === "RESOLVE";
 
