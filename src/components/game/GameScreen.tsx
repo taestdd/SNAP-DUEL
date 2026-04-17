@@ -275,7 +275,14 @@ export default function GameScreen({
       return;
     }
     cancelledActorRef.current = state.recentlyCancelledPlayer ?? null;
-  }, [state.phase, state.recentlyCancelledPlayer]);
+    if (state.recentlyCancelledPlayer && state.recentlyCancelledId) {
+      const cardDef = getCard(state.recentlyCancelledId);
+      setAnimLog((prev) => [
+        ...prev,
+        `cancel: ${state.recentlyCancelledPlayer} [${cardDef?.name ?? state.recentlyCancelledId}]`,
+      ]);
+    }
+  }, [state.phase, state.recentlyCancelledPlayer, state.recentlyCancelledId]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
