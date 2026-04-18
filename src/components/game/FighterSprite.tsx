@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FighterPose } from "@/game/engine/types";
-import {
-  SPRITE_MAP,
-  BACKGROUND_SIZE,
-  frameToBackgroundPosition,
-} from "@/game/animation/spriteMap";
+import type { CharacterId, FighterPose } from "@/game/engine/types";
+import { CHARACTER_SPRITES, frameToBackgroundPosition, backgroundSize } from "@/game/animation/spriteMap";
 import styles from "./FighterSprite.module.css";
 
 interface FighterSpriteProps {
@@ -16,6 +12,7 @@ interface FighterSpriteProps {
    * (같은 포즈를 다시 재생할 때도 key처럼 사용)
    */
   poseKey: string | number;
+  characterId: CharacterId;
   /** true = scaleX(-1) 로 좌우 반전 (AI측 파이터) */
   flip?: boolean;
   className?: string;
@@ -24,14 +21,15 @@ interface FighterSpriteProps {
 export default function FighterSprite({
   pose,
   poseKey,
+  characterId,
   flip = false,
   className,
 }: FighterSpriteProps) {
-  const entry = SPRITE_MAP[pose];
+  const config = CHARACTER_SPRITES[characterId];
+  const entry = config.poses[pose];
   const [frameIdx, setFrameIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // poseKey 또는 pose 변경 → 프레임 리셋 + 타이머 재시작
   useEffect(() => {
     setFrameIdx(0);
 
@@ -44,11 +42,10 @@ export default function FighterSprite({
         const next = prev + 1;
         if (next >= entry.frames.length) {
           if (entry.hold) {
-            // 마지막 프레임 고정 → 타이머 중지
             if (intervalRef.current) clearInterval(intervalRef.current);
             return prev;
           }
-          return 0; // 루프
+          return 0;
         }
         return next;
       });
@@ -61,14 +58,14 @@ export default function FighterSprite({
   }, [poseKey, pose]);
 
   const absoluteFrame = entry.frames[frameIdx] ?? entry.frames[0];
-  const bgPos = frameToBackgroundPosition(absoluteFrame);
 
   return (
     <div
       className={`${styles.sprite} ${flip ? styles.flip : ""} ${className ?? ""}`}
       style={{
-        backgroundPosition: bgPos,
-        backgroundSize: BACKGROUND_SIZE,
+        backgroundImage: `url("${config.imagePath}")`,
+        backgroundPosition: frameToBackgroundPosition(absoluteFrame, config.sheet),
+        backgroundSize: backgroundSize(config.sheet),
       }}
       aria-hidden="true"
     />
