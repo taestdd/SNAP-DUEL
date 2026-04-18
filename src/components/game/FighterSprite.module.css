@@ -1,7 +1,6 @@
 .sprite {
   width: 180px;
   height: 180px;
-  background-image: url("/sprites/sheet.png");
   background-repeat: no-repeat;
   image-rendering: pixelated;
   flex-shrink: 0;

@@ -355,8 +355,10 @@ export default function GameScreen({
         <ArenaStage
           playerPose={playerPose}
           playerPoseKey={playerPoseKey}
+          playerCharacter={state.P1.activeCharacter}
           aiPose={aiPose}
           aiPoseKey={aiPoseKey}
+          aiCharacter={state.AI.activeCharacter}
           shakeLevel={shakeLevel}
         />
 
