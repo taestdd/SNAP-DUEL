@@ -349,8 +349,6 @@ export type Action =
   | { type: "RESOLVE/STEP" }
   | { type: "TURN/END" }
   | { type: "DEBUG/RESET" }
-  | { type: "INITIATIVE/RANDOMIZE" }
-  | { type: "GAME/INIT" }
   | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
   | { type: "SELECTION/SKIP" }
   | { type: "DISCARD/CONFIRM"; discardCards: string[] }
