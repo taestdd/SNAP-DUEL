@@ -1,6 +1,7 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch, LOG_LIMIT } from "./rules";
 import { getCard } from "./cards";
+import { aiSelectCard } from "./ai";
 import { shuffle } from "./rng";
 
 
@@ -65,7 +66,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
           s = {
             ...s,
-            log: [`P1 passes and draws 1`, ...s.log].slice(0, 200),
+            log: [`P1 passes and draws 1`, ...s.log].slice(0, LOG_LIMIT),
           };
         }
 
@@ -105,7 +106,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         ...s,
         P1: { ...s.P1, ready: true },
         selected: null,
-        log: [`P1 tags without a card`, ...s.log].slice(0, 200),
+        log: [`P1 tags without a card`, ...s.log].slice(0, LOG_LIMIT),
       };
 
       if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
@@ -132,32 +133,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
         return s;
       }
 
-      // 후보: 코스트 가능 + useCondition 충족 카드만
-      const candidates = s.AI.hand
-        .map((id, idx) => ({ id, idx, card: getCard(id) }))
-        .filter((x) => x.card && x.card.cost <= s.AI.deck.length && canUseCard(s, "AI", x.id));
-
-      // “가장 강력”: damage면 value 큰 것 우선, 그 다음 cost 큰 것
-      candidates.sort((a, b) => {
-        const aDamage =
-          a.card!.effects
-            .filter((effect) => effect.type === "damage")
-            .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
-
-        const bDamage =
-          b.card!.effects
-            .filter((effect) => effect.type === "damage")
-            .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
-
-        if (bDamage !== aDamage) return bDamage - aDamage;
-        return (b.card!.cost ?? 0) - (a.card!.cost ?? 0);
-      });
-
-      if (candidates.length > 0) {
-        const pick = candidates[0];
+      const pick = aiSelectCard(s);
+      if (pick) {
         s = queueCard(s, "AI", pick.id, pick.idx);
       } else {
-        // ✅ AI도 pass하면 1드로우
         s = draw(s, "AI", 1);
         if (s.phase === "GAME_OVER") return s;
       }
@@ -231,7 +210,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         },
         pendingDiscard: null,
         phase: "TURN_END",
-        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, 200),
+        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, LOG_LIMIT),
       };
 
       return s;

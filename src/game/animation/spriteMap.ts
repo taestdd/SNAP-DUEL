@@ -94,7 +94,7 @@ export const SPRITE_MAP: Record<FighterPose, PoseEntry> = {
     hold: true,
   },
 
-  attack_week_punch: {
+  attack_weak_punch: {
     frames: [2,3],
     fps: 12,
     hold: true,
@@ -106,7 +106,7 @@ export const SPRITE_MAP: Record<FighterPose, PoseEntry> = {
     hold: true,
   },
 
-  attack_week_kick: {
+  attack_weak_kick: {
     frames: [6, 7, 8],
     fps: 12,
     hold: true,

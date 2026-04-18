@@ -1,4 +1,3 @@
-import { it } from "node:test";
 import type { Card } from "./types";
 
 export const CARDS: Record<string, Card> = {
@@ -260,8 +259,8 @@ export const CARDS: Record<string, Card> = {
 
   //본격 카드
 
-    week_punch: {
-    id: "week_punch",
+    weak_punch: {
+    id: "weak_punch",
     name: "Weak Punch",
     cost: 3,
     speed: 2,
@@ -270,7 +269,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 1, target: "enemy", damageType: "ground" }
     ],
     text: "Deal 1 ground damage.",
-    actionTag: "week_punch",
+    actionTag: "weak_punch",
   },
 
   strong_punch: {
@@ -286,8 +285,8 @@ export const CARDS: Record<string, Card> = {
     actionTag: "strong_punch",
   },
 
-  week_kick: {
-    id: "week_kick",
+  weak_kick: {
+    id: "weak_kick",
     name: "Weak Kick",
     cost: 3,
     speed: 3,
@@ -297,7 +296,7 @@ export const CARDS: Record<string, Card> = {
       { type: "damage", value: 1, target: "enemy", damageType: "anti-air" }
     ],
     text: "Deal 2 ground damage and 1 anti-air damage.",
-    actionTag: "week_kick",
+    actionTag: "weak_kick",
   },
   
   strong_kick: {
