@@ -124,20 +124,19 @@ function createCombatant(
   };
 }
 
-//턴 시작
 export function createInitialState(config: SetupConfig): GameState {
   const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
 
-  const state: GameState = {
+  let state: GameState = {
     round: 1,
     turn: 0,
     phase: "TURN_START",
     winner: null,
 
-    initiative: "P1",
+    initiative: Math.random() < 0.5 ? "P1" : "AI",
 
-    P1: createCombatant("P1", config.characters[0], p1Deck),
-    AI: createCombatant("AI", "A", PROTOTYPE_DECK),
+    P1: createCombatant("P1", config.characters[0], shuffle([...p1Deck])),
+    AI: createCombatant("AI", "A", shuffle([...PROTOTYPE_DECK])),
 
     selected: null,
     pendingSelection: null,
@@ -150,6 +149,9 @@ export function createInitialState(config: SetupConfig): GameState {
     resolveIndex: 0,
     resolveUnresolved: [],
   };
+
+  state = draw(state, "P1", 3);
+  state = draw(state, "AI", 3);
 
   return state;
 }

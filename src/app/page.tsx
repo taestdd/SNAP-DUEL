@@ -12,11 +12,6 @@ function GameApp({ config }: { config: SetupConfig }) {
   const [isAiThinking, setIsAiThinking] = useState(false);
 
   useEffect(() => {
-    dispatch({ type: "GAME/INIT" });
-  }, []);
-
-  // StrictMode에서도 안전: TURN_START일 때만 시작
-  useEffect(() => {
     if (state.phase === "TURN_START" && state.P1.hand.length > 0 && state.AI.hand.length > 0) {
       dispatch({ type: "TURN/BEGIN" });
     }
