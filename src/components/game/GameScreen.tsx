@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   Action,
   ActionTag,
+  CharacterId,
   CombatAnimationEvent,
   FighterPose,
   GameState,
@@ -83,14 +84,16 @@ export default function GameScreen({
   state,
   dispatch,
   isAiThinking,
+  isTagAnimating = false,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
   isAiThinking: boolean;
+  isTagAnimating?: boolean;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
-  const canAct = isSetup && !state.P1.ready && !isGameOver;
+  const canAct = isSetup && !state.P1.ready && !isGameOver && !isTagAnimating;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
@@ -106,8 +109,46 @@ export default function GameScreen({
   const [aiPoseKey, setAiPoseKey] = useState<number>(0);
   const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
 
+  // 태그 애니메이션: 실제 표시 캐릭터 (exit 재생 후 전환)
+  const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
+  const [displayedAIChar, setDisplayedAIChar] = useState<CharacterId>(state.AI.activeCharacter);
+  const prevP1CharRef2 = useRef<CharacterId>(state.P1.activeCharacter);
+  const prevAICharRef2 = useRef<CharacterId>(state.AI.activeCharacter);
+
   const prevP1HpRef = useRef(state.P1.hp);
   const prevAiHpRef = useRef(state.AI.hp);
+
+  // P1 캐릭터 교체 감지 → exit 애니 → displayedP1Char 전환 → entry 애니
+  useEffect(() => {
+    if (state.P1.activeCharacter === prevP1CharRef2.current) return;
+    const newChar = state.P1.activeCharacter;
+    prevP1CharRef2.current = newChar;
+
+    setPlayerPose("tag_exit");
+    setPlayerPoseKey((k) => k + 1);
+    const t = setTimeout(() => {
+      setDisplayedP1Char(newChar);
+      setPlayerPose("tag_entry");
+      setPlayerPoseKey((k) => k + 1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [state.P1.activeCharacter]);
+
+  // AI 캐릭터 교체 감지 → exit 애니 → displayedAIChar 전환 → entry 애니
+  useEffect(() => {
+    if (state.AI.activeCharacter === prevAICharRef2.current) return;
+    const newChar = state.AI.activeCharacter;
+    prevAICharRef2.current = newChar;
+
+    setAiPose("tag_exit");
+    setAiPoseKey((k) => k + 1);
+    const t = setTimeout(() => {
+      setDisplayedAIChar(newChar);
+      setAiPose("tag_entry");
+      setAiPoseKey((k) => k + 1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [state.AI.activeCharacter]);
 
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
@@ -355,10 +396,10 @@ export default function GameScreen({
         <ArenaStage
           playerPose={playerPose}
           playerPoseKey={playerPoseKey}
-          playerCharacter={state.P1.activeCharacter}
+          playerCharacter={displayedP1Char}
           aiPose={aiPose}
           aiPoseKey={aiPoseKey}
-          aiCharacter={state.AI.activeCharacter}
+          aiCharacter={displayedAIChar}
           shakeLevel={shakeLevel}
         />
 
@@ -429,6 +470,8 @@ export default function GameScreen({
                   !isSetup ||
                   state.P1.ready ||
                   isGameOver ||
+                  isTagAnimating ||
+                  state.p1TaggedThisTurn ||
                   state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
                 }
                 onClick={() => dispatch({ type: "TURN/TAG" })}

@@ -143,7 +143,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
     } as GameState;
   }
 
-  // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환
+  // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환, airborne 초기화
   const newHp = s[player].characterHp[newChar];
   s = {
     ...s,
@@ -151,6 +151,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
       ...s[player],
       activeCharacter: newChar,
       hp: newHp,
+      airborneStack: 0,
     },
   } as GameState;
 
@@ -494,6 +495,7 @@ function resetTurnFlags(state: GameState): GameState {
     selected: null,
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
+    p1TaggedThisTurn: false,
     P1: {
       ...state.P1,
       block: 0,
