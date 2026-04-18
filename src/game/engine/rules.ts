@@ -4,7 +4,7 @@ import { CHARACTERS } from "./characters";
 import { shuffle } from "./rng";
 
 const HAND_LIMIT = 6;
-const LOG_LIMIT = 200;
+export const LOG_LIMIT = 200;
 
 
 
@@ -62,10 +62,11 @@ function getEffectiveSpeed(
   return Math.max(0, c.speed - bonus);
 }
 
-function moveQueuedCardToCooldown(
+function moveQueuedCard(
   state: GameState,
   player: PlayerId,
-  cardId: string
+  cardId: string,
+  to: "cooldown" | "trash"
 ): GameState {
   const me = state[player];
   const nextQueue = [...me.queue];
@@ -80,30 +81,7 @@ function moveQueuedCardToCooldown(
     [player]: {
       ...me,
       queue: nextQueue,
-      cooldown: [...me.cooldown, cardId],
-    },
-  } as GameState;
-}
-
-function moveQueuedCardToTrash(
-  state: GameState,
-  player: PlayerId,
-  cardId: string
-): GameState {
-  const me = state[player];
-  const nextQueue = [...me.queue];
-
-  const idx = nextQueue.indexOf(cardId);
-  if (idx >= 0) {
-    nextQueue.splice(idx, 1);
-  }
-
-  return {
-    ...state,
-    [player]: {
-      ...me,
-      queue: nextQueue,
-      trash: [...me.trash, cardId],
+      [to]: [...me[to], cardId],
     },
   } as GameState;
 }
@@ -375,25 +353,6 @@ function applySingleEffect(
     default:
       return state;
   }
-}
-
-function applyCardEffects(
-  state: GameState,
-  player: PlayerId,
-  cardId: string
-): GameState {
-  const card = getCard(cardId);
-  if (!card) return state;
-
-  let s = state;
-
-  for (const effect of card.effects) {
-    s = applySingleEffect(s, player, effect);
-    s = checkGameOver(s);
-    if (s.phase === "GAME_OVER") return s;
-  }
-
-  return s;
 }
 
 /**
@@ -683,16 +642,13 @@ function moveCardsBetweenZones(
 ): GameState {
   if (cardIds.length === 0) return state;
 
-  // Remove from source zone
+  // Remove from source zone (first occurrence of each id, handles duplicate card names in deck)
   const sourceArr = state[fromPlayer][fromZone] as string[];
-  const cardIdSet = new Set(cardIds);
-  // Remove only first occurrence of each id (handles duplicates in deck)
   const remaining = [...sourceArr];
   for (const id of cardIds) {
     const idx = remaining.indexOf(id);
     if (idx >= 0) remaining.splice(idx, 1);
   }
-  void cardIdSet; // suppress unused warning
 
   let s: GameState = {
     ...state,
@@ -838,7 +794,7 @@ function applyCancelOnHit(
   const isCancellable = cancelledCardDef?.effects.some((e) => e.type === "damage") ?? false;
   if (!isCancellable) return state;
 
-  let s = moveQueuedCardToTrash(state, other, cancelledCard);
+  let s = moveQueuedCard(state, other, cancelledCard, "trash");
   s = {
     ...s,
     recentlyCancelledId: cancelledCard,
@@ -910,39 +866,6 @@ function endTurnCleanup(state: GameState): GameState {
 
   return { ...s, phase: "TURN_END" };
 }
-
-function resolveItems(
-  state: GameState,
-  items: { player: PlayerId; cardId: string }[],
-  startIndex: number,
-  unresolved: Set<PlayerId>
-): GameState {
-  let s = state;
-
-  for (let i = startIndex; i < items.length; i++) {
-    const it = items[i];
-    if (!unresolved.has(it.player)) continue;
-
-    const before = s;
-    s = applyCardEffectsWithPause(s, it.player, it.cardId, items, i + 1, [...unresolved]);
-
-    if (s.phase === "WAITING_SELECTION") return s; // P1 선택 대기 중
-    if (s.phase === "GAME_OVER") return s;
-
-    s = moveQueuedCardToCooldown(s, it.player, it.cardId);
-    unresolved.delete(it.player);
-
-    const hit = didDirectAttackHit(before, s, it.player, it.cardId);
-    if (hit) {
-      s = applyInitiativeOnHit(s, it.player);
-      s = applyGainOnHit(s, it.player, it.cardId);
-      s = applyCancelOnHit(s, it.player, unresolved);
-    }
-  }
-
-  return endTurnCleanup(s);
-}
-
 
 /**
  * RESOLVE 페이즈 진입 시 호출.
@@ -1016,7 +939,7 @@ export function resolveOneStep(state: GameState): GameState {
   }
   if (s.phase === "GAME_OVER") return s;
 
-  s = moveQueuedCardToCooldown(s, it.player, it.cardId);
+  s = moveQueuedCard(s, it.player, it.cardId, "cooldown");
   unresolved.delete(it.player);
 
   const hit = didDirectAttackHit(before, s, it.player, it.cardId);
@@ -1074,7 +997,7 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
   }
 
   // 원인 카드를 쿨다운으로 이동
-  s = moveQueuedCardToCooldown(s, ps.sourcePlayer, ps.sourceCardId);
+  s = moveQueuedCard(s, ps.sourcePlayer, ps.sourceCardId, "cooldown");
 
   // 남은 아이템 확인 후 RESOLVING으로 재개 (step-by-step)
   const unresolved = new Set<PlayerId>(ps.unresolvedPlayers);

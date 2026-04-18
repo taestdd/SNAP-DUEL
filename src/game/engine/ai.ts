@@ -1,59 +1,31 @@
-import type { Card, GameState } from "./types";
+import type { GameState } from "./types";
 import { getCard } from "./cards";
+import { canUseCard } from "./rules";
 
-function getEffectValue(card: Card, type: Card["effects"][number]["type"]): number {
-  return card.effects
-    .filter((effect) => effect.type === type)
-    .reduce((sum, effect) => sum + (effect.value ?? 0), 0);
-}
-
-function scoreCard(card: Card): number {
-  let score = 0;
-
-  const damage = getEffectValue(card, "damage");
-  const block = getEffectValue(card, "block");
-  const draw = getEffectValue(card, "draw");
-  const heal = getEffectValue(card, "heal");
-  const buffAttack = getEffectValue(card, "buff_attack");
-  const burn = getEffectValue(card, "burn");
-  const hasTag = card.effects.some((effect) => effect.type === "tag");
-
-  score += damage * 2.0;
-  score += block * 1.25;
-  score += draw * 1.0;
-  score += heal * 1.1;
-  score += buffAttack * 1.15;
-  score += burn * 1.4;
-
-  if (hasTag) {
-    score += 1.5;
-  }
-
-  score += card.gain * 0.9;
-  score += card.speed <= 0 ? 1.2 : Math.max(0, 1 - card.speed * 0.15);
-  score += card.cost * 0.15;
-
-  return score;
-}
-
-export function aiChooseCardToPlay(state: GameState): string | null {
+/**
+ * AI가 이번 턴에 사용할 카드를 선택한다.
+ * 코스트 가능 + useCondition 충족 카드 중 데미지 합계 → 코스트 순으로 정렬해 첫 번째를 반환.
+ * 사용 가능한 카드가 없으면 null (pass → 1드로우).
+ */
+export function aiSelectCard(state: GameState): { id: string; idx: number } | null {
   const ai = state.AI;
 
-  const playable = ai.hand
-    .map((id) => getCard(id))
-    .filter((card): card is Card => !!card)
-    .filter((card) => card.cost <= ai.deck.length);
+  const candidates = ai.hand
+    .map((id, idx) => ({ id, idx, card: getCard(id) }))
+    .filter((x) => x.card && x.card.cost <= ai.deck.length && canUseCard(state, "AI", x.id));
 
-  if (playable.length === 0) {
-    return null;
-  }
+  if (candidates.length === 0) return null;
 
-  const scored = playable.map((card) => ({
-    id: card.id,
-    score: scoreCard(card),
-  }));
+  candidates.sort((a, b) => {
+    const totalDamage = (entry: typeof a) =>
+      entry.card!.effects
+        .filter((e) => e.type === "damage")
+        .reduce((sum, e) => sum + (e.value ?? 0), 0);
 
-  scored.sort((a, b) => b.score - a.score);
+    const dmgDiff = totalDamage(b) - totalDamage(a);
+    if (dmgDiff !== 0) return dmgDiff;
+    return (b.card!.cost ?? 0) - (a.card!.cost ?? 0);
+  });
 
-  return scored[0]?.id ?? null;
+  return { id: candidates[0].id, idx: candidates[0].idx };
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   Action,
   ActionTag,
-  Combatant,
   CombatAnimationEvent,
   FighterPose,
   GameState,
@@ -13,7 +12,6 @@ import { getCard } from "@/game/engine/cards";
 import { makeQueue } from "@/game/animation/makeQueue";
 import { useAnimQueue } from "@/game/animation/useAnimQueue";
 import styles from "./GameScreen.module.css";
-import modalStyles from "./CardSelectionModal.module.css";
 import ArenaHeader from "./ArenaHeader";
 import PlayerBar from "./PlayerBar";
 import Hand from "./Hand";
@@ -22,6 +20,8 @@ import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
+import QueuePreview, { effectLabel } from "./QueuePreview";
+import DiscardModal from "./DiscardModal";
 
 function actionTagToPose(tag?: ActionTag): FighterPose | null {
   switch (tag) {
@@ -32,9 +32,9 @@ function actionTagToPose(tag?: ActionTag): FighterPose | null {
     case "launch":    return "attack_strike";
     case "anti_air":  return "attack_slash";
     case "aerial":    return "airborne";
-    case "week_punch":   return "attack_week_punch";
+    case "weak_punch":   return "attack_weak_punch";
     case "strong_punch": return "attack_strong_punch";
-    case "week_kick":    return "attack_week_kick";
+    case "weak_kick":    return "attack_weak_kick";
     case "strong_kick":  return "attack_strong_kick";
     case "dragon_kick":  return "attack_dragon_kick";
     case "rising_punch": return "attack_rising_punch";
@@ -43,151 +43,6 @@ function actionTagToPose(tag?: ActionTag): FighterPose | null {
 
     default:          return null;
   }
-}
-
-function effectLabel(effect: string, damageType?: string) {
-  if (effect === "damage" && damageType === "ground") return "⬇ Ground";
-  if (effect === "damage" && damageType === "anti-air") return "⬆ Anti-Air";
-  switch (effect) {
-    case "damage":      return "Damage";
-    case "block":       return "Block";
-    case "draw":        return "Draw";
-    case "heal":        return "Heal";
-    case "buff_attack": return "ATK Buff";
-    case "burn":        return "Burn";
-    case "tag":         return "⇄ Tag";
-    case "airborne":    return "⬆ Launch";
-    default:            return effect;
-  }
-}
-
-function QueuePreview({
-  title,
-  me,
-  phase,
-  recentlyCancelledPlayer,
-}: {
-  title: string;
-  me: Combatant;
-  phase: string;
-  recentlyCancelledPlayer: "P1" | "AI" | null;
-}) {
-  const queuedId = me.queue[0];
-  const card = queuedId ? getCard(queuedId) : null;
-  const showCancel = recentlyCancelledPlayer === me.id;
-
-  const isResolving = phase === "RESOLVE";
-
-  return (
-    <div className={styles.queueBox}>
-      <div className={styles.queueTitle}>{title}</div>
-
-      {!card ? (
-        <div className={`${styles.queueEmpty} ${showCancel ? styles.queueCancelAnim : ""}`}>
-          {showCancel ? (
-            <div className={`${styles.cancelOverlay}`} style={{ position: "relative", width: "100%", height: "40px" }} />
-          ) : "—"}
-        </div>
-      ) : (
-        <div key={queuedId} className={`${styles.queueCard} ${styles.queueCardAnim}`}>
-          <div className={styles.queueCardName}>{card.name}</div>
-
-          <div className={styles.queueStats}>
-            <span>Cost {card.cost}</span>
-            <span>Speed {card.speed}</span>
-            <span>Gain {card.gain}</span>
-          </div>
-
-          <div className={styles.queueEffectRow}>
-            {card.effects.map((effect, idx) => (
-              <span
-                key={`${card.id}-effect-${idx}`}
-                className={`${styles.effectBadge} ${isResolving ? styles.effectBadgePulse : ""}`}
-              >
-                {effectLabel(effect.type, effect.damageType)}
-                {effect.value !== undefined ? ` ${effect.value}` : ""}
-              </span>
-            ))}
-          </div>
-
-          <div className={styles.queueText}>{card.text}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DiscardModal({
-  count,
-  candidates,
-  onConfirm,
-}: {
-  count: number;
-  candidates: string[];
-  onConfirm: (keys: string[]) => void;
-}) {
-  const [selected, setSelected] = useState<string[]>([]);
-
-  function toggleCard(cardId: string, idx: number) {
-    const key = `${cardId}::${idx}`;
-    setSelected((prev) => {
-      if (prev.includes(key)) return prev.filter((k) => k !== key);
-      if (prev.length >= count) return prev;
-      return [...prev, key];
-    });
-  }
-
-  return (
-    <div className={modalStyles.overlay}>
-      <div className={modalStyles.modal}>
-        <div className={modalStyles.header}>
-          <h2 className={modalStyles.title}>
-            핸드 사이즈 초과 — {count}장을 버리세요
-          </h2>
-          <div className={modalStyles.subtitle}>
-            현재 핸드 {candidates.length}장 → {candidates.length - count}장으로 줄여야 합니다. 버릴 카드 {count}장을 선택하세요. 선택한 카드는 trash로 이동합니다.
-          </div>
-        </div>
-
-        <div className={modalStyles.cardList}>
-          {candidates.map((cardId, idx) => {
-            const card = getCard(cardId);
-            const key = `${cardId}::${idx}`;
-            const isSelected = selected.includes(key);
-            const isDisabled = !isSelected && selected.length >= count;
-
-            return (
-              <button
-                key={key}
-                type="button"
-                className={`${modalStyles.cardItem} ${isSelected ? modalStyles.cardSelected : ""} ${isDisabled ? modalStyles.cardDisabled : ""}`}
-                onClick={() => !isDisabled && toggleCard(cardId, idx)}
-              >
-                <div className={modalStyles.cardName}>{card?.name ?? cardId}</div>
-                {card && (
-                  <div className={modalStyles.cardMeta}>
-                    C{card.cost} · S{card.speed}
-                  </div>
-                )}
-                {card && <div className={modalStyles.cardText}>{card.text}</div>}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className={modalStyles.actions}>
-          <button
-            type="button"
-            className={modalStyles.confirmBtn}
-            disabled={selected.length !== count}
-            onClick={() => onConfirm(selected)}
-          >
-            버리기 ({selected.length}/{count})
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function DeckCardRows({ cards }: { cards: string[] }) {
@@ -299,7 +154,7 @@ export default function GameScreen({
       animInitiative = state.initiative === "P1" ? "player" : "ai";
     }
 
-    const queue = makeQueue(playerCard, aiCard, animInitiative, false, false);
+    const queue = makeQueue(playerCard, aiCard, animInitiative);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);

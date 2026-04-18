@@ -74,9 +74,9 @@ const DEBUG_DECK: string[] = [
 ];
 
 const PROTOTYPE_DECK: string[] = [
-  "week_punch", "week_punch", "week_punch",
+  "weak_punch", "weak_punch", "weak_punch",
   "strong_punch", "strong_punch", "strong_punch",
-  "week_kick", "week_kick", "week_kick",
+  "weak_kick", "weak_kick", "weak_kick",
   "strong_kick", "strong_kick", "strong_kick",
   "dragon_kick", "dragon_kick",
   "rising_punch", "rising_punch",

@@ -26,8 +26,6 @@ import type { Card, CombatAnimationEvent, PlayerId } from "@/game/engine/types";
  *   t=300  visual_hit   (P1 + AI 동시)
  *   t=400  damage_resolve
  *   t=800  action_end   (P1 + AI 동시)
- *
- * 캔슬된 카드: action_start 생략, action_end 즉시(t=0) 처리.
  */
 function hasDamage(card: Card): boolean {
   return card.effects.some((e) => e.type === "damage");
@@ -37,13 +35,11 @@ export function makeQueue(
   playerCard: Card | null,
   aiCard: Card | null,
   initiative: "player" | "ai" | "tie",
-  playerCardCancelled: boolean,
-  aiCardCancelled: boolean,
 ): CombatAnimationEvent[] {
   const events: CombatAnimationEvent[] = [];
 
-  const p1Acts = playerCard !== null && !playerCardCancelled;
-  const aiActs = aiCard !== null && !aiCardCancelled;
+  const p1Acts = playerCard !== null;
+  const aiActs = aiCard !== null;
 
   if (!p1Acts && !aiActs) return events;
 
