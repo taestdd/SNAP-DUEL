@@ -42,7 +42,9 @@ export type FighterPose =
   | "attack_dragon_kick"
   | "attack_rising_punch"
   | "attack_hadouken"
-  | "use_item";
+  | "use_item"
+  | "tag_exit"
+  | "tag_entry";
 
 /**
  * 파이터 뷰 상태 (렌더링용)
@@ -322,6 +324,9 @@ export type GameState = {
   recentlyCancelledPlayer: PlayerId | null;
 
   log: string[];
+
+  /** P1이 이번 턴에 태그를 사용했는지 (턴당 1회 제한) */
+  p1TaggedThisTurn: boolean;
 
   /** RESOLVING 페이즈: 처리할 카드 순서 목록 */
   resolveQueue: { player: PlayerId; cardId: string }[];

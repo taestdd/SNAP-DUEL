@@ -144,6 +144,7 @@ export function createInitialState(config: SetupConfig): GameState {
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
     log: [],
+    p1TaggedThisTurn: false,
 
     resolveQueue: [],
     resolveIndex: 0,

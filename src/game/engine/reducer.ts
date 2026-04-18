@@ -94,6 +94,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (!inSetupTag) return state;
       if (!isP1TurnToPick(state)) return state;
       if (state.P1.ready) return state;
+      if (state.p1TaggedThisTurn) return state;
 
       const benchCharP1 = state.P1.activeCharacter === "A" ? "B" : "A";
       if (state.P1.characterHp[benchCharP1] <= 0) return state;
@@ -101,16 +102,21 @@ export function gameReducer(state: GameState, action: Action): GameState {
       let s = applyTagSwitch(state, "P1");
       if (s.phase === "GAME_OVER") return s;
 
-      s = {
-        ...s,
-        P1: { ...s.P1, ready: true },
-        selected: null,
-        log: [`P1 tags without a card`, ...s.log].slice(0, LOG_LIMIT),
-      };
+      // airborne 카드가 선택된 상태였다면 클리어
+      let nextSelected = s.selected;
+      if (nextSelected) {
+        const selCard = getCard(nextSelected.cardId);
+        if (selCard?.useCondition === "airborne") {
+          nextSelected = null;
+        }
+      }
 
-      if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
-      if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
-      return s;
+      return {
+        ...s,
+        p1TaggedThisTurn: true,
+        selected: nextSelected,
+        log: [`P1 tags (free action)`, ...s.log].slice(0, LOG_LIMIT),
+      };
     }
 
     case "AI/SETUP_AUTO": {
@@ -120,18 +126,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       let s = state;
 
-      // AI 태그 고려: 벤치 캐릭터 HP가 현재보다 높으면 태그
+      // AI 태그: 벤치 HP가 현재보다 높고 벤치 HP > 0이면 태그 (카드와 같은 턴에 가능)
       const aiBenchChar = s.AI.activeCharacter === "A" ? "B" : "A";
       const aiBenchHp = s.AI.characterHp[aiBenchChar];
-      if (aiBenchHp > s.AI.hp) {
+      if (aiBenchHp > s.AI.hp && aiBenchHp > 0) {
         s = applyTagSwitch(s, "AI");
         if (s.phase === "GAME_OVER") return s;
-        s = { ...s, AI: { ...s.AI, ready: true } };
-        if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
-        if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
-        return s;
       }
 
+      // 태그 여부와 무관하게 카드 선택 또는 패스
       const pick = aiSelectCard(s);
       if (pick) {
         s = queueCard(s, "AI", pick.id, pick.idx);
