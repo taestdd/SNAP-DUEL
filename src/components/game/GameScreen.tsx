@@ -215,14 +215,16 @@ export default function GameScreen({
     }
   }, [state.phase, state.winner]);
 
-  // 라운드 시작 시 양쪽 idle 리셋
+  // 라운드 전환 시 양쪽 idle 리셋 (턴 시작마다 리셋하지 않음)
+  const prevRoundRef = useRef(state.round);
   useEffect(() => {
-    if (state.phase !== "TURN_START") return;
+    if (state.round === prevRoundRef.current) return;
+    prevRoundRef.current = state.round;
     setPlayerPose("idle");
     setPlayerPoseKey((k) => k + 1);
     setAiPose("idle");
     setAiPoseKey((k) => k + 1);
-  }, [state.phase]);
+  }, [state.round]);
 
   // HP 변화 감지 → 화면 흔들림
   useEffect(() => {
