@@ -13,66 +13,6 @@ const emptyStatus = (): Status => ({
   exhausted: false,
 });
 
-//초기 덱
-const STARTER_DECK: string[] = [
-  // 1 cost
-  "quick_strike", "quick_strike", "quick_strike",
-  "minor_guard", "minor_guard", "minor_guard",
-  "peek", "peek", "peek",
-
-  // 2 cost
-  "heavy_slash", "heavy_slash", "heavy_slash",
-  "piercing_strike", "piercing_strike", "piercing_strike",
-
-  // 3 cost
-  "power_strike", "power_strike", "power_strike",
-  "crushing_blow", "crushing_blow", "crushing_blow",
-
-  // 4 cost
-  "execution_blade", "execution_blade", "execution_blade",
-  "arcane_burst", "arcane_burst", "arcane_burst",
-  "meteor_strike", "meteor_strike", "meteor_strike",
-
-  // 태그
-  "tag_switch", "tag_switch",
-];
-
-// 모든 카드 타입을 골고루 포함하는 테스트 덱
-// ground damage / anti-air damage / block / draw / heal / airborne / tag / useCondition 전부 포함
-const DEBUG_DECK: string[] = [
-  // ground damage (저~고 코스트)
-  "quick_strike",
-  "heavy_slash",
-  "power_strike",
-  "crushing_blow",
-  "meteor_strike",
-
-  // block + draw
-  "minor_guard",
-  "minor_guard",
-  "peek",
-  "peek",
-
-  // heal + damage 복합
-  "life_drain",
-  "life_drain",
-
-  // 에어본 유발 + 대공 콤보
-  "launcher",
-  "launcher",
-  "anti_air_strike",
-  "anti_air_strike",
-  "aerial_combo",  // useCondition: airborne
-
-  // 태그
-  "tag_switch",
-  "tag_switch",
-
-  // 카드 회수
-  "reclaim_blade",
-  "reclaim_blade",
-];
-
 const PROTOTYPE_DECK: string[] = [
   "weak_punch", "weak_punch", "weak_punch",
   "strong_punch", "strong_punch", "strong_punch",
@@ -91,8 +31,6 @@ const PROTOTYPE_DECK: string[] = [
 
 /** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
 export const DECK_REGISTRY: Record<string, { name: string; cards: string[] }> = {
-  STARTER: { name: "Starter Deck", cards: STARTER_DECK },
-  DEBUG: { name: "Debug Deck", cards: DEBUG_DECK },
   PROTOTYPE: { name: "Prototype Deck", cards: PROTOTYPE_DECK },
 };
 
