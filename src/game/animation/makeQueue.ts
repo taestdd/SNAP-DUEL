@@ -37,18 +37,18 @@ export function makeQueue(
   if (!p1Acts && !aiActs) return events;
 
   if (p1Acts && !aiActs) {
-    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne);
+    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne, p1Airborne);
     return events;
   }
 
   if (!p1Acts && aiActs) {
-    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne);
+    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne, aiAirborne);
     return events;
   }
 
   if (initiative === "tie") {
-    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne);
-    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne);
+    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne, p1Airborne);
+    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne, aiAirborne);
     return events;
   }
 
@@ -58,9 +58,11 @@ export function makeQueue(
   const secondCard = initiative === "player" ? aiCard! : playerCard!;
   const firstTargetAirborne = initiative === "player" ? aiAirborne : p1Airborne;
   const secondTargetAirborne = initiative === "player" ? p1Airborne : aiAirborne;
+  const firstActorAirborne = initiative === "player" ? p1Airborne : aiAirborne;
+  const secondActorAirborne = initiative === "player" ? aiAirborne : p1Airborne;
 
-  pushSequenceWithHold(events, first, second, firstCard, 0, 1200, firstTargetAirborne);
-  pushSequence(events, second, first, secondCard, 700, secondTargetAirborne);
+  pushSequenceWithHold(events, first, second, firstCard, 0, 1200, firstTargetAirborne, firstActorAirborne);
+  pushSequence(events, second, first, secondCard, 700, secondTargetAirborne, secondActorAirborne);
 
   return events;
 }
@@ -72,8 +74,9 @@ function pushSequence(
   card: Card,
   offset: number,
   targetAirborne: number,
+  actorAirborne: number,
 ): void {
-  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne);
+  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne);
 }
 
 function pushSequenceWithHold(
@@ -84,8 +87,12 @@ function pushSequenceWithHold(
   offset: number,
   endDelay: number,
   targetAirborne: number,
+  actorAirborne: number,
 ): void {
-  events.push({ type: "action_start", delay: offset, actor, actionTag: card.actionTag });
+  const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
+    ? card.actionTagAirborne
+    : card.actionTag;
+  events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag });
 
   if (card.hitTimings && card.hitTimings.length > 0) {
     for (const timing of card.hitTimings) {

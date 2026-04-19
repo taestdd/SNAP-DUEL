@@ -15,6 +15,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 1 ground damage.",
     actionTag: "weak_punch",
+    actionTagAirborne: "aerial_punch",
     hitTimings: [{ ms: 150, ground: "hit_weak", airborne: "hit_aerial" }],
 
   },
@@ -30,6 +31,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage.",
     actionTag: "strong_punch",
+    actionTagAirborne: "aerial_punch",
     hitTimings: [{ ms: 200, ground: "hit_strong", airborne: "hit_aerial" }],
 
   },
@@ -46,6 +48,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and 1 anti-air damage.",
     actionTag: "weak_kick",
+    actionTagAirborne: "aerial_kick",
     hitTimings: [{ ms: 200, ground: "hit_weak", airborne: "hit_aerial" }],
 
   },
@@ -62,6 +65,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage and 1 anti-air damage.",
     actionTag: "strong_kick",
+    actionTagAirborne: "aerial_kick",
     hitTimings: [{ ms: 250, ground: "hit_strong", airborne: "hit_aerial" }],
 
   },
@@ -80,7 +84,8 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 4 ground damage and 2 anti-air damage. Launch the opponent (airborneStack 2) and boost your own airborneStack by 3.",
     actionTag: "dragon_kick",
-    hitTimings: [{ ms: 200, ground: "hit_weak", airborne: "hit_aerial" }],
+    actionTagAirborne: "dragon_kick",
+    hitTimings: [{ ms: 200, ground: "hit_aerial", airborne: "hit_aerial" }],
 
   },
   
@@ -97,6 +102,8 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 3).",
     actionTag: "rising_punch",
+    actionTagAirborne: "rising_punch",
+    useCondition: "ground",
     hitTimings: [
       { ms: 200, ground: "hit_weak", airborne: "hit_aerial" },
       { ms: 300, ground: "hit_weak", airborne: "hit_aerial" },
@@ -117,7 +124,9 @@ export const CARDS: Record<string, Card> = {
       { type: "airborne", value: 2, target: "enemy" },
     ],
     text: "Deal 4 ground damage and 4 anti-air damage. Launch the opponent (airborneStack 2).",
-    actionTag: "hadouken", 
+    actionTag: "hadouken",
+    actionTagAirborne: "hadouken",
+    useCondition: "ground", 
     hitTimings: [{ ms: 350, ground: "hit_strong", airborne: "hit_aerial" }],
 
   },
@@ -132,6 +141,7 @@ export const CARDS: Record<string, Card> = {
       { type: "move_cards", target: "self", fromZone: "deck", toZone: "hand", count: 2, userSelects: true }
     ],
     text: "Gain 2 cards from your deck.",
+    useCondition: "ground",
     actionTag: "use_item",
   },
 
@@ -145,6 +155,7 @@ export const CARDS: Record<string, Card> = {
       { type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 2, userSelects: true }
     ],
     text: "Return 2 cards from your trash to your hand.",
+    useCondition: "ground",
     actionTag: "use_item",
   }, 
 
@@ -158,6 +169,7 @@ export const CARDS: Record<string, Card> = {
       {type: "move_cards", target: "self", fromZone: "trash", toZone: "deck", count: 3, userSelects: true }
     ],
     text: "Return 3 cards from your trash to your deck.",
+    useCondition: "ground",
     actionTag: "use_item",
   }, 
     

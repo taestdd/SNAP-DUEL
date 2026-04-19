@@ -26,13 +26,9 @@ import DiscardModal from "./DiscardModal";
 
 function actionTagToPose(tag?: ActionTag): FighterPose | null {
   switch (tag) {
-    case "slash":     return "attack_slash";
-    case "strike":    return "attack_strike";
-    case "magic":     return "attack_magic";
     case "block":     return "block";
-    case "launch":    return "attack_strike";
-    case "anti_air":  return "attack_slash";
-    case "aerial":    return "airborne";
+    case "aerial_punch": return "attack_aerial_punch";
+    case "aerial_kick":  return "attack_aerial_kick";
     case "weak_punch":   return "attack_weak_punch";
     case "strong_punch": return "attack_strong_punch";
     case "weak_kick":    return "attack_weak_kick";
@@ -258,7 +254,7 @@ export default function GameScreen({
         ]);
         break;
       case "visual_hit": {
-        const pose = event.hitPose ?? "hit";
+        const pose = event.hitPose ?? "hit_weak";
         if (event.target === "P1") {
           setPlayerPose(pose);
           setPlayerPoseKey((k) => k + 1);

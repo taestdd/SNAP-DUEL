@@ -4,20 +4,16 @@ export type PlayerId = "P1" | "AI";
  * 카드 액션 태그 — 애니메이션 포즈 결정에 사용
  */
 export type ActionTag =
-  | "slash"
-  | "strike"
-  | "magic"
   | "block"
   | "draw"
-  | "launch"
-  | "anti_air"
-  | "aerial"
   | "tag_switch"
   | "reclaim"
   | "weak_punch"
   | "strong_punch"
+  | "aerial_punch"
   | "weak_kick"
   | "strong_kick"
+  | "aerial_kick"
   | "dragon_kick"
   | "rising_punch"
   | "hadouken"
@@ -28,21 +24,18 @@ export type ActionTag =
  */
 export type FighterPose =
   | "idle"
-  | "attack_slash"
-  | "attack_strike"
-  | "attack_magic"
   | "block"
-  | "hit"
   | "hit_weak"
   | "hit_strong"
   | "hit_aerial"
-  | "airborne"
   | "ko"
   | "attack_weak_punch"
   | "attack_strong_punch"
+  | "attack_aerial_punch"
   | "attack_weak_kick"
   | "attack_strong_kick"
   | "attack_dragon_kick"
+  | "attack_aerial_kick"
   | "attack_rising_punch"
   | "attack_hadouken"
   | "use_item"
@@ -50,7 +43,7 @@ export type FighterPose =
   | "tag_entry";
 
 /** 피격 애니메이션 포즈 — hitTimings 및 visual_hit 이벤트에 사용 */
-export type HitPose = "hit" | "hit_weak" | "hit_strong" | "hit_aerial";
+export type HitPose = "hit_weak" | "hit_strong" | "hit_aerial";
 
 /**
  * 파이터 뷰 상태 (렌더링용)
@@ -191,6 +184,8 @@ export type Card = {
 
   /** 애니메이션 액션 태그. 미지정 시 idle 유지 */
   actionTag?: ActionTag;
+  /** 공격자가 airborne 상태일 때 사용할 액션 태그. 미지정 시 actionTag 그대로 사용 */
+  actionTagAirborne?: ActionTag;
 
   /** 히트 타이밍 목록. 각 항목은 ms 지연과 ground/airborne별 피격 애니를 정의 */
   hitTimings?: { ms: number; ground: HitPose; airborne: HitPose }[];
