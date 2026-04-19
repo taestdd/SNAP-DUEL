@@ -191,6 +191,8 @@ export type Card = {
 
   /** 애니메이션 액션 태그. 미지정 시 idle 유지 */
   actionTag?: ActionTag;
+  /** 공격자가 airborne 상태일 때 사용할 액션 태그. 미지정 시 actionTag 그대로 사용 */
+  actionTagAirborne?: ActionTag;
 
   /** 히트 타이밍 목록. 각 항목은 ms 지연과 ground/airborne별 피격 애니를 정의 */
   hitTimings?: { ms: number; ground: HitPose; airborne: HitPose }[];

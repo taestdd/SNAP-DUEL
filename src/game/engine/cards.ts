@@ -15,6 +15,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 1 ground damage.",
     actionTag: "weak_punch",
+    actionTagAirborne: "aerial",
     hitTimings: [{ ms: 150, ground: "hit_weak", airborne: "hit_aerial" }],
 
   },
@@ -30,6 +31,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage.",
     actionTag: "strong_punch",
+    actionTagAirborne: "aerial",
     hitTimings: [{ ms: 200, ground: "hit_strong", airborne: "hit_aerial" }],
 
   },
@@ -46,6 +48,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and 1 anti-air damage.",
     actionTag: "weak_kick",
+    actionTagAirborne: "aerial",
     hitTimings: [{ ms: 200, ground: "hit_weak", airborne: "hit_aerial" }],
 
   },
@@ -62,6 +65,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage and 1 anti-air damage.",
     actionTag: "strong_kick",
+    actionTagAirborne: "aerial",
     hitTimings: [{ ms: 250, ground: "hit_strong", airborne: "hit_aerial" }],
 
   },
