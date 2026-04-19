@@ -141,9 +141,9 @@ export default function SetupScreen({
             <span className={styles.sectionHint}>고정</span>
           </h2>
           <div className={`${styles.deckCard} ${styles.deckFixed}`}>
-            <div className={styles.deckName}>{DECK_REGISTRY["STARTER"].name}</div>
+            <div className={styles.deckName}>{DECK_REGISTRY["PROTOTYPE"].name}</div>
             <div className={styles.deckCount}>
-              {DECK_REGISTRY["STARTER"].cards.length} cards
+              {DECK_REGISTRY["PROTOTYPE"].cards.length} cards
             </div>
           </div>
         </section>
