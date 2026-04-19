@@ -48,6 +48,9 @@ const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   attack_magic:       { frames: [6, 7, 8, 9, 10, 11],        fps: 10, hold: true  },
   block:              { frames: [27],                         fps: 8,  hold: true  },
   hit:                { frames: [30, 31],                     fps: 12, hold: true  },
+  hit_weak:           { frames: [30],                         fps: 8,  hold: true  },
+  hit_strong:         { frames: [30, 31],                     fps: 12, hold: true  },
+  hit_aerial:         { frames: [31],                         fps: 8,  hold: true  },
   airborne:           { frames: [18, 19, 20, 21],             fps: 10, hold: false },
   ko:                 { frames: [24, 25, 26, 27, 28, 29],     fps: 10, hold: true  },
   attack_weak_punch:  { frames: [2, 3],                       fps: 12, hold: true  },
@@ -58,8 +61,8 @@ const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   attack_rising_punch:{ frames: [15, 16, 17, 18, 19, 20, 21], fps: 12, hold: true  },
   attack_hadouken:    { frames: [22, 23, 24, 25, 26],         fps: 10, hold: true  },
   use_item:           { frames: [28, 29],                     fps: 12, hold: true  },
-  tag_exit:           { frames: [0, 1],                       fps: 6,  hold: false },
-  tag_entry:          { frames: [0, 1],                       fps: 6,  hold: true  },
+  tag_exit:           { frames: [22, 23],                       fps: 6,  hold: false },
+  tag_entry:          { frames: [24, 25, 26],                       fps: 9,  hold: true  },
 };
 
 export const CHARACTER_SPRITES: Record<CharacterId, CharacterSpriteConfig> = {

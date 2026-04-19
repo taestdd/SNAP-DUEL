@@ -195,7 +195,7 @@ export default function GameScreen({
       animInitiative = state.initiative === "P1" ? "player" : "ai";
     }
 
-    const queue = makeQueue(playerCard, aiCard, animInitiative);
+    const queue = makeQueue(playerCard, aiCard, animInitiative, state.P1.airborneStack, state.AI.airborneStack);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
@@ -257,16 +257,18 @@ export default function GameScreen({
           `action_start: ${event.actor ?? "?"}${event.actionTag ? ` [${event.actionTag}]` : ""}`,
         ]);
         break;
-      case "visual_hit":
+      case "visual_hit": {
+        const pose = event.hitPose ?? "hit";
         if (event.target === "P1") {
-          setPlayerPose("hit");
+          setPlayerPose(pose);
           setPlayerPoseKey((k) => k + 1);
         } else if (event.target === "AI") {
-          setAiPose("hit");
+          setAiPose(pose);
           setAiPoseKey((k) => k + 1);
         }
-        setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} hit`]);
+        setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
+      }
       case "action_end":
         // hold last pose — idle reset happens on TURN_END / TURN_START
         break;

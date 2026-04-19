@@ -33,6 +33,9 @@ export type FighterPose =
   | "attack_magic"
   | "block"
   | "hit"
+  | "hit_weak"
+  | "hit_strong"
+  | "hit_aerial"
   | "airborne"
   | "ko"
   | "attack_weak_punch"
@@ -45,6 +48,9 @@ export type FighterPose =
   | "use_item"
   | "tag_exit"
   | "tag_entry";
+
+/** 피격 애니메이션 포즈 — hitTimings 및 visual_hit 이벤트에 사용 */
+export type HitPose = "hit" | "hit_weak" | "hit_strong" | "hit_aerial";
 
 /**
  * 파이터 뷰 상태 (렌더링용)
@@ -73,6 +79,8 @@ export interface CombatAnimationEvent {
   actor?: PlayerId;
   /** 피격자 (visual_hit) */
   target?: PlayerId;
+  /** 피격자가 재생할 포즈 (visual_hit). 미지정 시 "hit" fallback */
+  hitPose?: HitPose;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
 }
@@ -184,8 +192,8 @@ export type Card = {
   /** 애니메이션 액션 태그. 미지정 시 idle 유지 */
   actionTag?: ActionTag;
 
-  /** 히트 타이밍 (ms). 애니메이션 중 피격 판정 시점 */
-  hitTimings?: number[];
+  /** 히트 타이밍 목록. 각 항목은 ms 지연과 ground/airborne별 피격 애니를 정의 */
+  hitTimings?: { ms: number; ground: HitPose; airborne: HitPose }[];
 };
 
 export type SelectedCard = {

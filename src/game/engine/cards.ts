@@ -14,7 +14,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 2 ground damage.",
     tags: ["검술", "한손검"],
     actionTag: "slash",
-    hitTimings: [250],
+    hitTimings: [{ ms: 250, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   minor_guard: {
@@ -57,7 +57,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 4 ground damage.",
     tags: ["검술", "한손검"],
     actionTag: "slash",
-    hitTimings: [350],
+    hitTimings: [{ ms: 350, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   piercing_strike: {
@@ -72,7 +72,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 4 ground damage.",
     tags: ["검술", "한손검"],
     actionTag: "slash",
-    hitTimings: [300],
+    hitTimings: [{ ms: 300, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   power_strike: {
@@ -87,7 +87,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 6 ground damage.",
     tags: ["격투"],
     actionTag: "strike",
-    hitTimings: [400],
+    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   crushing_blow: {
@@ -102,7 +102,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 7 ground damage.",
     tags: ["격투"],
     actionTag: "strike",
-    hitTimings: [450],
+    hitTimings: [{ ms: 450, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   execution_blade: {
@@ -118,7 +118,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 10 ground damage. Draw 1.",
     tags: ["검술", "한손검"],
     actionTag: "slash",
-    hitTimings: [500],
+    hitTimings: [{ ms: 500, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   arcane_burst: {
@@ -134,7 +134,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 9 ground damage. Draw 1.",
     tags: ["마법"],
     actionTag: "magic",
-    hitTimings: [400],
+    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   meteor_strike: {
@@ -150,7 +150,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 12 ground damage. Draw 1.",
     tags: ["마법"],
     actionTag: "magic",
-    hitTimings: [500],
+    hitTimings: [{ ms: 500, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   // 복합 효과 카드
@@ -167,7 +167,7 @@ export const CARDS: Record<string, Card> = {
     text: "Heal 2, then deal 2 ground damage.",
     tags: ["마법"],
     actionTag: "magic",
-    hitTimings: [350],
+    hitTimings: [{ ms: 350, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   // 에어본 시스템 카드
@@ -186,7 +186,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 2 ground damage and launch the opponent (airborneStack 2).",
     tags: ["격투"],
     actionTag: "launch",
-    hitTimings: [300],
+    hitTimings: [{ ms: 300, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   // 대공 데미지 카드: 상대가 체공 상태일 때만 피해
@@ -202,7 +202,7 @@ export const CARDS: Record<string, Card> = {
     text: "Deal 6 anti-air damage — only hits airborne targets.",
     tags: ["검술"],
     actionTag: "anti_air",
-    hitTimings: [250],
+    hitTimings: [{ ms: 250, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   // 사용 조건 있는 카드: 체공 상태에서만 사용 가능
@@ -219,7 +219,7 @@ export const CARDS: Record<string, Card> = {
     tags: ["격투"],
     useCondition: "airborne",
     actionTag: "aerial",
-    hitTimings: [300],
+    hitTimings: [{ ms: 300, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   // move_cards 카드
@@ -270,6 +270,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 1 ground damage.",
     actionTag: "weak_punch",
+    hitTimings: [{ ms: 150, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   strong_punch: {
@@ -283,6 +284,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage.",
     actionTag: "strong_punch",
+    hitTimings: [{ ms: 200, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   weak_kick: {
@@ -297,6 +299,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and 1 anti-air damage.",
     actionTag: "weak_kick",
+    hitTimings: [{ ms: 200, ground: "hit_weak", airborne: "hit_aerial" }],
   },
   
   strong_kick: {
@@ -311,6 +314,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 3 ground damage and 1 anti-air damage.",
     actionTag: "strong_kick",
+    hitTimings: [{ ms: 250, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   dragon_kick: {
@@ -327,6 +331,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 4 ground damage and 2 anti-air damage. Launch the opponent (airborneStack 2) and boost your own airborneStack by 3.",
     actionTag: "dragon_kick",
+    hitTimings: [{ ms: 300, ground: "hit_weak", airborne: "hit_aerial" }],
   },
   
   rising_punch: {
@@ -342,6 +347,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 2 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 3).",
     actionTag: "rising_punch",
+    hitTimings: [{ ms: 300, ground: "hit_weak", airborne: "hit_aerial" }],
   },
 
   hadouken: {
@@ -357,6 +363,7 @@ export const CARDS: Record<string, Card> = {
     ],
     text: "Deal 4 ground damage and 4 anti-air damage. Launch the opponent (airborneStack 2).",
     actionTag: "hadouken",
+    hitTimings: [{ ms: 350, ground: "hit_strong", airborne: "hit_aerial" }],
   },
 
   item_a : {
