@@ -1,0 +1,53 @@
+.draftModal {
+  width: min(560px, 92vw);
+}
+
+.counter {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #a0a0c0;
+  text-align: center;
+}
+
+.effectRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.effectBadge {
+  font-size: 0.7rem;
+  background: #2a2a4a;
+  border: 1px solid #3a3a5c;
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #c0c0e0;
+}
+
+.waitingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+}
+
+.waitingText {
+  font-size: 1rem;
+  color: #a0a0c0;
+}
+
+.countdown {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6c63ff;
+}
+
+.aiStatus {
+  font-size: 0.78rem;
+  color: #666;
+  text-align: right;
+  border-top: 1px solid #2a2a4a;
+  padding-top: 8px;
+}

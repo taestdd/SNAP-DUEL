@@ -23,6 +23,7 @@ import ToastMessage from "./ToastMessage";
 import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
 import QueuePreview, { effectLabel } from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
+import DraftModal from "./DraftModal";
 
 function actionTagToPose(tag?: ActionTag): FighterPose | null {
   switch (tag) {
@@ -166,6 +167,28 @@ export default function GameScreen({
       ]);
     }
   }, [state.phase, state.recentlyCancelledPlayer, state.recentlyCancelledId]);
+
+  // ROUND_DRAFT: AI 자동 드래프트 (10초 후)
+  useEffect(() => {
+    if (state.phase !== "ROUND_DRAFT") return;
+    if (state.draftSelections.AI !== null) return;
+
+    const t = setTimeout(() => {
+      const deck = state.AI.deck;
+      const count = Math.min(3, deck.length);
+      // 랜덤 인덱스 선택
+      const indices = [...Array(deck.length).keys()];
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const cardIds = indices.slice(0, count).map((i) => deck[i]);
+      dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds });
+    }, 10000);
+
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.draftSelections.AI]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
@@ -328,6 +351,10 @@ export default function GameScreen({
   return (
     <div className={styles.page}>
       {toastText && <ToastMessage key={toastKey} message={toastText} />}
+
+      {state.phase === "ROUND_DRAFT" && (
+        <DraftModal state={state} dispatch={dispatch} />
+      )}
 
       {state.phase === "WAITING_SELECTION" && state.pendingSelection && (
         <CardSelectionModal

@@ -448,10 +448,11 @@ function prepareNextRound(state: GameState): GameState {
     ...s,
     round: state.round + 1,
     turn: 0,
-    phase: "TURN_START",
+    phase: "ROUND_DRAFT",
     selected: null,
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
+    draftSelections: { P1: null, AI: null },
     P1: {
       ...s.P1,
       queue: [],
@@ -471,12 +472,53 @@ function prepareNextRound(state: GameState): GameState {
   s = syncExhausted(nextState, "P1");
   s = syncExhausted(s, "AI");
 
-  // 1라운드 시작처럼 각자 시작 핸드 3장
-  s = draw(s, "P1", 3);
-  s = draw(s, "AI", 3);
+  return s;
+}
+/* -------------------------- */
+/* 드래프트 제출 */
+/* -------------------------- */
+
+export function submitDraft(state: GameState, player: PlayerId, cardIds: string[]): GameState {
+  if (state.phase !== "ROUND_DRAFT") return state;
+  if (state.draftSelections[player] !== null) return state;
+
+  const me = state[player];
+
+  // 선택한 카드를 덱에서 제거하고 hand로 이동
+  const remaining = [...me.deck];
+  const moved: string[] = [];
+  for (const id of cardIds) {
+    const idx = remaining.indexOf(id);
+    if (idx >= 0) {
+      remaining.splice(idx, 1);
+      moved.push(id);
+    }
+  }
+
+  let s: GameState = {
+    ...state,
+    [player]: {
+      ...me,
+      deck: remaining,
+      hand: [...me.hand, ...moved],
+    },
+    draftSelections: {
+      ...state.draftSelections,
+      [player]: moved,
+    },
+  } as GameState;
+
+  s = syncExhausted(s, player);
+  s = pushLog(s, `${player} drafts ${moved.length} card(s)`);
+
+  // 양쪽 모두 제출 완료 → TURN_START
+  if (s.draftSelections.P1 !== null && s.draftSelections.AI !== null) {
+    s = { ...s, phase: "TURN_START" };
+  }
 
   return s;
 }
+
 /* -------------------------- */
 /* 턴 시작 처리 */
 /* -------------------------- */

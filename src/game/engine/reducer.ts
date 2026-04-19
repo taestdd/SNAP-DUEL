@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch, LOG_LIMIT } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
 import { getCard } from "./cards";
 import { aiSelectCard } from "./ai";
 
@@ -220,6 +220,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case "TURN/END": {
       return { ...state, phase: "TURN_END" };
+    }
+
+    case "SUBMIT_DRAFT": {
+      return submitDraft(state, action.player, action.cardIds);
     }
 
     case "DEBUG/RESET": {
