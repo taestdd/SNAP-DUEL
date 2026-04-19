@@ -25,8 +25,6 @@ const PROTOTYPE_DECK: string[] = [
   "item_a", "item_a",
   "item_b", "item_b",
   "item_c", "item_c",
-
-  "guard", "guard"
 ];
 
 /** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
