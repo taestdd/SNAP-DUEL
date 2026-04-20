@@ -1,6 +1,5 @@
 import type { CharacterId, Combatant, GameState, SetupConfig, Status } from "./types";
 import { shuffle } from "./rng";
-import { draw } from "./rules";
 import { CHARACTERS } from "./characters";
 
 
@@ -63,10 +62,10 @@ function createCombatant(
 export function createInitialState(config: SetupConfig): GameState {
   const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
 
-  let state: GameState = {
+  const state: GameState = {
     round: 1,
     turn: 0,
-    phase: "TURN_START",
+    phase: "ROUND_DRAFT",
     winner: null,
 
     initiative: Math.random() < 0.5 ? "P1" : "AI",
@@ -85,10 +84,8 @@ export function createInitialState(config: SetupConfig): GameState {
     resolveQueue: [],
     resolveIndex: 0,
     resolveUnresolved: [],
+    draftSelections: { P1: null, AI: null },
   };
-
-  state = draw(state, "P1", 3);
-  state = draw(state, "AI", 3);
 
   return state;
 }

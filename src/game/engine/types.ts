@@ -250,6 +250,7 @@ export type Combatant = {
 };
 
 export type TurnPhase =
+  | "ROUND_DRAFT"
   | "TURN_START"
   | "SETUP_INIT"
   | "SETUP_OTHER"
@@ -338,6 +339,8 @@ export type GameState = {
   /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
   resolveUnresolved: PlayerId[];
 
+  /** ROUND_DRAFT 페이즈: 드래프트 제출 현황 (null = 미제출) */
+  draftSelections: { P1: string[] | null; AI: string[] | null };
 };
 
 /** 게임 시작 전 셋업 설정 */
@@ -360,4 +363,5 @@ export type Action =
   | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
   | { type: "SELECTION/SKIP" }
   | { type: "DISCARD/CONFIRM"; discardCards: string[] }
-  | { type: "TURN/TAG" };
+  | { type: "TURN/TAG" }
+  | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] };
