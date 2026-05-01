@@ -85,28 +85,31 @@ export default function FightingHPBar({
           </div>
         )}
 
-        {/* 바 트랙 */}
+        {/* 바 래퍼 — 툴팁 overflow 처리 */}
         <div
-          className={styles.barTrack}
+          className={styles.barTrackWrap}
           data-hp-label={`${currentHp} / ${maxHp}`}
         >
-          {/* 잔상(ghost) 바 */}
-          {!dead && ghostPct > mainPct && (
-            <div
-              className={[styles.barFill, styles.barGhost, isRight ? styles.barRight : ""].join(" ")}
-              style={{ width: `${ghostPct}%` }}
-            />
-          )}
-          {/* 메인 바 */}
-          {!dead && (
-            <div
-              className={[styles.barFill, hpColor, isRight ? styles.barRight : ""].join(" ")}
-              style={{ width: `${mainPct}%` }}
-            />
-          )}
-          {dead && (
-            <div className={styles.barDead} />
-          )}
+          {/* 바 트랙 — overflow: hidden 으로 fill 클리핑 */}
+          <div className={styles.barTrack}>
+            {/* 잔상(ghost) 바 */}
+            {!dead && ghostPct > mainPct && (
+              <div
+                className={[styles.barFill, styles.barGhost, isRight ? styles.barRight : ""].join(" ")}
+                style={{ width: `${ghostPct}%` }}
+              />
+            )}
+            {/* 메인 바 */}
+            {!dead && (
+              <div
+                className={[styles.barFill, hpColor, isRight ? styles.barRight : ""].join(" ")}
+                style={{ width: `${mainPct}%` }}
+              />
+            )}
+            {dead && (
+              <div className={styles.barDead} />
+            )}
+          </div>
         </div>
 
         {isRight && (

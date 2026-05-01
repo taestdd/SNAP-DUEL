@@ -75,23 +75,14 @@
   gap: 3px;
 }
 
-/* ── 바 트랙 ── */
-.barTrack {
+/* ── 바 래퍼 — 툴팁은 여기에, overflow는 inner track에 ── */
+.barTrackWrap {
   flex: 1;
   position: relative;
-  height: 14px;      /* 활성 바 높이 — .charRowBench로 override */
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-/* 벤치 바는 좀 더 얇게 */
-.charRowBench .barTrack {
-  height: 8px;
 }
 
 /* 툴팁: hover 시 HP 수치 표시 */
-.barTrack::after {
+.barTrackWrap::after {
   content: attr(data-hp-label);
   position: absolute;
   top: -26px;
@@ -110,8 +101,22 @@
   z-index: 10;
 }
 
-.barTrack:hover::after {
+.barTrackWrap:hover::after {
   opacity: 1;
+}
+
+/* ── 바 트랙 — fill 클리핑용 ── */
+.barTrack {
+  position: relative;
+  height: 14px;      /* 활성 바 높이 — .charRowBench로 override */
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+/* 벤치 바는 좀 더 얇게 */
+.charRowBench .barTrack {
+  height: 8px;
 }
 
 /* ── 바 fill 공통 ── */
