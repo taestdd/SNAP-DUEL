@@ -16,6 +16,12 @@
   align-items: center;
   gap: 7px;
   margin-bottom: 2px;
+  width: 100%;
+}
+
+/* AI측 — 이름이 오른쪽 끝에 붙도록 역순 */
+.nameRowRight {
+  flex-direction: row-reverse;
 }
 
 .name {
@@ -24,6 +30,14 @@
   letter-spacing: 0.8px;
   text-transform: uppercase;
   opacity: 0.80;
+  flex-shrink: 0;
+}
+
+/* 존 카운트 */
+.zoneInfo {
+  font-size: 10px;
+  opacity: 0.45;
+  white-space: nowrap;
 }
 
 .thinking {
@@ -81,11 +95,11 @@
   position: relative;
 }
 
-/* 툴팁: hover 시 HP 수치 표시 */
+/* 툴팁: hover 시 HP 수치 표시 (바 아래) */
 .barTrackWrap::after {
   content: attr(data-hp-label);
   position: absolute;
-  top: -26px;
+  bottom: -24px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(10, 14, 30, 0.92);
@@ -204,6 +218,12 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.badgeAir {
+  background: rgba(255, 180, 50, 0.18);
+  border-color: rgba(255, 180, 50, 0.45);
+  color: #ffcc66;
 }
 
 .badgeBurn {

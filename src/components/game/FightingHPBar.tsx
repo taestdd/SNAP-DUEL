@@ -77,12 +77,7 @@ export default function FightingHPBar({
       >
         {/* 캐릭터 라벨 (오른쪽 사이드면 라벨이 오른쪽에) */}
         {!isRight && (
-          <div className={styles.charLabel}>
-            {charId}
-            {isActive && airborneStack >= 1 && (
-              <span className={styles.airBadge}>⬆{airborneStack}</span>
-            )}
-          </div>
+          <div className={styles.charLabel}>{charId}</div>
         )}
 
         {/* 바 래퍼 — 툴팁 overflow 처리 */}
@@ -113,12 +108,7 @@ export default function FightingHPBar({
         </div>
 
         {isRight && (
-          <div className={styles.charLabel}>
-            {charId}
-            {isActive && airborneStack >= 1 && (
-              <span className={styles.airBadge}>⬆{airborneStack}</span>
-            )}
-          </div>
+          <div className={styles.charLabel}>{charId}</div>
         )}
       </div>
     );
@@ -129,10 +119,13 @@ export default function FightingHPBar({
 
   return (
     <div className={[styles.wrap, isRight ? styles.wrapRight : ""].join(" ")}>
-      {/* 플레이어 이름 */}
-      <div className={styles.nameRow}>
+      {/* 플레이어 이름 + 존 카운트 */}
+      <div className={[styles.nameRow, isRight ? styles.nameRowRight : ""].join(" ")}>
         <span className={styles.name}>{label}</span>
         {isThinking && <span className={styles.thinking}>Thinking…</span>}
+        <span className={styles.zoneInfo}>
+          D:{combatant.deck.length} · H:{combatant.hand.length} · CD:{combatant.cooldown.length} · TR:{combatant.trash.length}
+        </span>
       </div>
 
       {/* 활성 캐릭터 바 */}
@@ -142,13 +135,17 @@ export default function FightingHPBar({
       {renderBar(benchChar, false)}
 
       {/* 상태 배지 */}
-      {(block > 0 ||
+      {(airborneStack >= 1 ||
+        block > 0 ||
         status.attackBuff > 0 ||
         burn ||
         status.exhausted ||
         status.speedBonus > 0 ||
         status.speedBonusNext > 0) && (
         <div className={[styles.badges, isRight ? styles.badgesRight : ""].join(" ")}>
+          {airborneStack >= 1 && (
+            <span className={[styles.badge, styles.badgeAir].join(" ")}>⬆ ×{airborneStack}</span>
+          )}
           {block > 0 && <span className={styles.badge}>🛡 {block}</span>}
           {status.attackBuff > 0 && (
             <span className={styles.badge}>ATK+{status.attackBuff}</span>
