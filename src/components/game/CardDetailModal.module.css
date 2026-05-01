@@ -1,0 +1,154 @@
+/* 전체 오버레이 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.60);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  padding: 0 0 12px;
+}
+
+/* 슬라이드-업 패널 */
+.panel {
+  width: min(360px, 100vw - 24px);
+  background: #1c1c2e;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 18px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #e8e8f0;
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerName {
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.2px;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  transition: color 120ms;
+}
+.closeBtn:hover {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+/* 메타 행 */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.metaLabel {
+  font-size: 10px;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metaValue {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.metaDivider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* 카드 텍스트 */
+.text {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
+  margin: 0;
+}
+
+/* 효과 목록 */
+.effectList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.effectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.effBadge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.effValue {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.effTarget {
+  font-size: 11px;
+  opacity: 0.50;
+  margin-left: auto;
+}
+
+/* 태그 배지 행 */
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagBadge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(180, 140, 255, 0.12);
+  border: 1px solid rgba(180, 140, 255, 0.30);
+  color: #c8aaff;
+}
+
+/* 사용 조건 */
+.condition {
+  font-size: 12px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(110, 180, 255, 0.08);
+  border: 1px solid rgba(110, 180, 255, 0.25);
+  color: #88c8ff;
+}

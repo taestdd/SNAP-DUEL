@@ -1,7 +1,8 @@
+import { useRef } from "react";
 import styles from "./CardView.module.css";
 import { CARDS } from "@/game/engine/cards";
 
-function effectBadgeClass(type: string, damageType?: string) {
+export function effectBadgeClass(type: string, damageType?: string) {
   if (type === "tag") return styles.tagTag;
   if (damageType === "ground") return styles.tagGround;
   if (damageType === "anti-air") return styles.tagAntiAir;
@@ -9,7 +10,7 @@ function effectBadgeClass(type: string, damageType?: string) {
   return "";
 }
 
-function effectLabel(type: string, damageType?: string): string {
+export function effectLabel(type: string, damageType?: string): string {
   if (type === "damage" && damageType === "ground") return "⬇ Ground";
   if (type === "damage" && damageType === "anti-air") return "⬆ Anti-Air";
   if (type === "tag") return "⇄ Tag";
@@ -18,8 +19,11 @@ function effectLabel(type: string, damageType?: string): string {
   if (type === "block") return "Block";
   if (type === "draw") return "Draw";
   if (type === "buff_attack") return "ATK+";
+  if (type === "move_cards") return "Move";
   return type;
 }
+
+const LONG_PRESS_MS = 480;
 
 export default function CardView({
   cardId,
@@ -27,15 +31,37 @@ export default function CardView({
   conditionBlocked = false,
   selected,
   onClick,
+  onLongPress,
 }: {
   cardId: string;
   disabled: boolean;
   conditionBlocked?: boolean;
   selected: boolean;
   onClick: () => void;
+  onLongPress?: () => void;
 }) {
   const card = CARDS[cardId];
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longFiredRef = useRef(false);
+
   if (!card) return null;
+
+  function startPress() {
+    longFiredRef.current = false;
+    timerRef.current = setTimeout(() => {
+      longFiredRef.current = true;
+      onLongPress?.();
+    }, LONG_PRESS_MS);
+  }
+
+  function cancelPress() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }
+
+  function handleClick() {
+    if (longFiredRef.current) return; // 롱프레스가 발동한 경우 클릭 무시
+    onClick();
+  }
 
   return (
     <button
@@ -46,29 +72,21 @@ export default function CardView({
         conditionBlocked ? styles.conditionBlocked : "",
         selected ? styles.selected : "",
       ].join(" ")}
-      onClick={onClick}
+      onClick={handleClick}
+      onPointerDown={startPress}
+      onPointerUp={cancelPress}
+      onPointerLeave={cancelPress}
+      onPointerCancel={cancelPress}
       disabled={disabled}
-      title={card.text}
     >
+      {/* 컴팩트 상단: 코스트 · 이름 · 속도 */}
       <div className={styles.top}>
         <div className={styles.cost}>{card.cost}</div>
         <div className={styles.name}>{card.name}</div>
-        <div className={styles.speed}>SPD {card.speed}</div>
-        {card.gain > 0 ? <span className={styles.meta}>GAIN {card.gain}</span> : null}
+        <div className={styles.speed}>{card.speed}</div>
       </div>
 
-      <div className={styles.body}>
-        <div className={styles.text}>{card.text}</div>
-      </div>
-
-      {card.tags && card.tags.length > 0 && (
-        <div className={styles.tagRow}>
-          {card.tags.map((t) => (
-            <span key={t} className={styles.cardTagBadge}>#{t}</span>
-          ))}
-        </div>
-      )}
-
+      {/* 효과 배지 (간략) */}
       <div className={styles.footer}>
         <div className={styles.effectRow}>
           {card.effects.map((eff, i) => (
@@ -82,12 +100,15 @@ export default function CardView({
           ))}
         </div>
 
-        {card.useCondition ? (
+        {card.useCondition && (
           <span className={styles.conditionTag}>
-            {card.useCondition === "ground" ? "⬇ only" : "⬆ only"}
+            {card.useCondition === "ground" ? "⬇" : "⬆"}
           </span>
-        ) : null}
+        )}
       </div>
+
+      {/* 롱프레스 힌트 */}
+      {onLongPress && <div className={styles.longPressHint}>…</div>}
     </button>
   );
 }
