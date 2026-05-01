@@ -413,11 +413,6 @@ export default function GameScreen({
           </div>
         </div>
 
-        {/* P1 HP — mobile: 아레나 아래 / desktop: grid 좌측 */}
-        <div className={styles.p1Panel}>
-          <FightingHPBar combatant={state.P1} side="left" label="YOU" />
-        </div>
-
         {/* 아레나 */}
         <div className={styles.arenaWrap}>
           <ArenaStage
@@ -429,6 +424,11 @@ export default function GameScreen({
             aiCharacter={displayedAIChar}
             shakeLevel={shakeLevel}
           />
+        </div>
+
+        {/* P1 HP */}
+        <div className={styles.p1Panel}>
+          <FightingHPBar combatant={state.P1} side="left" label="YOU" />
         </div>
 
         {/* 큐 패널 */}

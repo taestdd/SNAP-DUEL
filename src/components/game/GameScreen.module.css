@@ -8,30 +8,23 @@
   color: #e9ecf5;
 }
 
+/* ── Single vertical layout, max 480px ── */
 .shell {
-  width: min(1280px, 100%);
+  width: min(480px, 100%);
   height: 100dvh;
   margin: 0 auto;
-  padding: 12px 20px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 6px 10px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   overflow: hidden;
-
-  /* 데스크톱: 3열 named-area grid */
-  display: grid;
-  grid-template-areas:
-    "p1panel  center   aipanel"
-    "arenawrap arenawrap arenawrap"
-    "midrow   midrow   midrow"
-    "handwrap  handwrap  handwrap";
-  grid-template-columns: 1fr 0.55fr 1fr;
-  grid-template-rows: auto auto 1fr 240px;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-/* ── 데스크톱 grid 영역 배치 ── */
+/* ── Panel wrappers ── */
 .aiPanel {
-  grid-area: aipanel;
+  flex-shrink: 0;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -40,7 +33,7 @@
 }
 
 .p1Panel {
-  grid-area: p1panel;
+  flex-shrink: 0;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -49,54 +42,40 @@
 }
 
 .arenaWrap {
-  grid-area: arenawrap;
+  flex-shrink: 0;
 }
 
 .handWrap {
-  grid-area: handwrap;
+  flex: 1;
   min-height: 0;
-}
-
-/* ── Top row: Player | Title | AI ── */
-.topRow {
-  display: grid;
-  grid-template-columns: 1fr 0.55fr 1fr;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.topPanel {
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
 
+/* ── Title / info center block ── */
 .topCenter {
-  grid-area: center;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 12px 14px;
+  padding: 5px 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
-  gap: 4px;
+  gap: 2px;
 }
 
 .title {
   margin: 0;
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.2px;
 }
 
 .sub {
   opacity: 0.75;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .gameOver {
@@ -110,11 +89,11 @@
 
 /* ── Middle row: P1 Queue | AI Queue ── */
 .middleRow {
-  grid-area: midrow;
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  min-height: 0;
+  height: 70px;
   overflow: hidden;
 }
 
@@ -435,50 +414,4 @@
   border-radius: 8px;
   animation: cancelFade 0.85s ease forwards;
   pointer-events: none;
-}
-
-/* ── 860px: 큐 패널 단일 열 ── */
-@media (max-width: 860px) {
-  .middleRow {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── 768px 이하: 모바일 세로 스택 레이아웃 ── */
-@media (max-width: 768px) {
-  .shell {
-    display: flex;
-    flex-direction: column;
-    /* 고정 높이 — 스크롤 없이 모든 섹션이 뷰포트 안에 들어오도록 */
-    height: 100dvh;
-    overflow: hidden;
-    gap: 5px;
-    padding: 6px 10px;
-    padding-bottom: max(6px, env(safe-area-inset-bottom));
-  }
-
-  /* 순서: AI HP → 중앙정보 → 아레나 → P1 HP → 큐 → 핸드 */
-  .aiPanel    { order: 1; flex-shrink: 0; }
-  .topCenter  { order: 2; flex-shrink: 0; padding: 5px 10px; gap: 2px; }
-  .arenaWrap  { order: 3; flex-shrink: 0; }
-  .p1Panel    { order: 4; flex-shrink: 0; }
-  .middleRow  {
-    order: 5;
-    flex-shrink: 0;
-    /* 모바일에서도 2열 유지 — 세로 공간 절약 */
-    grid-template-columns: 1fr 1fr;
-    height: 70px;
-    overflow-y: hidden;
-  }
-  /* Hand가 남은 공간을 모두 차지 */
-  .handWrap   {
-    order: 6;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  /* 모바일에서 타이틀 폰트 축소 */
-  .title { font-size: 13px; }
-  .sub   { font-size: 10px; }
 }
