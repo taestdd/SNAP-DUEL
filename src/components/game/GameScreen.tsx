@@ -13,8 +13,7 @@ import { getCard } from "@/game/engine/cards";
 import { makeQueue } from "@/game/animation/makeQueue";
 import { useAnimQueue } from "@/game/animation/useAnimQueue";
 import styles from "./GameScreen.module.css";
-import ArenaHeader from "./ArenaHeader";
-import PlayerBar from "./PlayerBar";
+import FightingHPBar from "./FightingHPBar";
 import Hand from "./Hand";
 import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
@@ -380,7 +379,7 @@ export default function GameScreen({
         {/* Top row: Player | Game Title | AI */}
         <div className={styles.topRow}>
           <div className={styles.topPanel}>
-            <PlayerBar me={state.P1} />
+            <FightingHPBar combatant={state.P1} side="left" label="YOU" />
           </div>
 
           <div className={styles.topCenter}>
@@ -415,7 +414,7 @@ export default function GameScreen({
           </div>
 
           <div className={styles.topPanel}>
-            <ArenaHeader ai={state.AI} isThinking={isAiThinking} />
+            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
           </div>
         </div>
 
