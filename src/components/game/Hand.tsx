@@ -23,11 +23,14 @@ export default function Hand({
   return (
     <div className={styles.wrap}>
       <div className={styles.top}>
-        <div className={styles.topLeft}>
+        <div className={styles.titleRow}>
           <div className={styles.title}>Hand ({me.hand.length}/10)</div>
-          <div className={styles.help}>
-            {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
-          </div>
+          {endTurnButton && (
+            <div className={styles.headerButtons}>{endTurnButton}</div>
+          )}
+        </div>
+        <div className={styles.help}>
+          {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
         </div>
       </div>
 
@@ -57,10 +60,6 @@ export default function Hand({
           );
         })}
       </div>
-
-      {endTurnButton && (
-        <div className={styles.actionBar}>{endTurnButton}</div>
-      )}
 
       {detailCard && (
         <CardDetailModal
