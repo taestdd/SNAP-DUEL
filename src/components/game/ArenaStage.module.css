@@ -15,7 +15,7 @@
 
 @media (max-width: 768px) {
   .arena {
-    height: 160px;
+    height: clamp(120px, 28dvh, 160px);
     gap: clamp(12px, 4vw, 30px);
     padding: 0 10px;
     border-radius: 8px;

@@ -449,34 +449,36 @@
   .shell {
     display: flex;
     flex-direction: column;
-    height: auto;
-    min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
-    gap: 6px;
-    padding: 8px 10px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    /* 고정 높이 — 스크롤 없이 모든 섹션이 뷰포트 안에 들어오도록 */
+    height: 100dvh;
+    overflow: hidden;
+    gap: 5px;
+    padding: 6px 10px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 
   /* 순서: AI HP → 중앙정보 → 아레나 → P1 HP → 큐 → 핸드 */
   .aiPanel    { order: 1; flex-shrink: 0; }
-  .topCenter  { order: 2; flex-shrink: 0; padding: 8px 10px; }
+  .topCenter  { order: 2; flex-shrink: 0; padding: 5px 10px; gap: 2px; }
   .arenaWrap  { order: 3; flex-shrink: 0; }
   .p1Panel    { order: 4; flex-shrink: 0; }
   .middleRow  {
     order: 5;
     flex-shrink: 0;
-    grid-template-columns: 1fr;
-    max-height: 110px;
-    overflow-y: auto;
+    /* 모바일에서도 2열 유지 — 세로 공간 절약 */
+    grid-template-columns: 1fr 1fr;
+    height: 70px;
+    overflow-y: hidden;
   }
+  /* Hand가 남은 공간을 모두 차지 */
   .handWrap   {
     order: 6;
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /* 모바일에서 타이틀 폰트 축소 */
-  .title { font-size: 14px; }
-  .sub   { font-size: 11px; }
+  .title { font-size: 13px; }
+  .sub   { font-size: 10px; }
 }

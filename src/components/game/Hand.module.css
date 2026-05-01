@@ -57,7 +57,8 @@
 
 @media (max-width: 768px) {
   .wrap {
-    height: auto;
+    height: 100%;
+    overflow: hidden;
   }
   .row {
     grid-auto-columns: min(130px, 35vw);
