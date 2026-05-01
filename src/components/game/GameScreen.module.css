@@ -23,7 +23,7 @@
 /* ── Top row: Player | Title | AI ── */
 .topRow {
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
+  grid-template-columns: 1fr 0.55fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
 }
