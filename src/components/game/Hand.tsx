@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { Combatant, SelectedCard } from "@/game/engine/types";
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
+import CardDetailModal from "./CardDetailModal";
 import { CARDS } from "@/game/engine/cards";
 
 export default function Hand({
@@ -16,6 +18,8 @@ export default function Hand({
   onSelectCard: (cardId: string, handIndex: number) => void;
   endTurnButton?: React.ReactNode;
 }) {
+  const [detailCard, setDetailCard] = useState<{ cardId: string; handIndex: number } | null>(null);
+
   return (
     <div className={styles.wrap}>
       <div className={styles.top}>
@@ -51,10 +55,18 @@ export default function Hand({
               conditionBlocked={conditionBlocked}
               selected={isSelected}
               onClick={() => onSelectCard(cardId, idx)}
+              onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
             />
           );
         })}
       </div>
+
+      {detailCard && (
+        <CardDetailModal
+          cardId={detailCard.cardId}
+          onClose={() => setDetailCard(null)}
+        />
+      )}
     </div>
   );
 }
