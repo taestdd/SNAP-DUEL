@@ -49,3 +49,12 @@
   flex: 1 1 0;
   min-height: 0;
 }
+
+@media (max-width: 768px) {
+  .wrap {
+    height: auto;
+  }
+  .row {
+    grid-auto-columns: min(130px, 36vw);
+  }
+}

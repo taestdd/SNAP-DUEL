@@ -376,65 +376,66 @@ export default function GameScreen({
       )}
 
       <div className={styles.shell}>
-        {/* Top row: Player | Game Title | AI */}
-        <div className={styles.topRow}>
-          <div className={styles.topPanel}>
-            <FightingHPBar combatant={state.P1} side="left" label="YOU" />
-          </div>
+        {/* AI HP — mobile: 최상단 / desktop: grid 우측 */}
+        <div className={styles.aiPanel}>
+          <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
+        </div>
 
-          <div className={styles.topCenter}>
-            <h1 className={styles.title}>Snap Duel (MVP)</h1>
-            <div className={styles.sub}>
-              Round {state.round}/3 · Turn {state.turn} · Phase {state.phase} · Initiative{" "}
-              {state.initiative}
-            </div>
-            {isGameOver && (
-              <div className={styles.gameOver}>
-                Winner: {state.winner === "DRAW" ? "DRAW" : state.winner}
-              </div>
-            )}
-            <div className={styles.popoverBtnRow}>
-              <button
-                ref={logBtnRef}
-                type="button"
-                className={`${styles.popoverBtn} ${logOpen ? styles.active : ""}`}
-                onClick={() => { setLogOpen((v) => !v); setDeckOpen(false); }}
-              >
-                📋 로그
-              </button>
-              <button
-                ref={deckBtnRef}
-                type="button"
-                className={`${styles.popoverBtn} ${deckOpen ? styles.active : ""}`}
-                onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
-              >
-                🃏 덱
-              </button>
-            </div>
+        {/* 중앙 정보 — desktop: grid 중앙 */}
+        <div className={styles.topCenter}>
+          <h1 className={styles.title}>Snap Duel (MVP)</h1>
+          <div className={styles.sub}>
+            Round {state.round}/3 · Turn {state.turn} · Phase {state.phase} · Initiative{" "}
+            {state.initiative}
           </div>
-
-          <div className={styles.topPanel}>
-            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
+          {isGameOver && (
+            <div className={styles.gameOver}>
+              Winner: {state.winner === "DRAW" ? "DRAW" : state.winner}
+            </div>
+          )}
+          <div className={styles.popoverBtnRow}>
+            <button
+              ref={logBtnRef}
+              type="button"
+              className={`${styles.popoverBtn} ${logOpen ? styles.active : ""}`}
+              onClick={() => { setLogOpen((v) => !v); setDeckOpen(false); }}
+            >
+              📋 로그
+            </button>
+            <button
+              ref={deckBtnRef}
+              type="button"
+              className={`${styles.popoverBtn} ${deckOpen ? styles.active : ""}`}
+              onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
+            >
+              🃏 덱
+            </button>
           </div>
         </div>
 
-        {/* Arena stage: fighters face each other */}
-        <ArenaStage
-          playerPose={playerPose}
-          playerPoseKey={playerPoseKey}
-          playerCharacter={displayedP1Char}
-          aiPose={aiPose}
-          aiPoseKey={aiPoseKey}
-          aiCharacter={displayedAIChar}
-          shakeLevel={shakeLevel}
-        />
+        {/* P1 HP — mobile: 아레나 아래 / desktop: grid 좌측 */}
+        <div className={styles.p1Panel}>
+          <FightingHPBar combatant={state.P1} side="left" label="YOU" />
+        </div>
 
-        {/* Middle row: P1 Queue | AI Queue */}
+        {/* 아레나 */}
+        <div className={styles.arenaWrap}>
+          <ArenaStage
+            playerPose={playerPose}
+            playerPoseKey={playerPoseKey}
+            playerCharacter={displayedP1Char}
+            aiPose={aiPose}
+            aiPoseKey={aiPoseKey}
+            aiCharacter={displayedAIChar}
+            shakeLevel={shakeLevel}
+          />
+        </div>
+
+        {/* 큐 패널 */}
         <div className={styles.middleRow}>
           <div className={styles.queuePanel}>
             <QueuePreview title="P1 Queue" me={state.P1} phase={state.phase} recentlyCancelledPlayer={state.recentlyCancelledPlayer} />
           </div>
-
           <div className={styles.queuePanel}>
             <QueuePreview title="AI Queue" me={state.AI} phase={state.phase} recentlyCancelledPlayer={state.recentlyCancelledPlayer} />
           </div>
@@ -475,36 +476,38 @@ export default function GameScreen({
           </div>
         )}
 
-        {/* Bottom: Hand section */}
-        <Hand
-          me={state.P1}
-          selected={state.selected}
-          disabled={!canAct}
-          onSelectCard={(cardId, handIndex) =>
-            dispatch({ type: "CARD/SELECT", cardId, handIndex })
-          }
-          endTurnButton={
-            <>
-              <EndTurnButton
-                label={readyLabel}
-                disabled={!isSetup || state.P1.ready || isGameOver}
-                onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
-              />
-              <EndTurnButton
-                label="Tag"
-                disabled={
-                  !isSetup ||
-                  state.P1.ready ||
-                  isGameOver ||
-                  isTagAnimating ||
-                  state.p1TaggedThisTurn ||
-                  state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
-                }
-                onClick={() => dispatch({ type: "TURN/TAG" })}
-              />
-            </>
-          }
-        />
+        {/* Hand */}
+        <div className={styles.handWrap}>
+          <Hand
+            me={state.P1}
+            selected={state.selected}
+            disabled={!canAct}
+            onSelectCard={(cardId, handIndex) =>
+              dispatch({ type: "CARD/SELECT", cardId, handIndex })
+            }
+            endTurnButton={
+              <>
+                <EndTurnButton
+                  label={readyLabel}
+                  disabled={!isSetup || state.P1.ready || isGameOver}
+                  onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
+                />
+                <EndTurnButton
+                  label="Tag"
+                  disabled={
+                    !isSetup ||
+                    state.P1.ready ||
+                    isGameOver ||
+                    isTagAnimating ||
+                    state.p1TaggedThisTurn ||
+                    state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
+                  }
+                  onClick={() => dispatch({ type: "TURN/TAG" })}
+                />
+              </>
+            }
+          />
+        </div>
       </div>
     </div>
   );

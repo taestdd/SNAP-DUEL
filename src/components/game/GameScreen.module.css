@@ -15,9 +15,46 @@
   padding: 12px 20px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   box-sizing: border-box;
-  display: grid;
-  grid-template-rows: auto auto 1fr 240px;
   overflow: hidden;
+
+  /* 데스크톱: 3열 named-area grid */
+  display: grid;
+  grid-template-areas:
+    "p1panel  center   aipanel"
+    "arenawrap arenawrap arenawrap"
+    "midrow   midrow   midrow"
+    "handwrap  handwrap  handwrap";
+  grid-template-columns: 1fr 0.55fr 1fr;
+  grid-template-rows: auto auto 1fr 240px;
+  gap: 10px;
+}
+
+/* ── 데스크톱 grid 영역 배치 ── */
+.aiPanel {
+  grid-area: aipanel;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.p1Panel {
+  grid-area: p1panel;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.arenaWrap {
+  grid-area: arenawrap;
+}
+
+.handWrap {
+  grid-area: handwrap;
+  min-height: 0;
 }
 
 /* ── Top row: Player | Title | AI ── */
@@ -37,6 +74,7 @@
 }
 
 .topCenter {
+  grid-area: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -72,12 +110,12 @@
 
 /* ── Middle row: P1 Queue | AI Queue ── */
 .middleRow {
+  grid-area: midrow;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   min-height: 0;
   overflow: hidden;
-  margin-bottom: 10px;
 }
 
 .queuePanel {
@@ -399,11 +437,46 @@
   pointer-events: none;
 }
 
+/* ── 860px: 큐 패널 단일 열 ── */
 @media (max-width: 860px) {
-  .topRow {
-    grid-template-columns: 1fr;
-  }
   .middleRow {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── 768px 이하: 모바일 세로 스택 레이아웃 ── */
+@media (max-width: 768px) {
+  .shell {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    gap: 6px;
+    padding: 8px 10px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* 순서: AI HP → 중앙정보 → 아레나 → P1 HP → 큐 → 핸드 */
+  .aiPanel    { order: 1; flex-shrink: 0; }
+  .topCenter  { order: 2; flex-shrink: 0; padding: 8px 10px; }
+  .arenaWrap  { order: 3; flex-shrink: 0; }
+  .p1Panel    { order: 4; flex-shrink: 0; }
+  .middleRow  {
+    order: 5;
+    flex-shrink: 0;
+    grid-template-columns: 1fr;
+    max-height: 110px;
+    overflow-y: auto;
+  }
+  .handWrap   {
+    order: 6;
+    flex: 1;
+    min-height: 200px;
+  }
+
+  /* 모바일에서 타이틀 폰트 축소 */
+  .title { font-size: 14px; }
+  .sub   { font-size: 11px; }
 }

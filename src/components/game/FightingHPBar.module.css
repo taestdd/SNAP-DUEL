@@ -5,6 +5,13 @@
   padding: 10px 12px;
 }
 
+@media (max-width: 768px) {
+  .wrap {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+}
+
 /* AI측은 오른쪽 정렬 */
 .wrapRight {
   align-items: flex-end;
