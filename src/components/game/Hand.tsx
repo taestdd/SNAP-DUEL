@@ -29,9 +29,6 @@ export default function Hand({
             {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
           </div>
         </div>
-        {endTurnButton && (
-          <div className={styles.topRight}>{endTurnButton}</div>
-        )}
       </div>
 
       <div className={styles.row}>
@@ -60,6 +57,10 @@ export default function Hand({
           );
         })}
       </div>
+
+      {endTurnButton && (
+        <div className={styles.actionBar}>{endTurnButton}</div>
+      )}
 
       {detailCard && (
         <CardDetailModal

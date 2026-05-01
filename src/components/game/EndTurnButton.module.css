@@ -18,3 +18,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}
