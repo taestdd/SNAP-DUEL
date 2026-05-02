@@ -357,6 +357,8 @@ export type Action =
   | { type: "CARD/SELECT"; cardId: string; handIndex: number }
   | { type: "PLAYER/READY"; player: PlayerId }
   | { type: "AI/SETUP_AUTO" }
+  | { type: "AI/GUEST_READY"; cardId?: string; handIndex?: number }
+  | { type: "AI/GUEST_TAG" }
   | { type: "RESOLVE/STEP" }
   | { type: "TURN/END" }
   | { type: "DEBUG/RESET" }

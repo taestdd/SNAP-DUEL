@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import styles from "./MainMenu.module.css";
 
 const MENU_ITEMS = [
-  { label: "AI 대전",   href: "/game", disabled: false },
-  { label: "로컬 대전", href: null,    disabled: true  },
-  { label: "랭크 대전", href: null,    disabled: true  },
-  { label: "덱 빌더",   href: null,    disabled: true  },
+  { label: "AI 대전",     href: "/game",   disabled: false },
+  { label: "온라인 대전", href: "/online", disabled: false },
+  { label: "랭크 대전",   href: null,      disabled: true  },
+  { label: "덱 빌더",     href: null,      disabled: true  },
 ];
 
 export default function MainMenu() {

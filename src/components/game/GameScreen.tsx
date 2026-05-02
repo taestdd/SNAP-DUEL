@@ -81,12 +81,14 @@ export default function GameScreen({
   dispatch,
   isAiThinking,
   isTagAnimating = false,
+  disableAiDraft = false,
   onExit,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
   isAiThinking: boolean;
   isTagAnimating?: boolean;
+  disableAiDraft?: boolean;
   onExit?: () => void;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
@@ -179,15 +181,15 @@ export default function GameScreen({
     }
   }, [state.phase, state.recentlyCancelledPlayer, state.recentlyCancelledId]);
 
-  // ROUND_DRAFT: AI 자동 드래프트 (10초 후)
+  // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
+    if (disableAiDraft) return;
     if (state.phase !== "ROUND_DRAFT") return;
     if (state.draftSelections.AI !== null) return;
 
     const t = setTimeout(() => {
       const deck = state.AI.deck;
       const count = Math.min(3, deck.length);
-      // 랜덤 인덱스 선택
       const indices = [...Array(deck.length).keys()];
       for (let i = indices.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -199,7 +201,7 @@ export default function GameScreen({
 
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, state.draftSelections.AI]);
+  }, [disableAiDraft, state.phase, state.draftSelections.AI]);
 
   // RESOLVING 진입 시 이벤트 큐 생성
   useEffect(() => {
