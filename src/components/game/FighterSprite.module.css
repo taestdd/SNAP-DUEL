@@ -1,16 +1,9 @@
 .sprite {
-  width: 180px;
-  height: 180px;
+  width: clamp(90px, 23vw, 140px);
+  height: clamp(90px, 23vw, 140px);
   background-repeat: no-repeat;
   image-rendering: pixelated;
   flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-  .sprite {
-    width: clamp(90px, 23vw, 140px);
-    height: clamp(90px, 23vw, 140px);
-  }
 }
 
 .flip {

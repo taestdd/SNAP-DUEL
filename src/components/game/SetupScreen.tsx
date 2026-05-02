@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CHARACTERS } from "@/game/engine/characters";
 import { DECK_REGISTRY } from "@/game/engine/state";
 import type { CardEffect, CharacterId, SetupConfig } from "@/game/engine/types";
@@ -39,6 +39,11 @@ export default function SetupScreen({
     null,
   ]);
   const [deckId, setDeckId] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = "auto";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const allCharIds = Object.keys(CHARACTERS) as CharacterId[];
 

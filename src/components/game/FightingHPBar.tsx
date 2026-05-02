@@ -117,14 +117,22 @@ export default function FightingHPBar({
   // 활성/벤치 순서
   const benchChar: CharacterId = activeCharacter === "A" ? "B" : "A";
 
+  // 덱 바 계산
+  const deckTotal =
+    combatant.deck.length +
+    combatant.hand.length +
+    combatant.cooldown.length +
+    combatant.trash.length;
+  const deckPct = deckTotal > 0 ? (combatant.deck.length / deckTotal) * 100 : 0;
+
   return (
     <div className={[styles.wrap, isRight ? styles.wrapRight : ""].join(" ")}>
-      {/* 플레이어 이름 + 존 카운트 */}
+      {/* 플레이어 이름 + 존 카운트 (D: 제외) */}
       <div className={[styles.nameRow, isRight ? styles.nameRowRight : ""].join(" ")}>
         <span className={styles.name}>{label}</span>
         {isThinking && <span className={styles.thinking}>Thinking…</span>}
         <span className={styles.zoneInfo}>
-          D:{combatant.deck.length} · H:{combatant.hand.length} · CD:{combatant.cooldown.length} · TR:{combatant.trash.length}
+          H:{combatant.hand.length} · CD:{combatant.cooldown.length} · TR:{combatant.trash.length}
         </span>
       </div>
 
@@ -133,6 +141,21 @@ export default function FightingHPBar({
 
       {/* 벤치 캐릭터 바 */}
       {renderBar(benchChar, false)}
+
+      {/* 덱 바 */}
+      <div className={[styles.deckRow, isRight ? styles.charRowRight : ""].join(" ")}>
+        {!isRight && <div className={styles.charLabel}>D</div>}
+        <div className={styles.barTrackWrap}>
+          <div className={[styles.barTrack, styles.deckBarTrack].join(" ")}>
+            <div
+              className={[styles.barFill, styles.barDeck, isRight ? styles.barRight : ""].join(" ")}
+              style={{ width: `${deckPct}%` }}
+            />
+          </div>
+        </div>
+        <div className={styles.deckCount}>{combatant.deck.length}</div>
+        {isRight && <div className={styles.charLabel}>D</div>}
+      </div>
 
       {/* 상태 배지 */}
       {(airborneStack >= 1 ||

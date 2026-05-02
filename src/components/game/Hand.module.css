@@ -6,9 +6,9 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
-  height: 100%;
   overflow: hidden;
 }
+
 
 .top {
   display: flex;
@@ -46,21 +46,9 @@
 .row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 160px;
+  grid-auto-columns: min(130px, 35vw);
   gap: 10px;
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 6px;
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-@media (max-width: 768px) {
-  .wrap {
-    height: 100%;
-    overflow: hidden;
-  }
-  .row {
-    grid-auto-columns: min(130px, 35vw);
-  }
 }

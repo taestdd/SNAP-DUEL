@@ -1,5 +1,6 @@
 .btn {
   padding: 10px 14px;
+  min-height: 44px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.10);
@@ -17,10 +18,4 @@
 .disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .btn {
-    min-height: 44px;
-  }
 }
