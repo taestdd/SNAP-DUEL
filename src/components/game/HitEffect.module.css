@@ -1,0 +1,74 @@
+.wrap {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+
+/* ── 중심 원 ── */
+.center {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: centerBurst 180ms ease-out forwards;
+}
+
+.centerStrong {
+  width: 34px;
+  height: 34px;
+}
+
+@keyframes centerBurst {
+  0%   { opacity: 1;   transform: translate(-50%, -50%) scale(0.2); }
+  30%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(0.8); }
+}
+
+/* ── 링 ── */
+.ring {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: ringExpand 320ms ease-out forwards;
+}
+
+.ringStrong {
+  width: 44px;
+  height: 44px;
+  border-width: 4px;
+}
+
+@keyframes ringExpand {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3); }
+}
+
+/* ── 스파크 도트 ── */
+.spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: white;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: sparkFly 280ms ease-out forwards;
+}
+
+.sparkStrong {
+  width: 6px;
+  height: 6px;
+}
+
+@keyframes sparkFly {
+  0%   { opacity: 1; transform: translate(-50%, -50%) translate(0px, 0px); }
+  60%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)); }
+}
