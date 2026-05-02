@@ -81,11 +81,13 @@ export default function GameScreen({
   dispatch,
   isAiThinking,
   isTagAnimating = false,
+  onExit,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
   isAiThinking: boolean;
   isTagAnimating?: boolean;
+  onExit?: () => void;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -391,6 +393,19 @@ export default function GameScreen({
             dispatch({ type: "DISCARD/CONFIRM", discardCards })
           }
         />
+      )}
+
+      {isGameOver && onExit && (
+        <div className={styles.gameOverOverlay}>
+          <div className={styles.gameOverBox}>
+            <div className={styles.gameOverResult}>
+              {state.winner === "P1" ? "WIN" : state.winner === "AI" ? "LOSE" : "DRAW"}
+            </div>
+            <button type="button" className={styles.gameOverMenuBtn} onClick={onExit}>
+              메인 메뉴
+            </button>
+          </div>
+        </div>
       )}
 
       <div className={styles.shell}>

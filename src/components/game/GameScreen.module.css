@@ -8,6 +8,51 @@
   color: #e9ecf5;
 }
 
+/* ── 게임 오버 오버레이 ── */
+.gameOverOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.gameOverBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.gameOverResult {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #7eb8ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gameOverMenuBtn {
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e9ecf5;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gameOverMenuBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 /* ── Single vertical layout, max 480px ── */
 .shell {
   width: min(480px, 100%);
