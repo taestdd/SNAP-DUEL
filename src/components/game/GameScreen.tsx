@@ -112,6 +112,9 @@ export default function GameScreen({
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
   const [zoomKey, setZoomKey] = useState(0);
   const [bgOffset, setBgOffset] = useState(0);
+  const [hitEffectKey, setHitEffectKey] = useState(0);
+  const [hitEffectTarget, setHitEffectTarget] = useState<"P1" | "AI" | null>(null);
+  const [hitEffectStrength, setHitEffectStrength] = useState<"weak" | "strong">("weak");
 
   // 태그 애니메이션: 실제 표시 캐릭터 (exit 재생 후 전환)
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -283,6 +286,9 @@ export default function GameScreen({
         setShakeLevel(shakeLevel);
         shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
         setZoomKey((k) => k + 1);
+        setHitEffectTarget(event.target ?? null);
+        setHitEffectStrength(pose === "hit_strong" ? "strong" : "weak");
+        setHitEffectKey((k) => k + 1);
         if (event.target === "P1") {
           setBgOffset((o) => o + 40);
           setPlayerPose(pose);
@@ -424,6 +430,9 @@ export default function GameScreen({
             aiKnockbackKey={aiKnockbackKey}
             zoomKey={zoomKey}
             bgOffset={bgOffset}
+            hitEffectKey={hitEffectKey}
+            hitEffectTarget={hitEffectTarget}
+            hitEffectStrength={hitEffectStrength}
           />
         </div>
 

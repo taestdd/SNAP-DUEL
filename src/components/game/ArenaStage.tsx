@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { CharacterId, FighterPose } from "@/game/engine/types";
 import FighterSprite from "./FighterSprite";
+import HitEffect from "./HitEffect";
 import styles from "./ArenaStage.module.css";
 
 export type ShakeLevel = "none" | "light" | "heavy";
@@ -25,6 +26,9 @@ interface ArenaStageProps {
   aiKnockbackKey?: number;
   zoomKey?: number;
   bgOffset?: number;
+  hitEffectKey?: number;
+  hitEffectTarget?: "P1" | "AI" | null;
+  hitEffectStrength?: "weak" | "strong";
 }
 
 export default function ArenaStage({
@@ -44,6 +48,9 @@ export default function ArenaStage({
   aiKnockbackKey = 0,
   zoomKey = 0,
   bgOffset = 0,
+  hitEffectKey = 0,
+  hitEffectTarget = null,
+  hitEffectStrength = "weak",
 }: ArenaStageProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const aiRef = useRef<HTMLDivElement>(null);
@@ -86,6 +93,16 @@ export default function ArenaStage({
     <div ref={zoomRef} className={styles.zoomWrap}>
       <div className={`${styles.arena} ${shakeClass}`}>
         <div className={styles.arenaBg} style={{ backgroundPositionX: `${bgOffset}px` }} />
+        {hitEffectKey > 0 && hitEffectTarget && (
+          <HitEffect
+            key={hitEffectKey}
+            strength={hitEffectStrength}
+            style={{
+              left: hitEffectTarget === "P1" ? "32%" : "68%",
+              top: "55%",
+            }}
+          />
+        )}
         <div ref={playerRef} className={styles.fighterLeft}>
           <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} />
         </div>
