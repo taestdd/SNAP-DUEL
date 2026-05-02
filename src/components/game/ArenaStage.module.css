@@ -1,3 +1,17 @@
+.zoomWrap {
+  flex-shrink: 0;
+}
+
+.zooming {
+  animation: zoomPulse 260ms ease-out forwards;
+}
+
+@keyframes zoomPulse {
+  0%   { transform: scale(1); }
+  18%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
 .arena {
   display: flex;
   align-items: flex-end;
@@ -10,7 +24,18 @@
   padding: 0 10px;
   position: relative;
   overflow: hidden;
-  flex-shrink: 0;
+}
+
+.arenaBg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/sprites/backgrounds/arena_bg.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  background-position-y: bottom;
+  opacity: 0.55;
+  transition: background-position-x 400ms ease-out;
+  z-index: 0;
 }
 
 .arena::after {
@@ -62,4 +87,27 @@
   display: flex;
   align-items: flex-end;
   position: relative;
+  z-index: 1;
+}
+
+/* ─── Knockback ─── */
+
+.knockbackLeft {
+  animation: knockbackLeft 280ms ease-out forwards;
+}
+
+.knockbackRight {
+  animation: knockbackRight 280ms ease-out forwards;
+}
+
+@keyframes knockbackLeft {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-28px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes knockbackRight {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(28px); }
+  100% { transform: translateX(0); }
 }

@@ -9,3 +9,13 @@
 .flip {
   transform: scaleX(-1);
 }
+
+.flashing {
+  animation: hitFlash 180ms ease-out forwards;
+}
+
+@keyframes hitFlash {
+  0%   { filter: brightness(8) saturate(0); }
+  50%  { filter: brightness(3) saturate(0.3); }
+  100% { filter: brightness(1) saturate(1); }
+}
