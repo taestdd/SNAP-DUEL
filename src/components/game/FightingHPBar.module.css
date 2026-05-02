@@ -185,12 +185,40 @@
   50%       { opacity: 0.70; }
 }
 
+/* 덱 바 색상 */
+.barDeck {
+  background: linear-gradient(90deg, #2e6fd4 0%, #5a9bf5 100%);
+  z-index: 2;
+}
+
 /* KO — 어둡게 */
 .barDead {
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
+}
+
+/* ── 덱 바 행 ── */
+.deckRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  opacity: 0.72;
+}
+
+.deckBarTrack {
+  height: 6px;
+}
+
+.deckCount {
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 14px;
+  text-align: right;
+  opacity: 0.85;
 }
 
 /* airborne 배지 */
