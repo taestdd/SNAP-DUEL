@@ -106,6 +106,12 @@ export default function GameScreen({
   const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
   const [playerFrozenUntil, setPlayerFrozenUntil] = useState(0);
   const [aiFrozenUntil, setAiFrozenUntil] = useState(0);
+  const [playerFlashKey, setPlayerFlashKey] = useState(0);
+  const [aiFlashKey, setAiFlashKey] = useState(0);
+  const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
+  const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
+  const [zoomKey, setZoomKey] = useState(0);
+  const [bgOffset, setBgOffset] = useState(0);
 
   // 태그 애니메이션: 실제 표시 캐릭터 (exit 재생 후 전환)
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -113,8 +119,7 @@ export default function GameScreen({
   const prevP1CharRef2 = useRef<CharacterId>(state.P1.activeCharacter);
   const prevAICharRef2 = useRef<CharacterId>(state.AI.activeCharacter);
 
-  const prevP1HpRef = useRef(state.P1.hp);
-  const prevAiHpRef = useRef(state.AI.hp);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // P1 캐릭터 교체 감지 → exit 애니 → displayedP1Char 전환 → entry 애니
   useEffect(() => {
@@ -246,19 +251,6 @@ export default function GameScreen({
     setAiPoseKey((k) => k + 1);
   }, [state.round]);
 
-  // HP 변화 감지 → 화면 흔들림
-  useEffect(() => {
-    const p1Dmg = prevP1HpRef.current - state.P1.hp;
-    const aiDmg = prevAiHpRef.current - state.AI.hp;
-    prevP1HpRef.current = state.P1.hp;
-    prevAiHpRef.current = state.AI.hp;
-    const maxDmg = Math.max(p1Dmg, aiDmg);
-    if (maxDmg <= 0) return;
-    const level: ShakeLevel = maxDmg <= 5 ? "light" : "heavy";
-    setShakeLevel(level);
-    const timer = setTimeout(() => setShakeLevel("none"), 300);
-    return () => clearTimeout(timer);
-  }, [state.P1.hp, state.AI.hp]);
 
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
@@ -283,12 +275,26 @@ export default function GameScreen({
         const frozenUntil = Date.now() + freezeMs;
         setPlayerFrozenUntil(frozenUntil);
         setAiFrozenUntil(frozenUntil);
+
+        // 흔들림은 히트스톱보다 짧게 — 흔들림 종료 후 파이터 재개
+        const shakeLevel: ShakeLevel = pose === "hit_strong" ? "heavy" : "light";
+        const shakeDuration = pose === "hit_strong" ? 220 : pose === "hit_aerial" ? 160 : 100;
+        if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+        setShakeLevel(shakeLevel);
+        shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
+        setZoomKey((k) => k + 1);
         if (event.target === "P1") {
+          setBgOffset((o) => o + 40);
           setPlayerPose(pose);
           setPlayerPoseKey((k) => k + 1);
+          setPlayerFlashKey((k) => k + 1);
+          setPlayerKnockbackKey((k) => k + 1);
         } else if (event.target === "AI") {
+          setBgOffset((o) => o - 40);
           setAiPose(pose);
           setAiPoseKey((k) => k + 1);
+          setAiFlashKey((k) => k + 1);
+          setAiKnockbackKey((k) => k + 1);
         }
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
@@ -412,6 +418,12 @@ export default function GameScreen({
             shakeLevel={shakeLevel}
             playerFrozenUntil={playerFrozenUntil}
             aiFrozenUntil={aiFrozenUntil}
+            playerFlashKey={playerFlashKey}
+            aiFlashKey={aiFlashKey}
+            playerKnockbackKey={playerKnockbackKey}
+            aiKnockbackKey={aiKnockbackKey}
+            zoomKey={zoomKey}
+            bgOffset={bgOffset}
           />
         </div>
 
