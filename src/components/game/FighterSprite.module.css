@@ -6,6 +6,13 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 768px) {
+  .sprite {
+    width: clamp(90px, 23vw, 140px);
+    height: clamp(90px, 23vw, 140px);
+  }
+}
+
 .flip {
   transform: scaleX(-1);
 }

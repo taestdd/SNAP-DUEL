@@ -18,3 +18,9 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+  }
+}
