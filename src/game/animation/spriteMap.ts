@@ -25,11 +25,13 @@ export type CharacterSpriteConfig = {
 export function frameToBackgroundPosition(frameIndex: number, sheet: SheetSpec): string {
   const col = frameIndex % sheet.cols;
   const row = Math.floor(frameIndex / sheet.cols);
-  return `-${col * sheet.displayW}px -${row * sheet.displayH}px`;
+  const x = sheet.cols === 1 ? 0 : (col / (sheet.cols - 1)) * 100;
+  const y = sheet.rows === 1 ? 0 : (row / (sheet.rows - 1)) * 100;
+  return `${x}% ${y}%`;
 }
 
 export function backgroundSize(sheet: SheetSpec): string {
-  return `${sheet.cols * sheet.displayW}px ${sheet.rows * sheet.displayH}px`;
+  return `${sheet.cols * 100}% ${sheet.rows * 100}%`;
 }
 
 const DEFAULT_SHEET: SheetSpec = {
