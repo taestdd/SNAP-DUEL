@@ -235,11 +235,9 @@ export function GuestGameApp({
 
         // Ready: AI/GUEST_READY로 변환해 Firestore 전송
         case "PLAYER/READY": {
-          const guestAction: Action = {
-            type: "AI/GUEST_READY",
-            cardId: localSelected?.cardId,
-            handIndex: localSelected?.handIndex,
-          };
+          const guestAction: Action = localSelected
+            ? { type: "AI/GUEST_READY", cardId: localSelected.cardId, handIndex: localSelected.handIndex }
+            : { type: "AI/GUEST_READY" };
           setLocalSelected(null);
           sendGuestAction(roomCode, guestAction).catch(console.error);
           return;
