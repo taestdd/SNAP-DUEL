@@ -93,7 +93,11 @@ export default function GameScreen({
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
-  const canAct = isSetup && !state.P1.ready && !isGameOver && !isTagAnimating;
+  // P1(내) 턴인지: SETUP_INIT이면 initiative===P1, SETUP_OTHER면 initiative!==P1
+  const isMyTurn =
+    (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
+    (state.phase === "SETUP_OTHER" && state.initiative !== "P1");
+  const canAct = isSetup && isMyTurn && !state.P1.ready && !isGameOver && !isTagAnimating;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
@@ -532,15 +536,13 @@ export default function GameScreen({
               <>
                 <EndTurnButton
                   label={readyLabel}
-                  disabled={!isSetup || state.P1.ready || isGameOver}
+                  disabled={!canAct}
                   onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
                 />
                 <EndTurnButton
                   label="Tag"
                   disabled={
-                    !isSetup ||
-                    state.P1.ready ||
-                    isGameOver ||
+                    !canAct ||
                     isTagAnimating ||
                     state.p1TaggedThisTurn ||
                     state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
