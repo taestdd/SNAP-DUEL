@@ -104,6 +104,8 @@ export default function GameScreen({
   const [aiPose, setAiPose] = useState<FighterPose>("idle");
   const [aiPoseKey, setAiPoseKey] = useState<number>(0);
   const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
+  const [playerFrozenUntil, setPlayerFrozenUntil] = useState(0);
+  const [aiFrozenUntil, setAiFrozenUntil] = useState(0);
 
   // 태그 애니메이션: 실제 표시 캐릭터 (exit 재생 후 전환)
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -277,6 +279,10 @@ export default function GameScreen({
         break;
       case "visual_hit": {
         const pose = event.hitPose ?? "hit_weak";
+        const freezeMs = pose === "hit_strong" ? 300 : pose === "hit_aerial" ? 220 : 150;
+        const frozenUntil = Date.now() + freezeMs;
+        setPlayerFrozenUntil(frozenUntil);
+        setAiFrozenUntil(frozenUntil);
         if (event.target === "P1") {
           setPlayerPose(pose);
           setPlayerPoseKey((k) => k + 1);
@@ -404,6 +410,8 @@ export default function GameScreen({
             aiPoseKey={aiPoseKey}
             aiCharacter={displayedAIChar}
             shakeLevel={shakeLevel}
+            playerFrozenUntil={playerFrozenUntil}
+            aiFrozenUntil={aiFrozenUntil}
           />
         </div>
 

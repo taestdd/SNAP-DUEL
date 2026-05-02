@@ -16,6 +16,8 @@ interface ArenaStageProps {
   aiCharacter?: CharacterId;
   shakeLevel?: ShakeLevel;
   hitSide?: HitSide;
+  playerFrozenUntil?: number;
+  aiFrozenUntil?: number;
 }
 
 export default function ArenaStage({
@@ -27,6 +29,8 @@ export default function ArenaStage({
   aiCharacter = "A",
   shakeLevel = "none",
   hitSide = null,
+  playerFrozenUntil = 0,
+  aiFrozenUntil = 0,
 }: ArenaStageProps) {
   const shakeClass =
     shakeLevel === "light"
@@ -38,10 +42,10 @@ export default function ArenaStage({
   return (
     <div className={`${styles.arena} ${shakeClass}`}>
       <div className={styles.fighterLeft}>
-        <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} />
+        <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} />
       </div>
       <div className={styles.fighterRight}>
-        <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} />
+        <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} />
       </div>
     </div>
   );
