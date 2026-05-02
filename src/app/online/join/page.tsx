@@ -1,25 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { joinRoom } from "@/lib/roomService";
+import { joinRoom, saveGuestConfig, subscribeRoom } from "@/lib/roomService";
+import type { RoomData } from "@/lib/roomService";
+import type { SetupConfig } from "@/game/engine/types";
+import SetupScreen from "@/components/game/SetupScreen";
 import styles from "./page.module.css";
-import { Suspense } from "react";
+
+type Stage = "input" | "joining" | "setup" | "waitingHost" | "error";
 
 function JoinForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") ?? "");
+  const [stage, setStage] = useState<Stage>("input");
+  const [confirmedCode, setConfirmedCode] = useState("");
   const [error, setError] = useState("");
-  const [joining, setJoining] = useState(false);
 
   // QR 스캔으로 들어온 경우 자동 참여
   useEffect(() => {
     const qrCode = searchParams.get("code");
-    if (qrCode) {
-      handleJoin(qrCode);
-    }
-  // 마운트 시 1회만
+    if (qrCode) handleJoin(qrCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -30,21 +32,56 @@ function JoinForm() {
       return;
     }
 
-    setJoining(true);
+    setStage("joining");
     setError("");
 
     try {
       const ok = await joinRoom(target);
       if (!ok) {
         setError("방을 찾을 수 없거나 이미 시작된 게임입니다");
-        setJoining(false);
+        setStage("input");
         return;
       }
-      router.push(`/online/game?code=${target}&role=guest`);
+      setConfirmedCode(target);
+      setStage("setup");
     } catch {
       setError("연결 오류. 다시 시도해주세요");
-      setJoining(false);
+      setStage("input");
     }
+  }
+
+  async function handleSetupConfirm(config: SetupConfig) {
+    setStage("waitingHost");
+    try {
+      await saveGuestConfig(confirmedCode, config);
+    } catch (e: unknown) {
+      setError((e as Error).message ?? "저장 실패");
+      setStage("setup");
+      return;
+    }
+
+    // 호스트가 게임을 시작하면 이동
+    const unsubscribe = subscribeRoom(confirmedCode, (data: RoomData) => {
+      if (data.status === "in_progress") {
+        unsubscribe();
+        router.push(`/online/game?code=${confirmedCode}&role=guest`);
+      }
+    });
+  }
+
+  if (stage === "setup") {
+    return <SetupScreen onConfirm={handleSetupConfirm} />;
+  }
+
+  if (stage === "waitingHost") {
+    return (
+      <div className={styles.page}>
+        <div className={styles.shell}>
+          <p className={styles.waiting}>호스트 덱 선택 대기 중...</p>
+          <p className={styles.sub}>상대방이 캐릭터와 덱을 선택하고 있습니다</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -61,7 +98,7 @@ function JoinForm() {
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             maxLength={6}
             placeholder="XXXXXX"
-            disabled={joining}
+            disabled={stage === "joining"}
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
             autoFocus
           />
@@ -72,17 +109,17 @@ function JoinForm() {
         <button
           type="button"
           className={styles.joinBtn}
-          disabled={joining || code.length !== 6}
+          disabled={stage === "joining" || code.length !== 6}
           onClick={() => handleJoin()}
         >
-          {joining ? "연결 중..." : "참여하기"}
+          {stage === "joining" ? "연결 중..." : "참여하기"}
         </button>
 
         <button
           type="button"
           className={styles.backBtn}
           onClick={() => router.push("/online")}
-          disabled={joining}
+          disabled={stage === "joining"}
         >
           돌아가기
         </button>

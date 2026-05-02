@@ -16,14 +16,12 @@ function OnlineGame() {
   const [hostConfig, setHostConfig] = useState<SetupConfig | null>(null);
   const [ready, setReady] = useState(false);
 
-  // 호스트: setupConfig가 Firestore에 올라올 때까지 대기
-  // 게스트: 게임 상태가 올라올 때까지 대기
   useEffect(() => {
     if (!code) return;
 
     const unsubscribe = subscribeRoom(code, (data: RoomData) => {
-      if (data.status === "in_progress" && data.setupConfig) {
-        setHostConfig(data.setupConfig);
+      if (data.status === "in_progress" && data.hostConfig) {
+        setHostConfig(data.hostConfig);
         setReady(true);
       }
     });

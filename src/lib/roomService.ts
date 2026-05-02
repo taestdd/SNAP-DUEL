@@ -15,7 +15,8 @@ export type RoomStatus = "waiting" | "ready" | "in_progress" | "finished";
 export type RoomData = {
   status: RoomStatus;
   createdAt: unknown;
-  setupConfig: SetupConfig | null;
+  hostConfig: SetupConfig | null;
+  guestConfig: SetupConfig | null;
   gameState: GameState | null;
   guestAction: Action | null;
 };
@@ -38,10 +39,11 @@ export async function createRoom(): Promise<string> {
       await setDoc(ref, {
         status: "waiting",
         createdAt: serverTimestamp(),
-        setupConfig: null,
+        hostConfig: null,
+        guestConfig: null,
         gameState: null,
         guestAction: null,
-      } satisfies Omit<RoomData, "createdAt"> & { createdAt: unknown });
+      });
       return code;
     }
     code = generateCode();
@@ -59,11 +61,22 @@ export async function joinRoom(code: string): Promise<boolean> {
   return true;
 }
 
-export async function startGame(code: string, config: SetupConfig, initialState: GameState): Promise<void> {
+export async function saveHostConfig(code: string, config: SetupConfig): Promise<void> {
+  const ref = doc(db, "rooms", code);
+  await updateDoc(ref, { hostConfig: config });
+}
+
+export async function saveGuestConfig(code: string, config: SetupConfig): Promise<void> {
+  const ref = doc(db, "rooms", code);
+  await updateDoc(ref, { guestConfig: config });
+}
+
+export async function startGame(code: string, hostConfig: SetupConfig, guestConfig: SetupConfig, initialState: GameState): Promise<void> {
   const ref = doc(db, "rooms", code);
   await updateDoc(ref, {
     status: "in_progress",
-    setupConfig: config,
+    hostConfig,
+    guestConfig,
     gameState: initialState,
   });
 }
