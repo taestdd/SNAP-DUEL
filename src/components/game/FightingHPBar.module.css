@@ -1,15 +1,9 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 10px 12px;
-}
-
-@media (max-width: 768px) {
-  .wrap {
-    padding: 6px 10px;
-    gap: 4px;
-  }
+  gap: 4px;
+  padding: 6px 10px;
+  width: 100%;
 }
 
 /* AI측은 오른쪽 정렬 */

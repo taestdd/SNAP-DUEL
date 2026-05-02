@@ -25,7 +25,9 @@
 /* ── Panel wrappers ── */
 .aiPanel {
   flex-shrink: 0;
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
@@ -34,11 +36,100 @@
 
 .p1Panel {
   flex-shrink: 0;
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
+}
+
+/* HP 바 영역 — 남은 공간 채움 */
+.hpWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── 좌측 게임 정보 영역 (aiPanel 안) ── */
+.gameInfoArea {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 10px;
+  gap: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.menuBtn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 3px 7px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+  align-self: flex-start;
+}
+
+.menuBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e9ecf5;
+}
+
+.gameInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gameInfoLine {
+  font-size: 10px;
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
+.gameInfoWinner {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd700;
+  letter-spacing: 0.5px;
+}
+
+/* ── 우측 액션 버튼 영역 (p1Panel 안) ── */
+.actionArea {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actionBtn {
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e9ecf5;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1;
+  text-align: center;
+}
+
+.actionBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.actionBtn.active {
+  background: rgba(89, 156, 255, 0.22);
+  border-color: rgba(89, 156, 255, 0.45);
 }
 
 .arenaWrap {
@@ -49,42 +140,6 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-/* ── Title / info center block ── */
-.topCenter {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  gap: 2px;
-}
-
-.title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-}
-
-.sub {
-  opacity: 0.75;
-  font-size: 10px;
-}
-
-.gameOver {
-  padding: 4px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 13px;
-  font-weight: 700;
 }
 
 /* ── Middle row: P1 Queue | AI Queue ── */
@@ -102,35 +157,6 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   overflow-y: auto;
-}
-
-/* ── Popover buttons ── */
-.popoverBtnRow {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-top: 6px;
-}
-
-.popoverBtn {
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.07);
-  color: #e9ecf5;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.popoverBtn:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.popoverBtn.active {
-  background: rgba(89, 156, 255, 0.22);
-  border-color: rgba(89, 156, 255, 0.45);
 }
 
 /* ── Popover panel ── */

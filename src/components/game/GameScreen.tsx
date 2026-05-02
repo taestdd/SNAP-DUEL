@@ -376,40 +376,21 @@ export default function GameScreen({
       )}
 
       <div className={styles.shell}>
-        {/* AI HP — mobile: 최상단 / desktop: grid 우측 */}
+        {/* AI 패널: 좌측 게임 정보 + 우측 HP 바 */}
         <div className={styles.aiPanel}>
-          <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
-        </div>
-
-        {/* 중앙 정보 — desktop: grid 중앙 */}
-        <div className={styles.topCenter}>
-          <h1 className={styles.title}>Snap Duel (MVP)</h1>
-          <div className={styles.sub}>
-            Round {state.round}/3 · Turn {state.turn} · Phase {state.phase} · Initiative{" "}
-            {state.initiative}
-          </div>
-          {isGameOver && (
-            <div className={styles.gameOver}>
-              Winner: {state.winner === "DRAW" ? "DRAW" : state.winner}
+          <div className={styles.gameInfoArea}>
+            <button type="button" className={styles.menuBtn} aria-label="메뉴">☰</button>
+            <div className={styles.gameInfo}>
+              <span className={styles.gameInfoLine}>R{state.round}/3 · T{state.turn}</span>
+              {isGameOver && (
+                <span className={styles.gameInfoWinner}>
+                  {state.winner === "DRAW" ? "DRAW" : state.winner === "P1" ? "WIN" : "LOSE"}
+                </span>
+              )}
             </div>
-          )}
-          <div className={styles.popoverBtnRow}>
-            <button
-              ref={logBtnRef}
-              type="button"
-              className={`${styles.popoverBtn} ${logOpen ? styles.active : ""}`}
-              onClick={() => { setLogOpen((v) => !v); setDeckOpen(false); }}
-            >
-              📋 로그
-            </button>
-            <button
-              ref={deckBtnRef}
-              type="button"
-              className={`${styles.popoverBtn} ${deckOpen ? styles.active : ""}`}
-              onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
-            >
-              🃏 덱
-            </button>
+          </div>
+          <div className={styles.hpWrap}>
+            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
           </div>
         </div>
 
@@ -426,9 +407,25 @@ export default function GameScreen({
           />
         </div>
 
-        {/* P1 HP */}
+        {/* P1 패널: 좌측 HP 바 + 우측 액션 버튼 */}
         <div className={styles.p1Panel}>
-          <FightingHPBar combatant={state.P1} side="left" label="YOU" />
+          <div className={styles.hpWrap}>
+            <FightingHPBar combatant={state.P1} side="left" label="YOU" />
+          </div>
+          <div className={styles.actionArea}>
+            <button
+              ref={logBtnRef}
+              type="button"
+              className={`${styles.actionBtn} ${logOpen ? styles.active : ""}`}
+              onClick={() => { setLogOpen((v) => !v); setDeckOpen(false); }}
+            >📋</button>
+            <button
+              ref={deckBtnRef}
+              type="button"
+              className={`${styles.actionBtn} ${deckOpen ? styles.active : ""}`}
+              onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
+            >🃏</button>
+          </div>
         </div>
 
         {/* 큐 패널 */}
