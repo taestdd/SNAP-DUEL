@@ -16,6 +16,8 @@ interface FighterSpriteProps {
   /** true = scaleX(-1) 로 좌우 반전 (AI측 파이터) */
   flip?: boolean;
   className?: string;
+  /** Date.now() + durationMs — 이 시각까지 프레임 진행을 멈춤 (히트스톱) */
+  frozenUntil?: number;
 }
 
 export default function FighterSprite({
@@ -24,11 +26,14 @@ export default function FighterSprite({
   characterId,
   flip = false,
   className,
+  frozenUntil = 0,
 }: FighterSpriteProps) {
   const config = CHARACTER_SPRITES[characterId];
   const entry = config.poses[pose];
   const [frameIdx, setFrameIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const frozenUntilRef = useRef(frozenUntil);
+  frozenUntilRef.current = frozenUntil;
 
   useEffect(() => {
     setFrameIdx(0);
@@ -39,6 +44,7 @@ export default function FighterSprite({
 
     intervalRef.current = setInterval(() => {
       setFrameIdx((prev) => {
+        if (Date.now() < frozenUntilRef.current) return prev;
         const next = prev + 1;
         if (next >= entry.frames.length) {
           if (entry.hold) {
