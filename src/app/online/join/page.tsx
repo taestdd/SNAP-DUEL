@@ -50,7 +50,7 @@ function JoinForm() {
     }
   }
 
-  async function handleSetupConfirm(config: SetupConfig) {
+  async function handleSetupConfirm(config: SetupConfig, _aiConfig?: SetupConfig) {
     setStage("waitingHost");
     try {
       await saveGuestConfig(confirmedCode, config);
