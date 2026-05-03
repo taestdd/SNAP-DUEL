@@ -44,7 +44,7 @@ export default function HostPage() {
   }, [roomCode, stage]);
 
   // 호스트 SetupScreen 확인 → hostConfig 저장 → 게스트 config 대기
-  async function handleSetupConfirm(config: SetupConfig) {
+  async function handleSetupConfirm(config: SetupConfig, _aiConfig?: SetupConfig) {
     setStage("waitingGuest");
     try {
       await saveHostConfig(roomCode, config);

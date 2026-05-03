@@ -10,8 +10,12 @@ import SetupScreen from "@/components/game/SetupScreen";
 
 const TAG_ANIM_DURATION = 700;
 
-function GameApp({ config, onExit }: { config: SetupConfig; onExit: () => void }) {
-  const [state, dispatch] = useReducer(gameReducer, config, createInitialState);
+function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?: SetupConfig; onExit: () => void }) {
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    () => createInitialState(config, aiConfig)
+  );
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [isTagAnimating, setIsTagAnimating] = useState(false);
 
@@ -90,11 +94,16 @@ function GameApp({ config, onExit }: { config: SetupConfig; onExit: () => void }
 
 export default function Page() {
   const router = useRouter();
-  const [config, setConfig] = useState<SetupConfig | null>(null);
+  const [configs, setConfigs] = useState<{ player: SetupConfig; ai?: SetupConfig } | null>(null);
 
-  if (!config) {
-    return <SetupScreen onConfirm={setConfig} />;
+  if (!configs) {
+    return (
+      <SetupScreen
+        showAi
+        onConfirm={(playerConfig, aiConfig) => setConfigs({ player: playerConfig, ai: aiConfig })}
+      />
+    );
   }
 
-  return <GameApp config={config} onExit={() => router.push("/")} />;
+  return <GameApp config={configs.player} aiConfig={configs.ai} onExit={() => router.push("/")} />;
 }
