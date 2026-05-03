@@ -2,18 +2,65 @@
   "PROTOTYPE": {
     "id": "PROTOTYPE",
     "name": "Prototype Deck",
-    "characters": ["A", "B"],
+    "characters": [
+      "A",
+      "B"
+    ],
     "cards": [
-      "weak_punch", "weak_punch", "weak_punch",
-      "strong_punch", "strong_punch", "strong_punch",
-      "weak_kick", "weak_kick", "weak_kick",
-      "strong_kick", "strong_kick", "strong_kick",
-      "dragon_kick", "dragon_kick",
-      "rising_punch", "rising_punch",
-      "hadouken", "hadouken",
-      "item_a", "item_a",
-      "item_b", "item_b",
-      "item_c", "item_c"
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "strong_punch",
+      "strong_punch",
+      "strong_punch",
+      "weak_kick",
+      "weak_kick",
+      "weak_kick",
+      "strong_kick",
+      "strong_kick",
+      "strong_kick",
+      "dragon_kick",
+      "dragon_kick",
+      "rising_punch",
+      "rising_punch",
+      "hadouken",
+      "hadouken",
+      "item_a",
+      "item_a",
+      "item_b",
+      "item_b",
+      "item_c",
+      "item_c"
+    ]
+  },
+  "TEST_": {
+    "id": "TEST_",
+    "name": "my deck",
+    "characters": [
+      "A",
+      "B"
+    ],
+    "cards": [
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch",
+      "weak_punch"
     ]
   }
 }

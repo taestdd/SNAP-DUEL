@@ -1,106 +1,29 @@
 import type { CardZone, CharacterId, DeckInsertPosition, GameState, PendingDiscard, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
-import { shuffle } from "./rng";
+import {
+  LOG_LIMIT,
+  opponentOf,
+  pushLog,
+  syncExhausted,
+  getEffectiveSpeed,
+  moveQueuedCard,
+  dealDamage,
+  draw,
+  checkGameOver,
+  decideWinnerByHp,
+  filterCards,
+  moveCardsBetweenZones,
+  areBothPlayersExhausted,
+  moveHandToTrash,
+  recycleTrashIntoDeck,
+  moveCooldownToTrash,
+  discardAIExcess,
+} from "./stateHelpers";
+
+export { LOG_LIMIT, draw, checkGameOver, filterCards };
 
 const HAND_LIMIT = 6;
-export const LOG_LIMIT = 200;
-
-
-
-/* -------------------------- */
-/* 공통 유틸 */
-/* -------------------------- */
-
-function opponentOf(p: PlayerId): PlayerId {
-  return p === "P1" ? "AI" : "P1";
-}
-
-function pushLog(state: GameState, msg: string): GameState {
-  return {
-    ...state,
-    log: [msg, ...state.log].slice(0, LOG_LIMIT),
-  };
-}
-
-function syncExhausted(state: GameState, player: PlayerId): GameState {
-  const me = state[player];
-  const exhausted = me.deck.length === 0;
-
-  if (me.status.exhausted === exhausted) {
-    return state;
-  }
-
-  let s = {
-    ...state,
-    [player]: {
-      ...me,
-      status: {
-        ...me.status,
-        exhausted,
-      },
-    },
-  } as GameState;
-
-  s = pushLog(
-    s,
-    exhausted ? `${player} is exhausted` : `${player} recovered from exhaustion`
-  );
-
-  return s;
-}
-
-function getEffectiveSpeed(
-  state: GameState,
-  player: PlayerId,
-  cardId: string
-): number {
-  const c = getCard(cardId);
-  if (!c) return Number.MAX_SAFE_INTEGER;
-
-  const bonus = state[player].status.speedBonus ?? 0;
-  return Math.max(0, c.speed - bonus);
-}
-
-function moveQueuedCard(
-  state: GameState,
-  player: PlayerId,
-  cardId: string,
-  to: "cooldown" | "trash"
-): GameState {
-  const me = state[player];
-  const nextQueue = [...me.queue];
-
-  const idx = nextQueue.indexOf(cardId);
-  if (idx >= 0) {
-    nextQueue.splice(idx, 1);
-  }
-
-  return {
-    ...state,
-    [player]: {
-      ...me,
-      queue: nextQueue,
-      [to]: [...me[to], cardId],
-    },
-  } as GameState;
-}
-
-//라운드 종료 처리
-function handleRoundEnd(state: GameState): GameState {
-  let s = state;
-
-  s = pushLog(s, `Round ${s.round} ends`);
-
-  s = moveHandToTrash(s, "P1");
-  s = moveHandToTrash(s, "AI");
-
-  if (s.round >= 3) {
-    return decideWinnerByHp(s);
-  }
-
-  return prepareNextRound(s);
-}
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체) */
@@ -474,6 +397,23 @@ function prepareNextRound(state: GameState): GameState {
 
   return s;
 }
+
+//라운드 종료 처리
+function handleRoundEnd(state: GameState): GameState {
+  let s = state;
+
+  s = pushLog(s, `Round ${s.round} ends`);
+
+  s = moveHandToTrash(s, "P1");
+  s = moveHandToTrash(s, "AI");
+
+  if (s.round >= 3) {
+    return decideWinnerByHp(s);
+  }
+
+  return prepareNextRound(s);
+}
+
 /* -------------------------- */
 /* 드래프트 제출 */
 /* -------------------------- */
@@ -666,74 +606,6 @@ export function queueCard(
 }
 
 /* -------------------------- */
-/* 존 간 카드 이동 */
-/* -------------------------- */
-
-/** 조건에 맞는 카드만 필터 (현재는 전체 반환, 추후 확장) */
-// TODO: CardCondition 파라미터 추가 후 실제 필터링 구현
-export function filterCards(cards: string[]): string[] {
-  return cards;
-}
-
-function moveCardsBetweenZones(
-  state: GameState,
-  fromPlayer: PlayerId,
-  fromZone: CardZone,
-  toPlayer: PlayerId,
-  toZone: CardZone,
-  cardIds: string[],
-  toPosition: DeckInsertPosition = "bottom"
-): GameState {
-  if (cardIds.length === 0) return state;
-
-  // Remove from source zone (first occurrence of each id, handles duplicate card names in deck)
-  const sourceArr = state[fromPlayer][fromZone] as string[];
-  const remaining = [...sourceArr];
-  for (const id of cardIds) {
-    const idx = remaining.indexOf(id);
-    if (idx >= 0) remaining.splice(idx, 1);
-  }
-
-  let s: GameState = {
-    ...state,
-    [fromPlayer]: {
-      ...state[fromPlayer],
-      [fromZone]: remaining,
-    },
-  } as GameState;
-
-  // Add to target zone
-  const targetArr = s[toPlayer][toZone] as string[];
-  let newTargetArr: string[];
-
-  if (toZone === "deck" && toPosition === "top") {
-    newTargetArr = [...cardIds, ...targetArr];
-  } else if (toZone === "deck" && toPosition === "random") {
-    newTargetArr = [...targetArr];
-    for (const id of cardIds) {
-      const pos = Math.floor(Math.random() * (newTargetArr.length + 1));
-      newTargetArr.splice(pos, 0, id);
-    }
-  } else {
-    newTargetArr = [...targetArr, ...cardIds];
-  }
-
-  s = {
-    ...s,
-    [toPlayer]: {
-      ...s[toPlayer],
-      [toZone]: newTargetArr,
-    },
-  } as GameState;
-
-  // Sync exhausted if deck was affected
-  if (fromZone === "deck") s = syncExhausted(s, fromPlayer);
-  if (toZone === "deck") s = syncExhausted(s, toPlayer);
-
-  return s;
-}
-
-/* -------------------------- */
 /* resolve 순서 생성 */
 /* -------------------------- */
 
@@ -783,6 +655,7 @@ function didDirectAttackHit(
   const other = opponentOf(player);
   return stateAfter[other].hp < stateBefore[other].hp;
 }
+
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   if (state.initiative === player) return state;
 
@@ -861,28 +734,6 @@ function applyCancelOnHit(
 /* -------------------------- */
 /* resolve 메인 */
 /* -------------------------- */
-
-
-
-/** AI의 핸드 초과 카드를 자동으로 trash로 버린다 */
-function discardAIExcess(state: GameState): GameState {
-  const excess = state.AI.hand.length - HAND_LIMIT;
-  if (excess <= 0) return state;
-
-  // 마지막 N장을 버린다 (가장 최근 드로우한 카드)
-  const newHand = state.AI.hand.slice(0, HAND_LIMIT);
-  const discarded = state.AI.hand.slice(HAND_LIMIT);
-
-  const s: GameState = {
-    ...state,
-    AI: {
-      ...state.AI,
-      hand: newHand,
-      trash: [...state.AI.trash, ...discarded],
-    },
-  };
-  return pushLog(s, `AI discards ${excess} card(s) to hand limit`);
-}
 
 function endTurnCleanup(state: GameState): GameState {
   let s: GameState = {
@@ -1071,174 +922,4 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
     resolveIndex: ps.resolveNextIndex,
     resolveUnresolved: ps.unresolvedPlayers,
   };
-}
-
-/* -------------------------- */
-/* 카드 효과 */
-/* -------------------------- */
-
-
-// 두 플레이어 탈진 체크
-function areBothPlayersExhausted(state: GameState): boolean {
-  return state.P1.status.exhausted && state.AI.status.exhausted;
-}
-
-
-//핸드를 전부 트래시로 이동
-function moveHandToTrash(state: GameState, player: PlayerId): GameState {
-  const me = state[player];
-  if (me.hand.length === 0) return state;
-
-  return {
-    ...state,
-    [player]: {
-      ...me,
-      hand: [],
-      trash: [...me.trash, ...me.hand],
-    },
-  } as GameState;
-}
-
-//트래시 재활용
-function recycleTrashIntoDeck(state: GameState, player: PlayerId): GameState {
-  const me = state[player];
-  if (me.trash.length === 0) {
-    return syncExhausted(state, player);
-  }
-
-  const mergedDeck = shuffle([...me.deck, ...me.trash]);
-
-  let s = {
-    ...state,
-    [player]: {
-      ...me,
-      deck: mergedDeck,
-      trash: [],
-    },
-  } as GameState;
-
-  s = syncExhausted(s, player);
-  return s;
-}
-
-//쿨다운 재활용
-function moveCooldownToTrash(state: GameState, player: PlayerId): GameState {
-  const me = state[player];
-  if (me.cooldown.length === 0) return state;
-
-  return {
-    ...state,
-    [player]: {
-      ...me,
-      cooldown: [],
-      trash: [...me.trash, ...me.cooldown],
-    },
-  } as GameState;
-}
-
-/* -------------------------- */
-/* 데미지 / 드로우 / 게임오버 */
-/* -------------------------- */
-
-function dealDamage(
-  state: GameState,
-  target: PlayerId,
-  amount: number,
-  label?: string
-): GameState {
-  const t = state[target];
-  const blocked = Math.min(t.block, amount);
-  const dmg = amount - blocked;
-  const hpBefore = t.hp;
-  const newHp = hpBefore - dmg;
-
-  const nextTarget = {
-    ...t,
-    block: t.block - blocked,
-    hp: newHp,
-    characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
-  };
-
-  const next = {
-    ...state,
-    [target]: nextTarget,
-  } as GameState;
-
-  const blockedStr = blocked > 0 ? `, ${blocked} blocked` : "";
-  return pushLog(
-    next,
-    `${label ?? "Damage"} → ${target} (Char ${t.activeCharacter}) ${dmg}dmg [${hpBefore}→${newHp} HP]${blockedStr}`
-  );
-}
-
-export function draw(
-  state: GameState,
-  player: PlayerId,
-  n: number
-): GameState {
-  let s = state;
-  let drawnCount = 0;
-
-  for (let i = 0; i < n; i++) {
-    const me = s[player];
-
-    if (me.deck.length === 0) {
-      s = syncExhausted(s, player);
-      break;
-    }
-
-    const top = me.deck[0];
-
-    s = {
-      ...s,
-      [player]: {
-        ...me,
-        deck: me.deck.slice(1),
-        hand: [...me.hand, top],
-      },
-    } as GameState;
-
-    s = syncExhausted(s, player);
-    drawnCount++;
-  }
-
-  if (drawnCount > 0) {
-    s = pushLog(s, `${player} draws ${drawnCount} card(s)`);
-  }
-
-  return s;
-}
-
-//게임오버 체크 (어느 캐릭터든 HP ≤ 0이면 즉시 패배)
-export function checkGameOver(state: GameState): GameState {
-  const p1Dead =
-    state.P1.characterHp.A <= 0 || state.P1.characterHp.B <= 0;
-  const aiDead =
-    state.AI.characterHp.A <= 0 || state.AI.characterHp.B <= 0;
-
-  if (p1Dead && aiDead) {
-    return { ...state, phase: "GAME_OVER", winner: "DRAW" };
-  }
-  if (p1Dead) {
-    return { ...state, phase: "GAME_OVER", winner: "AI" };
-  }
-  if (aiDead) {
-    return { ...state, phase: "GAME_OVER", winner: "P1" };
-  }
-
-  return state;
-}
-
-//3라운드 종료 후 승패판정 (양측 캐릭터 HP 합산 비교)
-function decideWinnerByHp(state: GameState): GameState {
-  const p1Total = state.P1.characterHp.A + state.P1.characterHp.B;
-  const aiTotal = state.AI.characterHp.A + state.AI.characterHp.B;
-
-  if (p1Total > aiTotal) {
-    return { ...state, phase: "GAME_OVER", winner: "P1" };
-  }
-  if (aiTotal > p1Total) {
-    return { ...state, phase: "GAME_OVER", winner: "AI" };
-  }
-  return { ...state, phase: "GAME_OVER", winner: "DRAW" };
 }
