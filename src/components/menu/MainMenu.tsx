@@ -35,6 +35,15 @@ export default function MainMenu() {
             </button>
           ))}
         </nav>
+
+        <a
+          href="/admin"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.adminLink}
+        >
+          ⚙ 카드 에디터
+        </a>
       </div>
     </div>
   );
