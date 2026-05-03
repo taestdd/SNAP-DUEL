@@ -119,6 +119,40 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
+    case "AI/GUEST_TAG": {
+      if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
+      if (state.AI.ready) return state;
+
+      const aiBenchChar = state.AI.activeCharacter === "A" ? "B" : "A";
+      if (state.AI.characterHp[aiBenchChar] <= 0) return state;
+
+      const s = applyTagSwitch(state, "AI");
+      if (s.phase === "GAME_OVER") return s;
+      return { ...s, log: [`P2 tags`, ...s.log].slice(0, LOG_LIMIT) };
+    }
+
+    case "AI/GUEST_READY": {
+      if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
+      if (state.AI.ready) return state;
+
+      let s = state;
+      const { cardId, handIndex } = action;
+
+      if (cardId !== undefined && handIndex !== undefined && canUseCard(s, "AI", cardId)) {
+        s = queueCard(s, "AI", cardId, handIndex);
+      } else {
+        s = draw(s, "AI", 1);
+        if (s.phase === "GAME_OVER") return s;
+        s = { ...s, log: [`P2 passes and draws 1`, ...s.log].slice(0, LOG_LIMIT) };
+      }
+
+      s = { ...s, AI: { ...s.AI, ready: true } };
+
+      if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
+      if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
+      return s;
+    }
+
     case "AI/SETUP_AUTO": {
       // ✅ AI 자동 선택은 SETUP 단계에서만
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;

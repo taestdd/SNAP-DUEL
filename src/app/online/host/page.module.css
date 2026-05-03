@@ -1,0 +1,109 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0f;
+  padding: 2rem;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+.center {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: #0a0a0f;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.sub {
+  color: #888;
+  font-size: 0.85rem;
+  text-align: center;
+  margin: -0.5rem 0 0;
+}
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  width: 100%;
+}
+
+.codeLabel {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.code {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.25em;
+  font-variant-numeric: tabular-nums;
+}
+
+.qrWrap {
+  background: #0a0a0f;
+  padding: 1rem;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.waiting {
+  color: #888;
+  font-size: 0.9rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.loading {
+  color: #888;
+  font-size: 1rem;
+}
+
+.error {
+  color: #f87171;
+  font-size: 1rem;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+
+.backBtn:hover {
+  color: #aaa;
+}

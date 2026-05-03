@@ -59,8 +59,10 @@ function createCombatant(
   };
 }
 
-export function createInitialState(config: SetupConfig): GameState {
+export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig): GameState {
   const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
+  const aiDeck = aiConfig ? (DECK_REGISTRY[aiConfig.deckId]?.cards ?? PROTOTYPE_DECK) : PROTOTYPE_DECK;
+  const aiChar = aiConfig ? aiConfig.characters[0] : "A";
 
   const state: GameState = {
     round: 1,
@@ -71,7 +73,7 @@ export function createInitialState(config: SetupConfig): GameState {
     initiative: Math.random() < 0.5 ? "P1" : "AI",
 
     P1: createCombatant("P1", config.characters[0], shuffle([...p1Deck])),
-    AI: createCombatant("AI", "A", shuffle([...PROTOTYPE_DECK])),
+    AI: createCombatant("AI", aiChar, shuffle([...aiDeck])),
 
     selected: null,
     pendingSelection: null,
