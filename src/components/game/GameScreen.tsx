@@ -381,7 +381,7 @@ export default function GameScreen({
         <DraftModal state={state} dispatch={dispatch} />
       )}
 
-      {state.phase === "WAITING_SELECTION" && state.pendingSelection && (
+      {state.phase === "WAITING_SELECTION" && state.pendingSelection && state.pendingSelection.selectingPlayer === "P1" && (
         <CardSelectionModal
           pendingSelection={state.pendingSelection}
           onConfirm={(selectedCards) =>
