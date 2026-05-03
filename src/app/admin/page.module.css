@@ -1,0 +1,179 @@
+.page {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #e0e0e0;
+  font-family: monospace;
+  padding: 32px 24px;
+}
+
+:global(html),
+:global(body) {
+  overflow: auto !important;
+  height: auto !important;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 16px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.badge {
+  font-size: 11px;
+  background: #1a1a2e;
+  color: #7c7cff;
+  border: 1px solid #3a3a7c;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+.newBtn {
+  background: #3a3aff;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: monospace;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.newBtn:hover {
+  background: #5555ff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 18px;
+  transition: border-color 0.15s;
+}
+
+.card:hover {
+  border-color: #444;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cardId {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.stat {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.statVal {
+  color: #fff;
+  font-weight: 700;
+}
+
+.effectList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.effectTag {
+  font-size: 11px;
+  background: #1e2a1e;
+  color: #6dbe6d;
+  border: 1px solid #2a3d2a;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.cardText {
+  font-size: 12px;
+  color: #777;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editBtn {
+  flex: 1;
+  background: #1e1e3a;
+  color: #7c7cff;
+  border: 1px solid #3a3a7c;
+  padding: 6px 0;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: monospace;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.editBtn:hover {
+  background: #2a2a5a;
+}
+
+.deleteBtn {
+  background: #1e1a1a;
+  color: #ff6b6b;
+  border: 1px solid #5a2a2a;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: monospace;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.deleteBtn:hover {
+  background: #3a1a1a;
+}
+
+.empty {
+  text-align: center;
+  color: #555;
+  padding: 80px 0;
+  font-size: 14px;
+}
