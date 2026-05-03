@@ -77,6 +77,19 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     return () => clearTimeout(t);
   }, [state.phase, state.resolveIndex]);
 
+  // WAITING_SELECTION: AI 차례면 자동으로 첫 번째 후보 선택
+  useEffect(() => {
+    if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return;
+    if (state.pendingSelection.selectingPlayer !== "AI") return;
+    const { candidates, count } = state.pendingSelection;
+    const autoSelected = candidates.slice(0, count);
+    if (autoSelected.length > 0) {
+      dispatch({ type: "SELECTION/CONFIRM", selectedCards: autoSelected });
+    } else {
+      dispatch({ type: "SELECTION/SKIP" });
+    }
+  }, [state.phase, state.pendingSelection]);
+
   // 턴 종료 후 다음 턴 (게임 오버면 중지)
   useEffect(() => {
     if (state.phase !== "TURN_END") return;

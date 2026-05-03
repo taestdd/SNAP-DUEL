@@ -308,10 +308,10 @@ function applyCardEffectsWithPause(
 
       const candidates = filterCards(s[fromPlayerId][fromZone] as string[]);
 
-      if (effect.userSelects && player === "P1") {
-        // P1은 직접 선택 — resolution 일시정지
+      if (effect.userSelects) {
+        // 카드 사용 플레이어가 직접 선택 — resolution 일시정지
         const pendingSelection: PendingSelection = {
-          selectingPlayer: "P1",
+          selectingPlayer: player,
           candidates: [...candidates],
           count,
           fromZone,
