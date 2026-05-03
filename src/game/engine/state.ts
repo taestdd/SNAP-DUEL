@@ -1,9 +1,12 @@
-import type { CharacterId, Combatant, GameState, SetupConfig, Status } from "./types";
+import type { CharacterId, Combatant, DeckDef, GameState, SetupConfig, Status } from "./types";
 import { shuffle } from "./rng";
 import { CHARACTERS } from "./characters";
+import decksData from "@/data/decks.json";
 
+export const DECK_REGISTRY: Record<string, DeckDef> = decksData as unknown as Record<string, DeckDef>;
 
-//기본 상태
+const FALLBACK_DECK = DECK_REGISTRY["PROTOTYPE"];
+
 const emptyStatus = (): Status => ({
   attackBuff: 0,
   burn: null,
@@ -12,26 +15,6 @@ const emptyStatus = (): Status => ({
   exhausted: false,
 });
 
-const PROTOTYPE_DECK: string[] = [
-  "weak_punch", "weak_punch", "weak_punch",
-  "strong_punch", "strong_punch", "strong_punch",
-  "weak_kick", "weak_kick", "weak_kick",
-  "strong_kick", "strong_kick", "strong_kick",
-  "dragon_kick", "dragon_kick",
-  "rising_punch", "rising_punch",
-  "hadouken", "hadouken",
-
-  "item_a", "item_a",
-  "item_b", "item_b",
-  "item_c", "item_c",
-];
-
-/** 덱 레지스트리 — 키를 추가하면 SetupScreen에 자동 반영 */
-export const DECK_REGISTRY: Record<string, { name: string; cards: string[] }> = {
-  PROTOTYPE: { name: "Prototype Deck", cards: PROTOTYPE_DECK },
-};
-
-//플레이어 셋팅
 function createCombatant(
   id: "P1" | "AI",
   activeChar: CharacterId,
@@ -60,9 +43,9 @@ function createCombatant(
 }
 
 export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig): GameState {
-  const p1Deck = DECK_REGISTRY[config.deckId]?.cards ?? PROTOTYPE_DECK;
-  const aiDeck = aiConfig ? (DECK_REGISTRY[aiConfig.deckId]?.cards ?? PROTOTYPE_DECK) : PROTOTYPE_DECK;
-  const aiChar = aiConfig ? aiConfig.characters[0] : "A";
+  const p1DeckDef = DECK_REGISTRY[config.deckId] ?? FALLBACK_DECK;
+  const aiDeckDef = aiConfig ? (DECK_REGISTRY[aiConfig.deckId] ?? FALLBACK_DECK) : FALLBACK_DECK;
+  const aiChar = aiConfig ? aiConfig.characters[0] : FALLBACK_DECK.characters[0];
 
   const state: GameState = {
     round: 1,
@@ -72,8 +55,8 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
 
     initiative: Math.random() < 0.5 ? "P1" : "AI",
 
-    P1: createCombatant("P1", config.characters[0], shuffle([...p1Deck])),
-    AI: createCombatant("AI", aiChar, shuffle([...aiDeck])),
+    P1: createCombatant("P1", config.characters[0], shuffle([...p1DeckDef.cards])),
+    AI: createCombatant("AI", aiChar, shuffle([...aiDeckDef.cards])),
 
     selected: null,
     pendingSelection: null,

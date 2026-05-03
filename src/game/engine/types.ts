@@ -343,11 +343,21 @@ export type GameState = {
   draftSelections: { P1: string[] | null; AI: string[] | null };
 };
 
+/** 덱 정의 — decks.json에 저장 */
+export type DeckDef = {
+  id: string;
+  name: string;
+  /** 카드 id 배열 (중복 허용, 최소 20장) */
+  cards: string[];
+  /** [0] = 선발, [1] = 후발 */
+  characters: [CharacterId, CharacterId];
+};
+
 /** 게임 시작 전 셋업 설정 */
 export type SetupConfig = {
   /** [0] = 선발, [1] = 후발 */
   characters: [CharacterId, CharacterId];
-  /** DECK_REGISTRY 키 */
+  /** decks.json 키 */
   deckId: string;
 };
 

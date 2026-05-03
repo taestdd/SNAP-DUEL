@@ -1,0 +1,378 @@
+.page {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #e0e0e0;
+  font-family: monospace;
+  padding: 24px;
+}
+
+:global(html),
+:global(body) {
+  overflow: auto !important;
+  height: auto !important;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 16px;
+}
+
+.backLink {
+  color: #7c7cff;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.backLink:hover { text-decoration: underline; }
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* 상단 기본정보 */
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 7px 10px;
+  outline: none;
+}
+
+.input:focus { border-color: #5555ff; }
+
+/* 캐릭터 선택 */
+.charSection {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c7cff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.charSlots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.charSlot {
+  flex: 1;
+  background: #0f0f0f;
+  border: 1px dashed #333;
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.charSlotFilled {
+  border-color: #5555ff;
+  border-style: solid;
+  color: #fff;
+}
+
+.charSlotLabel {
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.charSlotValue {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.slotArrow {
+  color: #444;
+  font-size: 18px;
+}
+
+.charBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.charBtn {
+  flex: 1;
+  background: #111;
+  border: 1px solid #333;
+  color: #aaa;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.charBtnActive {
+  background: #1a1a3a;
+  border-color: #5555ff;
+  color: #fff;
+}
+
+/* 2단 레이아웃 */
+.editorLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: calc(100vh - 280px);
+  min-height: 480px;
+}
+
+.panel {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panelHeader {
+  padding: 12px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c7cff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.panelCount {
+  font-size: 12px;
+  color: #666;
+}
+
+.panelCountWarn {
+  color: #ff6b6b;
+}
+
+.searchInput {
+  background: #111;
+  border: none;
+  border-bottom: 1px solid #2a2a2a;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 8px 14px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.cardList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  gap: 8px;
+}
+
+.cardRow:hover { background: #222; }
+
+.cardRowInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardRowName {
+  font-size: 13px;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardRowMeta {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.addBtn {
+  background: #1e2a1e;
+  color: #6dbe6d;
+  border: 1px solid #2a3d2a;
+  font-size: 16px;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+
+.addBtn:hover { background: #243024; }
+
+/* 덱 패널 카드 행 */
+.deckCardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 6px;
+  gap: 8px;
+}
+
+.deckCardRow:hover { background: #222; }
+
+.deckCardName {
+  flex: 1;
+  font-size: 13px;
+  color: #e0e0e0;
+}
+
+.countCtrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.countBtn {
+  background: #111;
+  border: 1px solid #333;
+  color: #aaa;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.countBtn:hover { background: #222; color: #fff; }
+
+.countNum {
+  font-size: 13px;
+  color: #fff;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* 하단 */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancelLink {
+  background: #1a1a1a;
+  color: #888;
+  border: 1px solid #333;
+  padding: 9px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: monospace;
+  text-decoration: none;
+}
+
+.submitBtn {
+  background: #3a3aff;
+  color: #fff;
+  border: none;
+  padding: 9px 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: monospace;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) { background: #5555ff; }
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.errorBox {
+  background: #1e0f0f;
+  border: 1px solid #5a2a2a;
+  color: #ff8080;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.successBox {
+  background: #0f1e0f;
+  border: 1px solid #2a5a2a;
+  color: #80ff80;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.emptyDeck {
+  text-align: center;
+  color: #444;
+  padding: 40px 0;
+  font-size: 13px;
+}
