@@ -1,9 +1,10 @@
 import type { CharacterId, Combatant, DeckDef, GameState, SetupConfig, Status } from "./types";
 import { shuffle } from "./rng";
 import { CHARACTERS } from "./characters";
+import { DecksRecordSchema } from "./deckSchema";
 import decksData from "@/data/decks.json";
 
-export const DECK_REGISTRY: Record<string, DeckDef> = decksData as unknown as Record<string, DeckDef>;
+export const DECK_REGISTRY: Record<string, DeckDef> = DecksRecordSchema.parse(decksData);
 
 const FALLBACK_DECK = DECK_REGISTRY["PROTOTYPE"];
 
