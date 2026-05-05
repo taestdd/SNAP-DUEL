@@ -1,17 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  Action,
-  ActionTag,
-  CharacterId,
-  CombatAnimationEvent,
-  FighterPose,
-  GameState,
-} from "@/game/engine/types";
+import { useEffect, useRef, useState } from "react";
+import type { Action, GameState } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
-import { makeQueueFromScript } from "@/game/animation/makeQueue";
-import { useAnimQueue } from "@/game/animation/useAnimQueue";
+import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
 import Hand from "./Hand";
@@ -19,28 +11,10 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
-import ArenaStage, { type ShakeLevel, type HitSide } from "./ArenaStage";
+import ArenaStage, { type HitSide } from "./ArenaStage";
 import QueuePreview, { effectLabel } from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
 import DraftModal from "./DraftModal";
-
-function actionTagToPose(tag?: ActionTag): FighterPose | null {
-  switch (tag) {
-    case "block":     return "block";
-    case "aerial_punch": return "attack_aerial_punch";
-    case "aerial_kick":  return "attack_aerial_kick";
-    case "weak_punch":   return "attack_weak_punch";
-    case "strong_punch": return "attack_strong_punch";
-    case "weak_kick":    return "attack_weak_kick";
-    case "strong_kick":  return "attack_strong_kick";
-    case "dragon_kick":  return "attack_dragon_kick";
-    case "rising_punch": return "attack_rising_punch";
-    case "hadouken":     return "attack_hadouken";
-    case "use_item":     return "use_item";
-
-    default:          return null;
-  }
-}
 
 function DeckCardRows({ cards }: { cards: string[] }) {
   return (
@@ -106,70 +80,18 @@ export default function GameScreen({
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
 
-  // ── 파이터 포즈 상태 ──────────────────────────────────────────
-  const [playerPose, setPlayerPose] = useState<FighterPose>("idle");
-  const [playerPoseKey, setPlayerPoseKey] = useState<number>(0);
-  const [aiPose, setAiPose] = useState<FighterPose>("idle");
-  const [aiPoseKey, setAiPoseKey] = useState<number>(0);
-  const [shakeLevel, setShakeLevel] = useState<ShakeLevel>("none");
-  const [playerFrozenUntil, setPlayerFrozenUntil] = useState(0);
-  const [aiFrozenUntil, setAiFrozenUntil] = useState(0);
-  const [playerFlashKey, setPlayerFlashKey] = useState(0);
-  const [aiFlashKey, setAiFlashKey] = useState(0);
-  const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
-  const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
-  const [zoomKey, setZoomKey] = useState(0);
-  const [bgOffset, setBgOffset] = useState(0);
-  const [hitEffectKey, setHitEffectKey] = useState(0);
-  const [hitEffectTarget, setHitEffectTarget] = useState<"P1" | "AI" | null>(null);
-  const [hitEffectStrength, setHitEffectStrength] = useState<"weak" | "strong">("weak");
-
-  // 태그 애니메이션: 실제 표시 캐릭터 (exit 재생 후 전환)
-  const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
-  const [displayedAIChar, setDisplayedAIChar] = useState<CharacterId>(state.AI.activeCharacter);
-  const prevP1CharRef2 = useRef<CharacterId>(state.P1.activeCharacter);
-  const prevAICharRef2 = useRef<CharacterId>(state.AI.activeCharacter);
-
-  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // P1 캐릭터 교체 감지 → exit 애니 → displayedP1Char 전환 → entry 애니
-  useEffect(() => {
-    if (state.P1.activeCharacter === prevP1CharRef2.current) return;
-    const newChar = state.P1.activeCharacter;
-    prevP1CharRef2.current = newChar;
-
-    setPlayerPose("tag_exit");
-    setPlayerPoseKey((k) => k + 1);
-    const t = setTimeout(() => {
-      setDisplayedP1Char(newChar);
-      setPlayerPose("tag_entry");
-      setPlayerPoseKey((k) => k + 1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [state.P1.activeCharacter]);
-
-  // AI 캐릭터 교체 감지 → exit 애니 → displayedAIChar 전환 → entry 애니
-  useEffect(() => {
-    if (state.AI.activeCharacter === prevAICharRef2.current) return;
-    const newChar = state.AI.activeCharacter;
-    prevAICharRef2.current = newChar;
-
-    setAiPose("tag_exit");
-    setAiPoseKey((k) => k + 1);
-    const t = setTimeout(() => {
-      setDisplayedAIChar(newChar);
-      setAiPose("tag_entry");
-      setAiPoseKey((k) => k + 1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [state.AI.activeCharacter]);
-
-  const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
-  const [animRunning, setAnimRunning] = useState(false);
-  const [animLog, setAnimLog] = useState<string[]>([]);
-  // dispatch 레퍼런스 (ANIM/DONE 타이머에서 안정적으로 참조)
-  const dispatchRef = useRef(dispatch);
-  useEffect(() => { dispatchRef.current = dispatch; });
+  // ── 아레나 애니메이션 (포즈·히트스톱·흔들림·태그 전환·ANIM/DONE) ──────────────
+  const {
+    playerPose, playerPoseKey, playerCharacter,
+    aiPose, aiPoseKey, aiCharacter,
+    shakeLevel,
+    playerFrozenUntil, aiFrozenUntil,
+    playerFlashKey, aiFlashKey,
+    playerKnockbackKey, aiKnockbackKey,
+    zoomKey, bgOffset,
+    hitEffectKey, hitEffectTarget, hitEffectStrength,
+    animLog,
+  } = useArenaAnimation(state, dispatch);
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
@@ -192,108 +114,6 @@ export default function GameScreen({
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disableAiDraft, state.phase, state.draftSelections.AI]);
-
-  // ANIMATING 진입 시 animScript로 이벤트 큐 생성 및 완료 타이머 설정
-  useEffect(() => {
-    if (state.phase !== "ANIMATING") {
-      setAnimRunning(false);
-      return;
-    }
-
-    const queue = makeQueueFromScript(state.animScript);
-    setAnimQueue(queue);
-    setAnimRunning(true);
-    setAnimLog([]);
-
-    const maxDelay = queue.reduce((m, e) => Math.max(m, e.delay), 0);
-    const t = setTimeout(() => dispatchRef.current({ type: "ANIM/DONE" }), maxDelay + 150);
-    return () => clearTimeout(t);
-  // animScript는 ANIMATING 진입 시 한 번만 설정되므로 phase만 의존
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase]);
-
-  // GAME_OVER 시 KO 포즈
-  useEffect(() => {
-    if (state.phase !== "GAME_OVER") return;
-    if (state.winner === "AI") {
-      setPlayerPose("ko");
-      setPlayerPoseKey((k) => k + 1);
-    } else if (state.winner === "P1") {
-      setAiPose("ko");
-      setAiPoseKey((k) => k + 1);
-    }
-  }, [state.phase, state.winner]);
-
-  // 라운드 전환 시 양쪽 idle 리셋 (턴 시작마다 리셋하지 않음)
-  const prevRoundRef = useRef(state.round);
-  useEffect(() => {
-    if (state.round === prevRoundRef.current) return;
-    prevRoundRef.current = state.round;
-    setPlayerPose("idle");
-    setPlayerPoseKey((k) => k + 1);
-    setAiPose("idle");
-    setAiPoseKey((k) => k + 1);
-  }, [state.round]);
-
-
-  const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
-    switch (event.type) {
-      case "action_start":
-        if (event.actor === "P1") {
-          const pose = actionTagToPose(event.actionTag);
-          if (pose) { setPlayerPose(pose); setPlayerPoseKey((k) => k + 1); }
-        } else if (event.actor === "AI") {
-          const pose = actionTagToPose(event.actionTag);
-          if (pose) { setAiPose(pose); setAiPoseKey((k) => k + 1); }
-        }
-        setAnimLog((prev) => [
-          ...prev,
-          `action_start: ${event.actor ?? "?"}${event.actionTag ? ` [${event.actionTag}]` : ""}`,
-        ]);
-        break;
-      case "visual_hit": {
-        const pose = event.hitPose ?? "hit_weak";
-        const freezeMs = pose === "hit_strong" ? 300 : pose === "hit_aerial" ? 220 : 150;
-        const frozenUntil = Date.now() + freezeMs;
-        setPlayerFrozenUntil(frozenUntil);
-        setAiFrozenUntil(frozenUntil);
-
-        // 흔들림은 히트스톱보다 짧게 — 흔들림 종료 후 파이터 재개
-        const shakeLevel: ShakeLevel = pose === "hit_strong" ? "heavy" : "light";
-        const shakeDuration = pose === "hit_strong" ? 220 : pose === "hit_aerial" ? 160 : 100;
-        if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-        setShakeLevel(shakeLevel);
-        shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
-        setZoomKey((k) => k + 1);
-        setHitEffectTarget(event.target ?? null);
-        setHitEffectStrength(pose === "hit_strong" ? "strong" : "weak");
-        setHitEffectKey((k) => k + 1);
-        if (event.target === "P1") {
-          setBgOffset((o) => o + 40);
-          setPlayerPose(pose);
-          setPlayerPoseKey((k) => k + 1);
-          setPlayerFlashKey((k) => k + 1);
-          setPlayerKnockbackKey((k) => k + 1);
-        } else if (event.target === "AI") {
-          setBgOffset((o) => o - 40);
-          setAiPose(pose);
-          setAiPoseKey((k) => k + 1);
-          setAiFlashKey((k) => k + 1);
-          setAiKnockbackKey((k) => k + 1);
-        }
-        setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
-        break;
-      }
-      case "action_end":
-        // hold last pose — idle reset happens on TURN_END / TURN_START
-        break;
-      case "damage_resolve":
-        // HP 반영은 게임 상태(resolveOneStep)가 자동 처리
-        break;
-    }
-  }, []);
-
-  useAnimQueue(animQueue, handleAnimEvent, animRunning);
 
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -409,10 +229,10 @@ export default function GameScreen({
           <ArenaStage
             playerPose={playerPose}
             playerPoseKey={playerPoseKey}
-            playerCharacter={displayedP1Char}
+            playerCharacter={playerCharacter}
             aiPose={aiPose}
             aiPoseKey={aiPoseKey}
-            aiCharacter={displayedAIChar}
+            aiCharacter={aiCharacter}
             shakeLevel={shakeLevel}
             playerFrozenUntil={playerFrozenUntil}
             aiFrozenUntil={aiFrozenUntil}
