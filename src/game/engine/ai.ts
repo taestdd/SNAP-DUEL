@@ -49,8 +49,9 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   score += effDmg * 10;
 
   // 속도: 낮을수록 먼저 행동 → 캔슬 위험 감소
+  // 상대 손패가 적을수록 캔슬 위험이 낮아지므로 느린 카드의 페널티를 줄임
   const effSpeed = Math.max(0, card.speed - (me.status.speedBonus ?? 0));
-  score -= effSpeed * 1.5;
+  score -= effSpeed * 1.5 * cancelRiskFactor(state, player);
 
   // Gain: 적중 시 다음 턴 속도 보너스 가치
   score += (card.gain ?? 0) * 5;
@@ -85,6 +86,23 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   }
 
   return score;
+}
+
+/**
+ * 상대가 이번 턴에 카드를 낼 가능성을 기반으로 캔슬 위험 계수를 반환한다.
+ * 0에 가까울수록 캔슬 위험이 낮아 느린 고데미지 카드를 써도 안전하다.
+ *
+ * - 상대 손패 0장: 패스만 가능 → 위험 없음
+ * - 상대 손패 1장: 낼 수도 있으나 선택지 좁음 → 낮은 위험
+ * - 상대 덱 고갈(exhausted): 코스트 지불 불가 → 낮은 위험
+ * - 그 외: 일반 위험
+ */
+function cancelRiskFactor(state: GameState, player: PlayerId): number {
+  const opp = state[opponentOf(player)];
+  if (opp.hand.length === 0) return 0.1;
+  if (opp.status.exhausted || opp.hand.length === 1) return 0.35;
+  if (opp.hand.length === 2) return 0.7;
+  return 1.0;
 }
 
 /**
