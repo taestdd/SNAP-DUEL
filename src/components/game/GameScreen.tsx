@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type {
   Action,
   ActionTag,
@@ -170,19 +170,23 @@ export default function GameScreen({
   // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
   const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
 
+  // useLayoutEffect: DOM 업데이트 직후 동기 실행 → 다음 setTimeout 실행 전 반드시 완료됨
+  // useEffect 대신 사용하는 이유: resolveOneStep(t=600ms)과 action_start 타이머(t=700ms) 사이
+  // 100ms 안에 ref가 업데이트되지 않는 race condition 방지
+  useLayoutEffect(() => {
+    cancelledActorRef.current = state.phase === "RESOLVING"
+      ? (state.recentlyCancelledPlayer ?? null)
+      : null;
+  }, [state.phase, state.recentlyCancelledPlayer]);
+
   useEffect(() => {
-    if (state.phase !== "RESOLVING") {
-      cancelledActorRef.current = null;
-      return;
-    }
-    cancelledActorRef.current = state.recentlyCancelledPlayer ?? null;
-    if (state.recentlyCancelledPlayer && state.recentlyCancelledId) {
-      const cardDef = getCard(state.recentlyCancelledId);
-      setAnimLog((prev) => [
-        ...prev,
-        `cancel: ${state.recentlyCancelledPlayer} [${cardDef?.name ?? state.recentlyCancelledId}]`,
-      ]);
-    }
+    if (state.phase !== "RESOLVING") return;
+    if (!state.recentlyCancelledPlayer || !state.recentlyCancelledId) return;
+    const cardDef = getCard(state.recentlyCancelledId);
+    setAnimLog((prev) => [
+      ...prev,
+      `cancel: ${state.recentlyCancelledPlayer} [${cardDef?.name ?? state.recentlyCancelledId}]`,
+    ]);
   }, [state.phase, state.recentlyCancelledPlayer, state.recentlyCancelledId]);
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
