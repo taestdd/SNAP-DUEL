@@ -17,7 +17,7 @@
     "id": "strong_punch",
     "name": "Strong Punch",
     "cost": 3,
-    "speed": 3,
+    "speed": 4,
     "gain": 0,
     "effects": [
       { "type": "damage", "value": 3, "target": "enemy", "damageType": "ground" }
@@ -46,7 +46,7 @@
     "id": "strong_kick",
     "name": "Strong Kick",
     "cost": 3,
-    "speed": 4,
+    "speed": 3,
     "gain": 1,
     "effects": [
       { "type": "damage", "value": 3, "target": "enemy", "damageType": "ground" },
@@ -60,7 +60,7 @@
   "dragon_kick": {
     "id": "dragon_kick",
     "name": "Dragon Kick",
-    "cost": 4,
+    "cost": 3,
     "speed": 4,
     "gain": 0,
     "effects": [
@@ -99,7 +99,7 @@
     "id": "hadouken",
     "name": "Hadouken",
     "cost": 5,
-    "speed": 4,
+    "speed": 3,
     "gain": 0,
     "effects": [
       { "type": "damage", "value": 4, "target": "enemy", "damageType": "ground" },
