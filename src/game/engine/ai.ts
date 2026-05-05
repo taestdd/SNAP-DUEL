@@ -50,11 +50,17 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
 
   // 속도: 낮을수록 먼저 행동 → 캔슬 위험 감소
   // 상대 손패가 적을수록 캔슬 위험이 낮아지므로 느린 카드의 페널티를 줄임
-  const effSpeed = Math.max(0, card.speed - (me.status.speedBonus ?? 0));
+  const speedBonus = me.status.speedBonus ?? 0;
+  const effSpeed = Math.max(0, card.speed - speedBonus);
   score -= effSpeed * 1.5 * cancelRiskFactor(state, player);
 
+  // 콤보 없이(speedBonus=0) 느린 카드(base speed>=4) 선택 억제
+  // gain 기대가치보다 캔슬 위험이 더 크므로 추가 패널티 부여
+  if (speedBonus === 0 && card.speed >= 4) score -= 12;
+
   // Gain: 적중 시 다음 턴 속도 보너스 가치
-  score += (card.gain ?? 0) * 5;
+  // 이미 콤보 중(speedBonus>0)이면 콤보 유지 가치가 더 높음
+  score += (card.gain ?? 0) * (speedBonus > 0 ? 7 : 5);
 
   // 발사 콤보: 지상 상대를 공중으로 띄우면 다음 턴 anti-air 기회
   const launchesOpponent = card.effects.some(
