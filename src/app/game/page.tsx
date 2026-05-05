@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
@@ -69,10 +70,11 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
   }, [state.phase, isTagAnimating]);
 
   // RESOLVING: 카드 한 장씩 600ms 딜레이
+  // flushSync: 취소 상태(recentlyCancelledPlayer)를 700ms 애니메이션 타이머 전에 반드시 반영
   useEffect(() => {
     if (state.phase !== "RESOLVING") return;
     const t = setTimeout(() => {
-      dispatch({ type: "RESOLVE/STEP" });
+      flushSync(() => dispatch({ type: "RESOLVE/STEP" }));
     }, 600);
     return () => clearTimeout(t);
   }, [state.phase, state.resolveIndex]);

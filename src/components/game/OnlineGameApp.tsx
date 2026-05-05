@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import type { Action, CharacterId, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
@@ -148,9 +149,12 @@ export function HostGameApp({
   }, [state.phase, isTagAnimating]);
 
   // RESOLVING: 600ms 간격
+  // flushSync: 취소 상태를 700ms 애니메이션 타이머 전에 반드시 반영
   useEffect(() => {
     if (state.phase !== "RESOLVING") return;
-    const t = setTimeout(() => dispatch({ type: "RESOLVE/STEP" }), 600);
+    const t = setTimeout(() => {
+      flushSync(() => dispatch({ type: "RESOLVE/STEP" }));
+    }, 600);
     return () => clearTimeout(t);
   }, [state.phase, state.resolveIndex]);
 
