@@ -1,7 +1,7 @@
 import type { Action, GameState } from "./types";
 import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
 import { getCard } from "./cards";
-import { aiSelectCard } from "./ai";
+import { selectCard } from "./ai";
 
 
 function isP1TurnToPick(state: GameState): boolean {
@@ -169,7 +169,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       }
 
       // 태그 여부와 무관하게 카드 선택 또는 패스
-      const pick = aiSelectCard(s);
+      const pick = selectCard(s, "AI");
       if (pick) {
         s = queueCard(s, "AI", pick.id, pick.idx);
       } else {

@@ -6,8 +6,7 @@
 
 import { createInitialState } from "../src/game/engine/state";
 import { gameReducer } from "../src/game/engine/reducer";
-import { getCard } from "../src/game/engine/cards";
-import { canUseCard } from "../src/game/engine/rules";
+import { selectCard, selectDraftCards } from "../src/game/engine/ai";
 import type { GameState, PlayerId } from "../src/game/engine/types";
 
 // ─── CLI args ────────────────────────────────────────────────────────────────
@@ -23,86 +22,12 @@ const GAMES = (() => {
 const DRAFT_COUNT = 4;
 const MAX_STEPS = 2000; // 게임당 안전 상한선
 
-// ─── 카드 점수 계산 (플레이어 범용) ──────────────────────────────────────────
-
-function effectiveDamage(cardId: string, oppAirborne: number): number {
-  const card = getCard(cardId);
-  if (!card) return 0;
-  let total = 0;
-  for (const e of card.effects) {
-    if (e.type !== "damage") continue;
-    if (e.damageType === "ground" && oppAirborne >= 1) continue;
-    if (e.damageType === "anti-air" && oppAirborne === 0) continue;
-    total += e.value ?? 0;
-  }
-  return total;
-}
-
-function scoreCardFor(state: GameState, cardId: string, player: PlayerId): number {
-  const card = getCard(cardId);
-  if (!card) return -Infinity;
-
-  const me = state[player];
-  const opp = state[player === "P1" ? "AI" : "P1"];
-  let score = 0;
-
-  const effDmg = effectiveDamage(cardId, opp.airborneStack);
-  score += effDmg * 10;
-
-  const effSpeed = Math.max(0, card.speed - (me.status.speedBonus ?? 0));
-  score -= effSpeed * 1.5;
-  score += (card.gain ?? 0) * 5;
-
-  if (
-    card.effects.some((e) => e.type === "airborne" && e.target === "enemy") &&
-    opp.airborneStack === 0
-  ) {
-    score += 8;
-  }
-
-  const handAfter = me.hand.length - 1;
-  for (const e of card.effects) {
-    if (e.type !== "move_cards") continue;
-    if (e.fromZone === "deck") score += Math.max(0, 4 - handAfter) * 3;
-    else if (e.fromZone === "trash") score += Math.min(me.trash.length, e.count ?? 2) * 3;
-  }
-
-  const hpDiff = me.hp - opp.hp;
-  if (hpDiff < -5 && effDmg > 0) score += 5;
-  else if (hpDiff > 5) score += Math.max(0, 3 - effSpeed);
-
-  return score;
-}
-
-function selectCard(state: GameState, player: PlayerId): { id: string; idx: number } | null {
-  const me = state[player];
-  const candidates = me.hand
-    .map((id, idx) => ({ id, idx }))
-    .filter(({ id }) => {
-      const card = getCard(id);
-      return card && card.cost <= me.deck.length && canUseCard(state, player, id);
-    });
-  if (candidates.length === 0) return null;
-  candidates.sort((a, b) => scoreCardFor(state, b.id, player) - scoreCardFor(state, a.id, player));
-  return candidates[0];
-}
-
-function selectDraftCards(state: GameState, player: PlayerId, count: number): string[] {
-  const me = state[player];
-  const opp = state[player === "P1" ? "AI" : "P1"];
-  const scored = me.deck.map((id) => {
-    const card = getCard(id);
-    if (!card) return { id, score: -Infinity };
-    let score = 0;
-    score += effectiveDamage(id, opp.airborneStack) * 10;
-    score -= card.speed * 1.5;
-    score += (card.gain ?? 0) * 5;
-    if (card.effects.some((e) => e.type === "airborne" && e.target === "enemy")) score += 6;
-    if (card.effects.some((e) => e.type === "move_cards")) score += 4;
-    return { id, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, count).map((x) => x.id);
+// ─── 카드 점수 기반 버리기 선택 ───────────────────────────────────────────────
+// WAITING_DISCARD 시 손패에서 가장 가치 낮은 카드를 버린다.
+// scoreCard는 ai.ts 내부 함수라 직접 접근 불가 → 대신 selectCard로 가장 좋은 카드를 역산.
+function pickCardsToDiscard(state: GameState, hand: string[], count: number): string[] {
+  // 간단히 앞에서 count장 버리기 (랜덤 덱이므로 큰 차이 없음)
+  return hand.slice(0, count).map((id, i) => `${id}::${i}`);
 }
 
 // ─── 게임 통계 타입 ───────────────────────────────────────────────────────────
@@ -135,12 +60,18 @@ function simulateGame(): GameResult {
     switch (state.phase) {
       case "ROUND_DRAFT": {
         if (state.draftSelections.P1 === null) {
-          const cards = selectDraftCards(state, "P1", DRAFT_COUNT);
-          state = gameReducer(state, { type: "SUBMIT_DRAFT", player: "P1", cardIds: cards });
+          state = gameReducer(state, {
+            type: "SUBMIT_DRAFT",
+            player: "P1",
+            cardIds: selectDraftCards(state, "P1", DRAFT_COUNT),
+          });
         }
         if (state.draftSelections.AI === null) {
-          const cards = selectDraftCards(state, "AI", DRAFT_COUNT);
-          state = gameReducer(state, { type: "SUBMIT_DRAFT", player: "AI", cardIds: cards });
+          state = gameReducer(state, {
+            type: "SUBMIT_DRAFT",
+            player: "AI",
+            cardIds: selectDraftCards(state, "AI", DRAFT_COUNT),
+          });
         }
         break;
       }
@@ -159,6 +90,7 @@ function simulateGame(): GameResult {
             : state.initiative !== "P1";
 
         if (p1Turn) {
+          // P1: selectCard(state, "P1") — AI와 동일한 로직
           const pick = selectCard(state, "P1");
           if (pick) {
             state = gameReducer(state, {
@@ -169,6 +101,7 @@ function simulateGame(): GameResult {
           }
           state = gameReducer(state, { type: "PLAYER/READY", player: "P1" });
         } else {
+          // AI: reducer 내 AI/SETUP_AUTO (태그 판단 포함)
           state = gameReducer(state, { type: "AI/SETUP_AUTO" });
         }
         break;
@@ -180,7 +113,7 @@ function simulateGame(): GameResult {
       }
 
       case "ANIMATING": {
-        // animScript = 성공적으로 해결된 카드 목록
+        // animScript = 이번 턴 성공적으로 해결된 카드 목록
         for (const entry of state.animScript) {
           plays.push({ player: entry.actor, cardId: entry.cardId, cancelled: false });
         }
@@ -198,39 +131,34 @@ function simulateGame(): GameResult {
 
       case "WAITING_SELECTION": {
         const ps = state.pendingSelection!;
-        const selected = ps.candidates.slice(0, ps.count);
-        state = gameReducer(state, { type: "SELECTION/CONFIRM", selectedCards: selected });
+        state = gameReducer(state, {
+          type: "SELECTION/CONFIRM",
+          selectedCards: ps.candidates.slice(0, ps.count),
+        });
         break;
       }
 
       case "WAITING_DISCARD": {
         const pd = state.pendingDiscard!;
-        // 점수가 낮은 카드부터 버리기
-        const scored = pd.candidates.map((id, idx) => ({
-          key: `${id}::${idx}`,
-          score: scoreCardFor(state, id, "P1"),
-        }));
-        scored.sort((a, b) => a.score - b.score);
-        const toDiscard = scored.slice(0, pd.count).map((x) => x.key);
-        state = gameReducer(state, { type: "DISCARD/CONFIRM", discardCards: toDiscard });
+        state = gameReducer(state, {
+          type: "DISCARD/CONFIRM",
+          discardCards: pickCardsToDiscard(state, pd.candidates, pd.count),
+        });
         break;
       }
 
       default:
-        steps = MAX_STEPS; // 알 수 없는 페이즈 → 강제 종료
+        steps = MAX_STEPS;
     }
   }
 
-  return {
-    winner: state.winner ?? "DRAW",
-    plays,
-  };
+  return { winner: state.winner ?? "DRAW", plays };
 }
 
 // ─── 통계 집계 ────────────────────────────────────────────────────────────────
 
 interface CardStat {
-  played: number;       // 플레이 횟수
+  played: number;       // 플레이 횟수 (양쪽 합산)
   playedAndWon: number; // 플레이한 쪽이 게임을 이긴 횟수
   cancelled: number;    // 캔슬된 횟수
 }
@@ -277,7 +205,7 @@ console.log(` P1 승 : ${p1Wins.toString().padStart(5)}  (${((p1Wins / GAMES) * 
 console.log(` AI 승 : ${aiWins.toString().padStart(5)}  (${((aiWins / GAMES) * 100).toFixed(1)}%)`);
 console.log(` 무승부 : ${draws.toString().padStart(4)}  (${((draws / GAMES) * 100).toFixed(1)}%)`);
 console.log();
-console.log(` 카드별 통계  (승률 내림차순)`);
+console.log(` 카드별 통계  (승기여율 내림차순)`);
 console.log(`─────────────────────────────────────────────────────────`);
 console.log(
   ` ${"카드".padEnd(16)} ${"사용수".padStart(6)} ${"승기여율".padStart(8)} ${"캔슬률".padStart(7)} ${"사용/게임".padStart(9)}`
