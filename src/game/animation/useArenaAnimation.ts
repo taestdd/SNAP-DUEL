@@ -233,18 +233,18 @@ export function useArenaAnimation(
         setHitEffectStrength(pose === "hit_strong" ? "strong" : "weak");
         setHitEffectKey((k) => k + 1);
 
-        if (event.target === "P1") {
-          setBgOffset((o) => o + 40);
-          setPlayerPose(pose);
-          setPlayerPoseKey((k) => k + 1);
-          setPlayerFlashKey((k) => k + 1);
-          setPlayerKnockbackKey((k) => k + 1);
-        } else if (event.target === "AI") {
-          setBgOffset((o) => o - 40);
-          setAiPose(pose);
-          setAiPoseKey((k) => k + 1);
-          setAiFlashKey((k) => k + 1);
-          setAiKnockbackKey((k) => k + 1);
+        const target = event.target;
+        if (target === "P1" || target === "AI") {
+          const isP1 = target === "P1";
+          const setPose      = isP1 ? setPlayerPose      : setAiPose;
+          const setPoseKey   = isP1 ? setPlayerPoseKey   : setAiPoseKey;
+          const setFlashKey  = isP1 ? setPlayerFlashKey  : setAiFlashKey;
+          const setKnockback = isP1 ? setPlayerKnockbackKey : setAiKnockbackKey;
+          setBgOffset((o) => o + (isP1 ? 40 : -40));
+          setPose(pose);
+          setPoseKey((k) => k + 1);
+          setFlashKey((k) => k + 1);
+          setKnockback((k) => k + 1);
         }
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
