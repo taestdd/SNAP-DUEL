@@ -6,11 +6,13 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     maxHp: 25,
     entryEffect: { type: "damage", value: 1, target: "enemy" },
     exitEffect: null,
+    affinities: [],
   },
   B: {
     id: "B",
     maxHp: 20,
     entryEffect: null,
     exitEffect: { type: "heal", value: 2, target: "self" },
+    affinities: [],
   },
 };

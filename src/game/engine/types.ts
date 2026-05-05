@@ -87,6 +87,8 @@ export type CharacterDef = {
   entryEffect: CardEffect | null;
   /** 이 캐릭터에서 다른 캐릭터로 교체될 때 발동 */
   exitEffect: CardEffect | null;
+  /** 이 캐릭터가 사용할 수 있는 카드 태그 집합. 카드의 tags가 모두 포함되어야 사용 가능 */
+  affinities: string[];
 };
 
 /** 카드가 위치할 수 있는 영역 */
