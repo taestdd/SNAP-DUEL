@@ -88,6 +88,17 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
 }
 
 /**
+ * 벤치 캐릭터 HP가 현재 캐릭터보다 높을 때 태그를 권장한다.
+ * reducer(AI/SETUP_AUTO)와 시뮬레이션(P1) 양쪽에서 동일하게 사용.
+ */
+export function shouldTag(state: GameState, player: PlayerId): boolean {
+  const me = state[player];
+  const benchChar: import("./types").CharacterId = me.activeCharacter === "A" ? "B" : "A";
+  const benchHp = me.characterHp[benchChar];
+  return benchHp > me.hp && benchHp > 0;
+}
+
+/**
  * 지정한 플레이어가 이번 턴에 사용할 카드를 선택한다.
  *
  * 코스트 가능 + useCondition 충족 카드 중 scoreCard 점수가 가장 높은 카드를 반환.

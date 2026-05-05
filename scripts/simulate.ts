@@ -6,7 +6,7 @@
 
 import { createInitialState } from "../src/game/engine/state";
 import { gameReducer } from "../src/game/engine/reducer";
-import { selectCard, selectDraftCards } from "../src/game/engine/ai";
+import { selectCard, selectDraftCards, shouldTag } from "../src/game/engine/ai";
 import type { GameState, PlayerId } from "../src/game/engine/types";
 
 // ─── CLI args ────────────────────────────────────────────────────────────────
@@ -90,7 +90,10 @@ function simulateGame(): GameResult {
             : state.initiative !== "P1";
 
         if (p1Turn) {
-          // P1: selectCard(state, "P1") — AI와 동일한 로직
+          // P1: AI와 동일한 태그 판단 + 카드 선택
+          if (shouldTag(state, "P1")) {
+            state = gameReducer(state, { type: "TURN/TAG" });
+          }
           const pick = selectCard(state, "P1");
           if (pick) {
             state = gameReducer(state, {
