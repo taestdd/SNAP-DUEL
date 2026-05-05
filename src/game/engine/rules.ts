@@ -1,4 +1,4 @@
-import type { CardZone, CharacterId, DeckInsertPosition, GameState, PendingDiscard, PendingSelection, PlayerId } from "./types";
+import type { AnimScriptEntry, CardZone, CharacterId, DeckInsertPosition, GameState, PendingDiscard, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -478,6 +478,7 @@ function resetTurnFlags(state: GameState): GameState {
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
     p1TaggedThisTurn: false,
+    animScript: [],
     P1: {
       ...state.P1,
       block: 0,
@@ -741,7 +742,7 @@ function applyCancelOnHit(
 /* resolve 메인 */
 /* -------------------------- */
 
-function endTurnCleanup(state: GameState): GameState {
+export function endTurnCleanup(state: GameState): GameState {
   let s: GameState = {
     ...state,
     P1: { ...state.P1, queue: [], ready: false },
@@ -770,7 +771,7 @@ function endTurnCleanup(state: GameState): GameState {
 
 /**
  * RESOLVE 페이즈 진입 시 호출.
- * resolveQueue를 구성하고 phase를 RESOLVING으로 전환만 한다 (즉시 처리 없음).
+ * resolveQueue를 구성하고 모든 카드를 즉시 처리 후 ANIMATING으로 전환.
  */
 export function enterResolving(state: GameState): GameState {
   if (state.phase !== "RESOLVE") return state;
@@ -786,95 +787,92 @@ export function enterResolving(state: GameState): GameState {
       resolveQueue: [],
       resolveIndex: 0,
       resolveUnresolved: [],
+      animScript: [],
     });
   }
 
-  return {
+  return resolveAll({
     ...state,
     phase: "RESOLVING",
     resolveQueue: items,
     resolveIndex: 0,
     resolveUnresolved: unresolvedArr,
-  };
+    animScript: [],
+  });
 }
 
 /**
- * RESOLVING 페이즈에서 카드 한 장 처리.
- * 처리 후 남은 카드가 있으면 RESOLVING 유지, 없으면 TURN_END.
+ * RESOLVING 페이즈에서 모든 카드를 즉시 처리하고 animScript를 구성.
+ * WAITING_SELECTION이 필요한 경우 해당 페이즈로 전환 후 중단.
+ * 완료 시 ANIMATING으로 전환 (애니메이션이 있는 경우) 또는 endTurnCleanup.
  */
-export function resolveOneStep(state: GameState): GameState {
+function resolveAll(state: GameState): GameState {
   if (state.phase !== "RESOLVING") return state;
 
   const items = state.resolveQueue;
   const unresolved = new Set<PlayerId>(state.resolveUnresolved);
-
-  // 현재 인덱스부터 처리 가능한 다음 아이템 탐색
+  const animScript: AnimScriptEntry[] = [...state.animScript];
   let idx = state.resolveIndex;
-  while (idx < items.length && !unresolved.has(items[idx].player)) {
+  let s = state;
+
+  while (true) {
+    // 이미 처리된(캔슬된) 플레이어 건너뜀
+    while (idx < items.length && !unresolved.has(items[idx].player)) {
+      idx++;
+    }
+    if (idx >= items.length) break;
+
+    const it = items[idx];
+    const target = opponentOf(it.player);
+    // 효과 적용 전 체공 스택 캡처 (animScript 용)
+    const actorAirborne = s[it.player].airborneStack;
+    const targetAirborne = s[target].airborneStack;
+    const beforeStep = s;
+
+    s = applyCardEffectsWithPause(s, it.player, it.cardId, items, idx + 1, [...unresolved]);
+
+    if (s.phase === "WAITING_SELECTION") {
+      // 선택 전 이 카드도 animScript에 추가
+      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+      return { ...s, animScript };
+    }
+
+    if (s.phase === "GAME_OVER") {
+      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+      if (animScript.length > 0) {
+        return { ...s, phase: "ANIMATING", resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
+      }
+      return s;
+    }
+
+    s = moveQueuedCard(s, it.player, it.cardId, "cooldown");
+    unresolved.delete(it.player);
+
+    const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
+    if (hit) {
+      s = applyInitiativeOnHit(s, it.player);
+      s = applyGainOnHit(s, it.player, it.cardId);
+      // applyCancelOnHit이 unresolved Set을 직접 수정함 (캔슬된 플레이어 제거)
+      s = applyCancelOnHit(s, it.player, unresolved);
+    }
+
+    // 캔슬되지 않은 카드만 animScript에 추가
+    animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+
     idx++;
   }
 
-  if (idx >= items.length) {
-    return endTurnCleanup({
-      ...state,
-      resolveQueue: [],
-      resolveIndex: 0,
-      resolveUnresolved: [],
-    });
+  // 모든 카드 처리 완료
+  const base = { ...s, resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
+
+  if (animScript.length > 0) {
+    // endTurnCleanup 후 ANIMATING으로 전환 (winner가 있으면 GAME_OVER 우선)
+    const cleaned = endTurnCleanup(base);
+    if (cleaned.phase === "GAME_OVER") return cleaned;
+    return { ...cleaned, phase: "ANIMATING" };
   }
 
-  const it = items[idx];
-  const before = state;
-
-  let s = applyCardEffectsWithPause(
-    state,
-    it.player,
-    it.cardId,
-    items,
-    idx + 1,
-    [...unresolved]
-  );
-
-  if (s.phase === "WAITING_SELECTION") {
-    return { ...s, resolveIndex: idx };
-  }
-  if (s.phase === "GAME_OVER") return s;
-
-  s = moveQueuedCard(s, it.player, it.cardId, "cooldown");
-  unresolved.delete(it.player);
-
-  const hit = didDirectAttackHit(before, s, it.player, it.cardId);
-  if (hit) {
-    s = applyInitiativeOnHit(s, it.player);
-    s = applyGainOnHit(s, it.player, it.cardId);
-    s = applyCancelOnHit(s, it.player, unresolved);
-  }
-
-  const nextIdx = idx + 1;
-
-  let hasMore = false;
-  for (let i = nextIdx; i < items.length; i++) {
-    if (unresolved.has(items[i].player)) {
-      hasMore = true;
-      break;
-    }
-  }
-
-  if (hasMore) {
-    return {
-      ...s,
-      phase: "RESOLVING",
-      resolveIndex: nextIdx,
-      resolveUnresolved: [...unresolved],
-    };
-  }
-
-  return endTurnCleanup({
-    ...s,
-    resolveQueue: [],
-    resolveIndex: 0,
-    resolveUnresolved: [],
-  });
+  return endTurnCleanup(base);
 }
 
 /**
@@ -900,32 +898,11 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
   // 원인 카드를 쿨다운으로 이동
   s = moveQueuedCard(s, ps.sourcePlayer, ps.sourceCardId, "cooldown");
 
-  // 남은 아이템 확인 후 RESOLVING으로 재개 (step-by-step)
-  const unresolved = new Set<PlayerId>(ps.unresolvedPlayers);
-  const items = ps.resolveItems;
-
-  let hasMore = false;
-  for (let i = ps.resolveNextIndex; i < items.length; i++) {
-    if (unresolved.has(items[i].player)) {
-      hasMore = true;
-      break;
-    }
-  }
-
-  if (!hasMore) {
-    return endTurnCleanup({
-      ...s,
-      resolveQueue: [],
-      resolveIndex: 0,
-      resolveUnresolved: [],
-    });
-  }
-
-  return {
+  // 나머지 아이템을 즉시 처리 (resolveAll 재사용)
+  return resolveAll({
     ...s,
-    phase: "RESOLVING",
-    resolveQueue: items,
+    resolveQueue: ps.resolveItems,
     resolveIndex: ps.resolveNextIndex,
     resolveUnresolved: ps.unresolvedPlayers,
-  };
+  });
 }

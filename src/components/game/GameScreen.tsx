@@ -10,7 +10,7 @@ import type {
   GameState,
 } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
-import { makeQueue } from "@/game/animation/makeQueue";
+import { makeQueueFromScript } from "@/game/animation/makeQueue";
 import { useAnimQueue } from "@/game/animation/useAnimQueue";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
@@ -167,23 +167,9 @@ export default function GameScreen({
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
   const [animRunning, setAnimRunning] = useState(false);
   const [animLog, setAnimLog] = useState<string[]>([]);
-  // RESOLVING 중 캔슬된 플레이어 추적 (action_start 스킵용)
-  const cancelledActorRef = useRef<"P1" | "AI" | null>(null);
-
-  useEffect(() => {
-    if (state.phase !== "RESOLVING") {
-      cancelledActorRef.current = null;
-      return;
-    }
-    cancelledActorRef.current = state.recentlyCancelledPlayer ?? null;
-    if (state.recentlyCancelledPlayer && state.recentlyCancelledId) {
-      const cardDef = getCard(state.recentlyCancelledId);
-      setAnimLog((prev) => [
-        ...prev,
-        `cancel: ${state.recentlyCancelledPlayer} [${cardDef?.name ?? state.recentlyCancelledId}]`,
-      ]);
-    }
-  }, [state.phase, state.recentlyCancelledPlayer, state.recentlyCancelledId]);
+  // dispatch 레퍼런스 (ANIM/DONE 타이머에서 안정적으로 참조)
+  const dispatchRef = useRef(dispatch);
+  useEffect(() => { dispatchRef.current = dispatch; });
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
@@ -207,35 +193,22 @@ export default function GameScreen({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disableAiDraft, state.phase, state.draftSelections.AI]);
 
-  // RESOLVING 진입 시 이벤트 큐 생성
+  // ANIMATING 진입 시 animScript로 이벤트 큐 생성 및 완료 타이머 설정
   useEffect(() => {
-    if (state.phase !== "RESOLVING") {
+    if (state.phase !== "ANIMATING") {
       setAnimRunning(false);
       return;
     }
 
-    // WAITING_SELECTION 복귀 시 이미 처리된 카드를 재생하지 않도록 resolveIndex부터 탐색
-    const remainingQueue = state.resolveQueue.slice(state.resolveIndex);
-    const p1Entry = remainingQueue.find((e) => e.player === "P1");
-    const aiEntry = remainingQueue.find((e) => e.player === "AI");
-    const playerCard = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
-    const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
-
-    // resolveQueue 순서(speed 기준)로 선공자 결정 — state.initiative는 동속도 타이브레이커일 뿐
-    let animInitiative: "player" | "ai" | "tie";
-    if (p1Entry && aiEntry) {
-      const p1Idx = remainingQueue.indexOf(p1Entry);
-      const aiIdx = remainingQueue.indexOf(aiEntry);
-      animInitiative = p1Idx < aiIdx ? "player" : "ai";
-    } else {
-      animInitiative = state.initiative === "P1" ? "player" : "ai";
-    }
-
-    const queue = makeQueue(playerCard, aiCard, animInitiative, state.P1.airborneStack, state.AI.airborneStack);
+    const queue = makeQueueFromScript(state.animScript);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
-  // resolveQueue 내용이 같아도 phase가 RESOLVING으로 바뀔 때만 재생성
+
+    const maxDelay = queue.reduce((m, e) => Math.max(m, e.delay), 0);
+    const t = setTimeout(() => dispatchRef.current({ type: "ANIM/DONE" }), maxDelay + 150);
+    return () => clearTimeout(t);
+  // animScript는 ANIMATING 진입 시 한 번만 설정되므로 phase만 의존
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
@@ -266,8 +239,6 @@ export default function GameScreen({
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
     switch (event.type) {
       case "action_start":
-        // 캔슬된 플레이어의 action_start는 스킵
-        if (cancelledActorRef.current === event.actor) break;
         if (event.actor === "P1") {
           const pose = actionTagToPose(event.actionTag);
           if (pose) { setPlayerPose(pose); setPlayerPoseKey((k) => k + 1); }

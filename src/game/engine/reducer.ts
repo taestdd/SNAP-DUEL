@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, resolveOneStep, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
 import { getCard } from "./cards";
 import { aiSelectCard } from "./ai";
 
@@ -191,17 +191,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case "RESOLVE/STEP": {
       if (state.phase === "RESOLVE") {
-        // 500ms 딜레이 후 진입 — resolveQueue 구성 후 RESOLVING 전환
+        // 500ms 딜레이 후 진입 — 모든 카드를 즉시 처리 후 ANIMATING 전환
         return enterResolving(state);
       }
-      if (state.phase === "RESOLVING") {
-        // 600ms 딜레이마다 카드 한 장씩 처리
-        const s1 = resolveOneStep(state);
-        if (s1.phase === "GAME_OVER") return s1;
-        if (s1.phase === "WAITING_SELECTION") return s1;
-        return checkGameOver(s1);
-      }
       return state;
+    }
+
+    case "ANIM/DONE": {
+      if (state.phase !== "ANIMATING") return state;
+      // 애니메이션 완료: winner 있으면 GAME_OVER, 아니면 턴 종료 처리
+      if (state.winner) return { ...state, phase: "GAME_OVER", animScript: [] };
+      return endTurnCleanup({ ...state, animScript: [] });
     }
 
     case "SELECTION/CONFIRM": {

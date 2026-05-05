@@ -68,15 +68,6 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     return () => clearTimeout(t);
   }, [state.phase, isTagAnimating]);
 
-  // RESOLVING: 카드 한 장씩 600ms 딜레이
-  useEffect(() => {
-    if (state.phase !== "RESOLVING") return;
-    const t = setTimeout(() => {
-      dispatch({ type: "RESOLVE/STEP" });
-    }, 600);
-    return () => clearTimeout(t);
-  }, [state.phase, state.resolveIndex]);
-
   // WAITING_SELECTION: AI 차례면 자동으로 첫 번째 후보 선택
   useEffect(() => {
     if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return;

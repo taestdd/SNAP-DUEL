@@ -1,4 +1,5 @@
-import type { Card, CombatAnimationEvent, HitPose, PlayerId } from "@/game/engine/types";
+import type { AnimScriptEntry, Card, CombatAnimationEvent, HitPose, PlayerId } from "@/game/engine/types";
+import { getCard } from "@/game/engine/cards";
 
 /**
  * 두 카드와 이니셔티브 정보를 받아 CombatAnimationEvent[] 를 생성한다.
@@ -104,4 +105,27 @@ function pushSequenceWithHold(
   }
 
   events.push({ type: "action_end", delay: endDelay, actor });
+}
+
+/**
+ * animScript 배열에서 CombatAnimationEvent[]를 생성한다.
+ * 캔슬된 카드는 animScript에 포함되지 않으므로 race condition 없이 안전.
+ */
+export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationEvent[] {
+  if (script.length === 0) return [];
+
+  const p1Entry = script.find((e) => e.actor === "P1");
+  const aiEntry = script.find((e) => e.actor === "AI");
+
+  const p1Card = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
+  const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
+
+  const p1Airborne = p1Entry?.actorAirborne ?? 0;
+  const aiAirborne = aiEntry?.actorAirborne ?? 0;
+
+  // script[0]의 actor가 선공자 결정
+  const initiative: "player" | "ai" =
+    script[0].actor === "P1" ? "player" : "ai";
+
+  return makeQueue(p1Card, aiCard, initiative, p1Airborne, aiAirborne);
 }
