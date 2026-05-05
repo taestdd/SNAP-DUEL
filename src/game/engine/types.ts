@@ -258,10 +258,24 @@ export type TurnPhase =
   | "SETUP_OTHER"
   | "RESOLVE"
   | "RESOLVING"
+  | "ANIMATING"
   | "WAITING_SELECTION"
   | "WAITING_DISCARD"
   | "TURN_END"
   | "GAME_OVER";
+
+/**
+ * ANIMATING 페이즈에서 재생할 애니메이션 항목.
+ * 캔슬된 카드는 포함되지 않음.
+ */
+export type AnimScriptEntry = {
+  actor: PlayerId;
+  cardId: string;
+  /** 해결 시점의 행동자 체공 스택 (actionTagAirborne 선택에 사용) */
+  actorAirborne: number;
+  /** 해결 시점의 피격자 체공 스택 (hitTimings 포즈 선택에 사용) */
+  targetAirborne: number;
+};
 
 /**
  * 턴 종료 시 핸드 사이즈 초과로 인한 버리기 대기 상태
@@ -341,6 +355,9 @@ export type GameState = {
   /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
   resolveUnresolved: PlayerId[];
 
+  /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (캔슬된 카드 제외) */
+  animScript: AnimScriptEntry[];
+
   /** ROUND_DRAFT 페이즈: 드래프트 제출 현황 (null = 미제출) */
   draftSelections: { P1: string[] | null; AI: string[] | null };
 };
@@ -378,4 +395,5 @@ export type Action =
   | { type: "SELECTION/SKIP" }
   | { type: "DISCARD/CONFIRM"; discardCards: string[] }
   | { type: "TURN/TAG" }
-  | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] };
+  | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] }
+  | { type: "ANIM/DONE" };

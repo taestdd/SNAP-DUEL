@@ -51,6 +51,10 @@ function flipState(state: GameState): GameState {
       player: flipId(item.player),
     })),
     resolveUnresolved: state.resolveUnresolved.map(flipId),
+    animScript: state.animScript.map((entry) => ({
+      ...entry,
+      actor: flipId(entry.actor),
+    })),
     recentlyCancelledPlayer:
       state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
     p1TaggedThisTurn: false,
@@ -140,19 +144,12 @@ export function HostGameApp({
     return () => unsubscribe();
   }, [state.phase, state.draftSelections.AI, roomCode]);
 
-  // RESOLVE 진입
+  // RESOLVE 진입: 500ms 딜레이 후 모든 카드 즉시 처리
   useEffect(() => {
     if (state.phase !== "RESOLVE" || isTagAnimating) return;
     const t = setTimeout(() => dispatch({ type: "RESOLVE/STEP" }), 500);
     return () => clearTimeout(t);
   }, [state.phase, isTagAnimating]);
-
-  // RESOLVING: 600ms 간격
-  useEffect(() => {
-    if (state.phase !== "RESOLVING") return;
-    const t = setTimeout(() => dispatch({ type: "RESOLVE/STEP" }), 600);
-    return () => clearTimeout(t);
-  }, [state.phase, state.resolveIndex]);
 
   // WAITING_SELECTION: AI 차례면 게스트 액션 대기
   useEffect(() => {

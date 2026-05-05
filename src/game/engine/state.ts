@@ -70,6 +70,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     resolveQueue: [],
     resolveIndex: 0,
     resolveUnresolved: [],
+    animScript: [],
     draftSelections: { P1: null, AI: null },
   };
 
