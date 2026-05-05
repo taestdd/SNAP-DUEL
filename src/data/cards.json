@@ -4,7 +4,7 @@
     "name": "Weak Punch",
     "cost": 3,
     "speed": 2,
-    "gain": 0,
+    "gain": 1,
     "effects": [
       { "type": "damage", "value": 1, "target": "enemy", "damageType": "ground" }
     ],
@@ -17,8 +17,8 @@
     "id": "strong_punch",
     "name": "Strong Punch",
     "cost": 3,
-    "speed": 4,
-    "gain": 0,
+    "speed": 3,
+    "gain": 1,
     "effects": [
       { "type": "damage", "value": 3, "target": "enemy", "damageType": "ground" }
     ],
@@ -32,7 +32,7 @@
     "name": "Weak Kick",
     "cost": 3,
     "speed": 3,
-    "gain": 0,
+    "gain": 1,
     "effects": [
       { "type": "damage", "value": 2, "target": "enemy", "damageType": "ground" },
       { "type": "damage", "value": 1, "target": "enemy", "damageType": "anti-air" }
@@ -62,7 +62,7 @@
     "name": "Dragon Kick",
     "cost": 3,
     "speed": 4,
-    "gain": 0,
+    "gain": 2,
     "effects": [
       { "type": "damage", "value": 2, "target": "enemy", "damageType": "ground" },
       { "type": "damage", "value": 4, "target": "enemy", "damageType": "anti-air" },
@@ -79,7 +79,7 @@
     "name": "Rising Punch",
     "cost": 5,
     "speed": 3,
-    "gain": 0,
+    "gain": 1,
     "effects": [
       { "type": "damage", "value": 2, "target": "enemy", "damageType": "ground" },
       { "type": "damage", "value": 3, "target": "enemy", "damageType": "anti-air" },
@@ -100,7 +100,7 @@
     "name": "Hadouken",
     "cost": 5,
     "speed": 3,
-    "gain": 0,
+    "gain": 1,
     "effects": [
       { "type": "damage", "value": 4, "target": "enemy", "damageType": "ground" },
       { "type": "damage", "value": 4, "target": "enemy", "damageType": "anti-air" },
