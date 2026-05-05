@@ -4,6 +4,7 @@ import styles from "./Hand.module.css";
 import CardView from "./CardView";
 import CardDetailModal from "./CardDetailModal";
 import { CARDS } from "@/game/engine/cards";
+import { CHARACTERS } from "@/game/engine/characters";
 
 export default function Hand({
   me,
@@ -42,8 +43,12 @@ export default function Hand({
             !card?.useCondition ||
             (card.useCondition === "ground" && me.airborneStack === 0) ||
             (card.useCondition === "airborne" && me.airborneStack >= 1);
-          const canSelect = !disabled && costOk && conditionMet;
-          const conditionBlocked = !disabled && costOk && !conditionMet;
+          const charAffinities = CHARACTERS[me.activeCharacter].affinities;
+          const affinityMet =
+            !card?.tags?.length ||
+            card.tags.every((t) => charAffinities.includes(t));
+          const canSelect = !disabled && costOk && conditionMet && affinityMet;
+          const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
           const isSelected =
             selected?.cardId === cardId && selected?.handIndex === idx;
 

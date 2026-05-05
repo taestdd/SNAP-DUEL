@@ -548,8 +548,14 @@ export function beginTurn(state: GameState): GameState {
 export function canUseCard(state: GameState, player: PlayerId, cardId: string): boolean {
   const card = getCard(cardId);
   if (!card) return false;
-  if (!card.useCondition) return true;
 
+  // 캐릭터 친화 태그 체크: 카드의 모든 태그가 현재 캐릭터의 affinities에 포함되어야 함
+  if (card.tags && card.tags.length > 0) {
+    const charAffinities = CHARACTERS[state[player].activeCharacter].affinities;
+    if (!card.tags.every((t) => charAffinities.includes(t))) return false;
+  }
+
+  if (!card.useCondition) return true;
   const stack = state[player].airborneStack;
   if (card.useCondition === "ground") return stack === 0;
   if (card.useCondition === "airborne") return stack >= 1;
