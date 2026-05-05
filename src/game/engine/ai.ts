@@ -123,10 +123,60 @@ export function shouldTag(state: GameState, player: PlayerId): boolean {
 }
 
 /**
+ * 상대가 이번 턴에 낼 공격 카드의 유효 속도(speedBonus 적용)를 반환한다.
+ * 상대에게 위협이 없으면 Infinity를 반환한다.
+ *
+ * - SETUP_OTHER(내가 나중에 선택): 상대 queue를 확인한다.
+ *   · queue에 공격 카드 있음 → 이미 확정된 위협 → 그 속도 반환
+ *   · queue가 비어있음 → 상대가 패스했다는 뜻 → 위협 없음(Infinity)
+ * - SETUP_INIT(내가 먼저 선택): 상대 아직 미결정 → hand 기준 최속 추정
+ */
+function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
+  const opp = state[opponentOf(player)];
+  const oppBonus = opp.status.speedBonus ?? 0;
+
+  // 상대가 이미 카드를 큐에 올린 경우(SETUP_OTHER) → queue가 실제 위협
+  if (opp.queue.length > 0) {
+    let fastest = Infinity;
+    for (const cardId of opp.queue) {
+      const card = getCard(cardId);
+      if (!card) continue;
+      if (!card.effects.some((e) => e.type === "damage")) continue;
+      fastest = Math.min(fastest, Math.max(0, card.speed - oppBonus));
+    }
+    return fastest;
+  }
+
+  // 상대 queue가 비어있는 경우:
+  // · 상대가 패스했다면(SETUP_OTHER 상황) → 위협 없음
+  // · 상대가 아직 미결정(SETUP_INIT 상황) → hand 기준 최속 추정
+  // SETUP_INIT인지 SETUP_OTHER인지는 이미 ready 플래그로 구분 가능
+  if (opp.ready) return Infinity; // 상대 이미 ready(패스) → 위협 없음
+
+  let fastest = Infinity;
+  for (const cardId of opp.hand) {
+    const card = getCard(cardId);
+    if (!card) continue;
+    if (!card.effects.some((e) => e.type === "damage")) continue;
+    if (card.cost > opp.deck.length) continue;
+    if (!canUseCard(state, opponentOf(player), cardId)) continue;
+    fastest = Math.min(fastest, Math.max(0, card.speed - oppBonus));
+  }
+
+  return fastest;
+}
+
+/**
  * 지정한 플레이어가 이번 턴에 사용할 카드를 선택한다.
  *
- * 코스트 가능 + useCondition 충족 카드 중 scoreCard 점수가 가장 높은 카드를 반환.
- * 사용 가능한 카드가 없으면 null (pass → 1드로우).
+ * 코스트 가능 + useCondition 충족 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
+ * 아래 조건을 모두 충족하면 패스(null)로 전환한다:
+ *   - 주도권이 없을 것
+ *   - 선택 카드가 공격 카드(캔슬 대상)일 것
+ *   - 내 유효 속도 >= 상대 최속 공격 카드의 유효 속도
+ *     (즉, 상대가 먼저 행동하거나 동속 타이를 initiative로 이겨 내 카드를 캔슬할 수 있음)
+ *
+ * 사용 가능한 카드가 없거나 패스가 유리하면 null (pass → 1드로우).
  */
 export function selectCard(
   state: GameState,
@@ -145,7 +195,22 @@ export function selectCard(
 
   candidates.sort((a, b) => scoreCard(state, b.id, player) - scoreCard(state, a.id, player));
 
-  return { id: candidates[0].id, idx: candidates[0].idx };
+  const best = candidates[0];
+  const bestCard = getCard(best.id)!;
+  const myEffSpeed = Math.max(0, bestCard.speed - (me.status.speedBonus ?? 0));
+  const isAttack = bestCard.effects.some((e) => e.type === "damage");
+
+  // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 캔슬 확정
+  if (isAttack && state.initiative !== player && myEffSpeed >= oppFastestAttackSpeed(state, player)) {
+    // 공격 대신 아이템 카드(캔슬 불가)가 있으면 그것을 사용
+    const safeCard = candidates.find(({ id }) => {
+      const c = getCard(id);
+      return c && !c.effects.some((e) => e.type === "damage");
+    });
+    return safeCard ?? null;
+  }
+
+  return best;
 }
 
 /**
