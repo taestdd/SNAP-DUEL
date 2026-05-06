@@ -51,9 +51,11 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
 
   let score = 0;
 
-  // 실효 데미지 (실제로 맞는 데미지만)
+  // 실효 데미지 × 코스트 할인 가중치
+  // 코스트가 높을수록 카드 1장당 데미지 가치가 감소 (덱 자원 대비 효율 반영)
+  // cost-3 카드: ×7, cost-5 카드: ×5, 아이템(effDmg=0): 영향 없음
   const effDmg = effectiveDamage(card, oppAirborne);
-  score += effDmg * 10;
+  score += effDmg * Math.max(1, 10 - card.cost);
 
   // 속도: 낮을수록 먼저 행동 → 캔슬 위험 감소
   // 상대 손패가 적을수록 캔슬 위험이 낮아지므로 느린 카드의 페널티를 줄임
@@ -69,11 +71,8 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   // 이미 콤보 중(speedBonus>0)이면 콤보 유지 가치가 더 높음
   score += (card.gain ?? 0) * (speedBonus > 0 ? 7 : 5);
 
-  // 발사 콤보: 지상 상대를 공중으로 띄우면 다음 턴 anti-air 기회
-  const launchesOpponent = card.effects.some(
-    (e) => e.type === "airborne" && e.target === "enemy"
-  );
-  if (launchesOpponent && oppAirborne === 0) score += 8;
+  // launch 가치는 다음 턴에 anti-air 카드의 effectiveDamage가 올라가는 것으로 이미 반영됨
+  // 현재 턴에 별도 보너스를 주면 hadouken 같은 고코스트 launch 카드가 과도하게 선택됨
 
   // 유틸리티: 아이템 카드의 상황별 가치
   const handSizeAfter = me.hand.length - 1; // 카드 사용 후 손패 수
