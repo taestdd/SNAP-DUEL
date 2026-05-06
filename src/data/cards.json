@@ -9,6 +9,7 @@
       { "type": "damage", "value": 1, "target": "enemy", "damageType": "ground" }
     ],
     "text": "Deal 1 ground damage.",
+    "useCondition": "ground",
     "actionTag": "weak_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [{ "ms": 150, "ground": "hit_weak", "airborne": "hit_aerial" }]
@@ -38,6 +39,7 @@
       { "type": "damage", "value": 1, "target": "enemy", "damageType": "anti-air" }
     ],
     "text": "Deal 2 ground damage and 1 anti-air damage.",
+    "useCondition": "ground",
     "actionTag": "weak_kick",
     "actionTagAirborne": "aerial_kick",
     "hitTimings": [{ "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" }]
