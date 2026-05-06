@@ -1,10 +1,17 @@
 import type { Card, GameState, PlayerId } from "./types";
-import { getCard } from "./cards";
+import { CARDS, getCard } from "./cards";
 import { canUseCard } from "./rules";
 
 function opponentOf(player: PlayerId): PlayerId {
   return player === "P1" ? "AI" : "P1";
 }
+
+// 게임 내 공격 카드(damage 효과 보유) 중 최소 speed — 공개 정보이므로 상수로 계산
+const MIN_ATTACK_SPEED = Math.min(
+  ...Object.values(CARDS)
+    .filter((c) => c.effects.some((e) => e.type === "damage"))
+    .map((c) => c.speed)
+);
 
 /**
  * 상대의 현재 airborne 상태를 기반으로 실제로 적중할 데미지만 계산한다.
@@ -148,22 +155,13 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
   }
 
   // 상대 queue가 비어있는 경우:
-  // · 상대가 패스했다면(SETUP_OTHER 상황) → 위협 없음
-  // · 상대가 아직 미결정(SETUP_INIT 상황) → hand 기준 최속 추정
-  // SETUP_INIT인지 SETUP_OTHER인지는 이미 ready 플래그로 구분 가능
-  if (opp.ready) return Infinity; // 상대 이미 ready(패스) → 위협 없음
+  // · ready=true → 상대가 패스 완료 → 위협 없음
+  // · ready=false → 상대 아직 미결정, 핸드 내용은 비공개
+  //   카드가 있으면 최악 케이스(게임 내 최속 공격 카드) 가정
+  if (opp.ready) return Infinity;
+  if (opp.hand.length === 0 || opp.status.exhausted) return Infinity;
 
-  let fastest = Infinity;
-  for (const cardId of opp.hand) {
-    const card = getCard(cardId);
-    if (!card) continue;
-    if (!card.effects.some((e) => e.type === "damage")) continue;
-    if (card.cost > opp.deck.length) continue;
-    if (!canUseCard(state, opponentOf(player), cardId)) continue;
-    fastest = Math.min(fastest, Math.max(0, card.speed - oppBonus));
-  }
-
-  return fastest;
+  return Math.max(0, MIN_ATTACK_SPEED - oppBonus);
 }
 
 /**
@@ -201,7 +199,7 @@ export function selectCard(
   const isAttack = bestCard.effects.some((e) => e.type === "damage");
 
   // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 캔슬 확정
-  if (isAttack && state.initiative !== player && myEffSpeed >= oppFastestAttackSpeed(state, player)) {
+  if (isAttack && state.initiative !== player && myEffSpeed > oppFastestAttackSpeed(state, player)) {
     // 공격 대신 아이템 카드(캔슬 불가)가 있으면 그것을 사용
     const safeCard = candidates.find(({ id }) => {
       const c = getCard(id);
