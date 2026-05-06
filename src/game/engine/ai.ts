@@ -71,8 +71,14 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   // 이미 콤보 중(speedBonus>0)이면 콤보 유지 가치가 더 높음
   score += (card.gain ?? 0) * (speedBonus > 0 ? 7 : 5);
 
-  // launch 가치는 다음 턴에 anti-air 카드의 effectiveDamage가 올라가는 것으로 이미 반영됨
-  // 현재 턴에 별도 보너스를 주면 hadouken 같은 고코스트 launch 카드가 과도하게 선택됨
+  // 빠른 카드 안전 보너스: base speed ≤ 2는 MIN_ATTACK_SPEED 이하라 캔슬당하지 않음
+  if (card.speed <= 2) score += 6;
+
+  // 발사 콤보: 지상 상대를 공중으로 띄우면 다음 턴 anti-air 기회 생성
+  const launchesOpponent = card.effects.some(
+    (e) => e.type === "airborne" && e.target === "enemy"
+  );
+  if (launchesOpponent && oppAirborne === 0) score += 3;
 
   // 유틸리티: 아이템 카드의 상황별 가치
   const handSizeAfter = me.hand.length - 1; // 카드 사용 후 손패 수
@@ -238,14 +244,16 @@ export function selectDraftCards(
     if (!card) return { id, score: -Infinity };
 
     let score = 0;
-    score += effectiveDamage(card, oppAirborne) * 10;
+    const effDmg = effectiveDamage(card, oppAirborne);
+    score += effDmg * Math.max(1, 10 - card.cost);
     score -= card.speed * 1.5;
     score += (card.gain ?? 0) * 5;
+    if (card.speed <= 2) score += 6;
 
     const hasLaunch = card.effects.some(
       (e) => e.type === "airborne" && e.target === "enemy"
     );
-    if (hasLaunch) score += 6;
+    if (hasLaunch) score += 3;
 
     const hasUtility = card.effects.some((e) => e.type === "move_cards");
     if (hasUtility) score += 4;
