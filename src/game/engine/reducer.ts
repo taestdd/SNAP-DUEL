@@ -1,7 +1,7 @@
 import type { Action, GameState } from "./types";
 import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
 import { getCard } from "./cards";
-import { aiSelectCard } from "./ai";
+import { selectCard, shouldTag } from "./ai";
 
 
 function isP1TurnToPick(state: GameState): boolean {
@@ -160,16 +160,14 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       let s = state;
 
-      // AI 태그: 벤치 HP가 현재보다 높고 벤치 HP > 0이면 태그 (카드와 같은 턴에 가능)
-      const aiBenchChar = s.AI.activeCharacter === "A" ? "B" : "A";
-      const aiBenchHp = s.AI.characterHp[aiBenchChar];
-      if (aiBenchHp > s.AI.hp && aiBenchHp > 0) {
+      // AI 태그: shouldTag 판단 (ai.ts와 동일 로직)
+      if (shouldTag(s, "AI")) {
         s = applyTagSwitch(s, "AI");
         if (s.phase === "GAME_OVER") return s;
       }
 
       // 태그 여부와 무관하게 카드 선택 또는 패스
-      const pick = aiSelectCard(s);
+      const pick = selectCard(s, "AI");
       if (pick) {
         s = queueCard(s, "AI", pick.id, pick.idx);
       } else {
