@@ -372,6 +372,26 @@
   align-items: center;
 }
 
+.queuePass {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #888;
+  opacity: 0.8;
+}
+
+.queueSelecting {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0c040;
+  animation: selectingPulse 1s ease-in-out infinite;
+}
+
+@keyframes selectingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .queueCard {
   display: flex;
   flex-direction: column;
