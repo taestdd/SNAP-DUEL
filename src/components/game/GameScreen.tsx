@@ -198,6 +198,25 @@ export default function GameScreen({
             <div className={styles.gameOverResult}>
               {state.winner === "P1" ? "WIN" : state.winner === "AI" ? "LOSE" : "DRAW"}
             </div>
+            <button
+              type="button"
+              className={styles.gameOverMenuBtn}
+              onClick={() => {
+                const log = {
+                  winner: state.winner,
+                  turns: state.turnLog,
+                };
+                const blob = new Blob([JSON.stringify(log, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `snap-duel-log-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              로그 저장
+            </button>
             <button type="button" className={styles.gameOverMenuBtn} onClick={onExit}>
               메인 메뉴
             </button>

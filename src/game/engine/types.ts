@@ -360,6 +360,19 @@ export type GameState = {
 
   /** ROUND_DRAFT 페이즈: 드래프트 제출 현황 (null = 미제출) */
   draftSelections: { P1: string[] | null; AI: string[] | null };
+
+  /** 플레이 로그: 턴별 요약 (게임 종료 후 JSON 다운로드용) */
+  turnLog: TurnLogEntry[];
+};
+
+/** 턴 요약 — 게임 로그 분석용 */
+export type TurnLogEntry = {
+  turn: number;
+  initiative: PlayerId;
+  P1: { card: string | null; cancelled: boolean };
+  AI: { card: string | null; cancelled: boolean };
+  hp: { P1: number; AI: number };
+  airborne: { P1: number; AI: number };
 };
 
 /** 덱 정의 — decks.json에 저장 */

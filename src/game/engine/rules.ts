@@ -743,10 +743,28 @@ function applyCancelOnHit(
 /* -------------------------- */
 
 export function endTurnCleanup(state: GameState): GameState {
+  // 턴 요약 기록
+  const p1Card = state.animScript.find((e) => e.actor === "P1")?.cardId
+    ?? (state.recentlyCancelledPlayer === "P1" ? state.recentlyCancelledId : null)
+    ?? null;
+  const aiCard = state.animScript.find((e) => e.actor === "AI")?.cardId
+    ?? (state.recentlyCancelledPlayer === "AI" ? state.recentlyCancelledId : null)
+    ?? null;
+
+  const entry = {
+    turn: state.turn,
+    initiative: state.initiative,
+    P1: { card: p1Card, cancelled: state.recentlyCancelledPlayer === "P1" },
+    AI: { card: aiCard, cancelled: state.recentlyCancelledPlayer === "AI" },
+    hp: { P1: state.P1.hp, AI: state.AI.hp },
+    airborne: { P1: state.P1.airborneStack, AI: state.AI.airborneStack },
+  };
+
   let s: GameState = {
     ...state,
     P1: { ...state.P1, queue: [], ready: false },
     AI: { ...state.AI, queue: [], ready: false },
+    turnLog: [...state.turnLog, entry],
   };
 
   if (areBothPlayersExhausted(s)) {

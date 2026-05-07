@@ -72,6 +72,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     resolveUnresolved: [],
     animScript: [],
     draftSelections: { P1: null, AI: null },
+    turnLog: [],
   };
 
   return state;
