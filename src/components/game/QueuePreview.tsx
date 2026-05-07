@@ -40,7 +40,7 @@ export default function QueuePreview({
   const isSetup = phase === "SETUP_INIT" || phase === "SETUP_OTHER";
   const isResolving = phase === "RESOLVE";
   const isPassed = isSetup && me.ready && !queuedId;
-  const isSelecting = isSetup && !me.ready && !queuedId && isMyTurn;
+  const isSelecting = isSetup && !me.ready && !queuedId;
 
   return (
     <div className={styles.queueBox}>
