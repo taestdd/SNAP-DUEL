@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import type { Combatant, SelectedCard } from "@/game/engine/types";
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
 import CardDetailModal from "./CardDetailModal";
 import { CARDS } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
+
+const CARD_W = 110;
+const CARD_H = 88;
+const MIN_STEP = 32;
 
 export default function Hand({
   me,
@@ -20,6 +24,30 @@ export default function Hand({
   endTurnButton?: React.ReactNode;
 }) {
   const [detailCard, setDetailCard] = useState<{ cardId: string; handIndex: number } | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(400);
+
+  useLayoutEffect(() => {
+    if (rowRef.current) {
+      setContainerWidth(rowRef.current.getBoundingClientRect().width);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const n = me.hand.length;
+  const rawStep = n <= 1 ? 0 : (containerWidth - CARD_W) / (n - 1);
+  const step = n <= 1 ? 0 : Math.max(MIN_STEP, Math.min(CARD_W, rawStep));
+  const totalSpread = n === 0 ? 0 : CARD_W + step * (n - 1);
+  const groupLeft = Math.max(0, (containerWidth - totalSpread) / 2);
 
   return (
     <div className={styles.wrap}>
@@ -35,7 +63,7 @@ export default function Hand({
         </div>
       </div>
 
-      <div className={styles.row}>
+      <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
           const costOk = !!card && card.cost <= me.deck.length;
@@ -49,19 +77,30 @@ export default function Hand({
             card.tags.every((t) => charAffinities.includes(t));
           const canSelect = !disabled && costOk && conditionMet && affinityMet;
           const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
-          const isSelected =
-            selected?.cardId === cardId && selected?.handIndex === idx;
+          const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
 
           return (
-            <CardView
+            <div
               key={`${cardId}-${idx}`}
-              cardId={cardId}
-              disabled={!canSelect}
-              conditionBlocked={conditionBlocked}
-              selected={isSelected}
-              onClick={() => onSelectCard(cardId, idx)}
-              onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
-            />
+              style={{
+                position: "absolute",
+                left: groupLeft + idx * step,
+                width: CARD_W,
+                height: CARD_H,
+                zIndex: isSelected ? n + 10 : idx + 1,
+                transform: isSelected ? "translateY(-10px)" : "translateY(0)",
+                transition: "transform 150ms ease, left 200ms ease",
+              }}
+            >
+              <CardView
+                cardId={cardId}
+                disabled={!canSelect}
+                conditionBlocked={conditionBlocked}
+                selected={isSelected}
+                onClick={() => onSelectCard(cardId, idx)}
+                onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
+              />
+            </div>
           );
         })}
       </div>
