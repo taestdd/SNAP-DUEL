@@ -25,17 +25,23 @@ export default function QueuePreview({
   me,
   phase,
   recentlyCancelledPlayer,
+  isMyTurn = false,
 }: {
   title: string;
   me: Combatant;
   phase: string;
   recentlyCancelledPlayer: "P1" | "AI" | null;
+  isMyTurn?: boolean;
 }) {
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
   const showCancel = recentlyCancelledPlayer === me.id;
 
+  const isSetup = phase === "SETUP_INIT" || phase === "SETUP_OTHER";
   const isResolving = phase === "RESOLVE";
+  const isPassed    = isSetup && me.ready && !queuedId;
+  const isSelecting = isSetup && !me.ready && !queuedId && isMyTurn;
+  const isWaiting   = isSetup && !me.ready && !queuedId && !isMyTurn;
 
   return (
     <div className={styles.queueBox}>
@@ -45,6 +51,12 @@ export default function QueuePreview({
         <div className={`${styles.queueEmpty} ${showCancel ? styles.queueCancelAnim : ""}`}>
           {showCancel ? (
             <div className={styles.cancelOverlay} style={{ position: "relative", width: "100%", height: "40px" }} />
+          ) : isPassed ? (
+            <span className={styles.queuePass}>PASS</span>
+          ) : isSelecting ? (
+            <span className={styles.queueSelecting}>선택중…</span>
+          ) : isWaiting ? (
+            <span className={styles.queueWaiting}>선택전</span>
           ) : "—"}
         </div>
       ) : (
