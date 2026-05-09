@@ -8,7 +8,6 @@ import { CHARACTERS } from "@/game/engine/characters";
 
 const CARD_W = 110;
 const CARD_H = 88;
-const MIN_STEP = 32;
 
 export default function Hand({
   me,
@@ -44,8 +43,7 @@ export default function Hand({
   }, []);
 
   const n = me.hand.length;
-  const rawStep = n <= 1 ? 0 : (containerWidth - CARD_W) / (n - 1);
-  const step = n <= 1 ? 0 : Math.max(MIN_STEP, Math.min(CARD_W, rawStep));
+  const step = n <= 1 ? 0 : Math.min(CARD_W, (containerWidth - CARD_W) / (n - 1));
   const totalSpread = n === 0 ? 0 : CARD_W + step * (n - 1);
   const groupLeft = Math.max(0, (containerWidth - totalSpread) / 2);
 
