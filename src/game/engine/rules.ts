@@ -884,10 +884,9 @@ function resolveAll(state: GameState): GameState {
   const base = { ...s, resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
 
   if (animScript.length > 0) {
-    // endTurnCleanup 후 ANIMATING으로 전환 (winner가 있으면 GAME_OVER 우선)
-    const cleaned = endTurnCleanup(base);
-    if (cleaned.phase === "GAME_OVER") return cleaned;
-    return { ...cleaned, phase: "ANIMATING" };
+    // ANIM/DONE에서 endTurnCleanup이 호출되므로 여기서 미리 호출하지 않음
+    // (두 번 호출 시 라운드 전환 상태가 중복 처리되어 ROUND_DRAFT가 건너뛰어지는 버그 방지)
+    return { ...base, phase: "ANIMATING" };
   }
 
   return endTurnCleanup(base);
