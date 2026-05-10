@@ -158,12 +158,64 @@
   color: rgba(255,255,255,0.4);
 }
 
-/* 핸드 전용 — 크기 고정, 오버플로 차단 */
+/* 핸드 전용 — 크기 고정, 불투명 배경, 상단 stat + 하단 이름 */
 .handCard {
   height: 100%;
   min-height: unset;
   overflow: hidden;
-  justify-content: center;
+  justify-content: space-between;
+  background: #1e1e2e;
+  border-color: rgba(255,255,255,0.18);
+  padding: 7px 8px;
+}
+
+.handCard:hover {
+  background: #252540;
+}
+
+.handCard.disabled {
+  background: #16161f;
+}
+
+.handStatRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.speedCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  flex: 0 0 auto;
+}
+
+.speedDown {
+  background: rgba(80, 200, 120, 0.20);
+  border-color: rgba(80, 200, 120, 0.50);
+  color: #7ee8a2;
+}
+
+.speedUp {
+  background: rgba(255, 80, 80, 0.20);
+  border-color: rgba(255, 80, 80, 0.50);
+  color: #ff8080;
+}
+
+.handCardName {
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
 }
 
 .selected {

@@ -243,9 +243,38 @@ export default function GameScreen({
           </div>
         </div>
 
-        {/* 아레나 */}
-        <div className={styles.arenaWrap}>
-          <ArenaStage
+        {/* 큐 + 아레나 묶음 */}
+        <div className={styles.arenaBlock}>
+          <div className={styles.middleRow}>
+            <div className={styles.queuePanel}>
+              <QueuePreview
+                title="P1 Queue"
+                me={state.P1}
+                phase={state.phase}
+                recentlyCancelledPlayer={state.recentlyCancelledPlayer}
+                isMyTurn={
+                  (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
+                  (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
+                }
+              />
+            </div>
+            <div className={styles.queuePanel}>
+              <QueuePreview
+                title="AI Queue"
+                me={state.AI}
+                phase={state.phase}
+                recentlyCancelledPlayer={state.recentlyCancelledPlayer}
+                isMyTurn={
+                  (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
+                  (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
+                }
+              />
+            </div>
+          </div>
+
+          {/* 아레나 */}
+          <div className={styles.arenaWrap}>
+            <ArenaStage
             playerPose={playerPose}
             playerPoseKey={playerPoseKey}
             playerCharacter={playerCharacter}
@@ -265,6 +294,7 @@ export default function GameScreen({
             hitEffectTarget={hitEffectTarget}
             hitEffectStrength={hitEffectStrength}
           />
+          </div>
         </div>
 
         {/* P1 패널: 좌측 HP 바 + 우측 액션 버튼 */}
@@ -285,34 +315,6 @@ export default function GameScreen({
               className={`${styles.actionBtn} ${deckOpen ? styles.active : ""}`}
               onClick={() => { setDeckOpen((v) => !v); setLogOpen(false); }}
             >🃏</button>
-          </div>
-        </div>
-
-        {/* 큐 패널 */}
-        <div className={styles.middleRow}>
-          <div className={styles.queuePanel}>
-            <QueuePreview
-              title="P1 Queue"
-              me={state.P1}
-              phase={state.phase}
-              recentlyCancelledPlayer={state.recentlyCancelledPlayer}
-              isMyTurn={
-                (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
-                (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
-              }
-            />
-          </div>
-          <div className={styles.queuePanel}>
-            <QueuePreview
-              title="AI Queue"
-              me={state.AI}
-              phase={state.phase}
-              recentlyCancelledPlayer={state.recentlyCancelledPlayer}
-              isMyTurn={
-                (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
-                (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
-              }
-            />
           </div>
         </div>
 

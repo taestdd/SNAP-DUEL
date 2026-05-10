@@ -19,8 +19,8 @@
   gap: clamp(12px, 4vw, 30px);
   height: clamp(120px, 28dvh, 160px);
   background: linear-gradient(180deg, #0d1428 0%, #111b35 60%, #16243f 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   padding: 0 10px;
   position: relative;
   overflow: hidden;
@@ -29,12 +29,12 @@
 .arenaBg {
   position: absolute;
   inset: 0;
-  background-image: url('/sprites/backgrounds/arena_bg.png');
+  background-image: url('/sprites/backgrounds/arena_bg3.png');
   background-repeat: repeat-x;
   background-size: auto 100%;
-  background-position-y: bottom;
+  background-position: left bottom;
   opacity: 0.55;
-  transition: background-position-x 400ms ease-out;
+  image-rendering: pixelated;
   z-index: 0;
 }
 
@@ -88,6 +88,7 @@
   align-items: flex-end;
   position: relative;
   z-index: 1;
+  margin-bottom: -22px;
 }
 
 /* ─── Knockback ─── */
