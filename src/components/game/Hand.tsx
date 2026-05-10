@@ -95,6 +95,7 @@ export default function Hand({
                 disabled={!canSelect}
                 conditionBlocked={conditionBlocked}
                 selected={isSelected}
+                handMode
                 onClick={() => onSelectCard(cardId, idx)}
                 onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
               />

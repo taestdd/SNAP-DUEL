@@ -22,8 +22,10 @@
 }
 
 .disabled {
-  opacity: 0.45;
   cursor: not-allowed;
+  border-color: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.4);
 }
 
 .top {
@@ -150,10 +152,18 @@
 
 /* 조건 불충족으로 비활성 (코스트 부족과 구분) */
 .conditionBlocked {
-  opacity: 0.55;
   cursor: not-allowed;
   border-color: rgba(110, 180, 255, 0.25);
   background: rgba(110, 180, 255, 0.04);
+  color: rgba(255,255,255,0.4);
+}
+
+/* 핸드 전용 — 크기 고정, 오버플로 차단 */
+.handCard {
+  height: 100%;
+  min-height: unset;
+  overflow: hidden;
+  justify-content: center;
 }
 
 .selected {
