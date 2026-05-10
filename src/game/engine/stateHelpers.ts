@@ -8,7 +8,7 @@ import { getCard } from "./cards";
 import { shuffle } from "./rng";
 
 export const LOG_LIMIT = 200;
-const HAND_LIMIT = 6;
+const HAND_LIMIT = 10;
 
 /* ── 공통 유틸 ──────────────────────────────────── */
 

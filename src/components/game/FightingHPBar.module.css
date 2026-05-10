@@ -1,15 +1,86 @@
 .wrap {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   padding: 6px 14px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* AI측은 오른쪽 정렬 */
 .wrapRight {
-  align-items: flex-end;
+  /* row-reverse 제거 — portrait는 코드에서 마지막에 렌더링하여 자연스럽게 오른쪽에 배치 */
+}
+
+/* 초상화 영역을 제외한 나머지 콘텐츠 */
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── 초상화 ── */
+.portraits {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.portrait {
+  position: absolute;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  transition: width 280ms ease, height 280ms ease,
+              top 280ms ease, bottom 280ms ease,
+              left 280ms ease, right 280ms ease,
+              opacity 280ms ease, border-color 280ms ease;
+}
+
+.portraitImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* 플레이어측: 활성=좌상단(크게), 벤치=우하단(작게) */
+.portraitActive {
+  width: 52px;
+  height: 52px;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  border-color: rgba(255, 255, 255, 0.40);
+}
+
+.portraitBench {
+  width: 36px;
+  height: 36px;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  opacity: 0.65;
+}
+
+/* AI측(오른쪽): 좌우 반전 — 활성=우상단, 벤치=좌하단 */
+.portraitRight.portraitActive {
+  left: auto;
+  right: 0;
+}
+
+.portraitRight.portraitBench {
+  right: auto;
+  left: 0;
+}
+
+.portraitDead {
+  filter: grayscale(1);
+  opacity: 0.3 !important;
 }
 
 /* ── 이름 행 ── */
@@ -212,6 +283,15 @@
   height: 6px;
 }
 
+.hpNum {
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+  opacity: 0.85;
+}
+
 .deckCount {
   font-size: 10px;
   font-weight: 700;
@@ -233,12 +313,14 @@
   white-space: nowrap;
 }
 
-/* ── 상태 배지 ── */
+/* ── 상태 배지 — min-height로 높이 고정 ── */
 .badges {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 3px;
+  min-height: 22px;
+  align-items: flex-start;
 }
 
 .badgesRight {

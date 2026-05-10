@@ -72,7 +72,9 @@ export default function DraftModal({
               {selectedIndices.length} / {maxPick} 선택
             </div>
             <div className={modalStyles.cardList}>
-              {state.P1.deck.map((cardId, idx) => {
+              {[...state.P1.deck.map((cardId, idx) => ({ cardId, idx }))]
+                .sort((a, b) => (getCard(a.cardId)?.name ?? a.cardId).localeCompare(getCard(b.cardId)?.name ?? b.cardId))
+                .map(({ cardId, idx }) => {
                 const card = getCard(cardId);
                 const isSelected = selectedIndices.includes(idx);
                 const isDisabled = !isSelected && selectedIndices.length >= maxPick;

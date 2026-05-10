@@ -7,7 +7,7 @@ import { CARDS } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
 
 const CARD_W = 110;
-const CARD_H = 88;
+const CARD_H = 100;
 
 export default function Hand({
   me,
@@ -56,9 +56,7 @@ export default function Hand({
             <div className={styles.headerButtons}>{endTurnButton}</div>
           )}
         </div>
-        <div className={styles.help}>
-          {disabled ? "Setup only" : "Select 1 card, then Ready / Pass"}
-        </div>
+
       </div>
 
       <div className={styles.row} ref={rowRef}>
@@ -96,6 +94,7 @@ export default function Hand({
                 conditionBlocked={conditionBlocked}
                 selected={isSelected}
                 handMode
+                speedBonus={me.status.speedBonus}
                 onClick={() => onSelectCard(cardId, idx)}
                 onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
               />

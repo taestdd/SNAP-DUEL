@@ -2,18 +2,41 @@
   "PROTOTYPE": {
     "id": "PROTOTYPE",
     "name": "Prototype Deck",
-    "characters": ["A", "B"],
+    "characters": [
+      "A",
+      "B"
+    ],
     "cards": [
-      "jab", "jab",
-      "straight", "straight",
-      "uppercut", "uppercut",
-      "sweep", "sweep",
-      "dragon_kick", "dragon_kick",
-      "haymaker", "haymaker",
-      "rising_strike", "rising_strike",
-      "quick_draw", "quick_draw",
-      "recall", "recall",
-      "recycle", "recycle"
+      "jab",
+      "jab",
+      "jab",
+      "straight",
+      "straight",
+      "straight",
+      "uppercut",
+      "uppercut",
+      "uppercut",
+      "sweep",
+      "sweep",
+      "sweep",
+      "dragon_kick",
+      "dragon_kick",
+      "dragon_kick",
+      "haymaker",
+      "haymaker",
+      "haymaker",
+      "rising_strike",
+      "rising_strike",
+      "rising_strike",
+      "quick_draw",
+      "quick_draw",
+      "quick_draw",
+      "recall",
+      "recall",
+      "recall",
+      "recycle",
+      "recycle",
+      "recycle"
     ]
   }
 }

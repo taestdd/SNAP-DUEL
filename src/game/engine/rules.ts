@@ -23,7 +23,7 @@ import {
 
 export { LOG_LIMIT, draw, checkGameOver, filterCards };
 
-const HAND_LIMIT = 6;
+const HAND_LIMIT = 10;
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체) */
