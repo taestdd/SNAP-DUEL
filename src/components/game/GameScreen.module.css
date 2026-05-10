@@ -183,7 +183,7 @@
 
 .handWrap {
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ── Middle row: P1 Queue | AI Queue ── */
