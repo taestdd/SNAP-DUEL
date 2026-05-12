@@ -3,6 +3,11 @@ import { getCard } from "@/game/engine/cards";
 
 export const SUPER_FLASH_DUR = 700;
 
+export type ActorHpData = {
+  hpAfter: { P1: number; AI: number };
+  cancelledPlayer?: PlayerId;
+};
+
 /**
  * 두 카드와 이니셔티브 정보를 받아 CombatAnimationEvent[] 를 생성한다.
  *
@@ -32,6 +37,8 @@ export function makeQueue(
   initiative: "player" | "ai" | "tie",
   p1Airborne: number,
   aiAirborne: number,
+  playerHpData?: ActorHpData,
+  aiHpData?: ActorHpData,
 ): CombatAnimationEvent[] {
   const events: CombatAnimationEvent[] = [];
 
@@ -43,14 +50,14 @@ export function makeQueue(
   if (p1Acts && !aiActs) {
     const fd = flashDur(playerCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
-    pushSequence(events, "P1", "AI", playerCard!, fd, aiAirborne, p1Airborne);
+    pushSequence(events, "P1", "AI", playerCard!, fd, aiAirborne, p1Airborne, playerHpData);
     return events;
   }
 
   if (!p1Acts && aiActs) {
     const fd = flashDur(aiCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "AI", "P1", aiCard!, fd, p1Airborne, aiAirborne);
+    pushSequence(events, "AI", "P1", aiCard!, fd, p1Airborne, aiAirborne, aiHpData);
     return events;
   }
 
@@ -60,8 +67,8 @@ export function makeQueue(
     const maxFd = Math.max(p1fd, aifd);
     if (p1fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
     if (aifd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "P1", "AI", playerCard!, maxFd, aiAirborne, p1Airborne);
-    pushSequence(events, "AI", "P1", aiCard!, maxFd, p1Airborne, aiAirborne);
+    pushSequence(events, "P1", "AI", playerCard!, maxFd, aiAirborne, p1Airborne, playerHpData);
+    pushSequence(events, "AI", "P1", aiCard!, maxFd, p1Airborne, aiAirborne, aiHpData);
     return events;
   }
 
@@ -73,16 +80,18 @@ export function makeQueue(
   const secondTargetAirborne = initiative === "player" ? p1Airborne : aiAirborne;
   const firstActorAirborne = initiative === "player" ? p1Airborne : aiAirborne;
   const secondActorAirborne = initiative === "player" ? aiAirborne : p1Airborne;
+  const firstHpData = initiative === "player" ? playerHpData : aiHpData;
+  const secondHpData = initiative === "player" ? aiHpData : playerHpData;
 
   const ffd = flashDur(firstCard);
   const sfd = flashDur(secondCard);
 
   if (ffd > 0) events.push({ type: "super_flash", delay: 0, actor: first });
-  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne);
+  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne, firstHpData);
 
   const secondFlashAt = 700 + ffd;
   if (sfd > 0) events.push({ type: "super_flash", delay: secondFlashAt, actor: second });
-  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne);
+  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne, secondHpData);
 
   return events;
 }
@@ -99,8 +108,9 @@ function pushSequence(
   offset: number,
   targetAirborne: number,
   actorAirborne: number,
+  hpData?: ActorHpData,
 ): void {
-  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne);
+  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne, hpData);
 }
 
 function pushSequenceWithHold(
@@ -112,6 +122,7 @@ function pushSequenceWithHold(
   endDelay: number,
   targetAirborne: number,
   actorAirborne: number,
+  hpData?: ActorHpData,
 ): void {
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
@@ -124,7 +135,13 @@ function pushSequenceWithHold(
       events.push({ type: "visual_hit", delay: offset + timing.ms, target, hitPose });
     }
     const lastMs = card.hitTimings[card.hitTimings.length - 1].ms;
-    events.push({ type: "damage_resolve", delay: offset + lastMs + 100 });
+    events.push({
+      type: "damage_resolve",
+      delay: offset + lastMs + 100,
+      actor,
+      hpAfter: hpData?.hpAfter,
+      cancelledPlayer: hpData?.cancelledPlayer,
+    });
   }
 
   events.push({ type: "action_end", delay: endDelay, actor });
@@ -145,8 +162,15 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const p1Airborne = p1Entry?.actorAirborne ?? 0;
   const aiAirborne = aiEntry?.actorAirborne ?? 0;
 
+  const p1HpData: ActorHpData | undefined = p1Entry
+    ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer }
+    : undefined;
+  const aiHpData: ActorHpData | undefined = aiEntry
+    ? { hpAfter: aiEntry.hpAfter, cancelledPlayer: aiEntry.cancelledPlayer }
+    : undefined;
+
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 
-  return makeQueue(p1Card, aiCard, initiative, p1Airborne, aiAirborne);
+  return makeQueue(p1Card, aiCard, initiative, p1Airborne, aiAirborne, p1HpData, aiHpData);
 }

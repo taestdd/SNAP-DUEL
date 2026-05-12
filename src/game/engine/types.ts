@@ -68,7 +68,7 @@ export interface CombatAnimationEvent {
   type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash";
   /** 큐 시작 시점으로부터의 절대 지연 (ms) */
   delay: number;
-  /** 행동하는 플레이어 (action_start, action_end) */
+  /** 행동하는 플레이어 (action_start, action_end, damage_resolve) */
   actor?: PlayerId;
   /** 피격자 (visual_hit) */
   target?: PlayerId;
@@ -76,6 +76,10 @@ export interface CombatAnimationEvent {
   hitPose?: HitPose;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
+  /** damage_resolve: 이 카드 효과 적용 후의 HP (UI 표시용) */
+  hpAfter?: { P1: number; AI: number };
+  /** damage_resolve: 이 카드로 인해 캔슬된 플레이어 (UI 표시용) */
+  cancelledPlayer?: PlayerId;
 }
 
 export type CharacterId = "A" | "B";
@@ -278,6 +282,10 @@ export type AnimScriptEntry = {
   actorAirborne: number;
   /** 해결 시점의 피격자 체공 스택 (hitTimings 포즈 선택에 사용) */
   targetAirborne: number;
+  /** 이 카드 효과 완전 적용 후의 HP 스냅샷 (UI 지연 표시용) */
+  hpAfter: { P1: number; AI: number };
+  /** 이 카드 공격으로 인해 캔슬된 플레이어 (UI 지연 표시용) */
+  cancelledPlayer?: PlayerId;
 };
 
 /**
@@ -360,6 +368,9 @@ export type GameState = {
 
   /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (캔슬된 카드 제외) */
   animScript: AnimScriptEntry[];
+
+  /** ANIMATING 페이즈: 카드 효과 적용 직전 HP 스냅샷 (UI 지연 표시 초기값) */
+  animStartHp: { P1: number; AI: number } | null;
 
   /** ROUND_DRAFT 페이즈: 드래프트 제출 현황 (null = 미제출) */
   draftSelections: { P1: string[] | null; AI: string[] | null };

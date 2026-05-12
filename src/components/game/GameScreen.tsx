@@ -91,8 +91,27 @@ export default function GameScreen({
     zoomKey, bgOffset,
     hitEffectKey, hitEffectTarget, hitEffectStrength,
     superFlashActor,
+    displayedHp,
+    displayedCancelledPlayer,
     animLog,
   } = useArenaAnimation(state, dispatch);
+
+  const isAnimating = state.phase === "ANIMATING";
+
+  // ANIMATING 중에는 displayedHp로 HP바 표시 (damage_resolve 타이밍까지 이전 HP 유지)
+  const p1DisplayCharHp =
+    isAnimating && displayedHp !== null
+      ? { ...state.P1.characterHp, [state.P1.activeCharacter]: displayedHp.P1 }
+      : undefined;
+  const aiDisplayCharHp =
+    isAnimating && displayedHp !== null
+      ? { ...state.AI.characterHp, [state.AI.activeCharacter]: displayedHp.AI }
+      : undefined;
+
+  // ANIMATING 중에는 displayedCancelledPlayer로 캔슬 표시 타이밍 제어
+  const effectiveCancelledPlayer = isAnimating
+    ? displayedCancelledPlayer
+    : state.recentlyCancelledPlayer;
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
@@ -240,7 +259,7 @@ export default function GameScreen({
             </div>
           </div>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} />
+            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} overrideCharacterHp={aiDisplayCharHp} />
           </div>
         </div>
 
@@ -252,7 +271,7 @@ export default function GameScreen({
                 title="P1 Queue"
                 me={state.P1}
                 phase={state.phase}
-                recentlyCancelledPlayer={state.recentlyCancelledPlayer}
+                recentlyCancelledPlayer={effectiveCancelledPlayer}
                 isMyTurn={
                   (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
@@ -264,7 +283,7 @@ export default function GameScreen({
                 title="AI Queue"
                 me={state.AI}
                 phase={state.phase}
-                recentlyCancelledPlayer={state.recentlyCancelledPlayer}
+                recentlyCancelledPlayer={effectiveCancelledPlayer}
                 isMyTurn={
                   (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
@@ -302,7 +321,7 @@ export default function GameScreen({
         {/* P1 패널: 좌측 HP 바 + 우측 액션 버튼 */}
         <div className={styles.p1Panel}>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.P1} side="left" label="YOU" />
+            <FightingHPBar combatant={state.P1} side="left" label="YOU" overrideCharacterHp={p1DisplayCharHp} />
           </div>
           <div className={styles.actionArea}>
             <button

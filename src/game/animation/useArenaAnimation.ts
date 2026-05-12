@@ -73,6 +73,10 @@ export type ArenaAnimState = {
   hitEffectTarget: "P1" | "AI" | null;
   hitEffectStrength: "weak" | "strong";
   superFlashActor: "P1" | "AI" | null;
+  /** ANIMATING 중 UI에 표시할 HP (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState HP 그대로. */
+  displayedHp: { P1: number; AI: number } | null;
+  /** ANIMATING 중 UI에 표시할 캔슬 플레이어 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
+  displayedCancelledPlayer: "P1" | "AI" | null;
   animLog: string[];
 };
 
@@ -106,6 +110,10 @@ export function useArenaAnimation(
   const [hitEffectStrength, setHitEffectStrength] = useState<"weak" | "strong">("weak");
   const [superFlashActor, setSuperFlashActor] = useState<"P1" | "AI" | null>(null);
   const superFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 애니메이션 중 표시용 HP / 캔슬 플레이어 (damage_resolve 이벤트 타이밍에 갱신)
+  const [displayedHp, setDisplayedHp] = useState<{ P1: number; AI: number } | null>(null);
+  const [displayedCancelledPlayer, setDisplayedCancelledPlayer] = useState<"P1" | "AI" | null>(null);
 
   // 태그 애니메이션: exit 재생 후 스프라이트 전환
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -161,8 +169,16 @@ export function useArenaAnimation(
   useEffect(() => {
     if (state.phase !== "ANIMATING") {
       setAnimRunning(false);
+      setDisplayedHp(null);
+      setDisplayedCancelledPlayer(null);
       return;
     }
+
+    // 카드 효과 적용 직전 HP로 초기화 → damage_resolve까지 HP바 그대로 유지
+    if (state.animStartHp) {
+      setDisplayedHp({ ...state.animStartHp });
+    }
+    setDisplayedCancelledPlayer(null);
 
     const queue = makeQueueFromScript(state.animScript);
     setAnimQueue(queue);
@@ -262,8 +278,16 @@ export function useArenaAnimation(
         break;
       }
       case "action_end":
-      case "damage_resolve":
         break;
+      case "damage_resolve": {
+        if (event.hpAfter) {
+          setDisplayedHp({ ...event.hpAfter });
+        }
+        if (event.cancelledPlayer) {
+          setDisplayedCancelledPlayer(event.cancelledPlayer);
+        }
+        break;
+      }
     }
   }, []);
 
@@ -289,6 +313,8 @@ export function useArenaAnimation(
     hitEffectTarget,
     hitEffectStrength,
     superFlashActor,
+    displayedHp,
+    displayedCancelledPlayer,
     animLog,
   };
 }

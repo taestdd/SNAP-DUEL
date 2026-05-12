@@ -13,26 +13,34 @@ export default function FightingHPBar({
   side,
   label,
   isThinking,
+  overrideCharacterHp,
 }: {
   combatant: Combatant;
   side: "left" | "right";
   label: string;
   isThinking?: boolean;
+  /** ANIMATING 중 표시용 HP 오버라이드. 설정 시 combatant.characterHp 대신 사용 */
+  overrideCharacterHp?: Record<CharacterId, number>;
 }) {
+  // overrideCharacterHp가 있으면 그 값을, 없으면 combatant.characterHp를 사용
+  const effectiveCharHp = overrideCharacterHp ?? combatant.characterHp;
+  const charAHp = effectiveCharHp.A;
+  const charBHp = effectiveCharHp.B;
+
   const [ghostHp, setGhostHp] = useState<Record<CharacterId, number>>(
-    () => ({ ...combatant.characterHp })
+    () => ({ A: charAHp, B: charBHp })
   );
-  const prevHpRef = useRef<Record<CharacterId, number>>({ ...combatant.characterHp });
+  const prevHpRef = useRef<Record<CharacterId, number>>({ A: charAHp, B: charBHp });
 
   useEffect(() => {
     const prev = prevHpRef.current;
-    const next = combatant.characterHp;
-    const hasDamage = CHARS.some((id) => next[id] < prev[id]);
+    const next = { A: charAHp, B: charBHp };
+    const hasDamage = CHARS.some((id) => (next as Record<CharacterId, number>)[id] < prev[id]);
     prevHpRef.current = { ...next };
     if (!hasDamage) { setGhostHp({ ...next }); return; }
     const timer = setTimeout(() => setGhostHp({ ...next }), GHOST_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [combatant.characterHp]);
+  }, [charAHp, charBHp]);
 
   const { status, block, airborneStack, activeCharacter } = combatant;
   const burn = status.burn;
@@ -69,7 +77,7 @@ export default function FightingHPBar({
 
   function renderBar(charId: CharacterId, isActive: boolean) {
     const maxHp = CHARACTERS[charId].maxHp;
-    const currentHp = Math.max(0, combatant.characterHp[charId]);
+    const currentHp = Math.max(0, effectiveCharHp[charId]);
     const ghost = Math.max(0, ghostHp[charId] ?? maxHp);
     const mainPct = (currentHp / maxHp) * 100;
     const ghostPct = (ghost / maxHp) * 100;
