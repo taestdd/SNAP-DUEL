@@ -479,6 +479,7 @@ function resetTurnFlags(state: GameState): GameState {
     recentlyCancelledPlayer: null,
     p1TaggedThisTurn: false,
     animScript: [],
+    animStartHp: null,
     P1: {
       ...state.P1,
       block: 0,
@@ -816,6 +817,7 @@ export function enterResolving(state: GameState): GameState {
     resolveIndex: 0,
     resolveUnresolved: unresolvedArr,
     animScript: [],
+    animStartHp: { P1: state.P1.hp, AI: state.AI.hp },
   });
 }
 
@@ -851,12 +853,14 @@ function resolveAll(state: GameState): GameState {
 
     if (s.phase === "WAITING_SELECTION") {
       // 선택 전 이 카드도 animScript에 추가
-      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
+        hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
       return { ...s, animScript };
     }
 
     if (s.phase === "GAME_OVER") {
-      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+      animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
+        hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
       if (animScript.length > 0) {
         return { ...s, phase: "ANIMATING", resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
       }
@@ -866,16 +870,28 @@ function resolveAll(state: GameState): GameState {
     s = moveQueuedCard(s, it.player, it.cardId, "cooldown");
     unresolved.delete(it.player);
 
+    let cancelledPlayerByThisCard: PlayerId | undefined;
     const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
     if (hit) {
       s = applyInitiativeOnHit(s, it.player);
       s = applyGainOnHit(s, it.player, it.cardId);
+      const prevCancelled = s.recentlyCancelledPlayer;
       // applyCancelOnHit이 unresolved Set을 직접 수정함 (캔슬된 플레이어 제거)
       s = applyCancelOnHit(s, it.player, unresolved);
+      if (s.recentlyCancelledPlayer !== prevCancelled) {
+        cancelledPlayerByThisCard = s.recentlyCancelledPlayer ?? undefined;
+      }
     }
 
     // 캔슬되지 않은 카드만 animScript에 추가
-    animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne });
+    animScript.push({
+      actor: it.player,
+      cardId: it.cardId,
+      actorAirborne,
+      targetAirborne,
+      hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
+      cancelledPlayer: cancelledPlayerByThisCard,
+    });
 
     idx++;
   }
