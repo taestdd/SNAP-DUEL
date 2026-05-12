@@ -50,7 +50,9 @@ export default function CardSelectionModal({ pendingSelection, onConfirm, onSkip
           {candidates.length === 0 ? (
             <div className={styles.empty}>No cards available in {fromZone}.</div>
           ) : (
-            candidates.map((cardId, idx) => {
+            [...candidates.map((cardId, idx) => ({ cardId, idx }))]
+              .sort((a, b) => (getCard(a.cardId)?.name ?? a.cardId).localeCompare(getCard(b.cardId)?.name ?? b.cardId))
+              .map(({ cardId, idx }) => {
               const card = getCard(cardId);
               const key = `${cardId}::${idx}`;
               const isSelected = selected.includes(key);

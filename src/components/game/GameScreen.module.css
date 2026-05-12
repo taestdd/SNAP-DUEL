@@ -177,13 +177,22 @@
   border-color: rgba(89, 156, 255, 0.45);
 }
 
+.arenaBlock {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .arenaWrap {
   flex-shrink: 0;
 }
 
 .handWrap {
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ── Middle row: P1 Queue | AI Queue ── */
@@ -191,16 +200,19 @@
   flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 0;
   height: 70px;
   overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .queuePanel {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   overflow-y: auto;
+}
+
+.queuePanel + .queuePanel {
+  border-left: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 /* ── Popover panel ── */
@@ -402,33 +414,61 @@
 .queueCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  cursor: default;
+  user-select: none;
+}
+
+.queueCardRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.queueCost {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+.queueSpeed {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+.queueSpeedDown {
+  background: rgba(80, 200, 120, 0.20);
+  border-color: rgba(80, 200, 120, 0.50);
+  color: #7ee8a2;
+}
+
+.queueSpeedUp {
+  background: rgba(255, 80, 80, 0.20);
+  border-color: rgba(255, 80, 80, 0.50);
+  color: #ff8080;
 }
 
 .queueCardName {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.queueStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.queueStats span {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.queueEffectRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .effectBadge {
@@ -440,12 +480,6 @@
   font-size: 11px;
   font-weight: 700;
   background: rgba(89, 156, 255, 0.18);
-}
-
-.queueText {
-  font-size: 13px;
-  line-height: 1.45;
-  opacity: 0.92;
 }
 
 /* ── Animations ── */

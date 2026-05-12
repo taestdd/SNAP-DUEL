@@ -1,12 +1,12 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
-  overflow: hidden;
+  overflow: visible;
 }
 
 
@@ -44,11 +44,7 @@
 }
 
 .row {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: min(130px, 35vw);
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 6px;
+  position: relative;
+  width: 100%;
+  height: 118px; /* CARD_H(100) + 선택 lift(10) + 여유 */
 }

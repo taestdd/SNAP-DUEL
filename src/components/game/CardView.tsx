@@ -30,6 +30,8 @@ export default function CardView({
   disabled,
   conditionBlocked = false,
   selected,
+  handMode = false,
+  speedBonus = 0,
   onClick,
   onLongPress,
 }: {
@@ -37,6 +39,8 @@ export default function CardView({
   disabled: boolean;
   conditionBlocked?: boolean;
   selected: boolean;
+  handMode?: boolean;
+  speedBonus?: number;
   onClick: () => void;
   onLongPress?: () => void;
 }) {
@@ -68,6 +72,7 @@ export default function CardView({
       type="button"
       className={[
         styles.card,
+        handMode ? styles.handCard : "",
         disabled ? styles.disabled : "",
         conditionBlocked ? styles.conditionBlocked : "",
         selected ? styles.selected : "",
@@ -79,33 +84,47 @@ export default function CardView({
       onPointerCancel={cancelPress}
       disabled={disabled}
     >
-      {/* 컴팩트 상단: 코스트 · 이름 · 속도 */}
-      <div className={styles.top}>
-        <div className={styles.cost}>{card.cost}</div>
-        <div className={styles.name}>{card.name}</div>
-        <div className={styles.speed}>{card.speed}</div>
-      </div>
-
-      {/* 효과 배지 (간략) */}
-      <div className={styles.footer}>
-        <div className={styles.effectRow}>
-          {card.effects.map((eff, i) => (
-            <span
-              key={i}
-              className={[styles.tag, effectBadgeClass(eff.type, eff.damageType)].join(" ")}
-            >
-              {effectLabel(eff.type, eff.damageType)}
-              {eff.value !== undefined ? ` ${eff.value}` : ""}
-            </span>
-          ))}
+      {handMode ? (
+        <>
+          <div className={styles.handStatRow}>
+            <div className={styles.cost}>{card.cost}</div>
+            <div className={[
+              styles.speedCircle,
+              speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
+            ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
+          </div>
+          <div className={styles.handCardName}>{card.name}</div>
+        </>
+      ) : (
+        <div className={styles.top}>
+          <div className={styles.cost}>{card.cost}</div>
+          <div className={styles.name}>{card.name}</div>
+          <div className={styles.speed}>{card.speed}</div>
         </div>
+      )}
 
-        {card.useCondition && (
-          <span className={styles.conditionTag}>
-            {card.useCondition === "ground" ? "⬇" : "⬆"}
-          </span>
-        )}
-      </div>
+      {/* 효과 배지 — 핸드 모드에서는 숨김 */}
+      {!handMode && (
+        <div className={styles.footer}>
+          <div className={styles.effectRow}>
+            {card.effects.map((eff, i) => (
+              <span
+                key={i}
+                className={[styles.tag, effectBadgeClass(eff.type, eff.damageType)].join(" ")}
+              >
+                {effectLabel(eff.type, eff.damageType)}
+                {eff.value !== undefined ? ` ${eff.value}` : ""}
+              </span>
+            ))}
+          </div>
+
+          {card.useCondition && (
+            <span className={styles.conditionTag}>
+              {card.useCondition === "ground" ? "⬇" : "⬆"}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* 롱프레스 힌트 */}
       {onLongPress && <div className={styles.longPressHint}>…</div>}
