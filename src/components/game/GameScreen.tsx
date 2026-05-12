@@ -90,6 +90,7 @@ export default function GameScreen({
     playerKnockbackKey, aiKnockbackKey,
     zoomKey, bgOffset,
     hitEffectKey, hitEffectTarget, hitEffectStrength,
+    superFlashActor,
     animLog,
   } = useArenaAnimation(state, dispatch);
 
@@ -264,6 +265,7 @@ export default function GameScreen({
             hitEffectKey={hitEffectKey}
             hitEffectTarget={hitEffectTarget}
             hitEffectStrength={hitEffectStrength}
+            superFlashActor={superFlashActor}
           />
         </div>
 

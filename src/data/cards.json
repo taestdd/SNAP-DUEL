@@ -84,6 +84,7 @@
       { "type": "damage", "value": 5, "target": "enemy", "damageType": "ground" }
     ],
     "text": "Deal 5 ground damage.",
+    "superFlash": true,
     "useCondition": "ground",
     "actionTag": "strong_punch",
     "actionTagAirborne": "aerial_punch",
@@ -101,6 +102,7 @@
       { "type": "airborne", "value": 2, "target": "enemy" }
     ],
     "text": "Deal 3 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 2).",
+    "superFlash": true,
     "useCondition": "ground",
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",

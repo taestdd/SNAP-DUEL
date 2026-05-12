@@ -53,6 +53,7 @@ export default function CardEditor({ initial, mode }: Props) {
   const [hitTimings, setHitTimings] = useState(
     initial?.hitTimings ?? []
   );
+  const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +104,7 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(actionTag ? { actionTag: actionTag as CardSchemaType["actionTag"] } : {}),
       ...(actionTagAirborne ? { actionTagAirborne: actionTagAirborne as CardSchemaType["actionTag"] } : {}),
       ...(hitTimings.length > 0 ? { hitTimings: hitTimings as CardSchemaType["hitTimings"] } : {}),
+      ...(superFlash ? { superFlash: true } : {}),
     };
 
     try {
@@ -215,6 +217,17 @@ export default function CardEditor({ initial, mode }: Props) {
                 <option value="airborne">airborne</option>
               </select>
             </div>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>슈퍼 플래시</label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={superFlash}
+                onChange={(e) => setSuperFlash(e.target.checked)}
+              />
+              발동 시 슈퍼 플래시 연출
+            </label>
           </div>
           <div className={styles.fieldFull}>
             <label className={styles.label}>카드 설명 *</label>

@@ -1,27 +1,30 @@
 import type { AnimScriptEntry, Card, CombatAnimationEvent, HitPose, PlayerId } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 
+export const SUPER_FLASH_DUR = 700;
+
 /**
  * 두 카드와 이니셔티브 정보를 받아 CombatAnimationEvent[] 를 생성한다.
  *
- * p1Airborne / aiAirborne: 큐 생성 시점(첫 히트 이전)의 체공 상태. 이후 변경돼도 고정.
+ * superFlash 카드는 action_start 전에 super_flash 이벤트를 삽입하고
+ * 이후 이벤트를 SUPER_FLASH_DUR(700ms)만큼 뒤로 밀어낸다.
  *
- * 이벤트 절대 지연 설계 (큐 시작 = t=0)
- *
- * 단일 공격자:
- *   t=  0  action_start (공격자)
- *   t=N    visual_hit × hitTimings.length  (카드 hitTimings 기준)
+ * 단일 공격자 (슈퍼 플래시 없음):
+ *   t=  0  action_start
+ *   t=N    visual_hit
  *   t=800  action_end
  *
- * 양측 모두 카드 있음 + 이니셔티브 우위 (선공자 먼저):
- *   t=  0  action_start (선공자)
- *   t=N    visual_hit   (hitTimings 기준)
- *   t=700  action_start (후공자)
- *   t=M    visual_hit   (hitTimings 기준)
- *   t=1200 action_end   (선공자)
- *   t=1500 action_end   (후공자)
+ * 단일 공격자 (슈퍼 플래시 있음):
+ *   t=  0  super_flash
+ *   t=700  action_start
+ *   t=700+N visual_hit
+ *   t=1500 action_end
  *
- * 동시 공격 (tie): 두 시퀀스 모두 offset=0
+ * 양측 + 이니셔티브 (선공·후공 모두 슈퍼 플래시):
+ *   t=   0  super_flash (선공)
+ *   t= 700  action_start (선공)
+ *   t=1400  super_flash (후공)
+ *   t=2100  action_start (후공)
  */
 export function makeQueue(
   playerCard: Card | null,
@@ -38,18 +41,27 @@ export function makeQueue(
   if (!p1Acts && !aiActs) return events;
 
   if (p1Acts && !aiActs) {
-    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne, p1Airborne);
+    const fd = flashDur(playerCard!);
+    if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
+    pushSequence(events, "P1", "AI", playerCard!, fd, aiAirborne, p1Airborne);
     return events;
   }
 
   if (!p1Acts && aiActs) {
-    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne, aiAirborne);
+    const fd = flashDur(aiCard!);
+    if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
+    pushSequence(events, "AI", "P1", aiCard!, fd, p1Airborne, aiAirborne);
     return events;
   }
 
   if (initiative === "tie") {
-    pushSequence(events, "P1", "AI", playerCard!, 0, aiAirborne, p1Airborne);
-    pushSequence(events, "AI", "P1", aiCard!, 0, p1Airborne, aiAirborne);
+    const p1fd = flashDur(playerCard!);
+    const aifd = flashDur(aiCard!);
+    const maxFd = Math.max(p1fd, aifd);
+    if (p1fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
+    if (aifd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
+    pushSequence(events, "P1", "AI", playerCard!, maxFd, aiAirborne, p1Airborne);
+    pushSequence(events, "AI", "P1", aiCard!, maxFd, p1Airborne, aiAirborne);
     return events;
   }
 
@@ -62,10 +74,21 @@ export function makeQueue(
   const firstActorAirborne = initiative === "player" ? p1Airborne : aiAirborne;
   const secondActorAirborne = initiative === "player" ? aiAirborne : p1Airborne;
 
-  pushSequenceWithHold(events, first, second, firstCard, 0, 1200, firstTargetAirborne, firstActorAirborne);
-  pushSequence(events, second, first, secondCard, 700, secondTargetAirborne, secondActorAirborne);
+  const ffd = flashDur(firstCard);
+  const sfd = flashDur(secondCard);
+
+  if (ffd > 0) events.push({ type: "super_flash", delay: 0, actor: first });
+  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne);
+
+  const secondFlashAt = 700 + ffd;
+  if (sfd > 0) events.push({ type: "super_flash", delay: secondFlashAt, actor: second });
+  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne);
 
   return events;
+}
+
+function flashDur(card: Card): number {
+  return card.superFlash ? SUPER_FLASH_DUR : 0;
 }
 
 function pushSequence(
@@ -109,7 +132,6 @@ function pushSequenceWithHold(
 
 /**
  * animScript 배열에서 CombatAnimationEvent[]를 생성한다.
- * 캔슬된 카드는 animScript에 포함되지 않으므로 race condition 없이 안전.
  */
 export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationEvent[] {
   if (script.length === 0) return [];
@@ -123,7 +145,6 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const p1Airborne = p1Entry?.actorAirborne ?? 0;
   const aiAirborne = aiEntry?.actorAirborne ?? 0;
 
-  // script[0]의 actor가 선공자 결정
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 

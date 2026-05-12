@@ -59,6 +59,7 @@ export const CardSchema = z.object({
   actionTag: ActionTagSchema.optional(),
   actionTagAirborne: ActionTagSchema.optional(),
   hitTimings: z.array(HitTimingSchema).optional(),
+  superFlash: z.boolean().optional(),
 });
 
 export const CardsRecordSchema = z.record(z.string(), CardSchema);
