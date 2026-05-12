@@ -65,7 +65,7 @@ export interface FighterViewState {
  * delay: 큐 시작 시점으로부터의 절대 지연 (ms)
  */
 export interface CombatAnimationEvent {
-  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end";
+  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash";
   /** 큐 시작 시점으로부터의 절대 지연 (ms) */
   delay: number;
   /** 행동하는 플레이어 (action_start, action_end) */
@@ -191,6 +191,9 @@ export type Card = {
 
   /** 히트 타이밍 목록. 각 항목은 ms 지연과 ground/airborne별 피격 애니를 정의 */
   hitTimings?: { ms: number; ground: HitPose; airborne: HitPose }[];
+
+  /** true면 기술 발동 전 슈퍼 플래시 연출 재생 */
+  superFlash?: boolean;
 };
 
 export type SelectedCard = {
