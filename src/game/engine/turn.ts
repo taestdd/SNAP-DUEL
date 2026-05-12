@@ -1,0 +1,211 @@
+import type { GameState, PendingDiscard, PlayerId } from "./types";
+import { getCard } from "./cards";
+import {
+  pushLog,
+  syncExhausted,
+  areBothPlayersExhausted,
+  discardAIExcess,
+  moveHandToTrash,
+  recycleTrashIntoDeck,
+  moveCooldownToTrash,
+  decideWinnerByHp,
+  moveQueuedCard,
+} from "./stateHelpers";
+import { HAND_LIMIT } from "./constants";
+import { canUseCard } from "./effects";
+
+/* -------------------------- */
+/* 라운드 라이프사이클          */
+/* -------------------------- */
+
+function prepareNextRound(state: GameState): GameState {
+  let s = state;
+  s = pushLog(s, `Round ${state.round + 1} begins`);
+  s = recycleTrashIntoDeck(s, "P1");
+  s = recycleTrashIntoDeck(s, "AI");
+  s = moveCooldownToTrash(s, "P1");
+  s = moveCooldownToTrash(s, "AI");
+
+  const nextState: GameState = {
+    ...s,
+    round: state.round + 1,
+    turn: 0,
+    phase: "ROUND_DRAFT",
+    selected: null,
+    recentlyCancelledId: null,
+    recentlyCancelledPlayer: null,
+    draftSelections: { P1: null, AI: null },
+    P1: { ...s.P1, queue: [], ready: false, block: 0 },
+    AI: { ...s.AI, queue: [], ready: false, block: 0 },
+  };
+
+  s = syncExhausted(nextState, "P1");
+  s = syncExhausted(s, "AI");
+  return s;
+}
+
+function handleRoundEnd(state: GameState): GameState {
+  let s = state;
+  s = pushLog(s, `Round ${s.round} ends`);
+  s = moveHandToTrash(s, "P1");
+  s = moveHandToTrash(s, "AI");
+  if (s.round >= 3) return decideWinnerByHp(s);
+  return prepareNextRound(s);
+}
+
+/* -------------------------- */
+/* 드래프트 제출               */
+/* -------------------------- */
+
+export function submitDraft(state: GameState, player: PlayerId, cardIds: string[]): GameState {
+  if (state.phase !== "ROUND_DRAFT") return state;
+  if (state.draftSelections[player] !== null) return state;
+
+  const me = state[player];
+  const remaining = [...me.deck];
+  const moved: string[] = [];
+  for (const id of cardIds) {
+    const idx = remaining.indexOf(id);
+    if (idx >= 0) { remaining.splice(idx, 1); moved.push(id); }
+  }
+
+  let s: GameState = {
+    ...state,
+    [player]: { ...me, deck: remaining, hand: [...me.hand, ...moved] },
+    draftSelections: { ...state.draftSelections, [player]: moved },
+  } as GameState;
+
+  s = syncExhausted(s, player);
+  s = pushLog(s, `${player} drafts ${moved.length} card(s)`);
+
+  if (s.draftSelections.P1 !== null && s.draftSelections.AI !== null) {
+    s = { ...s, phase: "TURN_START" };
+  }
+  return s;
+}
+
+/* -------------------------- */
+/* 턴 시작                    */
+/* -------------------------- */
+
+function advanceTurnNumber(state: GameState): GameState {
+  return { ...state, turn: state.turn + 1 };
+}
+
+function resetTurnFlags(state: GameState): GameState {
+  return {
+    ...state,
+    phase: "SETUP_INIT",
+    selected: null,
+    recentlyCancelledId: null,
+    recentlyCancelledPlayer: null,
+    p1TaggedThisTurn: false,
+    animScript: [],
+    animStartHp: null,
+    P1: { ...state.P1, block: 0, queue: [], ready: false },
+    AI: { ...state.AI, block: 0, queue: [], ready: false },
+  };
+}
+
+function applyTurnStartStatuses(state: GameState): GameState {
+  return {
+    ...state,
+    P1: {
+      ...state.P1,
+      status: { ...state.P1.status, speedBonus: state.P1.status.speedBonusNext ?? 0, speedBonusNext: 0 },
+      airborneStack: Math.max(0, state.P1.airborneStack - 1),
+    },
+    AI: {
+      ...state.AI,
+      status: { ...state.AI.status, speedBonus: state.AI.status.speedBonusNext ?? 0, speedBonusNext: 0 },
+      airborneStack: Math.max(0, state.AI.airborneStack - 1),
+    },
+  };
+}
+
+export function beginTurn(state: GameState): GameState {
+  if (state.phase === "GAME_OVER") return state;
+  let s = advanceTurnNumber(state);
+  s = resetTurnFlags(s);
+  s = applyTurnStartStatuses(s);
+  if (s.phase === "GAME_OVER") return s;
+  return pushLog(s, `━━ Turn ${s.turn} | Initiative: ${s.initiative} ━━`);
+}
+
+/* -------------------------- */
+/* 턴 종료                    */
+/* -------------------------- */
+
+export function endTurnCleanup(state: GameState): GameState {
+  const p1Card = state.animScript.find((e) => e.actor === "P1")?.cardId
+    ?? (state.recentlyCancelledPlayer === "P1" ? state.recentlyCancelledId : null)
+    ?? null;
+  const aiCard = state.animScript.find((e) => e.actor === "AI")?.cardId
+    ?? (state.recentlyCancelledPlayer === "AI" ? state.recentlyCancelledId : null)
+    ?? null;
+
+  const entry = {
+    turn: state.turn,
+    initiative: state.initiative,
+    P1: { card: p1Card, cancelled: state.recentlyCancelledPlayer === "P1" },
+    AI: { card: aiCard, cancelled: state.recentlyCancelledPlayer === "AI" },
+    hp: { P1: state.P1.hp, AI: state.AI.hp },
+    airborne: { P1: state.P1.airborneStack, AI: state.AI.airborneStack },
+  };
+
+  let s: GameState = {
+    ...state,
+    P1: { ...state.P1, queue: [], ready: false },
+    AI: { ...state.AI, queue: [], ready: false },
+    turnLog: [...state.turnLog, entry],
+  };
+
+  if (areBothPlayersExhausted(s)) return handleRoundEnd(s);
+
+  s = discardAIExcess(s);
+
+  const p1Excess = s.P1.hand.length - HAND_LIMIT;
+  if (p1Excess > 0) {
+    const pendingDiscard: PendingDiscard = { count: p1Excess, candidates: [...s.P1.hand] };
+    return { ...s, phase: "WAITING_DISCARD", pendingDiscard };
+  }
+
+  return { ...s, phase: "TURN_END" };
+}
+
+/* -------------------------- */
+/* 카드 예약                  */
+/* -------------------------- */
+
+export function queueCard(state: GameState, player: PlayerId, cardId: string, handIndex: number): GameState {
+  if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
+
+  const me = state[player];
+  const card = getCard(cardId);
+  if (!card) return state;
+  if (me.ready) return state;
+  if (handIndex < 0 || handIndex >= me.hand.length) return state;
+  if (me.hand[handIndex] !== cardId) return state;
+  if (me.deck.length < card.cost) return state;
+  if (!canUseCard(state, player, cardId)) return state;
+
+  const nextHand = [...me.hand];
+  nextHand.splice(handIndex, 1);
+  const costCards = me.deck.slice(0, card.cost);
+  const remainingDeck = me.deck.slice(card.cost);
+
+  let s = {
+    ...state,
+    [player]: {
+      ...me,
+      hand: nextHand,
+      deck: remainingDeck,
+      trash: [...me.trash, ...costCards],
+      queue: [...me.queue, cardId],
+    },
+  } as GameState;
+
+  s = pushLog(s, `${player} queued ${card.name} (cost: ${card.cost} cards)`);
+  s = syncExhausted(s, player);
+  return s;
+}

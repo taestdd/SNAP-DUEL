@@ -6,9 +6,9 @@
 import type { CardZone, DeckInsertPosition, GameState, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
+import { LOG_LIMIT, HAND_LIMIT } from "./constants";
 
-export const LOG_LIMIT = 200;
-const HAND_LIMIT = 10;
+export { LOG_LIMIT };
 
 /* ── 공통 유틸 ──────────────────────────────────── */
 
