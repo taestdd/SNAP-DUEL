@@ -100,6 +100,17 @@ function flashDur(card: Card): number {
   return card.superFlash ? SUPER_FLASH_DUR : 0;
 }
 
+/** 카드의 데미지 효과 중 하나라도 실제로 적중하는지 확인 (에어본/지상 조건 체크) */
+function hasConnectingDamage(card: Card, targetAirborne: number): boolean {
+  const damageEffects = card.effects.filter((e) => e.type === "damage");
+  if (damageEffects.length === 0) return true;
+  return damageEffects.some((effect) => {
+    if (effect.damageType === "ground" && targetAirborne >= 1) return false;
+    if (effect.damageType === "anti-air" && targetAirborne === 0) return false;
+    return true;
+  });
+}
+
 function pushSequence(
   events: CombatAnimationEvent[],
   actor: PlayerId,
@@ -130,9 +141,11 @@ function pushSequenceWithHold(
   events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag });
 
   if (card.hitTimings && card.hitTimings.length > 0) {
-    for (const timing of card.hitTimings) {
-      const hitPose: HitPose = targetAirborne >= 1 ? timing.airborne : timing.ground;
-      events.push({ type: "visual_hit", delay: offset + timing.ms, target, hitPose });
+    if (hasConnectingDamage(card, targetAirborne)) {
+      for (const timing of card.hitTimings) {
+        const hitPose: HitPose = targetAirborne >= 1 ? timing.airborne : timing.ground;
+        events.push({ type: "visual_hit", delay: offset + timing.ms, target, hitPose });
+      }
     }
     const lastMs = card.hitTimings[card.hitTimings.length - 1].ms;
     events.push({
