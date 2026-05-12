@@ -29,6 +29,7 @@ interface ArenaStageProps {
   hitEffectKey?: number;
   hitEffectTarget?: "P1" | "AI" | null;
   hitEffectStrength?: "weak" | "strong";
+  superFlashActor?: "P1" | "AI" | null;
 }
 
 export default function ArenaStage({
@@ -51,6 +52,7 @@ export default function ArenaStage({
   hitEffectKey = 0,
   hitEffectTarget = null,
   hitEffectStrength = "weak",
+  superFlashActor = null,
 }: ArenaStageProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const aiRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,9 @@ export default function ArenaStage({
     <div ref={zoomRef} className={styles.zoomWrap}>
       <div className={`${styles.arena} ${shakeClass}`}>
         <div className={styles.arenaBg} style={{ backgroundPositionX: `${bgOffset}px` }} />
+        {superFlashActor && (
+          <div key={superFlashActor} className={styles.superFlashOverlay} />
+        )}
         {hitEffectKey > 0 && hitEffectTarget && (
           <HitEffect
             key={hitEffectKey}
@@ -103,10 +108,16 @@ export default function ArenaStage({
             }}
           />
         )}
-        <div ref={playerRef} className={styles.fighterLeft}>
+        <div
+          ref={playerRef}
+          className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
+        >
           <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} />
         </div>
-        <div ref={aiRef} className={styles.fighterRight}>
+        <div
+          ref={aiRef}
+          className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
+        >
           <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} />
         </div>
       </div>

@@ -163,7 +163,8 @@
         "damageType": "ground"
       }
     ],
-    "text": "5데미지",
+    "text": "Deal 5 ground damage.",
+    "superFlash": true,
     "useCondition": "ground",
     "actionTag": "hadouken",
     "actionTagAirborne": "hadouken",
@@ -201,6 +202,7 @@
       }
     ],
     "text": "Deal 3 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 2).",
+    "superFlash": true,
     "useCondition": "ground",
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",

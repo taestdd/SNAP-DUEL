@@ -80,6 +80,36 @@
   100% { transform: translate(0, 0); }
 }
 
+/* ─── Super Flash ─── */
+
+.superFlashOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 2;
+  pointer-events: none;
+  animation: superFlashFade 700ms ease-in-out forwards;
+}
+
+@keyframes superFlashFade {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.superFlashActor {
+  z-index: 3;
+  animation: superGlowPulse 700ms ease-in-out forwards;
+}
+
+@keyframes superGlowPulse {
+  0%   { filter: brightness(1)   drop-shadow(0 0  0px rgba(255, 220, 60, 0)); }
+  25%  { filter: brightness(2.4) drop-shadow(0 0 22px rgba(255, 220, 60, 1)); }
+  65%  { filter: brightness(1.7) drop-shadow(0 0 16px rgba(255, 200, 40, 0.85)); }
+  100% { filter: brightness(1)   drop-shadow(0 0  4px rgba(255, 200, 40, 0.15)); }
+}
+
 /* ─── Fighters ─── */
 
 .fighterLeft,

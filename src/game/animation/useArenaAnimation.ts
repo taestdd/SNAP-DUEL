@@ -10,7 +10,7 @@ import type {
   GameState,
 } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
-import { makeQueueFromScript } from "./makeQueue";
+import { makeQueueFromScript, SUPER_FLASH_DUR } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
 
 // ── 타이밍 상수 ────────────────────────────────────────────────────────────────
@@ -72,6 +72,7 @@ export type ArenaAnimState = {
   hitEffectKey: number;
   hitEffectTarget: "P1" | "AI" | null;
   hitEffectStrength: "weak" | "strong";
+  superFlashActor: "P1" | "AI" | null;
   animLog: string[];
 };
 
@@ -103,6 +104,8 @@ export function useArenaAnimation(
   const [hitEffectKey, setHitEffectKey] = useState(0);
   const [hitEffectTarget, setHitEffectTarget] = useState<"P1" | "AI" | null>(null);
   const [hitEffectStrength, setHitEffectStrength] = useState<"weak" | "strong">("weak");
+  const [superFlashActor, setSuperFlashActor] = useState<"P1" | "AI" | null>(null);
+  const superFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 태그 애니메이션: exit 재생 후 스프라이트 전환
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -249,6 +252,15 @@ export function useArenaAnimation(
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
       }
+      case "super_flash": {
+        if (superFlashTimerRef.current) clearTimeout(superFlashTimerRef.current);
+        setSuperFlashActor(event.actor ?? null);
+        superFlashTimerRef.current = setTimeout(
+          () => setSuperFlashActor(null),
+          SUPER_FLASH_DUR,
+        );
+        break;
+      }
       case "action_end":
       case "damage_resolve":
         break;
@@ -276,6 +288,7 @@ export function useArenaAnimation(
     hitEffectKey,
     hitEffectTarget,
     hitEffectStrength,
+    superFlashActor,
     animLog,
   };
 }
