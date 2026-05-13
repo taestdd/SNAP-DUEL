@@ -132,7 +132,8 @@ export type EffectType =
   | "burn"
   | "tag"
   | "airborne"
-  | "move_cards";
+  | "move_cards"
+  | "shuffle";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =

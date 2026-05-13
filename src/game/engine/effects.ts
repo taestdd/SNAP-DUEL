@@ -10,6 +10,7 @@ import {
   filterCards,
   moveCardsBetweenZones,
 } from "./stateHelpers";
+import { shuffle } from "./rng";
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체)          */
@@ -208,6 +209,16 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
           },
         },
         `${target} draws ${drawnIds.length} tagged card(s) [${tag}] from ${zone}`,
+      );
+    }
+
+    case "shuffle": {
+      const zone = effect.zone ?? "deck";
+      const arr = state[target][zone] as string[];
+      if (arr.length === 0) return pushLog(state, `${target} shuffles ${zone} (empty)`);
+      return pushLog(
+        { ...state, [target]: { ...state[target], [zone]: shuffle([...arr]) } } as GameState,
+        `${target} shuffles ${zone}`,
       );
     }
 
