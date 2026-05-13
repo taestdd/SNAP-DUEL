@@ -197,7 +197,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const toDraw = matchedIndices.slice(0, count);
       const newPool = pool.filter((_, i) => !toDraw.includes(i));
       const drawnIds = toDraw.map((i) => pool[i]);
-      const newHand = [...me.hand, ...drawnIds].slice(0, 10);
+      const newHand = [...me.hand, ...drawnIds];
 
       return pushLog(
         {
