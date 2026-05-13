@@ -271,9 +271,14 @@
         "toZone": "deck",
         "count": 3,
         "userSelects": true
+      },
+      {
+        "type": "shuffle",
+        "target": "self",
+        "zone": "deck"
       }
     ],
-    "text": "트래시에서 3장 덱으로",
+    "text": "트래시에서 3장 덱으로, 덱 셔플",
     "useCondition": "ground",
     "actionTag": "use_item"
   }

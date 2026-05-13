@@ -18,7 +18,7 @@ const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = ["마법", "검술", "격투", "방어", "방패", "한손검"] as const;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards",
+  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle",
 ] as const;
 const TARGETS = ["self", "enemy"] as const;
 const DAMAGE_TYPES = ["ground", "anti-air"] as const;
@@ -357,7 +357,7 @@ export default function CardEditor({ initial, mode }: Props) {
                 </div>
 
                 {/* value - 대부분 타입에 해당 */}
-                {!["tag", "move_cards"].includes(effect.type) && (
+                {!["tag", "move_cards", "shuffle"].includes(effect.type) && (
                   <div className={styles.field}>
                     <label className={styles.label}>Value</label>
                     <input
@@ -458,6 +458,22 @@ export default function CardEditor({ initial, mode }: Props) {
                     <label htmlFor={`userSelects-${i}`}>P1이 직접 선택 (userSelects)</label>
                   </div>
                 </>
+              )}
+
+              {/* shuffle 전용 */}
+              {effect.type === "shuffle" && (
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Zone</label>
+                    <select
+                      className={styles.select}
+                      value={effect.zone ?? "deck"}
+                      onChange={(e) => updateEffect(i, { zone: e.target.value as CardEffect["zone"] })}
+                    >
+                      {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                    </select>
+                  </div>
+                </div>
               )}
 
               {/* draw_tagged 전용 */}

@@ -13,7 +13,7 @@ export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "�
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards",
+  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle",
 ]);
 
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);
