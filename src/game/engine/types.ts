@@ -101,12 +101,6 @@ export type CardZone = "hand" | "deck" | "trash" | "cooldown" | "queue";
 /** 덱에 카드를 삽입할 위치 */
 export type DeckInsertPosition = "top" | "bottom" | "random";
 
-/** 카드 필터 조건 (추후 확장 가능) */
-// TODO: 태그, 코스트, 타입 등 필터 프로퍼티 추가
-export type CardCondition = {
-  // Future: filter by card properties
-};
-
 /**
  * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
  * 새 태그 추가 시 이 한 곳만 수정하면 됨

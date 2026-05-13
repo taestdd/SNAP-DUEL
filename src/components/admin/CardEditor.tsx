@@ -383,11 +383,9 @@ export default function CardEditor({ initial, mode }: Props) {
             <div key={i} className={styles.effectItem}>
               <div className={styles.effectHeader}>
                 <span className={styles.effectIndex}>효과 #{i + 1}</span>
-                {effects.length > 1 && (
-                  <button type="button" className={styles.removeBtn} onClick={() => removeEffect(i)}>
+                <button type="button" className={styles.removeBtn} onClick={() => removeEffect(i)}>
                     ✕ 삭제
                   </button>
-                )}
               </div>
 
               <div className={styles.row}>
