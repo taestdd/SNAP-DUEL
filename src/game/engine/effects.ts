@@ -280,6 +280,27 @@ export function applyCardEffectsWithPause(
 
   let s = pushLog(state, `${player} resolves "${card.name}"`);
 
+  // 공격 타입 카드: 스탯 데미지를 효과보다 먼저 처리
+  if (card.cardType === "attack") {
+    const opponent = opponentOf(player);
+    const targetAirborne = s[opponent].airborneStack;
+    const attackBuff = s[player].status.attackBuff ?? 0;
+
+    if ((card.groundAttack ?? 0) > 0 && targetAirborne === 0) {
+      const dmg = Math.max(0, (card.groundAttack ?? 0) + attackBuff);
+      s = dealDamage(s, opponent, dmg, "Ground");
+      s = { ...s, [player]: { ...s[player], status: { ...s[player].status, attackBuff: 0 } } } as GameState;
+      s = checkGameOver(s);
+      if (s.phase === "GAME_OVER") return s;
+    } else if ((card.antiAirAttack ?? 0) > 0 && targetAirborne >= 1) {
+      const dmg = Math.max(0, (card.antiAirAttack ?? 0) + attackBuff);
+      s = dealDamage(s, opponent, dmg, "Anti-Air");
+      s = { ...s, [player]: { ...s[player], status: { ...s[player].status, attackBuff: 0 } } } as GameState;
+      s = checkGameOver(s);
+      if (s.phase === "GAME_OVER") return s;
+    }
+  }
+
   for (const effect of card.effects) {
     if (effect.type === "move_cards") {
       const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;

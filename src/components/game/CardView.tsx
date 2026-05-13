@@ -20,6 +20,8 @@ export function effectLabel(type: string, damageType?: string): string {
   if (type === "draw") return "Draw";
   if (type === "buff_attack") return "ATK+";
   if (type === "move_cards") return "Move";
+  if (type === "shuffle") return "Shuffle";
+  if (type === "generate") return "Generate";
   return type;
 }
 
@@ -92,6 +94,12 @@ export default function CardView({
               styles.speedCircle,
               speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
             ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
+            {card.cardType === "attack" && (
+              <div className={styles.atkBadge}>
+                {(card.groundAttack ?? 0) > 0 && <span>⬇{card.groundAttack}</span>}
+                {(card.antiAirAttack ?? 0) > 0 && <span>⬆{card.antiAirAttack}</span>}
+              </div>
+            )}
           </div>
           <div className={styles.handCardName}>{card.name}</div>
         </>

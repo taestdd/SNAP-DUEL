@@ -2,204 +2,122 @@
   "jab": {
     "id": "jab",
     "name": "잽",
+    "cardType": "attack",
     "cost": 3,
     "speed": 2,
+    "groundAttack": 1,
     "gain": 1,
-    "effects": [
-      {
-        "type": "damage",
-        "value": 1,
-        "target": "enemy",
-        "damageType": "ground"
-      }
-    ],
+    "effects": [],
     "text": "1데미지",
     "useCondition": "ground",
     "actionTag": "weak_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      {
-        "ms": 150,
-        "ground": "hit_weak",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 150, "ground": "hit_weak", "airborne": "hit_aerial" }
     ]
   },
   "straight": {
     "id": "straight",
     "name": "스트레이트",
+    "cardType": "attack",
     "cost": 3,
     "speed": 3,
+    "groundAttack": 2,
     "gain": 1,
-    "effects": [
-      {
-        "type": "damage",
-        "value": 2,
-        "target": "enemy",
-        "damageType": "ground"
-      }
-    ],
+    "effects": [],
     "text": "2데미지",
     "useCondition": "ground",
     "actionTag": "strong_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      {
-        "ms": 200,
-        "ground": "hit_weak",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" }
     ]
   },
   "uppercut": {
     "id": "uppercut",
     "name": "어퍼컷",
+    "cardType": "attack",
     "cost": 3,
     "speed": 3,
+    "antiAirAttack": 3,
     "gain": 1,
-    "effects": [
-      {
-        "type": "damage",
-        "value": 3,
-        "target": "enemy",
-        "damageType": "anti-air"
-      }
-    ],
+    "effects": [],
     "text": "공중3 데미지",
     "useCondition": "ground",
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",
     "hitTimings": [
-      {
-        "ms": 250,
-        "ground": "hit_strong",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 250, "ground": "hit_strong", "airborne": "hit_aerial" }
     ]
   },
   "sweep": {
     "id": "sweep",
     "name": "휘둘러치기",
+    "cardType": "attack",
     "cost": 3,
     "speed": 4,
+    "groundAttack": 2,
     "gain": 1,
     "effects": [
-      {
-        "type": "damage",
-        "value": 2,
-        "target": "enemy",
-        "damageType": "ground"
-      },
-      {
-        "type": "airborne",
-        "value": 2,
-        "target": "enemy"
-      }
+      { "type": "airborne", "value": 2, "target": "enemy" }
     ],
     "text": "2데미지, 2에어본",
     "useCondition": "ground",
     "actionTag": "strong_kick",
     "actionTagAirborne": "aerial_kick",
     "hitTimings": [
-      {
-        "ms": 200,
-        "ground": "hit_weak",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" }
     ]
   },
   "dragon_kick": {
     "id": "dragon_kick",
     "name": "선풍각",
+    "cardType": "attack",
     "cost": 3,
     "speed": 4,
+    "groundAttack": 2,
+    "antiAirAttack": 4,
     "gain": 1,
     "effects": [
-      {
-        "type": "damage",
-        "value": 2,
-        "target": "enemy",
-        "damageType": "ground"
-      },
-      {
-        "type": "damage",
-        "value": 4,
-        "target": "enemy",
-        "damageType": "anti-air"
-      },
-      {
-        "type": "airborne",
-        "value": 2,
-        "target": "enemy"
-      }
+      { "type": "airborne", "value": 2, "target": "enemy" }
     ],
     "text": "2데미지, 4공중 데미지, 2에어본",
     "actionTag": "dragon_kick",
     "actionTagAirborne": "dragon_kick",
     "hitTimings": [
-      {
-        "ms": 200,
-        "ground": "hit_weak",
-        "airborne": "hit_aerial"
-      },
-      {
-        "ms": 300,
-        "ground": "hit_strong",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" },
+      { "ms": 300, "ground": "hit_strong", "airborne": "hit_aerial" }
     ]
   },
   "haymaker": {
     "id": "haymaker",
     "name": "장풍",
+    "cardType": "attack",
     "cost": 5,
     "speed": 4,
+    "groundAttack": 5,
     "gain": 0,
-    "effects": [
-      {
-        "type": "damage",
-        "value": 5,
-        "target": "enemy",
-        "damageType": "ground"
-      }
-    ],
+    "effects": [],
     "text": "Deal 5 ground damage.",
     "superFlash": true,
     "useCondition": "ground",
     "actionTag": "hadouken",
     "actionTagAirborne": "hadouken",
     "hitTimings": [
-      {
-        "ms": 300,
-        "ground": "hit_strong",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 300, "ground": "hit_strong", "airborne": "hit_aerial" }
     ]
   },
   "rising_strike": {
     "id": "rising_strike",
     "name": "승룡권",
+    "cardType": "attack",
     "cost": 5,
     "speed": 4,
+    "groundAttack": 3,
+    "antiAirAttack": 3,
     "gain": 1,
     "effects": [
-      {
-        "type": "damage",
-        "value": 3,
-        "target": "enemy",
-        "damageType": "ground"
-      },
-      {
-        "type": "damage",
-        "value": 3,
-        "target": "enemy",
-        "damageType": "anti-air"
-      },
-      {
-        "type": "airborne",
-        "value": 2,
-        "target": "enemy"
-      }
+      { "type": "airborne", "value": 2, "target": "enemy" }
     ],
     "text": "Deal 3 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 2).",
     "superFlash": true,
@@ -207,21 +125,14 @@
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",
     "hitTimings": [
-      {
-        "ms": 200,
-        "ground": "hit_weak",
-        "airborne": "hit_aerial"
-      },
-      {
-        "ms": 350,
-        "ground": "hit_aerial",
-        "airborne": "hit_aerial"
-      }
+      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" },
+      { "ms": 350, "ground": "hit_aerial", "airborne": "hit_aerial" }
     ]
   },
   "quick_draw": {
     "id": "quick_draw",
     "name": "준비 태세",
+    "cardType": "skill",
     "cost": 0,
     "speed": 1,
     "gain": 0,
@@ -241,6 +152,7 @@
   "recall": {
     "id": "recall",
     "name": "전략 수립",
+    "cardType": "skill",
     "cost": 0,
     "speed": 1,
     "gain": 0,
@@ -260,6 +172,7 @@
   "recycle": {
     "id": "recycle",
     "name": "도시락 먹기",
+    "cardType": "skill",
     "cost": 1,
     "speed": 0,
     "gain": 0,

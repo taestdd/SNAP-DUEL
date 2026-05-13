@@ -208,6 +208,15 @@
   color: #ff8080;
 }
 
+.atkBadge {
+  display: flex;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffcc66;
+  margin-left: auto;
+}
+
 .handCardName {
   font-weight: 700;
   font-size: 11px;

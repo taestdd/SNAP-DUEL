@@ -24,7 +24,7 @@ export default function CardDetailModal({
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
-        {/* 메타 행: 코스트 · 속도 · 획득 */}
+        {/* 메타 행: 코스트 · 속도 · 공격 스탯 */}
         <div className={styles.metaRow}>
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Cost</span>
@@ -35,11 +35,25 @@ export default function CardDetailModal({
             <span className={styles.metaLabel}>Speed</span>
             <span className={styles.metaValue}>{card.speed}</span>
           </div>
-          <div className={styles.metaDivider} />
-          <div className={styles.metaItem}>
-            <span className={styles.metaLabel}>Gain</span>
-            <span className={styles.metaValue}>{card.gain}</span>
-          </div>
+          {card.cardType === "attack" ? (
+            <>
+              <div className={styles.metaDivider} />
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>⬇ Atk</span>
+                <span className={styles.metaValue}>{card.groundAttack ?? 0}</span>
+              </div>
+              <div className={styles.metaDivider} />
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>⬆ Atk</span>
+                <span className={styles.metaValue}>{card.antiAirAttack ?? 0}</span>
+              </div>
+              <div className={styles.metaDivider} />
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Gain</span>
+                <span className={styles.metaValue}>{card.gain}</span>
+              </div>
+            </>
+          ) : null}
         </div>
 
         {/* 카드 텍스트 */}

@@ -7,6 +7,8 @@ import styles from "./CardEditor.module.css";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CardEffect } from "@/game/engine/types";
 
+const CARD_TYPES = ["attack", "skill"] as const;
+
 const ACTION_TAGS = [
   "block", "draw", "tag_switch", "reclaim",
   "weak_punch", "strong_punch", "aerial_punch",
@@ -39,8 +41,11 @@ export default function CardEditor({ initial, mode }: Props) {
 
   const [id, setId] = useState(initial?.id ?? "");
   const [name, setName] = useState(initial?.name ?? "");
+  const [cardType, setCardType] = useState<string>(initial?.cardType ?? "skill");
   const [cost, setCost] = useState(initial?.cost ?? 0);
   const [speed, setSpeed] = useState(initial?.speed ?? 1);
+  const [groundAttack, setGroundAttack] = useState(initial?.groundAttack ?? 0);
+  const [antiAirAttack, setAntiAirAttack] = useState(initial?.antiAirAttack ?? 0);
   const [gain, setGain] = useState(initial?.gain ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
   const [useCondition, setUseCondition] = useState<string>(initial?.useCondition ?? "");
@@ -94,9 +99,10 @@ export default function CardEditor({ initial, mode }: Props) {
     const payload: CardSchemaType = {
       id,
       name,
+      cardType: cardType as CardSchemaType["cardType"],
       cost,
       speed,
-      gain,
+      ...(cardType === "attack" ? { groundAttack, antiAirAttack, gain } : { gain: 0 }),
       text,
       effects,
       ...(useCondition ? { useCondition: useCondition as "ground" | "airborne" } : {}),
@@ -176,6 +182,18 @@ export default function CardEditor({ initial, mode }: Props) {
           </div>
           <div className={styles.row}>
             <div className={styles.field}>
+              <label className={styles.label}>카드 타입</label>
+              <select
+                className={styles.select}
+                value={cardType}
+                onChange={(e) => setCardType(e.target.value)}
+              >
+                {CARD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.field}>
               <label className={styles.label}>코스트</label>
               <input
                 className={styles.input}
@@ -195,6 +213,31 @@ export default function CardEditor({ initial, mode }: Props) {
                 onChange={(e) => setSpeed(Number(e.target.value))}
               />
             </div>
+          </div>
+
+          {/* 공격 타입 전용 스탯 */}
+          {cardType === "attack" && (
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>지상 공격력</label>
+              <input
+                className={styles.input}
+                type="number"
+                min={0}
+                value={groundAttack}
+                onChange={(e) => setGroundAttack(Number(e.target.value))}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>대공 공격력</label>
+              <input
+                className={styles.input}
+                type="number"
+                min={0}
+                value={antiAirAttack}
+                onChange={(e) => setAntiAirAttack(Number(e.target.value))}
+              />
+            </div>
             <div className={styles.field}>
               <label className={styles.label}>게인</label>
               <input
@@ -205,6 +248,9 @@ export default function CardEditor({ initial, mode }: Props) {
                 onChange={(e) => setGain(Number(e.target.value))}
               />
             </div>
+          </div>
+          )}
+          <div className={styles.row}>
             <div className={styles.field}>
               <label className={styles.label}>사용 조건</label>
               <select

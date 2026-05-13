@@ -26,6 +26,8 @@ export const DeckInsertPositionSchema = z.enum(["top", "bottom", "random"]);
 
 export const UseConditionSchema = z.enum(["ground", "airborne"]);
 
+export const CardTypeSchema = z.enum(["attack", "skill"]);
+
 export const CardEffectSchema = z.object({
   type: EffectTypeSchema,
   value: z.number().optional(),
@@ -50,10 +52,13 @@ export const HitTimingSchema = z.object({
 export const CardSchema = z.object({
   id: z.string().min(1).regex(/^[a-z0-9_]+$/, "id는 소문자, 숫자, 언더스코어만 허용"),
   name: z.string().min(1),
+  cardType: CardTypeSchema.optional(),
   cost: z.number().int().min(0),
   speed: z.number().int().min(0),
+  groundAttack: z.number().int().min(0).optional(),
+  antiAirAttack: z.number().int().min(0).optional(),
   gain: z.number().int().min(0),
-  effects: z.array(CardEffectSchema).min(1),
+  effects: z.array(CardEffectSchema),
   text: z.string().min(1),
   useCondition: UseConditionSchema.optional(),
   tags: z.array(CardTagSchema).optional(),
