@@ -4,10 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./CardEditor.module.css";
+import { CardTypeSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { CardEffect } from "@/game/engine/types";
-
-const CARD_TYPES = ["attack", "skill"] as const;
+import type { CardEffect, CardType } from "@/game/engine/types";
 
 const ACTION_TAGS = [
   "block", "draw", "tag_switch", "reclaim",
@@ -41,7 +40,7 @@ export default function CardEditor({ initial, mode }: Props) {
 
   const [id, setId] = useState(initial?.id ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [cardType, setCardType] = useState<string>(initial?.cardType ?? "skill");
+  const [cardType, setCardType] = useState<CardType>(initial?.cardType ?? "skill");
   const [cost, setCost] = useState(initial?.cost ?? 0);
   const [speed, setSpeed] = useState(initial?.speed ?? 1);
   const [groundAttack, setGroundAttack] = useState(initial?.groundAttack ?? 0);
@@ -99,7 +98,7 @@ export default function CardEditor({ initial, mode }: Props) {
     const payload: CardSchemaType = {
       id,
       name,
-      cardType: cardType as CardSchemaType["cardType"],
+      cardType,
       cost,
       speed,
       ...(cardType === "attack" ? { groundAttack, antiAirAttack, gain } : { gain: 0 }),
@@ -186,9 +185,9 @@ export default function CardEditor({ initial, mode }: Props) {
               <select
                 className={styles.select}
                 value={cardType}
-                onChange={(e) => setCardType(e.target.value)}
+                onChange={(e) => setCardType(e.target.value as CardType)}
               >
-                {CARD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {CardTypeSchema.options.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           </div>
