@@ -133,7 +133,8 @@ export type EffectType =
   | "tag"
   | "airborne"
   | "move_cards"
-  | "shuffle";
+  | "shuffle"
+  | "generate";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -150,18 +151,20 @@ export type CardEffect = {
   damageType?: DamageType;
   /** move_cards: 카드를 가져올 영역 */
   fromZone?: CardZone;
-  /** move_cards: 카드를 보낼 영역 */
+  /** move_cards / generate: 카드를 보낼 영역 */
   toZone?: CardZone;
-  /** move_cards: 덱에 넣을 위치 */
+  /** move_cards / generate: 덱에 넣을 위치 */
   toPosition?: DeckInsertPosition;
-  /** move_cards: 이동할 카드 수 */
+  /** move_cards / generate: 이동하거나 생성할 카드 수 */
   count?: number;
   /** move_cards: P1이 직접 선택 (AI는 자동 선택) */
   userSelects?: boolean;
   /** draw_tagged: 드로우할 카드의 태그 */
   tag?: CardTag;
-  /** draw_tagged: 드로우할 영역 (기본값: "deck") */
+  /** draw_tagged / shuffle: 대상 영역 (기본값: "deck") */
   zone?: CardZone;
+  /** generate: 생성할 카드 id */
+  cardId?: string;
 };
 
 /** 카드 사용 가능 조건 */

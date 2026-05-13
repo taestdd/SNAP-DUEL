@@ -18,7 +18,7 @@ const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = ["마법", "검술", "격투", "방어", "방패", "한손검"] as const;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle",
+  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle", "generate",
 ] as const;
 const TARGETS = ["self", "enemy"] as const;
 const DAMAGE_TYPES = ["ground", "anti-air"] as const;
@@ -357,7 +357,7 @@ export default function CardEditor({ initial, mode }: Props) {
                 </div>
 
                 {/* value - 대부분 타입에 해당 */}
-                {!["tag", "move_cards", "shuffle"].includes(effect.type) && (
+                {!["tag", "move_cards", "shuffle", "generate"].includes(effect.type) && (
                   <div className={styles.field}>
                     <label className={styles.label}>Value</label>
                     <input
@@ -458,6 +458,52 @@ export default function CardEditor({ initial, mode }: Props) {
                     <label htmlFor={`userSelects-${i}`}>P1이 직접 선택 (userSelects)</label>
                   </div>
                 </>
+              )}
+
+              {/* generate 전용 */}
+              {effect.type === "generate" && (
+                <div className={styles.row}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Card ID *</label>
+                    <input
+                      className={styles.input}
+                      value={effect.cardId ?? ""}
+                      onChange={(e) => updateEffect(i, { cardId: e.target.value || undefined })}
+                      placeholder="weak_punch"
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Count</label>
+                    <input
+                      className={styles.input}
+                      type="number"
+                      min={1}
+                      value={effect.count ?? 1}
+                      onChange={(e) => updateEffect(i, { count: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>To Zone</label>
+                    <select
+                      className={styles.select}
+                      value={effect.toZone ?? "hand"}
+                      onChange={(e) => updateEffect(i, { toZone: e.target.value as CardEffect["toZone"] })}
+                    >
+                      {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>To Position</label>
+                    <select
+                      className={styles.select}
+                      value={effect.toPosition ?? ""}
+                      onChange={(e) => updateEffect(i, { toPosition: (e.target.value || undefined) as CardEffect["toPosition"] })}
+                    >
+                      <option value="">기본</option>
+                      {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+                </div>
               )}
 
               {/* shuffle 전용 */}

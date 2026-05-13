@@ -13,7 +13,7 @@ export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "�
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle",
+  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle", "generate",
 ]);
 
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);
@@ -38,6 +38,7 @@ export const CardEffectSchema = z.object({
   userSelects: z.boolean().optional(),
   tag: CardTagSchema.optional(),
   zone: CardZoneSchema.optional(),
+  cardId: z.string().optional(),
 });
 
 export const HitTimingSchema = z.object({

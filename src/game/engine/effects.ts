@@ -9,6 +9,7 @@ import {
   checkGameOver,
   filterCards,
   moveCardsBetweenZones,
+  syncExhausted,
 } from "./stateHelpers";
 import { shuffle } from "./rng";
 
@@ -220,6 +221,36 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
         { ...state, [target]: { ...state[target], [zone]: shuffle([...arr]) } } as GameState,
         `${target} shuffles ${zone}`,
       );
+    }
+
+    case "generate": {
+      const genCardId = effect.cardId;
+      if (!genCardId) return state;
+      const genCard = getCard(genCardId);
+      if (!genCard) return pushLog(state, `generate: unknown card "${genCardId}"`);
+
+      const count = effect.count ?? 1;
+      const toZone = effect.toZone ?? "hand";
+      const toPosition = effect.toPosition ?? "bottom";
+      const generated = Array.from({ length: count }, () => genCardId);
+
+      const targetArr = state[target][toZone] as string[];
+      let newArr: string[];
+      if (toZone === "deck" && toPosition === "top") {
+        newArr = [...generated, ...targetArr];
+      } else if (toZone === "deck" && toPosition === "random") {
+        newArr = [...targetArr];
+        for (const id of generated) {
+          const pos = Math.floor(Math.random() * (newArr.length + 1));
+          newArr.splice(pos, 0, id);
+        }
+      } else {
+        newArr = [...targetArr, ...generated];
+      }
+
+      let s = { ...state, [target]: { ...state[target], [toZone]: newArr } } as GameState;
+      if (toZone === "deck") s = syncExhausted(s, target);
+      return pushLog(s, `${target} generates ${count}x "${genCard.name}" → ${toZone}`);
     }
 
     default:
