@@ -38,7 +38,7 @@ function buildResolveOrder(state: GameState): { player: PlayerId; cardId: string
 function didDirectAttackHit(stateBefore: GameState, stateAfter: GameState, player: PlayerId, cardId: string): boolean {
   const card = getCard(cardId);
   if (!card) return false;
-  if (!card.effects.some((e) => e.type === "damage")) return false;
+  if (card.cardType !== "attack") return false;
   if (card.effects.some((e) => e.type === "tag")) return false;
   return stateAfter[opponentOf(player)].hp < stateBefore[opponentOf(player)].hp;
 }
@@ -76,8 +76,6 @@ function applyCancelOnHit(state: GameState, attacker: PlayerId, unresolved: Set<
   if (!cancelledCard) return state;
 
   const cancelledCardDef = getCard(cancelledCard);
-  const isCancellable = cancelledCardDef?.effects.some((e) => e.type === "damage") ?? false;
-  if (!isCancellable) return state;
 
   let s = moveQueuedCard(state, other, cancelledCard, "trash");
   s = {

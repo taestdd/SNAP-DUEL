@@ -211,6 +211,13 @@ export function moveCardsBetweenZones(
   return s;
 }
 
+export function clearAttackBuff(state: GameState, player: PlayerId): GameState {
+  return {
+    ...state,
+    [player]: { ...state[player], status: { ...state[player].status, attackBuff: 0 } },
+  } as GameState;
+}
+
 /* ── 라운드/턴 전환 헬퍼 ─────────────────────────── */
 
 export function areBothPlayersExhausted(state: GameState): boolean {

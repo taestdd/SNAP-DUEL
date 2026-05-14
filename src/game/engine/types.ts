@@ -101,12 +101,6 @@ export type CardZone = "hand" | "deck" | "trash" | "cooldown" | "queue";
 /** 덱에 카드를 삽입할 위치 */
 export type DeckInsertPosition = "top" | "bottom" | "random";
 
-/** 카드 필터 조건 (추후 확장 가능) */
-// TODO: 태그, 코스트, 타입 등 필터 프로퍼티 추가
-export type CardCondition = {
-  // Future: filter by card properties
-};
-
 /**
  * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
  * 새 태그 추가 시 이 한 곳만 수정하면 됨
@@ -172,15 +166,31 @@ export type UseCondition =
   | "ground"   // 자신의 airborneStack === 0 일 때만 사용 가능
   | "airborne"; // 자신의 airborneStack >= 1 일 때만 사용 가능
 
+/**
+ * 카드 타입
+ * - attack: 공격 스탯(groundAttack, antiAirAttack, gain)을 가지며, 적중 시 이니셔티브·캔슬 발동
+ * - skill:  공격 스탯 없음. 효과만 처리. 적중해도 이니셔티브·캔슬 발동 안 함
+ */
+export type CardType = "attack" | "skill";
+
 export type Card = {
   id: string;
   name: string;
+
+  /** 카드 타입. 미지정 시 기존 동작 유지 (하위 호환) */
+  cardType?: CardType;
 
   // 코스트 = 덱에서 소모할 카드 수
   cost: number;
 
   // 스피드 = 이상 정수, 0이 가장 빠름
   speed: number;
+
+  /** 공격 타입 전용 — 지상 공격력 (target.airborneStack === 0 일 때 적용) */
+  groundAttack?: number;
+  /** 공격 타입 전용 — 대공 공격력 (target.airborneStack >= 1 일 때 적용) */
+  antiAirAttack?: number;
+  /** 공격 타입 전용 — 적중 시 다음 턴 스피드 보너스 */
   gain: number;
 
   effects: CardEffect[];

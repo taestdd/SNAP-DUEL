@@ -10,6 +10,7 @@ import {
   filterCards,
   moveCardsBetweenZones,
   syncExhausted,
+  clearAttackBuff,
 } from "./stateHelpers";
 import { shuffle } from "./rng";
 
@@ -102,15 +103,8 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const bonus = state[player].status.attackBuff ?? 0;
       const total = amount + bonus;
 
-      let next = dealDamage(state, target, total, dt ? `Damage(${dt})` : "Damage");
-      next = {
-        ...next,
-        [player]: {
-          ...next[player],
-          status: { ...next[player].status, attackBuff: 0 },
-        },
-      } as GameState;
-      return next;
+      const next = dealDamage(state, target, total, dt ? `Damage(${dt})` : "Damage");
+      return clearAttackBuff(next, player);
     }
 
     case "block": {
@@ -279,6 +273,26 @@ export function applyCardEffectsWithPause(
   if (!card) return state;
 
   let s = pushLog(state, `${player} resolves "${card.name}"`);
+
+  if (card.cardType === "attack") {
+    const opponent = opponentOf(player);
+    const targetAirborne = s[opponent].airborneStack;
+    const attackBuff = s[player].status.attackBuff ?? 0;
+    const groundAtk = card.groundAttack ?? 0;
+    const antiAirAtk = card.antiAirAttack ?? 0;
+
+    if (groundAtk > 0 && targetAirborne === 0) {
+      s = dealDamage(s, opponent, Math.max(0, groundAtk + attackBuff), "Ground");
+      s = clearAttackBuff(s, player);
+      s = checkGameOver(s);
+      if (s.phase === "GAME_OVER") return s;
+    } else if (antiAirAtk > 0 && targetAirborne >= 1) {
+      s = dealDamage(s, opponent, Math.max(0, antiAirAtk + attackBuff), "Anti-Air");
+      s = clearAttackBuff(s, player);
+      s = checkGameOver(s);
+      if (s.phase === "GAME_OVER") return s;
+    }
+  }
 
   for (const effect of card.effects) {
     if (effect.type === "move_cards") {
