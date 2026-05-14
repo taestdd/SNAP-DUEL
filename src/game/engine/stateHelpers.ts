@@ -98,9 +98,7 @@ export function getEffectiveSpeed(
   const c = getCard(cardId);
   if (!c) return Number.MAX_SAFE_INTEGER;
   const bonus = state[player].status.speedBonus ?? 0;
-  const modDelta = c.statModifiers
-    ? (evaluateModifiers(state, player, c.statModifiers).speed ?? 0)
-    : 0;
+  const modDelta = evaluateModifiers(state, player, c.statModifiers).speed ?? 0;
   return Math.max(0, c.speed - bonus + modDelta);
 }
 

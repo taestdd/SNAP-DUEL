@@ -189,7 +189,7 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
   if (me.hand[handIndex] !== cardId) return state;
   if (!canUseCard(state, player, cardId)) return state;
 
-  const mods = card.statModifiers ? evaluateModifiers(state, player, card.statModifiers) : {};
+  const mods = evaluateModifiers(state, player, card.statModifiers);
   const effectiveCost = Math.max(0, card.cost + (mods.cost ?? 0));
 
   if (me.deck.length < effectiveCost) return state;

@@ -279,7 +279,7 @@ export function applyCardEffectsWithPause(
     const opponent = opponentOf(player);
     const targetAirborne = s[opponent].airborneStack;
     const attackBuff = s[player].status.attackBuff ?? 0;
-    const mods = card.statModifiers ? evaluateModifiers(s, player, card.statModifiers) : {};
+    const mods = evaluateModifiers(s, player, card.statModifiers);
     const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0));
     const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0));
 

@@ -67,9 +67,7 @@ export default function Hand({
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
-          const mods = card?.statModifiers
-            ? evaluateModifiers(gameState, playerId, card.statModifiers)
-            : {};
+          const mods = evaluateModifiers(gameState, playerId, card?.statModifiers);
           const effectiveCost = card ? Math.max(0, card.cost + (mods.cost ?? 0)) : 0;
           const costOk = !!card && effectiveCost <= me.deck.length;
           const conditionMet =

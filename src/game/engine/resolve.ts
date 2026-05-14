@@ -53,7 +53,7 @@ function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
 function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): GameState {
   const card = getCard(cardId);
   if (!card) return state;
-  const mods = card.statModifiers ? evaluateModifiers(state, player, card.statModifiers) : {};
+  const mods = evaluateModifiers(state, player, card.statModifiers);
   const gain = Math.max(0, (card.gain ?? 0) + (mods.gain ?? 0));
   if (gain <= 0) return state;
 
