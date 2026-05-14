@@ -6,6 +6,7 @@ import {
   getEffectiveSpeed,
   moveQueuedCard,
   moveCardsBetweenZones,
+  evaluateModifiers,
 } from "./stateHelpers";
 import { applyCardEffectsWithPause } from "./effects";
 import { endTurnCleanup } from "./turn";
@@ -52,7 +53,8 @@ function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
 function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): GameState {
   const card = getCard(cardId);
   if (!card) return state;
-  const gain = card.gain ?? 0;
+  const mods = card.statModifiers ? evaluateModifiers(state, player, card.statModifiers) : {};
+  const gain = Math.max(0, (card.gain ?? 0) + (mods.gain ?? 0));
   if (gain <= 0) return state;
 
   const s = {

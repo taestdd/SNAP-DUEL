@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./CardEditor.module.css";
-import { CardTypeSchema } from "@/game/engine/cardSchema";
+import { CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { CardEffect, CardType } from "@/game/engine/types";
+import type { CardEffect, CardType, StatModifier } from "@/game/engine/types";
 
 const ACTION_TAGS = [
   "block", "draw", "tag_switch", "reclaim",
@@ -58,10 +58,34 @@ export default function CardEditor({ initial, mode }: Props) {
     initial?.hitTimings ?? []
   );
   const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
+  const [statModifiers, setStatModifiers] = useState<StatModifier[]>(
+    initial?.statModifiers ?? []
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  function addModifier() {
+    setStatModifiers((prev) => [
+      ...prev,
+      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "speed", delta: -1 },
+    ]);
+  }
+
+  function updateModifier(index: number, patch: Partial<StatModifier>) {
+    setStatModifiers((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)));
+  }
+
+  function updateModifierCondition(index: number, patch: Partial<StatModifier["condition"]>) {
+    setStatModifiers((prev) =>
+      prev.map((m, i) => i === index ? { ...m, condition: { ...m.condition, ...patch } } : m)
+    );
+  }
+
+  function removeModifier(index: number) {
+    setStatModifiers((prev) => prev.filter((_, i) => i !== index));
+  }
 
   function toggleTag(tag: string) {
     setTags((prev) =>
@@ -110,6 +134,7 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(actionTagAirborne ? { actionTagAirborne: actionTagAirborne as CardSchemaType["actionTag"] } : {}),
       ...(hitTimings.length > 0 ? { hitTimings: hitTimings as CardSchemaType["hitTimings"] } : {}),
       ...(superFlash ? { superFlash: true } : {}),
+      ...(statModifiers.length > 0 ? { statModifiers } : {}),
     };
 
     try {
@@ -600,6 +625,93 @@ export default function CardEditor({ initial, mode }: Props) {
             onClick={() => setEffects((prev) => [...prev, emptyEffect()])}
           >
             + 효과 추가
+          </button>
+        </div>
+
+        {/* StatModifier 빌더 */}
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>스탯 보정 (StatModifiers)</div>
+          {statModifiers.map((mod, i) => (
+            <div key={i} className={styles.effectItem}>
+              <div className={styles.effectHeader}>
+                <span className={styles.effectIndex}>보정 #{i + 1}</span>
+                <button type="button" className={styles.removeBtn} onClick={() => removeModifier(i)}>
+                  ✕ 삭제
+                </button>
+              </div>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label className={styles.label}>조건 대상</label>
+                  <select
+                    className={styles.select}
+                    value={mod.condition.target}
+                    onChange={(e) => updateModifierCondition(i, { target: e.target.value as "self" | "enemy" })}
+                  >
+                    <option value="self">self</option>
+                    <option value="enemy">enemy</option>
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>체크 항목</label>
+                  <select
+                    className={styles.select}
+                    value={mod.condition.check}
+                    onChange={(e) => updateModifierCondition(i, { check: e.target.value as StatModifier["condition"]["check"] })}
+                  >
+                    {ConditionCheckSchema.options.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>연산자</label>
+                  <select
+                    className={styles.select}
+                    value={mod.condition.op}
+                    onChange={(e) => updateModifierCondition(i, { op: e.target.value as "<" | ">" | "=" })}
+                  >
+                    {CompareOpSchema.options.map((op) => (
+                      <option key={op} value={op}>{op}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>값</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    value={mod.condition.value}
+                    onChange={(e) => updateModifierCondition(i, { value: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label className={styles.label}>보정 스탯</label>
+                  <select
+                    className={styles.select}
+                    value={mod.stat}
+                    onChange={(e) => updateModifier(i, { stat: e.target.value as StatModifier["stat"] })}
+                  >
+                    {StatTargetSchema.options.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Delta</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    value={mod.delta}
+                    onChange={(e) => updateModifier(i, { delta: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button type="button" className={styles.addBtn} onClick={addModifier}>
+            + 스탯 보정 추가
           </button>
         </div>
 

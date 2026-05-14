@@ -11,6 +11,7 @@ import {
   moveCardsBetweenZones,
   syncExhausted,
   clearAttackBuff,
+  evaluateModifiers,
 } from "./stateHelpers";
 import { shuffle } from "./rng";
 
@@ -278,8 +279,9 @@ export function applyCardEffectsWithPause(
     const opponent = opponentOf(player);
     const targetAirborne = s[opponent].airborneStack;
     const attackBuff = s[player].status.attackBuff ?? 0;
-    const groundAtk = card.groundAttack ?? 0;
-    const antiAirAtk = card.antiAirAttack ?? 0;
+    const mods = card.statModifiers ? evaluateModifiers(s, player, card.statModifiers) : {};
+    const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0));
+    const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0));
 
     if (groundAtk > 0 && targetAirborne === 0) {
       s = dealDamage(s, opponent, Math.max(0, groundAtk + attackBuff), "Ground");

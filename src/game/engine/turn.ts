@@ -10,6 +10,7 @@ import {
   moveCooldownToTrash,
   decideWinnerByHp,
   moveQueuedCard,
+  evaluateModifiers,
 } from "./stateHelpers";
 import { HAND_LIMIT } from "./constants";
 import { canUseCard } from "./effects";
@@ -186,13 +187,17 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
   if (me.ready) return state;
   if (handIndex < 0 || handIndex >= me.hand.length) return state;
   if (me.hand[handIndex] !== cardId) return state;
-  if (me.deck.length < card.cost) return state;
   if (!canUseCard(state, player, cardId)) return state;
+
+  const mods = card.statModifiers ? evaluateModifiers(state, player, card.statModifiers) : {};
+  const effectiveCost = Math.max(0, card.cost + (mods.cost ?? 0));
+
+  if (me.deck.length < effectiveCost) return state;
 
   const nextHand = [...me.hand];
   nextHand.splice(handIndex, 1);
-  const costCards = me.deck.slice(0, card.cost);
-  const remainingDeck = me.deck.slice(card.cost);
+  const costCards = me.deck.slice(0, effectiveCost);
+  const remainingDeck = me.deck.slice(effectiveCost);
 
   let s = {
     ...state,
@@ -205,7 +210,7 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
     },
   } as GameState;
 
-  s = pushLog(s, `${player} queued ${card.name} (cost: ${card.cost} cards)`);
+  s = pushLog(s, `${player} queued ${card.name} (cost: ${effectiveCost} cards)`);
   s = syncExhausted(s, player);
   return s;
 }

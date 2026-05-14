@@ -380,6 +380,8 @@ export default function GameScreen({
             me={state.P1}
             selected={state.selected}
             disabled={!canAct}
+            gameState={state}
+            playerId="P1"
             onSelectCard={(cardId, handIndex) =>
               dispatch({ type: "CARD/SELECT", cardId, handIndex })
             }

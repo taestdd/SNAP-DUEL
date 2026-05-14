@@ -194,5 +194,77 @@
     "text": "트래시에서 3장 덱으로, 덱 셔플",
     "useCondition": "ground",
     "actionTag": "use_item"
+  },
+  "desperation_strike": {
+    "id": "desperation_strike",
+    "name": "사투",
+    "cardType": "attack",
+    "cost": 3,
+    "speed": 4,
+    "groundAttack": 2,
+    "gain": 1,
+    "effects": [],
+    "text": "2 지상 데미지. HP 5 이하 시 +3 추가.",
+    "useCondition": "ground",
+    "actionTag": "strong_punch",
+    "actionTagAirborne": "aerial_punch",
+    "hitTimings": [
+      { "ms": 200, "ground": "hit_strong", "airborne": "hit_aerial" }
+    ],
+    "statModifiers": [
+      {
+        "condition": { "check": "hp", "target": "self", "op": "<", "value": 6 },
+        "stat": "ground_attack",
+        "delta": 3
+      }
+    ]
+  },
+  "pressure_jab": {
+    "id": "pressure_jab",
+    "name": "압박 잽",
+    "cardType": "attack",
+    "cost": 2,
+    "speed": 3,
+    "groundAttack": 1,
+    "gain": 1,
+    "effects": [],
+    "text": "1 지상 데미지. 상대 핸드 5장 초과 시 Speed -1.",
+    "useCondition": "ground",
+    "actionTag": "weak_punch",
+    "actionTagAirborne": "aerial_punch",
+    "hitTimings": [
+      { "ms": 150, "ground": "hit_weak", "airborne": "hit_aerial" }
+    ],
+    "statModifiers": [
+      {
+        "condition": { "check": "hand_count", "target": "enemy", "op": ">", "value": 4 },
+        "stat": "speed",
+        "delta": -1
+      }
+    ]
+  },
+  "last_stand": {
+    "id": "last_stand",
+    "name": "배수진",
+    "cardType": "attack",
+    "cost": 4,
+    "speed": 3,
+    "groundAttack": 4,
+    "gain": 2,
+    "effects": [],
+    "text": "4 지상 데미지. 덱 2장 이하 시 Cost -2.",
+    "useCondition": "ground",
+    "actionTag": "strong_punch",
+    "actionTagAirborne": "aerial_punch",
+    "hitTimings": [
+      { "ms": 250, "ground": "hit_strong", "airborne": "hit_aerial" }
+    ],
+    "statModifiers": [
+      {
+        "condition": { "check": "deck_count", "target": "self", "op": "<", "value": 3 },
+        "stat": "cost",
+        "delta": -2
+      }
+    ]
   }
 }
