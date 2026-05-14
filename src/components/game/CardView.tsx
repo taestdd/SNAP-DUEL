@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import styles from "./CardView.module.css";
 import { CARDS } from "@/game/engine/cards";
+import type { StatTarget } from "@/game/engine/types";
 
 export function effectBadgeClass(type: string, damageType?: string) {
   if (type === "tag") return styles.tagTag;
@@ -34,6 +35,7 @@ export default function CardView({
   selected,
   handMode = false,
   speedBonus = 0,
+  statDeltas,
   onClick,
   onLongPress,
 }: {
@@ -43,6 +45,7 @@ export default function CardView({
   selected: boolean;
   handMode?: boolean;
   speedBonus?: number;
+  statDeltas?: Partial<Record<StatTarget, number>>;
   onClick: () => void;
   onLongPress?: () => void;
 }) {
@@ -86,24 +89,45 @@ export default function CardView({
       onPointerCancel={cancelPress}
       disabled={disabled}
     >
-      {handMode ? (
-        <>
-          <div className={styles.handStatRow}>
-            <div className={styles.cost}>{card.cost}</div>
-            <div className={[
-              styles.speedCircle,
-              speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
-            ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
-          </div>
-          <div className={styles.handCardName}>{card.name}</div>
-          {card.cardType === "attack" && (
-            <div className={styles.handAtkList}>
-              {(card.antiAirAttack ?? 0) > 0 && <div className={styles.handAtkLine}>🔼{card.antiAirAttack}</div>}
-              {(card.groundAttack ?? 0) > 0 && <div className={styles.handAtkLine}>🔽{card.groundAttack}</div>}
+      {handMode ? (() => {
+        const costDelta = statDeltas?.cost ?? 0;
+        const gaDelta = statDeltas?.ground_attack ?? 0;
+        const aaDelta = statDeltas?.anti_air_attack ?? 0;
+        const effectiveCost = Math.max(0, card.cost + costDelta);
+        const effectiveGA = Math.max(0, (card.groundAttack ?? 0) + gaDelta);
+        const effectiveAA = Math.max(0, (card.antiAirAttack ?? 0) + aaDelta);
+        return (
+          <>
+            <div className={styles.handStatRow}>
+              <div className={[
+                styles.cost,
+                costDelta < 0 ? styles.statBoosted : costDelta > 0 ? styles.statNerfed : "",
+              ].join(" ")}>{effectiveCost}</div>
+              <div className={[
+                styles.speedCircle,
+                speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
+              ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
             </div>
-          )}
-        </>
-      ) : (
+            <div className={styles.handCardName}>{card.name}</div>
+            {card.cardType === "attack" && (
+              <div className={styles.handAtkList}>
+                {(card.antiAirAttack ?? 0) > 0 && (
+                  <div className={[
+                    styles.handAtkLine,
+                    aaDelta > 0 ? styles.statBoosted : aaDelta < 0 ? styles.statNerfed : "",
+                  ].join(" ")}>🔼{effectiveAA}</div>
+                )}
+                {(card.groundAttack ?? 0) > 0 && (
+                  <div className={[
+                    styles.handAtkLine,
+                    gaDelta > 0 ? styles.statBoosted : gaDelta < 0 ? styles.statNerfed : "",
+                  ].join(" ")}>🔽{effectiveGA}</div>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })() : (
         <div className={styles.top}>
           <div className={styles.cost}>{card.cost}</div>
           <div className={styles.name}>{card.name}</div>

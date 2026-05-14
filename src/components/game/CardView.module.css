@@ -209,6 +209,18 @@
   color: #ff8080;
 }
 
+.statBoosted {
+  background: rgba(80, 200, 120, 0.20);
+  border-color: rgba(80, 200, 120, 0.50);
+  color: #7ee8a2;
+}
+
+.statNerfed {
+  background: rgba(255, 80, 80, 0.20);
+  border-color: rgba(255, 80, 80, 0.50);
+  color: #ff8080;
+}
+
 .handAtkList {
   display: flex;
   flex-direction: column;

@@ -80,6 +80,10 @@ export default function Hand({
           const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
 
+          const mods = card?.statModifiers
+            ? evaluateModifiers(gameState, playerId, card.statModifiers)
+            : {};
+
           return (
             <div
               key={`${cardId}-${idx}`}
@@ -99,12 +103,8 @@ export default function Hand({
                 conditionBlocked={conditionBlocked}
                 selected={isSelected}
                 handMode
-                speedBonus={
-                  me.status.speedBonus -
-                  (card?.statModifiers
-                    ? (evaluateModifiers(gameState, playerId, card.statModifiers).speed ?? 0)
-                    : 0)
-                }
+                speedBonus={me.status.speedBonus - (mods.speed ?? 0)}
+                statDeltas={mods}
                 onClick={() => onSelectCard(cardId, idx)}
                 onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
               />
