@@ -44,15 +44,12 @@ export function syncExhausted(state: GameState, player: PlayerId): GameState {
   return s;
 }
 
-/**
- * 카드의 statModifiers 중 조건이 충족되는 것들의 delta를 stat별로 합산하여 반환.
- * 반환값: stat → delta 합계 (부재 시 0)
- */
 export function evaluateModifiers(
   state: GameState,
   player: PlayerId,
-  modifiers: StatModifier[],
+  modifiers: StatModifier[] | undefined,
 ): Partial<Record<StatTarget, number>> {
+  if (!modifiers || modifiers.length === 0) return {};
   const result: Partial<Record<StatTarget, number>> = {};
 
   for (const mod of modifiers) {
@@ -60,20 +57,20 @@ export function evaluateModifiers(
     const condPlayer = condition.target === "enemy"
       ? (player === "P1" ? "AI" : "P1") as PlayerId
       : player;
-    const me = state[condPlayer];
+    const condTarget = state[condPlayer];
 
     let checkVal: number;
     switch (condition.check) {
-      case "hand_count":     checkVal = me.hand.length; break;
-      case "deck_count":     checkVal = me.deck.length; break;
-      case "cooldown_count": checkVal = me.cooldown.length; break;
-      case "hp":             checkVal = me.hp; break;
+      case "hand_count":     checkVal = condTarget.hand.length; break;
+      case "deck_count":     checkVal = condTarget.deck.length; break;
+      case "cooldown_count": checkVal = condTarget.cooldown.length; break;
+      case "hp":             checkVal = condTarget.hp; break;
       case "bench_hp": {
-        const bench = me.activeCharacter === "A" ? "B" : "A";
-        checkVal = me.characterHp[bench];
+        const bench = condTarget.activeCharacter === "A" ? "B" : "A";
+        checkVal = condTarget.characterHp[bench];
         break;
       }
-      case "airborne_stack": checkVal = me.airborneStack; break;
+      case "airborne_stack": checkVal = condTarget.airborneStack; break;
       case "turn":           checkVal = state.turn; break;
       case "round":          checkVal = state.round; break;
       default:               continue;
@@ -82,7 +79,8 @@ export function evaluateModifiers(
     const met =
       condition.op === "<" ? checkVal < condition.value :
       condition.op === ">" ? checkVal > condition.value :
-      checkVal === condition.value;
+      condition.op === "=" ? checkVal === condition.value :
+      false;
 
     if (met) {
       result[stat] = (result[stat] ?? 0) + delta;
