@@ -88,20 +88,20 @@ export default function CardView({
     >
       {handMode ? (
         <>
-          <div className={styles.handTopRow}>
-            <span className={styles.handCost}>[{card.cost}]</span>
-            <span className={[
-              styles.handSpeed,
+          <div className={styles.handStatRow}>
+            <div className={styles.cost}>{card.cost}</div>
+            <div className={[
+              styles.speedCircle,
               speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
-            ].join(" ")}>({Math.max(0, card.speed - speedBonus)})</span>
+            ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
+            {card.cardType === "attack" && (
+              <div className={styles.atkBadge}>
+                {(card.groundAttack ?? 0) > 0 && <span>⬇{card.groundAttack}</span>}
+                {(card.antiAirAttack ?? 0) > 0 && <span>⬆{card.antiAirAttack}</span>}
+              </div>
+            )}
           </div>
           <div className={styles.handCardName}>{card.name}</div>
-          {card.cardType === "attack" && (
-            <div className={styles.handAtkList}>
-              {(card.antiAirAttack ?? 0) > 0 && <div className={styles.handAtkLine}>🔼{card.antiAirAttack}</div>}
-              {(card.groundAttack ?? 0) > 0 && <div className={styles.handAtkLine}>🔽{card.groundAttack}</div>}
-            </div>
-          )}
         </>
       ) : (
         <div className={styles.top}>
