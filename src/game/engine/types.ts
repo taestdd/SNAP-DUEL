@@ -161,6 +161,36 @@ export type CardEffect = {
   cardId?: string;
 };
 
+/** StatModifier 조건 체크 대상 */
+export type ConditionCheck =
+  | "hand_count"
+  | "deck_count"
+  | "cooldown_count"
+  | "hp"
+  | "bench_hp"
+  | "airborne_stack"
+  | "turn"
+  | "round";
+
+export type CompareOp = "<" | ">" | "=";
+
+/** StatModifier가 보정할 카드 스탯 */
+export type StatTarget = "cost" | "speed" | "ground_attack" | "anti_air_attack" | "gain";
+
+export type ModifierCondition = {
+  check: ConditionCheck;
+  target: "self" | "enemy";
+  op: CompareOp;
+  value: number;
+};
+
+/** 조건부 스탯 보정 — 조건 충족 시 delta를 해당 스탯에 누적 적용. 최종값 0 고정 */
+export type StatModifier = {
+  condition: ModifierCondition;
+  stat: StatTarget;
+  delta: number;
+};
+
 /** 카드 사용 가능 조건 */
 export type UseCondition =
   | "ground"   // 자신의 airborneStack === 0 일 때만 사용 가능
@@ -212,6 +242,9 @@ export type Card = {
 
   /** true면 기술 발동 전 슈퍼 플래시 연출 재생 */
   superFlash?: boolean;
+
+  /** 조건부 스탯 보정 목록. 조건 충족 시 해당 스탯에 delta 누적 */
+  statModifiers?: StatModifier[];
 };
 
 export type SelectedCard = {

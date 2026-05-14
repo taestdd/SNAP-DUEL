@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
-import type { Combatant, SelectedCard } from "@/game/engine/types";
+import type { Combatant, GameState, PlayerId, SelectedCard } from "@/game/engine/types";
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
 import CardDetailModal from "./CardDetailModal";
 import { CARDS } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
+import { evaluateModifiers } from "@/game/engine/stateHelpers";
 
 const CARD_W = 110;
 const CARD_H = 100;
@@ -15,12 +16,16 @@ export default function Hand({
   disabled,
   onSelectCard,
   endTurnButton,
+  gameState,
+  playerId,
 }: {
   me: Combatant;
   selected: SelectedCard | null;
   disabled: boolean;
   onSelectCard: (cardId: string, handIndex: number) => void;
   endTurnButton?: React.ReactNode;
+  gameState: GameState;
+  playerId: PlayerId;
 }) {
   const [detailCard, setDetailCard] = useState<{ cardId: string; handIndex: number } | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -62,7 +67,9 @@ export default function Hand({
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
-          const costOk = !!card && card.cost <= me.deck.length;
+          const mods = evaluateModifiers(gameState, playerId, card?.statModifiers);
+          const effectiveCost = card ? Math.max(0, card.cost + (mods.cost ?? 0)) : 0;
+          const costOk = !!card && effectiveCost <= me.deck.length;
           const conditionMet =
             !card?.useCondition ||
             (card.useCondition === "ground" && me.airborneStack === 0) ||
@@ -94,7 +101,8 @@ export default function Hand({
                 conditionBlocked={conditionBlocked}
                 selected={isSelected}
                 handMode
-                speedBonus={me.status.speedBonus}
+                speedBonus={me.status.speedBonus - (mods.speed ?? 0)}
+                statDeltas={mods}
                 onClick={() => onSelectCard(cardId, idx)}
                 onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
               />
@@ -107,6 +115,8 @@ export default function Hand({
         <CardDetailModal
           cardId={detailCard.cardId}
           onClose={() => setDetailCard(null)}
+          gameState={gameState}
+          playerId={playerId}
         />
       )}
     </div>

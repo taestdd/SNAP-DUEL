@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import styles from "./CardView.module.css";
 import { CARDS } from "@/game/engine/cards";
+import type { StatTarget } from "@/game/engine/types";
 
 export function effectBadgeClass(type: string, damageType?: string) {
   if (type === "tag") return styles.tagTag;
@@ -25,6 +26,11 @@ export function effectLabel(type: string, damageType?: string): string {
   return type;
 }
 
+function deltaClass(delta: number, higherIsBetter = true) {
+  if (delta === 0) return "";
+  return (higherIsBetter ? delta > 0 : delta < 0) ? styles.statBoosted : styles.statNerfed;
+}
+
 const LONG_PRESS_MS = 480;
 
 export default function CardView({
@@ -34,6 +40,7 @@ export default function CardView({
   selected,
   handMode = false,
   speedBonus = 0,
+  statDeltas,
   onClick,
   onLongPress,
 }: {
@@ -43,6 +50,7 @@ export default function CardView({
   selected: boolean;
   handMode?: boolean;
   speedBonus?: number;
+  statDeltas?: Partial<Record<StatTarget, number>>;
   onClick: () => void;
   onLongPress?: () => void;
 }) {
@@ -51,6 +59,13 @@ export default function CardView({
   const longFiredRef = useRef(false);
 
   if (!card) return null;
+
+  const costDelta = statDeltas?.cost ?? 0;
+  const gaDelta = statDeltas?.ground_attack ?? 0;
+  const aaDelta = statDeltas?.anti_air_attack ?? 0;
+  const effectiveCost = Math.max(0, card.cost + costDelta);
+  const effectiveGA = Math.max(0, (card.groundAttack ?? 0) + gaDelta);
+  const effectiveAA = Math.max(0, (card.antiAirAttack ?? 0) + aaDelta);
 
   function startPress() {
     longFiredRef.current = false;
@@ -89,19 +104,23 @@ export default function CardView({
       {handMode ? (
         <>
           <div className={styles.handStatRow}>
-            <div className={styles.cost}>{card.cost}</div>
+            <div className={[styles.cost, deltaClass(costDelta, false)].join(" ")}>{effectiveCost}</div>
             <div className={[
               styles.speedCircle,
               speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
             ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
-            {card.cardType === "attack" && (
-              <div className={styles.atkBadge}>
-                {(card.groundAttack ?? 0) > 0 && <span>⬇{card.groundAttack}</span>}
-                {(card.antiAirAttack ?? 0) > 0 && <span>⬆{card.antiAirAttack}</span>}
-              </div>
-            )}
           </div>
           <div className={styles.handCardName}>{card.name}</div>
+          {card.cardType === "attack" && (
+            <div className={styles.handAtkList}>
+              {(card.antiAirAttack ?? 0) > 0 && (
+                <div className={[styles.handAtkLine, deltaClass(aaDelta)].join(" ")}>🔼{effectiveAA}</div>
+              )}
+              {(card.groundAttack ?? 0) > 0 && (
+                <div className={[styles.handAtkLine, deltaClass(gaDelta)].join(" ")}>🔽{effectiveGA}</div>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <div className={styles.top}>
@@ -111,7 +130,6 @@ export default function CardView({
         </div>
       )}
 
-      {/* 효과 배지 — 핸드 모드에서는 숨김 */}
       {!handMode && (
         <div className={styles.footer}>
           <div className={styles.effectRow}>
@@ -134,7 +152,6 @@ export default function CardView({
         </div>
       )}
 
-      {/* 롱프레스 힌트 */}
       {onLongPress && <div className={styles.longPressHint}>…</div>}
     </button>
   );

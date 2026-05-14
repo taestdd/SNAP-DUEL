@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { CardZone, DeckInsertPosition, GameState, PlayerId } from "./types";
+import type { CardZone, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget } from "./types";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -44,6 +44,52 @@ export function syncExhausted(state: GameState, player: PlayerId): GameState {
   return s;
 }
 
+export function evaluateModifiers(
+  state: GameState,
+  player: PlayerId,
+  modifiers: StatModifier[] | undefined,
+): Partial<Record<StatTarget, number>> {
+  if (!modifiers || modifiers.length === 0) return {};
+  const result: Partial<Record<StatTarget, number>> = {};
+
+  for (const mod of modifiers) {
+    const { condition, stat, delta } = mod;
+    const condPlayer = condition.target === "enemy"
+      ? (player === "P1" ? "AI" : "P1") as PlayerId
+      : player;
+    const condTarget = state[condPlayer];
+
+    let checkVal: number;
+    switch (condition.check) {
+      case "hand_count":     checkVal = condTarget.hand.length; break;
+      case "deck_count":     checkVal = condTarget.deck.length; break;
+      case "cooldown_count": checkVal = condTarget.cooldown.length; break;
+      case "hp":             checkVal = condTarget.hp; break;
+      case "bench_hp": {
+        const bench = condTarget.activeCharacter === "A" ? "B" : "A";
+        checkVal = condTarget.characterHp[bench];
+        break;
+      }
+      case "airborne_stack": checkVal = condTarget.airborneStack; break;
+      case "turn":           checkVal = state.turn; break;
+      case "round":          checkVal = state.round; break;
+      default:               continue;
+    }
+
+    const met =
+      condition.op === "<" ? checkVal < condition.value :
+      condition.op === ">" ? checkVal > condition.value :
+      condition.op === "=" ? checkVal === condition.value :
+      false;
+
+    if (met) {
+      result[stat] = (result[stat] ?? 0) + delta;
+    }
+  }
+
+  return result;
+}
+
 export function getEffectiveSpeed(
   state: GameState,
   player: PlayerId,
@@ -52,7 +98,8 @@ export function getEffectiveSpeed(
   const c = getCard(cardId);
   if (!c) return Number.MAX_SAFE_INTEGER;
   const bonus = state[player].status.speedBonus ?? 0;
-  return Math.max(0, c.speed - bonus);
+  const modDelta = evaluateModifiers(state, player, c.statModifiers).speed ?? 0;
+  return Math.max(0, c.speed - bonus + modDelta);
 }
 
 export function moveQueuedCard(

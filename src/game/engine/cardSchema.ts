@@ -28,6 +28,31 @@ export const UseConditionSchema = z.enum(["ground", "airborne"]);
 
 export const CardTypeSchema = z.enum(["attack", "skill"]);
 
+export const ConditionCheckSchema = z.enum([
+  "hand_count", "deck_count", "cooldown_count",
+  "hp", "bench_hp", "airborne_stack",
+  "turn", "round",
+]);
+
+export const CompareOpSchema = z.enum(["<", ">", "="]);
+
+export const StatTargetSchema = z.enum([
+  "cost", "speed", "ground_attack", "anti_air_attack", "gain",
+]);
+
+export const ModifierConditionSchema = z.object({
+  check: ConditionCheckSchema,
+  target: TargetSchema,
+  op: CompareOpSchema,
+  value: z.number().int(),
+});
+
+export const StatModifierSchema = z.object({
+  condition: ModifierConditionSchema,
+  stat: StatTargetSchema,
+  delta: z.number().int(),
+});
+
 export const CardEffectSchema = z.object({
   type: EffectTypeSchema,
   value: z.number().optional(),
@@ -66,6 +91,7 @@ export const CardSchema = z.object({
   actionTagAirborne: ActionTagSchema.optional(),
   hitTimings: z.array(HitTimingSchema).optional(),
   superFlash: z.boolean().optional(),
+  statModifiers: z.array(StatModifierSchema).optional(),
 });
 
 export const CardsRecordSchema = z.record(z.string(), CardSchema);

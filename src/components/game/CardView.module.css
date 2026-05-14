@@ -163,7 +163,8 @@
   height: 100%;
   min-height: unset;
   overflow: hidden;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 3px;
   background: #1e1e2e;
   border-color: rgba(255,255,255,0.18);
   padding: 7px 8px;
@@ -208,13 +209,29 @@
   color: #ff8080;
 }
 
-.atkBadge {
+.statBoosted {
+  background: rgba(80, 200, 120, 0.20);
+  border-color: rgba(80, 200, 120, 0.50);
+  color: #7ee8a2;
+}
+
+.statNerfed {
+  background: rgba(255, 80, 80, 0.20);
+  border-color: rgba(255, 80, 80, 0.50);
+  color: #ff8080;
+}
+
+.handAtkList {
   display: flex;
-  gap: 3px;
-  font-size: 10px;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.handAtkLine {
+  font-size: 11px;
   font-weight: 700;
   color: #ffcc66;
-  margin-left: auto;
+  line-height: 1.2;
 }
 
 .handCardName {
