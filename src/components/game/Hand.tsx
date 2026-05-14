@@ -67,7 +67,11 @@ export default function Hand({
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = CARDS[cardId];
-          const costOk = !!card && card.cost <= me.deck.length;
+          const mods = card?.statModifiers
+            ? evaluateModifiers(gameState, playerId, card.statModifiers)
+            : {};
+          const effectiveCost = card ? Math.max(0, card.cost + (mods.cost ?? 0)) : 0;
+          const costOk = !!card && effectiveCost <= me.deck.length;
           const conditionMet =
             !card?.useCondition ||
             (card.useCondition === "ground" && me.airborneStack === 0) ||
@@ -79,10 +83,6 @@ export default function Hand({
           const canSelect = !disabled && costOk && conditionMet && affinityMet;
           const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
-
-          const mods = card?.statModifiers
-            ? evaluateModifiers(gameState, playerId, card.statModifiers)
-            : {};
 
           return (
             <div
