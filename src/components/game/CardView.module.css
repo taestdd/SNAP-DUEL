@@ -158,15 +158,17 @@
   color: rgba(255,255,255,0.4);
 }
 
-/* 핸드 전용 — 크기 고정, 불투명 배경, 상단 stat + 하단 이름 */
+/* 핸드 전용 */
 .handCard {
   height: 100%;
   min-height: unset;
   overflow: hidden;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: flex-start;
   background: #1e1e2e;
   border-color: rgba(255,255,255,0.18);
-  padding: 7px 8px;
+  padding: 6px 8px;
+  gap: 2px;
 }
 
 .handCard:hover {
@@ -177,54 +179,56 @@
   background: #16161f;
 }
 
-.handStatRow {
+.handTopRow {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1;
 }
 
-.speedCircle {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+.handCost {
+  font-size: 13px;
   font-weight: 700;
-  font-size: 12px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.14);
-  flex: 0 0 auto;
+  color: #fff;
+}
+
+.handSpeed {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
 }
 
 .speedDown {
-  background: rgba(80, 200, 120, 0.20);
-  border-color: rgba(80, 200, 120, 0.50);
   color: #7ee8a2;
 }
 
 .speedUp {
-  background: rgba(255, 80, 80, 0.20);
-  border-color: rgba(255, 80, 80, 0.50);
   color: #ff8080;
-}
-
-.atkBadge {
-  display: flex;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffcc66;
-  margin-left: auto;
 }
 
 .handCardName {
   font-weight: 700;
   font-size: 11px;
-  line-height: 1.1;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0.9;
+  width: 100%;
+}
+
+.handAtkList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 1px;
+}
+
+.handAtkLine {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffcc66;
+  line-height: 1.2;
 }
 
 .selected {
