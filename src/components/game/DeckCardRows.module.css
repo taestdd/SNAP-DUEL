@@ -1,0 +1,29 @@
+.tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 217, 255, 0.10);
+  border: 1px solid rgba(0, 217, 255, 0.25);
+  color: var(--clr-cyan);
+}
+
+.effect {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 200, 80, 0.10);
+  border: 1px solid rgba(255, 200, 80, 0.25);
+  color: #ffd878;
+}
+
+.metaRow {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--clr-text-muted);
+  padding: 4px 0;
+}
