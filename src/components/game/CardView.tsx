@@ -2,6 +2,9 @@ import { useRef } from "react";
 import styles from "./CardView.module.css";
 import { CARDS } from "@/game/engine/cards";
 import type { StatTarget } from "@/game/engine/types";
+import { effectLabel } from "./cardLabels";
+
+export { effectLabel };
 
 export function effectBadgeClass(type: string, damageType?: string) {
   if (type === "tag") return styles.tagTag;
@@ -9,21 +12,6 @@ export function effectBadgeClass(type: string, damageType?: string) {
   if (damageType === "anti-air") return styles.tagAntiAir;
   if (type === "airborne") return styles.tagAirborne;
   return "";
-}
-
-export function effectLabel(type: string, damageType?: string): string {
-  if (type === "damage" && damageType === "ground") return "⬇ Ground";
-  if (type === "damage" && damageType === "anti-air") return "⬆ Anti-Air";
-  if (type === "tag") return "⇄ Tag";
-  if (type === "airborne") return "⬆ Launch";
-  if (type === "heal") return "Heal";
-  if (type === "block") return "Block";
-  if (type === "draw") return "Draw";
-  if (type === "buff_attack") return "ATK+";
-  if (type === "move_cards") return "Move";
-  if (type === "shuffle") return "Shuffle";
-  if (type === "generate") return "Generate";
-  return type;
 }
 
 function deltaClass(delta: number, higherIsBetter = true) {

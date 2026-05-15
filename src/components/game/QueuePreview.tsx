@@ -5,24 +5,10 @@ import type { Combatant } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import CardDetailModal from "./CardDetailModal";
+export { effectLabel } from "./cardLabels";
 
 const LONG_PRESS_MS = 480;
 
-export function effectLabel(effect: string, damageType?: string): string {
-  if (effect === "damage" && damageType === "ground") return "⬇ Ground";
-  if (effect === "damage" && damageType === "anti-air") return "⬆ Anti-Air";
-  switch (effect) {
-    case "damage":      return "Damage";
-    case "block":       return "Block";
-    case "draw":        return "Draw";
-    case "heal":        return "Heal";
-    case "buff_attack": return "ATK Buff";
-    case "burn":        return "Burn";
-    case "tag":         return "⇄ Tag";
-    case "airborne":    return "⬆ Launch";
-    default:            return effect;
-  }
-}
 
 export default function QueuePreview({
   title,

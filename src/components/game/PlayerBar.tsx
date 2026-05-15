@@ -1,34 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { CharacterId, Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
+import { useDamagedChars } from "./useDamagedChars";
+import StatusBadges from "./StatusBadges";
 import styles from "./PlayerBar.module.css";
 
 export default function PlayerBar({ me }: { me: Combatant }) {
-  const burn = me.status.burn;
-
-  const prevHpRef = useRef<Record<CharacterId, number>>(me.characterHp);
-  const [damagedChars, setDamagedChars] = useState<Set<CharacterId>>(new Set());
-
-  useEffect(() => {
-    const prev = prevHpRef.current;
-    const damaged = new Set<CharacterId>();
-
-    (["A", "B"] as CharacterId[]).forEach((charId) => {
-      if (me.characterHp[charId] < prev[charId]) {
-        damaged.add(charId);
-      }
-    });
-
-    prevHpRef.current = me.characterHp;
-
-    if (damaged.size > 0) {
-      setDamagedChars(damaged);
-      const timer = setTimeout(() => setDamagedChars(new Set()), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [me.characterHp]);
+  const damagedChars = useDamagedChars(me.characterHp);
 
   return (
     <div className={styles.wrap}>
@@ -62,27 +41,7 @@ export default function PlayerBar({ me }: { me: Combatant }) {
         Deck {me.deck.length} · Hand {me.hand.length} · Cooldown {me.cooldown.length} · Trash {me.trash.length}
       </div>
 
-      {(me.status.attackBuff > 0 || burn || me.status.exhausted || me.status.speedBonus > 0 || me.status.speedBonusNext > 0) && (
-        <div className={styles.badges}>
-          {me.status.attackBuff > 0 && (
-            <span className={styles.badge}>ATK+ {me.status.attackBuff}</span>
-          )}
-          {burn && (
-            <span className={styles.badge}>
-              BURN {burn.turns}t · {burn.dmgPerTurn}/t
-            </span>
-          )}
-          {me.status.exhausted && (
-            <span className={styles.badge}>EXHAUSTED</span>
-          )}
-          {me.status.speedBonus > 0 && (
-            <span className={styles.badge}>SPD-{me.status.speedBonus} now</span>
-          )}
-          {me.status.speedBonusNext > 0 && (
-            <span className={styles.badge}>SPD-{me.status.speedBonusNext} next</span>
-          )}
-        </div>
-      )}
+      <StatusBadges combatant={me} />
     </div>
   );
 }

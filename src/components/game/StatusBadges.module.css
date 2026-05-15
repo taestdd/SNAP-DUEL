@@ -1,0 +1,36 @@
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.badgesRight {
+  justify-content: flex-end;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.badgeAir {
+  background: rgba(255, 180, 50, 0.18);
+  border-color: rgba(255, 180, 50, 0.45);
+  color: #ffcc66;
+}
+
+.badgeBurn {
+  background: rgba(255, 100, 50, 0.18);
+  border-color: rgba(255, 100, 50, 0.40);
+  color: #ff8855;
+}
+
+.badgeWarn {
+  background: rgba(255, 200, 50, 0.14);
+  border-color: rgba(255, 200, 50, 0.35);
+  color: #ffcc44;
+}
