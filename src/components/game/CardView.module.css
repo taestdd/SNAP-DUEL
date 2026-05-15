@@ -1,13 +1,14 @@
 .card {
   width: 100%;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--clr-border);
+  background: rgba(21, 27, 61, 0.6);
   color: inherit;
   padding: 8px;
   cursor: pointer;
   text-align: left;
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  transition: transform 120ms ease, background 120ms ease,
+              border-color 120ms ease, box-shadow 120ms ease;
   min-height: 78px;
   display: flex;
   flex-direction: column;
@@ -17,15 +18,16 @@
 
 .card:hover {
   transform: translateY(-2px);
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.22);
+  background: rgba(0, 217, 255, 0.06);
+  border-color: rgba(0, 217, 255, 0.35);
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.15);
 }
 
 .disabled {
   cursor: not-allowed;
-  border-color: rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.4);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .top {
@@ -42,15 +44,16 @@
   place-items: center;
   font-weight: 800;
   font-size: 12px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--clr-border);
   flex: 0 0 auto;
 }
 
 .speed {
   font-size: 11px;
-  opacity: 0.70;
+  opacity: 0.65;
   margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .name {
@@ -73,7 +76,6 @@
   line-height: 1.25;
 }
 
-/* 카드 태그 배지 행 */
 .tagRow {
   display: flex;
   flex-wrap: wrap;
@@ -84,9 +86,9 @@
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgba(180, 140, 255, 0.12);
-  border: 1px solid rgba(180, 140, 255, 0.30);
-  color: #c8aaff;
+  background: rgba(181, 55, 242, 0.12);
+  border: 1px solid rgba(181, 55, 242, 0.30);
+  color: #d07ff5;
   letter-spacing: 0.2px;
 }
 
@@ -107,75 +109,70 @@
   font-size: 11px;
   padding: 3px 7px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--clr-border);
 }
 
-/* ground 데미지 — 초록 계열 */
 .tagGround {
-  background: rgba(80, 200, 120, 0.15);
-  border-color: rgba(80, 200, 120, 0.40);
-  color: #7ee8a2;
+  background: rgba(0, 247, 125, 0.12);
+  border-color: rgba(0, 247, 125, 0.35);
+  color: #00f77d;
 }
 
-/* anti-air 데미지 — 주황 계열 */
 .tagAntiAir {
-  background: rgba(255, 150, 60, 0.15);
-  border-color: rgba(255, 150, 60, 0.40);
+  background: rgba(255, 150, 60, 0.12);
+  border-color: rgba(255, 150, 60, 0.35);
   color: #ffb366;
 }
 
-/* 태그 카드 */
 .tagTag {
-  background: rgba(160, 120, 255, 0.15);
-  border-color: rgba(160, 120, 255, 0.40);
-  color: #c4a8ff;
+  background: rgba(181, 55, 242, 0.12);
+  border-color: rgba(181, 55, 242, 0.35);
+  color: #d07ff5;
 }
 
-/* airborne 효과 */
 .tagAirborne {
-  background: rgba(255, 180, 50, 0.15);
-  border-color: rgba(255, 180, 50, 0.40);
+  background: rgba(255, 180, 50, 0.12);
+  border-color: rgba(255, 180, 50, 0.35);
   color: #ffcc66;
 }
 
-/* 사용 조건 배지 */
 .conditionTag {
   flex-shrink: 0;
   font-size: 11px;
   padding: 3px 7px;
   border-radius: 999px;
-  background: rgba(110, 180, 255, 0.12);
-  border: 1px solid rgba(110, 180, 255, 0.35);
-  color: #88c8ff;
+  background: rgba(0, 217, 255, 0.10);
+  border: 1px solid rgba(0, 217, 255, 0.30);
+  color: var(--clr-cyan);
 }
 
-/* 조건 불충족으로 비활성 (코스트 부족과 구분) */
 .conditionBlocked {
   cursor: not-allowed;
-  border-color: rgba(110, 180, 255, 0.25);
-  background: rgba(110, 180, 255, 0.04);
-  color: rgba(255,255,255,0.4);
+  border-color: rgba(255, 0, 110, 0.25);
+  background: rgba(255, 0, 110, 0.04);
+  color: rgba(255, 255, 255, 0.35);
 }
 
-/* 핸드 전용 — 크기 고정, 불투명 배경, 상단 stat + 하단 이름 */
+/* ── 핸드 카드 ── */
 .handCard {
   height: 100%;
   min-height: unset;
   overflow: hidden;
   justify-content: flex-start;
   gap: 3px;
-  background: #1e1e2e;
-  border-color: rgba(255,255,255,0.18);
+  background: var(--clr-bg2);
+  border-color: var(--clr-border);
   padding: 7px 8px;
 }
 
 .handCard:hover {
-  background: #252540;
+  background: rgba(0, 217, 255, 0.07);
+  border-color: rgba(0, 217, 255, 0.3);
 }
 
 .handCard.disabled {
-  background: #16161f;
+  background: var(--clr-bg);
 }
 
 .handStatRow {
@@ -192,33 +189,34 @@
   place-items: center;
   font-weight: 700;
   font-size: 12px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--clr-border);
   flex: 0 0 auto;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .speedDown {
-  background: rgba(80, 200, 120, 0.20);
-  border-color: rgba(80, 200, 120, 0.50);
-  color: #7ee8a2;
+  background: rgba(0, 247, 125, 0.18);
+  border-color: rgba(0, 247, 125, 0.45);
+  color: var(--clr-green);
 }
 
 .speedUp {
-  background: rgba(255, 80, 80, 0.20);
-  border-color: rgba(255, 80, 80, 0.50);
-  color: #ff8080;
+  background: rgba(255, 56, 96, 0.18);
+  border-color: rgba(255, 56, 96, 0.45);
+  color: var(--clr-danger);
 }
 
 .statBoosted {
-  background: rgba(80, 200, 120, 0.20);
-  border-color: rgba(80, 200, 120, 0.50);
-  color: #7ee8a2;
+  background: rgba(0, 247, 125, 0.18);
+  border-color: rgba(0, 247, 125, 0.45);
+  color: var(--clr-green);
 }
 
 .statNerfed {
-  background: rgba(255, 80, 80, 0.20);
-  border-color: rgba(255, 80, 80, 0.50);
-  color: #ff8080;
+  background: rgba(255, 56, 96, 0.18);
+  border-color: rgba(255, 56, 96, 0.45);
+  color: var(--clr-danger);
 }
 
 .handAtkList {
@@ -232,6 +230,7 @@
   font-weight: 700;
   color: #ffcc66;
   line-height: 1.2;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .handCardName {
@@ -245,18 +244,18 @@
 }
 
 .selected {
-  outline: 2px solid rgba(255,255,255,0.65);
-  box-shadow: 0 0 0 3px rgba(0,0,0,0.35);
+  outline: none;
+  border-color: var(--clr-cyan);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5), inset 0 0 14px rgba(0, 217, 255, 0.08);
   transform: translateY(-2px);
 }
 
-/* 롱프레스 힌트 — 카드 우하단 */
 .longPressHint {
   position: absolute;
   bottom: 5px;
   right: 6px;
   font-size: 11px;
-  opacity: 0.35;
+  opacity: 0.3;
   line-height: 1;
   pointer-events: none;
   user-select: none;

@@ -1,16 +1,17 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(5, 8, 30, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
-  background: #1a1a2e;
-  border: 1px solid #3a3a5c;
+  background: var(--clr-bg2);
+  border: 1px solid var(--clr-border);
   border-radius: 12px;
   padding: 24px;
   width: min(480px, 90vw);
@@ -18,7 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 217, 255, 0.06);
 }
 
 .header {
@@ -30,11 +31,11 @@
 .title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #e8e8f0;
+  color: var(--clr-text);
   margin: 0;
 }
 
 .subtitle {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--clr-text-muted);
 }
