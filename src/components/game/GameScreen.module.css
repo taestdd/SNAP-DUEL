@@ -39,7 +39,7 @@
 
 .gameOverMenuBtn {
   padding: 12px 32px;
-  border-radius: 999px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
   color: #e9ecf5;
@@ -74,7 +74,7 @@
   flex-direction: row;
   align-items: stretch;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
@@ -85,7 +85,7 @@
   flex-direction: row;
   align-items: stretch;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
@@ -110,7 +110,7 @@
 .menuBtn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 6px;
+  border-radius: 2px;
   color: rgba(255, 255, 255, 0.55);
   font-size: 13px;
   cursor: pointer;
@@ -157,7 +157,7 @@
 
 .actionBtn {
   padding: 6px 9px;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.06);
   color: #e9ecf5;
@@ -180,7 +180,7 @@
 .arenaBlock {
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border-radius: 4px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -226,7 +226,7 @@
   height: min(82vh, 760px);
   background: #141929;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 14px;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
@@ -253,7 +253,7 @@
   font-size: 16px;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 2px;
   line-height: 1;
 }
 
@@ -289,7 +289,7 @@
 .aiDeckCount {
   font-size: 13px;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--clr-border);
   opacity: 0.8;
@@ -366,7 +366,7 @@
 .queueCost {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: 2px;
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -415,7 +415,7 @@
   align-items: center;
   justify-content: center;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: 3px;
   font-size: 11px;
   font-weight: 700;
   background: rgba(89, 156, 255, 0.18);
@@ -481,7 +481,7 @@
   letter-spacing: 0.5px;
   color: rgba(255, 80, 80, 0.95);
   background: rgba(0, 0, 0, 0.62);
-  border-radius: 8px;
+  border-radius: 2px;
   animation: cancelFade 0.85s ease forwards;
   pointer-events: none;
 }

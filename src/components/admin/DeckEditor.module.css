@@ -59,7 +59,7 @@
 .input {
   background: #1a1a1a;
   border: 1px solid #333;
-  border-radius: 5px;
+  border-radius: 2px;
   color: #e0e0e0;
   font-family: monospace;
   font-size: 14px;
@@ -73,7 +73,7 @@
 .charSection {
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 14px;
   margin-bottom: 16px;
 }
@@ -97,7 +97,7 @@
   flex: 1;
   background: #0f0f0f;
   border: 1px dashed #333;
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 10px;
   text-align: center;
   font-size: 13px;
@@ -141,7 +141,7 @@
   font-family: monospace;
   font-size: 14px;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -164,7 +164,7 @@
 .panel {
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
-  border-radius: 8px;
+  border-radius: 2px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -221,7 +221,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: 2px;
   cursor: pointer;
   transition: background 0.1s;
   gap: 8px;
@@ -255,7 +255,7 @@
   font-size: 16px;
   width: 26px;
   height: 26px;
-  border-radius: 5px;
+  border-radius: 2px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -272,7 +272,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: 2px;
   gap: 8px;
 }
 
@@ -296,7 +296,7 @@
   color: #aaa;
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   display: flex;
@@ -328,7 +328,7 @@
   color: #888;
   border: 1px solid #333;
   padding: 9px 20px;
-  border-radius: 6px;
+  border-radius: 2px;
   font-size: 14px;
   font-family: monospace;
   text-decoration: none;
@@ -339,7 +339,7 @@
   color: #fff;
   border: none;
   padding: 9px 28px;
-  border-radius: 6px;
+  border-radius: 2px;
   font-size: 14px;
   font-family: monospace;
   cursor: pointer;
@@ -353,7 +353,7 @@
   background: #1e0f0f;
   border: 1px solid #5a2a2a;
   color: #ff8080;
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 12px;
@@ -364,7 +364,7 @@
   background: #0f1e0f;
   border: 1px solid #2a5a2a;
   color: #80ff80;
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 12px;

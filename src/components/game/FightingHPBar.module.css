@@ -26,7 +26,7 @@
 
 .portrait {
   position: absolute;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 2px solid rgba(255, 255, 255, 0.18);
   overflow: hidden;
   transition: width 280ms ease, height 280ms ease,
@@ -111,7 +111,7 @@
 .thinking {
   font-size: 10px;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: 3px;
   background: rgba(255, 220, 50, 0.15);
   border: 1px solid rgba(255, 220, 50, 0.35);
   color: #ffdc32;
@@ -153,7 +153,7 @@
   transform: translateX(-50%);
   background: rgba(10, 14, 30, 0.92);
   border: 1px solid var(--clr-border);
-  border-radius: 5px;
+  border-radius: 2px;
   padding: 2px 8px;
   font-size: 11px;
   font-weight: 700;
@@ -172,7 +172,7 @@
 .barTrack {
   position: relative;
   height: 14px;
-  border-radius: 3px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -188,7 +188,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  border-radius: 3px;
+  border-radius: 0;
   transition: width 120ms ease;
 }
 
@@ -240,7 +240,7 @@
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 /* ── 덱 바 행 ── */

@@ -12,7 +12,7 @@
 .modal {
   background: var(--clr-bg2);
   border: 1px solid var(--clr-border);
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 24px;
   width: min(480px, 90vw);
   max-height: 80vh;
