@@ -1,11 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  /* Backgrounds */
+  --clr-bg:        #0a0e27;
+  --clr-bg2:       #151b3d;
+  --clr-bg3:       #0f1428;
+
+  /* Neon accents */
+  --clr-cyan:      #00d9ff;
+  --clr-pink:      #ff006e;
+  --clr-purple:    #b537f2;
+  --clr-green:     #00f77d;
+  --clr-orange:    #ff8c00;
+  --clr-danger:    #ff3860;
+
+  /* Text */
+  --clr-text:      #ffffff;
+  --clr-text-2:    #b0b8d0;
+  --clr-text-muted:#6b7280;
+
+  /* Structure */
+  --clr-border:    #2a3a5c;
+
+  /* Gradients */
+  --grad-primary:  linear-gradient(135deg, var(--clr-cyan), var(--clr-purple));
+  --grad-success:  linear-gradient(135deg, var(--clr-green), var(--clr-cyan));
+  --grad-danger:   linear-gradient(135deg, var(--clr-danger), var(--clr-pink));
+  --grad-hp:       linear-gradient(90deg, var(--clr-green), var(--clr-cyan));
+  --grad-card:     linear-gradient(180deg, #1a2f5f, var(--clr-bg));
+
+  /* Glows */
+  --glow-cyan:     0 0 12px rgba(0, 217, 255, 0.7);
+  --glow-cyan-lg:  0 0 24px rgba(0, 217, 255, 0.8), 0 0 48px rgba(0, 217, 255, 0.3);
+  --glow-green:    0 0 12px rgba(0, 247, 125, 0.6);
+  --glow-pink:     0 0 12px rgba(255, 0, 110, 0.6);
+  --glow-purple:   0 0 20px rgba(181, 55, 242, 0.6);
+
+  /* Transitions */
+  --transition:    all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Keyframes ── */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 217, 255, 0.5); }
+  50%       { box-shadow: 0 0 24px rgba(0, 217, 255, 1), 0 0 48px rgba(0, 217, 255, 0.4); }
+}
+
+@keyframes selectionGlow {
+  0%   { box-shadow: 0 0 5px rgba(0, 217, 255, 0.3); }
+  100% { box-shadow: 0 0 28px rgba(0, 217, 255, 0.9), inset 0 0 18px rgba(0, 217, 255, 0.12); }
+}
+
+@keyframes scorePop {
+  0%   { transform: scale(0.8) translateY(0);    opacity: 1; }
+  100% { transform: scale(1.2) translateY(-30px); opacity: 0; }
+}
+
+@keyframes slideInText {
+  0%   { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Base ── */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: Inter, 'Noto Sans KR', system-ui, sans-serif;
 }
 
 body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
 }

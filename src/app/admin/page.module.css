@@ -34,7 +34,7 @@
   color: #7c7cff;
   border: 1px solid #3a3a7c;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 0;
   margin-left: 10px;
 }
 
@@ -43,7 +43,7 @@
   gap: 4px;
   background: #111;
   border: 1px solid #2a2a2a;
-  border-radius: 7px;
+  border-radius: 2px;
   padding: 3px;
 }
 
@@ -54,7 +54,7 @@
   font-family: monospace;
   font-size: 13px;
   padding: 5px 14px;
-  border-radius: 5px;
+  border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -73,7 +73,7 @@
   color: #fff;
   border: none;
   padding: 8px 18px;
-  border-radius: 6px;
+  border-radius: 2px;
   font-size: 14px;
   font-family: monospace;
   cursor: pointer;
@@ -94,7 +94,7 @@
 .card {
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 18px;
   transition: border-color 0.15s;
 }
@@ -151,7 +151,7 @@
   color: #6dbe6d;
   border: 1px solid #2a3d2a;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .cardText {
@@ -172,7 +172,7 @@
   color: #7c7cff;
   border: 1px solid #3a3a7c;
   padding: 6px 0;
-  border-radius: 5px;
+  border-radius: 2px;
   font-size: 13px;
   font-family: monospace;
   cursor: pointer;
@@ -190,7 +190,7 @@
   color: #ff6b6b;
   border: 1px solid #5a2a2a;
   padding: 6px 12px;
-  border-radius: 5px;
+  border-radius: 2px;
   font-size: 13px;
   font-family: monospace;
   cursor: pointer;

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
-import { getCard } from "@/game/engine/cards";
 import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
@@ -12,42 +11,12 @@ import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import ArenaStage, { type HitSide } from "./ArenaStage";
-import QueuePreview, { effectLabel } from "./QueuePreview";
+import QueuePreview from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
 import DraftModal from "./DraftModal";
+import DeckCardRows from "./DeckCardRows";
 
-function DeckCardRows({ cards }: { cards: string[] }) {
-  return (
-    <div className={styles.deckCardList}>
-      {cards.length === 0 ? (
-        <div className={styles.deckEmpty}>비어 있습니다.</div>
-      ) : (
-        cards.map((cardId, idx) => {
-          const card = getCard(cardId);
-          if (!card) return null;
-          return (
-            <div key={`${cardId}-${idx}`} className={styles.deckCardRow}>
-              <div className={styles.deckCardName}>{card.name}</div>
-              <div className={styles.deckCardMeta}>
-                {card.tags?.map((tag) => (
-                  <span key={tag} className={styles.deckCardTag}>{tag}</span>
-                ))}
-                <div className={styles.deckCardEffects}>
-                  {card.effects.map((e, i) => (
-                    <span key={i} className={styles.deckCardEffect}>
-                      {effectLabel(e.type, e.damageType)}{e.value !== undefined ? ` ${e.value}` : ""}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.deckCardText}>{card.text}</div>
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
+
 
 
 export default function GameScreen({

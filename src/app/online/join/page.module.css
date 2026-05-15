@@ -43,7 +43,7 @@
   padding: 0.8rem 1rem;
   background: #1a1a2e;
   border: 1px solid #333;
-  border-radius: 12px;
+  border-radius: 4px;
   color: #fff;
   outline: none;
   box-sizing: border-box;
@@ -71,7 +71,7 @@
   padding: 0.9rem;
   background: #3b3bff;
   border: none;
-  border-radius: 10px;
+  border-radius: 4px;
   color: #fff;
   font-size: 1rem;
   font-weight: 600;

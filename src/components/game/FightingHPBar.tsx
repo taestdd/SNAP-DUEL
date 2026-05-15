@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CharacterId, Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
+import StatusBadges from "./StatusBadges";
 import styles from "./FightingHPBar.module.css";
 
 const GHOST_DELAY_MS = 500;
@@ -143,15 +144,7 @@ export default function FightingHPBar({
           <div className={styles.deckCount}>{combatant.deck.length}</div>
         </div>
 
-        <div className={[styles.badges, isRight ? styles.badgesRight : ""].join(" ")}>
-          {airborneStack >= 1 && <span className={[styles.badge, styles.badgeAir].join(" ")}>⬆ ×{airborneStack}</span>}
-          {block > 0 && <span className={styles.badge}>🛡 {block}</span>}
-          {status.attackBuff > 0 && <span className={styles.badge}>ATK+{status.attackBuff}</span>}
-          {burn && <span className={[styles.badge, styles.badgeBurn].join(" ")}>BURN {burn.turns}t</span>}
-          {status.exhausted && <span className={[styles.badge, styles.badgeWarn].join(" ")}>EXHAUSTED</span>}
-          {status.speedBonus > 0 && <span className={styles.badge}>SPD-{status.speedBonus}</span>}
-          {status.speedBonusNext > 0 && <span className={styles.badge}>SPD-{status.speedBonusNext} next</span>}
-        </div>
+        <StatusBadges combatant={combatant} alignRight={isRight} />
       </div>
 
       {/* AI측 초상화는 오른쪽 */}

@@ -19,7 +19,7 @@
   font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
   font-size: 11px;
   padding: 4px 6px;
-  border-radius: 5px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.04);
   line-height: 1.45;
 }

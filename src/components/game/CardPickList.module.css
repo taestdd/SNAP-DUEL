@@ -1,0 +1,112 @@
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.empty {
+  color: var(--clr-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 16px;
+}
+
+.cardItem {
+  background: rgba(21, 27, 61, 0.8);
+  border: 1px solid var(--clr-border);
+  border-radius: 2px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: var(--transition);
+}
+
+.cardItem:hover:not(.cardDisabled) {
+  border-color: var(--clr-cyan);
+  background: rgba(0, 217, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.2);
+}
+
+.cardSelected {
+  border-color: var(--clr-cyan);
+  background: rgba(0, 217, 255, 0.12);
+  box-shadow: 0 0 14px rgba(0, 217, 255, 0.35);
+}
+
+.cardSelected:hover {
+  border-color: var(--clr-cyan) !important;
+  box-shadow: var(--glow-cyan) !important;
+}
+
+.cardDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cardName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+.cardMeta {
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cardText {
+  font-size: 0.78rem;
+  color: var(--clr-text-2);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirmBtn {
+  background: linear-gradient(135deg, var(--clr-cyan), var(--clr-purple));
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.4);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.skipBtn {
+  background: transparent;
+  color: var(--clr-text-muted);
+  border: 1px solid var(--clr-border);
+  border-radius: 2px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.skipBtn:hover {
+  color: var(--clr-text-2);
+  border-color: rgba(176, 184, 208, 0.4);
+}
