@@ -38,7 +38,13 @@ export default function CardPickList({
 
   const selectedCount = selected.length;
   const sorted = [...candidates.map((cardId, idx) => ({ cardId, idx }))]
-    .sort((a, b) => (getCard(a.cardId)?.name ?? a.cardId).localeCompare(getCard(b.cardId)?.name ?? b.cardId));
+    .sort((a, b) => {
+      const ca = getCard(a.cardId);
+      const cb = getCard(b.cardId);
+      return (ca?.cost ?? 0) - (cb?.cost ?? 0)
+        || (ca?.speed ?? 0) - (cb?.speed ?? 0)
+        || (ca?.name ?? a.cardId).localeCompare(cb?.name ?? b.cardId);
+    });
 
   return (
     <>

@@ -7,9 +7,18 @@ export default function DeckCardRows({ cards }: { cards: string[] }) {
     return <div className={styles.empty}>비어 있습니다.</div>;
   }
 
+  const sorted = [...cards]
+    .sort((a, b) => {
+      const ca = getCard(a);
+      const cb = getCard(b);
+      return (ca?.cost ?? 0) - (cb?.cost ?? 0)
+        || (ca?.speed ?? 0) - (cb?.speed ?? 0)
+        || (ca?.name ?? a).localeCompare(cb?.name ?? b);
+    });
+
   return (
     <div className={pickStyles.cardList}>
-      {cards.map((cardId, idx) => {
+      {sorted.map((cardId, idx) => {
         const card = getCard(cardId);
         if (!card) return null;
         return (
