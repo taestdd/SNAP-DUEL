@@ -2,13 +2,6 @@
   width: min(560px, 92vw);
 }
 
-.counter {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #a0a0c0;
-  text-align: center;
-}
-
 .effectRow {
   display: flex;
   flex-wrap: wrap;
