@@ -202,7 +202,7 @@ export default function CardEditor({ initial, mode }: Props) {
       <div className={styles.header}>
         <Link href="/admin" className={styles.backLink}>← 목록</Link>
         <h1 className={styles.title}>
-          {mode === "create" ? "새 카드 만들기" : `편집: ${initial?.id}`}
+          {mode === "create" ? "새 카드" : initial?.id}
         </h1>
         <div className={styles.headerActions}>
           <Link href="/admin" className={styles.cancelLink}>취소</Link>
