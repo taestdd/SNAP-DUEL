@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./CardEditor.module.css";
@@ -25,6 +25,38 @@ const TARGETS = ["self", "enemy"] as const;
 const DAMAGE_TYPES = ["ground", "anti-air"] as const;
 const ZONES = ["hand", "deck", "trash", "cooldown", "queue"] as const;
 const POSITIONS = ["top", "bottom", "random"] as const;
+
+function NumericInput({
+  value,
+  onChange,
+  className,
+  ...rest
+}: {
+  value: number;
+  onChange: (n: number) => void;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type">) {
+  const [str, setStr] = useState(String(value));
+
+  useEffect(() => {
+    setStr(String(value));
+  }, [value]);
+
+  return (
+    <input
+      {...rest}
+      type="number"
+      className={className}
+      value={str}
+      onChange={(e) => setStr(e.target.value)}
+      onBlur={() => {
+        const n = Number(str);
+        const final = str.trim() === "" || isNaN(n) ? 0 : n;
+        onChange(final);
+        setStr(String(final));
+      }}
+    />
+  );
+}
 
 function emptyEffect(): CardEffect {
   return { type: "damage", value: 0, target: "enemy" };
@@ -219,22 +251,20 @@ export default function CardEditor({ initial, mode }: Props) {
           <div className={styles.row}>
             <div className={styles.field}>
               <label className={styles.label}>코스트</label>
-              <input
+              <NumericInput
                 className={styles.input}
-                type="number"
                 min={0}
                 value={cost}
-                onChange={(e) => setCost(Number(e.target.value))}
+                onChange={setCost}
               />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>스피드</label>
-              <input
+              <NumericInput
                 className={styles.input}
-                type="number"
                 min={0}
                 value={speed}
-                onChange={(e) => setSpeed(Number(e.target.value))}
+                onChange={setSpeed}
               />
             </div>
           </div>
@@ -244,32 +274,29 @@ export default function CardEditor({ initial, mode }: Props) {
           <div className={styles.row}>
             <div className={styles.field}>
               <label className={styles.label}>지상 공격력</label>
-              <input
+              <NumericInput
                 className={styles.input}
-                type="number"
                 min={0}
                 value={groundAttack}
-                onChange={(e) => setGroundAttack(Number(e.target.value))}
+                onChange={setGroundAttack}
               />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>대공 공격력</label>
-              <input
+              <NumericInput
                 className={styles.input}
-                type="number"
                 min={0}
                 value={antiAirAttack}
-                onChange={(e) => setAntiAirAttack(Number(e.target.value))}
+                onChange={setAntiAirAttack}
               />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>게인</label>
-              <input
+              <NumericInput
                 className={styles.input}
-                type="number"
                 min={0}
                 value={gain}
-                onChange={(e) => setGain(Number(e.target.value))}
+                onChange={setGain}
               />
             </div>
           </div>
@@ -362,12 +389,11 @@ export default function CardEditor({ initial, mode }: Props) {
             <div key={i} className={styles.hitTimingItem}>
               <div className={styles.field}>
                 <label className={styles.label}>ms</label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number"
                   min={0}
                   value={ht.ms}
-                  onChange={(e) => updateHitTiming(i, { ms: Number(e.target.value) })}
+                  onChange={(n) => updateHitTiming(i, { ms: n })}
                 />
               </div>
               <div className={styles.field}>
@@ -428,11 +454,10 @@ export default function CardEditor({ initial, mode }: Props) {
                 {!["tag", "move_cards", "shuffle", "generate"].includes(effect.type) && (
                   <div className={styles.field}>
                     <label className={styles.label}>Value</label>
-                    <input
+                    <NumericInput
                       className={styles.input}
-                      type="number"
                       value={effect.value ?? 0}
-                      onChange={(e) => updateEffect(i, { value: Number(e.target.value) })}
+                      onChange={(n) => updateEffect(i, { value: n })}
                     />
                   </div>
                 )}
@@ -495,12 +520,11 @@ export default function CardEditor({ initial, mode }: Props) {
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Count</label>
-                      <input
+                      <NumericInput
                         className={styles.input}
-                        type="number"
                         min={1}
                         value={effect.count ?? 1}
-                        onChange={(e) => updateEffect(i, { count: Number(e.target.value) })}
+                        onChange={(n) => updateEffect(i, { count: n })}
                       />
                     </div>
                     <div className={styles.field}>
@@ -542,12 +566,11 @@ export default function CardEditor({ initial, mode }: Props) {
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Count</label>
-                    <input
+                    <NumericInput
                       className={styles.input}
-                      type="number"
                       min={1}
                       value={effect.count ?? 1}
-                      onChange={(e) => updateEffect(i, { count: Number(e.target.value) })}
+                      onChange={(n) => updateEffect(i, { count: n })}
                     />
                   </div>
                   <div className={styles.field}>
@@ -677,11 +700,10 @@ export default function CardEditor({ initial, mode }: Props) {
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>값</label>
-                  <input
+                  <NumericInput
                     className={styles.input}
-                    type="number"
                     value={mod.condition.value}
-                    onChange={(e) => updateModifierCondition(i, { value: Number(e.target.value) })}
+                    onChange={(n) => updateModifierCondition(i, { value: n })}
                   />
                 </div>
               </div>
@@ -700,11 +722,10 @@ export default function CardEditor({ initial, mode }: Props) {
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>Delta</label>
-                  <input
+                  <NumericInput
                     className={styles.input}
-                    type="number"
                     value={mod.delta}
-                    onChange={(e) => updateModifier(i, { delta: Number(e.target.value) })}
+                    onChange={(n) => updateModifier(i, { delta: n })}
                   />
                 </div>
               </div>

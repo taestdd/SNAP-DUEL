@@ -205,6 +205,12 @@
   gap: 12px;
   justify-content: flex-end;
   margin-top: 8px;
+  position: sticky;
+  bottom: 0;
+  background: #0f0f0f;
+  padding: 12px 0;
+  border-top: 1px solid #2a2a2a;
+  z-index: 10;
 }
 
 .submitBtn {
