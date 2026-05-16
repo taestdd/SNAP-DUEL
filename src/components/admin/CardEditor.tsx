@@ -204,12 +204,19 @@ export default function CardEditor({ initial, mode }: Props) {
         <h1 className={styles.title}>
           {mode === "create" ? "새 카드 만들기" : `편집: ${initial?.id}`}
         </h1>
+        <div className={styles.headerActions}>
+          <Link href="/admin" className={styles.cancelLink}>취소</Link>
+          <button type="submit" form="card-editor-form" className={styles.submitBtn} disabled={saving}>
+            {saving ? "저장 중..." : mode === "create" ? "카드 생성" : "카드 수정"}
+          </button>
+        </div>
       </div>
 
       {error && <div className={styles.errorBox}>{error}</div>}
       {success && <div className={styles.successBox}>저장 완료! 목록으로 이동 중...</div>}
 
-      <form onSubmit={handleSubmit}>
+      <div className={styles.formBody}>
+      <form id="card-editor-form" onSubmit={handleSubmit}>
         {/* 기본 정보 */}
         <div className={styles.section}>
           <div className={styles.sectionTitle}>기본 정보</div>
@@ -736,13 +743,8 @@ export default function CardEditor({ initial, mode }: Props) {
           </button>
         </div>
 
-        <div className={styles.submitRow}>
-          <Link href="/admin" className={styles.cancelLink}>취소</Link>
-          <button type="submit" className={styles.submitBtn} disabled={saving}>
-            {saving ? "저장 중..." : mode === "create" ? "카드 생성" : "카드 수정"}
-          </button>
-        </div>
       </form>
+      </div>
     </div>
   );
 }
