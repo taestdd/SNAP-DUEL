@@ -266,5 +266,90 @@
         "delta": -2
       }
     ]
+  },
+  "seiatsu_doku": {
+    "id": "seiatsu_doku",
+    "name": "제압독",
+    "cardType": "skill",
+    "cost": 0,
+    "speed": 0,
+    "groundAttack": 0,
+    "antiAirAttack": 0,
+    "gain": 0,
+    "effects": [],
+    "text": "【제압독】 아무 효과 없음. 나기에 의해 당신의 덱에 심어진 카드.",
+    "tags": ["제압독"],
+    "superFlash": false
+  },
+  "molar_single": {
+    "id": "molar_single",
+    "name": "MOLAR 단발",
+    "cardType": "attack",
+    "cost": 2,
+    "speed": 2,
+    "groundAttack": 1,
+    "antiAirAttack": 0,
+    "gain": 1,
+    "effects": [
+      {
+        "type": "generate",
+        "cardId": "seiatsu_doku",
+        "toZone": "deck",
+        "toPosition": "top",
+        "count": 1,
+        "target": "enemy"
+      }
+    ],
+    "text": "1 지상 데미지. 상대 덱 상단에 제압독 1장을 심는다.",
+    "tags": ["투척형", "MOLAR"],
+    "superFlash": false
+  },
+  "molar_scatter": {
+    "id": "molar_scatter",
+    "name": "MOLAR 산탄",
+    "cardType": "attack",
+    "cost": 4,
+    "speed": 3,
+    "groundAttack": 2,
+    "antiAirAttack": 0,
+    "gain": 0,
+    "effects": [
+      {
+        "type": "generate",
+        "cardId": "seiatsu_doku",
+        "toZone": "deck",
+        "toPosition": "bottom",
+        "count": 2,
+        "target": "enemy"
+      },
+      {
+        "type": "shuffle",
+        "zone": "deck",
+        "target": "enemy"
+      }
+    ],
+    "text": "2 지상 데미지. 상대 덱에 제압독 2장을 심고 셔플한다. 독이 어디 박혔는지 모른다.",
+    "tags": ["투척형", "MOLAR"],
+    "superFlash": false
+  },
+  "molar_prep": {
+    "id": "molar_prep",
+    "name": "의치 준비",
+    "cardType": "skill",
+    "cost": 0,
+    "speed": 1,
+    "groundAttack": 0,
+    "antiAirAttack": 0,
+    "gain": 0,
+    "effects": [
+      {
+        "type": "draw_tagged",
+        "value": 1,
+        "tag": "MOLAR"
+      }
+    ],
+    "text": "덱에서 MOLAR 카드 1장을 핸드로 가져온다.",
+    "tags": ["준비", "루틴"],
+    "superFlash": false
   }
 }
