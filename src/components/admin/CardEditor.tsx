@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./CardEditor.module.css";
-import { CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
+import { CardTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CardEffect, CardType, StatModifier } from "@/game/engine/types";
 
@@ -16,7 +16,7 @@ const ACTION_TAGS = [
 ] as const;
 
 const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
-const CARD_TAGS = ["마법", "검술", "격투", "방어", "방패", "한손검"] as const;
+const CARD_TAGS = CardTagSchema.options;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
   "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle", "generate",

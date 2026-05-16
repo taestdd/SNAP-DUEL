@@ -9,7 +9,7 @@ export const ActionTagSchema = z.enum([
 
 export const HitPoseSchema = z.enum(["hit_weak", "hit_strong", "hit_aerial"]);
 
-export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "루틴"]);
+export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "암기"]);
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
