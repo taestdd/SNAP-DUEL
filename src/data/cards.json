@@ -6,14 +6,22 @@
     "cost": 3,
     "speed": 2,
     "groundAttack": 1,
+    "antiAirAttack": 0,
     "gain": 1,
     "effects": [],
     "text": "1데미지",
     "useCondition": "ground",
+    "tags": [
+      "격투"
+    ],
     "actionTag": "weak_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      { "ms": 150, "ground": "hit_weak", "airborne": "hit_aerial" }
+      {
+        "ms": 150,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "straight": {
@@ -23,14 +31,22 @@
     "cost": 3,
     "speed": 3,
     "groundAttack": 2,
+    "antiAirAttack": 0,
     "gain": 1,
     "effects": [],
     "text": "2데미지",
     "useCondition": "ground",
+    "tags": [
+      "격투"
+    ],
     "actionTag": "strong_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" }
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "uppercut": {
@@ -39,15 +55,29 @@
     "cardType": "attack",
     "cost": 3,
     "speed": 3,
+    "groundAttack": 0,
     "antiAirAttack": 3,
     "gain": 1,
-    "effects": [],
+    "effects": [
+      {
+        "type": "damage",
+        "value": 0,
+        "target": "enemy"
+      }
+    ],
     "text": "공중3 데미지",
     "useCondition": "ground",
+    "tags": [
+      "격투"
+    ],
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",
     "hitTimings": [
-      { "ms": 250, "ground": "hit_strong", "airborne": "hit_aerial" }
+      {
+        "ms": 250,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "sweep": {
@@ -57,16 +87,28 @@
     "cost": 3,
     "speed": 4,
     "groundAttack": 2,
+    "antiAirAttack": 0,
     "gain": 1,
     "effects": [
-      { "type": "airborne", "value": 2, "target": "enemy" }
+      {
+        "type": "airborne",
+        "value": 2,
+        "target": "enemy"
+      }
     ],
     "text": "2데미지, 2에어본",
     "useCondition": "ground",
+    "tags": [
+      "격투"
+    ],
     "actionTag": "strong_kick",
     "actionTagAirborne": "aerial_kick",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" }
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "dragon_kick": {
@@ -79,14 +121,26 @@
     "antiAirAttack": 4,
     "gain": 1,
     "effects": [
-      { "type": "airborne", "value": 2, "target": "enemy" }
+      {
+        "type": "airborne",
+        "value": 2,
+        "target": "enemy"
+      }
     ],
     "text": "2데미지, 4공중 데미지, 2에어본",
     "actionTag": "dragon_kick",
     "actionTagAirborne": "dragon_kick",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" },
-      { "ms": 300, "ground": "hit_strong", "airborne": "hit_aerial" }
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      },
+      {
+        "ms": 300,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "haymaker": {
@@ -104,7 +158,11 @@
     "actionTag": "hadouken",
     "actionTagAirborne": "hadouken",
     "hitTimings": [
-      { "ms": 300, "ground": "hit_strong", "airborne": "hit_aerial" }
+      {
+        "ms": 300,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "rising_strike": {
@@ -117,7 +175,11 @@
     "antiAirAttack": 3,
     "gain": 1,
     "effects": [
-      { "type": "airborne", "value": 2, "target": "enemy" }
+      {
+        "type": "airborne",
+        "value": 2,
+        "target": "enemy"
+      }
     ],
     "text": "Deal 3 ground damage and 3 anti-air damage. Launch the opponent (airborneStack 2).",
     "superFlash": true,
@@ -125,8 +187,16 @@
     "actionTag": "rising_punch",
     "actionTagAirborne": "rising_punch",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_weak", "airborne": "hit_aerial" },
-      { "ms": 350, "ground": "hit_aerial", "airborne": "hit_aerial" }
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      },
+      {
+        "ms": 350,
+        "ground": "hit_aerial",
+        "airborne": "hit_aerial"
+      }
     ]
   },
   "quick_draw": {
@@ -209,11 +279,20 @@
     "actionTag": "strong_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_strong", "airborne": "hit_aerial" }
+      {
+        "ms": 200,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
     ],
     "statModifiers": [
       {
-        "condition": { "check": "hp", "target": "self", "op": "<", "value": 6 },
+        "condition": {
+          "check": "hp",
+          "target": "self",
+          "op": "<",
+          "value": 6
+        },
         "stat": "ground_attack",
         "delta": 3
       }
@@ -233,11 +312,20 @@
     "actionTag": "weak_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      { "ms": 150, "ground": "hit_weak", "airborne": "hit_aerial" }
+      {
+        "ms": 150,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      }
     ],
     "statModifiers": [
       {
-        "condition": { "check": "hand_count", "target": "enemy", "op": ">", "value": 4 },
+        "condition": {
+          "check": "hand_count",
+          "target": "enemy",
+          "op": ">",
+          "value": 4
+        },
         "stat": "speed",
         "delta": -1
       }
@@ -257,11 +345,20 @@
     "actionTag": "strong_punch",
     "actionTagAirborne": "aerial_punch",
     "hitTimings": [
-      { "ms": 250, "ground": "hit_strong", "airborne": "hit_aerial" }
+      {
+        "ms": 250,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
     ],
     "statModifiers": [
       {
-        "condition": { "check": "deck_count", "target": "self", "op": "<", "value": 3 },
+        "condition": {
+          "check": "deck_count",
+          "target": "self",
+          "op": "<",
+          "value": 3
+        },
         "stat": "cost",
         "delta": -2
       }
@@ -278,7 +375,9 @@
     "gain": 0,
     "effects": [],
     "text": "【제압독】 아무 효과 없음. 나기에 의해 당신의 덱에 심어진 카드.",
-    "tags": ["제압독"],
+    "tags": [
+      "제압독"
+    ],
     "superFlash": false
   },
   "molar_single": {
@@ -301,7 +400,10 @@
       }
     ],
     "text": "1 지상 데미지. 상대 덱 상단에 제압독 1장을 심는다.",
-    "tags": ["투척형", "MOLAR"],
+    "tags": [
+      "투척형",
+      "MOLAR"
+    ],
     "superFlash": false
   },
   "molar_scatter": {
@@ -329,7 +431,10 @@
       }
     ],
     "text": "2 지상 데미지. 상대 덱에 제압독 2장을 심고 셔플한다. 독이 어디 박혔는지 모른다.",
-    "tags": ["투척형", "MOLAR"],
+    "tags": [
+      "투척형",
+      "MOLAR"
+    ],
     "superFlash": false
   },
   "resign_checklist": {
@@ -358,7 +463,9 @@
       }
     ],
     "text": "카드 1장 드로우. 상대 trash의 제압독 1장을 상대 덱 맨 아래로 되돌린다.",
-    "tags": ["루틴"],
+    "tags": [
+      "루틴"
+    ],
     "superFlash": false
   },
   "molar_prep": {
@@ -378,7 +485,10 @@
       }
     ],
     "text": "덱에서 MOLAR 카드 1장을 핸드로 가져온다.",
-    "tags": ["준비", "루틴"],
+    "tags": [
+      "준비",
+      "루틴"
+    ],
     "superFlash": false
   }
 }
