@@ -332,6 +332,35 @@
     "tags": ["투척형", "MOLAR"],
     "superFlash": false
   },
+  "resign_checklist": {
+    "id": "resign_checklist",
+    "name": "퇴사 체크리스트",
+    "cardType": "skill",
+    "cost": 0,
+    "speed": 1,
+    "groundAttack": 0,
+    "antiAirAttack": 0,
+    "gain": 0,
+    "effects": [
+      {
+        "type": "draw",
+        "value": 1
+      },
+      {
+        "type": "move_cards",
+        "count": 1,
+        "fromZone": "trash",
+        "toZone": "deck",
+        "toPosition": "bottom",
+        "target": "enemy",
+        "tag": "제압독",
+        "userSelects": false
+      }
+    ],
+    "text": "카드 1장 드로우. 상대 trash의 제압독 1장을 상대 덱 맨 아래로 되돌린다.",
+    "tags": ["루틴"],
+    "superFlash": false
+  },
   "molar_prep": {
     "id": "molar_prep",
     "name": "의치 준비",

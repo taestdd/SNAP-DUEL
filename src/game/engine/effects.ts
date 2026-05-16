@@ -305,7 +305,10 @@ export function applyCardEffectsWithPause(
       const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
       const count = effect.count ?? 1;
 
-      const candidates = filterCards(s[fromPlayerId][fromZone] as string[]);
+      const allCards = filterCards(s[fromPlayerId][fromZone] as string[]);
+      const candidates = effect.tag
+        ? allCards.filter((id) => getCard(id)?.tags?.includes(effect.tag!))
+        : allCards;
 
       if (effect.userSelects) {
         const pendingSelection: PendingSelection = {
