@@ -59,6 +59,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .section {
@@ -80,7 +81,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -214,7 +215,7 @@
 /* HitTiming */
 .hitTimingItem {
   display: grid;
-  grid-template-columns: 80px 1fr 1fr auto;
+  grid-template-columns: minmax(60px, 80px) 1fr 1fr auto;
   gap: 10px;
   align-items: end;
   margin-bottom: 10px;
@@ -328,4 +329,28 @@
   font-size: 13px;
   color: #aaa;
   margin-top: 4px;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 16px 12px 0;
+  }
+
+  .header {
+    gap: 10px;
+  }
+
+  .section {
+    padding: 14px 12px;
+  }
+
+  .hitTimingItem {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hitTimingItem > :last-child {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+  }
 }
