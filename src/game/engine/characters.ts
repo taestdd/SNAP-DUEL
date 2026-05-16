@@ -15,6 +15,6 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     maxHp: 10,
     entryEffect: null,
     exitEffect: { type: "draw", value: 1, target: "self" },
-    affinities: ["인법", "격투", "암기"],
+    affinities: ["MOLAR", "인법", "격투", "암기"],
   },
 };

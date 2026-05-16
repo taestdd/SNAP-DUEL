@@ -36,10 +36,47 @@
       "recall",
       "recycle",
       "recycle",
+      "recycle"
+    ]
+  },
+  "PROTO2": {
+    "id": "PROTO2",
+    "name": "proto2",
+    "characters": [
+      "A",
+      "B"
+    ],
+    "cards": [
+      "molar_single",
+      "molar_single",
+      "molar_single",
+      "molar_scatter",
+      "molar_scatter",
+      "molar_scatter",
+      "haymaker",
+      "haymaker",
+      "haymaker",
+      "jab",
+      "jab",
+      "jab",
       "recycle",
-      "desperation_strike",
-      "pressure_jab",
-      "last_stand"
+      "recycle",
+      "recycle",
+      "resign_checklist",
+      "resign_checklist",
+      "resign_checklist",
+      "straight",
+      "straight",
+      "straight",
+      "recall",
+      "recall",
+      "recall",
+      "molar_prep",
+      "molar_prep",
+      "molar_prep",
+      "rising_strike",
+      "rising_strike",
+      "rising_strike"
     ]
   }
 }

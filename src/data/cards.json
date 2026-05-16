@@ -128,6 +128,10 @@
       }
     ],
     "text": "2데미지, 4공중 데미지, 2에어본",
+    "tags": [
+      "격투",
+      "구룡권"
+    ],
     "actionTag": "dragon_kick",
     "actionTagAirborne": "dragon_kick",
     "hitTimings": [
@@ -150,11 +154,15 @@
     "cost": 5,
     "speed": 4,
     "groundAttack": 5,
+    "antiAirAttack": 0,
     "gain": 0,
     "effects": [],
     "text": "Deal 5 ground damage.",
-    "superFlash": true,
     "useCondition": "ground",
+    "tags": [
+      "격투",
+      "구룡권"
+    ],
     "actionTag": "hadouken",
     "actionTagAirborne": "hadouken",
     "hitTimings": [
@@ -163,7 +171,8 @@
         "ground": "hit_strong",
         "airborne": "hit_aerial"
       }
-    ]
+    ],
+    "superFlash": true
   },
   "rising_strike": {
     "id": "rising_strike",
@@ -368,17 +377,11 @@
     "id": "seiatsu_doku",
     "name": "제압독",
     "cardType": "skill",
-    "cost": 0,
+    "cost": 1,
     "speed": 0,
-    "groundAttack": 0,
-    "antiAirAttack": 0,
     "gain": 0,
     "effects": [],
-    "text": "【제압독】 아무 효과 없음. 나기에 의해 당신의 덱에 심어진 카드.",
-    "tags": [
-      "제압독"
-    ],
-    "superFlash": false
+    "text": "【제압독】 아무 효과 없음. 나기에 의해 당신의 덱에 심어진 카드."
   },
   "molar_single": {
     "id": "molar_single",
@@ -388,23 +391,31 @@
     "speed": 2,
     "groundAttack": 1,
     "antiAirAttack": 0,
-    "gain": 1,
+    "gain": 0,
     "effects": [
       {
         "type": "generate",
-        "cardId": "seiatsu_doku",
+        "target": "enemy",
         "toZone": "deck",
         "toPosition": "top",
         "count": 1,
-        "target": "enemy"
+        "cardId": "seiatsu_doku"
       }
     ],
     "text": "1 지상 데미지. 상대 덱 상단에 제압독 1장을 심는다.",
+    "useCondition": "ground",
     "tags": [
-      "투척형",
       "MOLAR"
     ],
-    "superFlash": false
+    "actionTag": "hadouken",
+    "actionTagAirborne": "hadouken",
+    "hitTimings": [
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      }
+    ]
   },
   "molar_scatter": {
     "id": "molar_scatter",
@@ -418,55 +429,69 @@
     "effects": [
       {
         "type": "generate",
-        "cardId": "seiatsu_doku",
+        "target": "enemy",
         "toZone": "deck",
-        "toPosition": "bottom",
-        "count": 2,
-        "target": "enemy"
-      },
-      {
-        "type": "shuffle",
-        "zone": "deck",
-        "target": "enemy"
+        "toPosition": "top",
+        "count": 3,
+        "cardId": "seiatsu_doku"
       }
     ],
-    "text": "2 지상 데미지. 상대 덱에 제압독 2장을 심고 셔플한다. 독이 어디 박혔는지 모른다.",
+    "text": "2 지상 데미지. 상대 덱에 제압독 3장",
     "tags": [
-      "투척형",
       "MOLAR"
     ],
-    "superFlash": false
+    "actionTag": "hadouken",
+    "actionTagAirborne": "aerial_punch",
+    "hitTimings": [
+      {
+        "ms": 200,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      },
+      {
+        "ms": 400,
+        "ground": "hit_weak",
+        "airborne": "hit_aerial"
+      },
+      {
+        "ms": 600,
+        "ground": "hit_strong",
+        "airborne": "hit_aerial"
+      }
+    ],
+    "superFlash": true
   },
   "resign_checklist": {
     "id": "resign_checklist",
     "name": "퇴사 체크리스트",
     "cardType": "skill",
-    "cost": 0,
+    "cost": 2,
     "speed": 1,
-    "groundAttack": 0,
-    "antiAirAttack": 0,
     "gain": 0,
     "effects": [
       {
         "type": "draw",
-        "value": 1
-      },
-      {
-        "type": "move_cards",
-        "count": 1,
-        "fromZone": "trash",
-        "toZone": "deck",
-        "toPosition": "bottom",
-        "target": "enemy",
-        "tag": "제압독",
-        "userSelects": false
+        "value": 3,
+        "target": "self"
       }
     ],
-    "text": "카드 1장 드로우. 상대 trash의 제압독 1장을 상대 덱 맨 아래로 되돌린다.",
+    "text": "카드 2장 드로우. 상대 덱이 20장 이상이라면, 코스트-2",
     "tags": [
-      "루틴"
+      "MOLAR",
+      "인법"
     ],
-    "superFlash": false
+    "statModifiers": [
+      {
+        "condition": {
+          "check": "deck_count",
+          "target": "enemy",
+          "op": "<",
+          "value": 19
+        },
+        "stat": "cost",
+        "delta": -2
+      }
+    ]
   },
   "molar_prep": {
     "id": "molar_prep",
@@ -474,21 +499,22 @@
     "cardType": "skill",
     "cost": 0,
     "speed": 1,
-    "groundAttack": 0,
-    "antiAirAttack": 0,
     "gain": 0,
     "effects": [
       {
         "type": "draw_tagged",
         "value": 1,
         "tag": "MOLAR"
+      },
+      {
+        "type": "shuffle",
+        "value": 0,
+        "target": "self"
       }
     ],
     "text": "덱에서 MOLAR 카드 1장을 핸드로 가져온다.",
     "tags": [
-      "준비",
-      "루틴"
-    ],
-    "superFlash": false
+      "MOLAR"
+    ]
   }
 }
