@@ -86,6 +86,7 @@ export type CharacterId = "A" | "B";
 
 export type CharacterDef = {
   id: CharacterId;
+  name: string;
   maxHp: number;
   /** 이 캐릭터로 교체될 때 발동 */
   entryEffect: CardEffect | null;
@@ -111,7 +112,15 @@ export type CardTag =
   | "격투"
   | "방어"
   | "방패"
-  | "한손검";
+  | "한손검"
+  | "제압독"
+  | "투척형"
+  | "MOLAR"
+  | "인법"
+  | "제압기"
+  | "필살"
+  | "준비"
+  | "루틴";
 
 /**
  * 카드 효과 타입
