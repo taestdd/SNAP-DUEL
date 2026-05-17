@@ -304,7 +304,7 @@ export function applyCardEffectsWithPause(
 
     if (effect.type === "move_cards") {
       const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
-      const toPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+      const toPlayerId: PlayerId = (effect.toTarget ?? effect.target) === "enemy" ? opponentOf(player) : player;
       const fromZone: CardZone = effect.fromZone ?? "trash";
       const toZone: CardZone = effect.toZone ?? "hand";
       const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
