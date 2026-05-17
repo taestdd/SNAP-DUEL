@@ -57,6 +57,7 @@ export const CardEffectSchema = z.object({
   type: EffectTypeSchema,
   value: z.number().optional(),
   target: TargetSchema.optional(),
+  toTarget: TargetSchema.optional(),
   damageType: DamageTypeSchema.optional(),
   fromZone: CardZoneSchema.optional(),
   toZone: CardZoneSchema.optional(),

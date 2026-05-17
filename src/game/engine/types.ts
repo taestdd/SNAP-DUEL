@@ -153,6 +153,8 @@ export type CardEffect = {
   type: EffectType;
   value?: number;
   target?: Target;
+  /** move_cards: 카드를 보낼 대상 플레이어 (미지정 시 target과 동일) */
+  toTarget?: Target;
   /** damage 효과에만 사용. 미지정 시 항상 적용 */
   damageType?: DamageType;
   /** move_cards: 카드를 가져올 영역 */
