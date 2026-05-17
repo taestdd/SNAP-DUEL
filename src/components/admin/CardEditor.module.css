@@ -212,15 +212,6 @@
   background: #22224a;
 }
 
-/* HitTiming */
-.hitTimingItem {
-  display: grid;
-  grid-template-columns: minmax(60px, 80px) 1fr 1fr auto;
-  gap: 10px;
-  align-items: end;
-  margin-bottom: 10px;
-}
-
 /* Submit */
 .submitRow {
   display: flex;
@@ -344,13 +335,4 @@
     padding: 14px 12px;
   }
 
-  .hitTimingItem {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .hitTimingItem > :last-child {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-  }
 }

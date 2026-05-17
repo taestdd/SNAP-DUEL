@@ -393,39 +393,44 @@ export default function CardEditor({ initial, mode }: Props) {
           {/* Hit Timings */}
           <div className={styles.sectionTitle} style={{ marginTop: 16 }}>Hit Timings</div>
           {hitTimings.map((ht, i) => (
-            <div key={i} className={styles.hitTimingItem}>
-              <div className={styles.field}>
-                <label className={styles.label}>ms</label>
-                <NumericInput
-                  className={styles.input}
-                  min={0}
-                  value={ht.ms}
-                  onChange={(n) => updateHitTiming(i, { ms: n })}
-                />
+            <div key={i} className={styles.effectItem}>
+              <div className={styles.effectHeader}>
+                <span className={styles.effectIndex}>Hit Timing #{i + 1}</span>
+                <button type="button" className={styles.removeBtn} onClick={() => removeHitTiming(i)}>
+                  ✕ 삭제
+                </button>
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Ground 포즈</label>
-                <select
-                  className={styles.select}
-                  value={ht.ground}
-                  onChange={(e) => updateHitTiming(i, { ground: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
-                >
-                  {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label className={styles.label}>ms</label>
+                  <NumericInput
+                    className={styles.input}
+                    min={0}
+                    value={ht.ms}
+                    onChange={(n) => updateHitTiming(i, { ms: n })}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Ground 포즈</label>
+                  <select
+                    className={styles.select}
+                    value={ht.ground}
+                    onChange={(e) => updateHitTiming(i, { ground: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
+                  >
+                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Airborne 포즈</label>
+                  <select
+                    className={styles.select}
+                    value={ht.airborne}
+                    onChange={(e) => updateHitTiming(i, { airborne: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
+                  >
+                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Airborne 포즈</label>
-                <select
-                  className={styles.select}
-                  value={ht.airborne}
-                  onChange={(e) => updateHitTiming(i, { airborne: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
-                >
-                  {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-              <button type="button" className={styles.removeBtn} onClick={() => removeHitTiming(i)}>
-                ✕
-              </button>
             </div>
           ))}
           <button type="button" className={styles.addBtn} onClick={addHitTiming}>
