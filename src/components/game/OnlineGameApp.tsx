@@ -46,11 +46,11 @@ function flipState(state: GameState): GameState {
           unresolvedPlayers: state.pendingSelection.unresolvedPlayers.map(flipId),
         }
       : null,
-    resolveQueue: state.resolveQueue.map((item) => ({
-      ...item,
-      player: flipId(item.player),
-    })),
-    resolveUnresolved: state.resolveUnresolved.map(flipId),
+    resolveContext: {
+      queue: state.resolveContext.queue.map((item) => ({ ...item, player: flipId(item.player) })),
+      index: state.resolveContext.index,
+      unresolved: state.resolveContext.unresolved.map(flipId),
+    },
     animScript: state.animScript.map((entry) => ({
       ...entry,
       actor: flipId(entry.actor),

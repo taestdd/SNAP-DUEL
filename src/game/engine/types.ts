@@ -418,12 +418,12 @@ export type GameState = {
   /** P1이 이번 턴에 태그를 사용했는지 (턴당 1회 제한) */
   p1TaggedThisTurn: boolean;
 
-  /** RESOLVING 페이즈: 처리할 카드 순서 목록 */
-  resolveQueue: { player: PlayerId; cardId: string }[];
-  /** RESOLVING 페이즈: 다음에 처리할 인덱스 */
-  resolveIndex: number;
-  /** RESOLVING 페이즈: 아직 카드를 처리하지 않은 플레이어 */
-  resolveUnresolved: PlayerId[];
+  /** RESOLVING 페이즈: 리졸브 루프 컨텍스트 (큐·인덱스·미처리 플레이어를 하나로 묶음) */
+  resolveContext: {
+    queue: { player: PlayerId; cardId: string }[];
+    index: number;
+    unresolved: PlayerId[];
+  };
 
   /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (캔슬된 카드 제외) */
   animScript: AnimScriptEntry[];

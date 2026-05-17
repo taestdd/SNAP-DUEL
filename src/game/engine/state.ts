@@ -75,9 +75,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     log: [],
     p1TaggedThisTurn: false,
 
-    resolveQueue: [],
-    resolveIndex: 0,
-    resolveUnresolved: [],
+    resolveContext: { queue: [], index: 0, unresolved: [] },
     animScript: [],
     animStartHp: null,
     draftSelections: { P1: null, AI: null },

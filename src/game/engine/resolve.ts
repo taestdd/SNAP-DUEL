@@ -96,13 +96,17 @@ function applyCancelOnHit(state: GameState, attacker: PlayerId, unresolved: Set<
 /* 리졸브 메인 루프            */
 /* -------------------------- */
 
+function emptyResolveContext() {
+  return { queue: [] as { player: PlayerId; cardId: string }[], index: 0, unresolved: [] as PlayerId[] };
+}
+
 function resolveAll(state: GameState): GameState {
   if (state.phase !== "RESOLVING") return state;
 
-  const items = state.resolveQueue;
-  const unresolved = new Set<PlayerId>(state.resolveUnresolved);
+  const { queue: items, index: startIdx, unresolved: unresolvedArr } = state.resolveContext;
+  const unresolved = new Set<PlayerId>(unresolvedArr);
   const animScript: AnimScriptEntry[] = [...state.animScript];
-  let idx = state.resolveIndex;
+  let idx = startIdx;
   let s = state;
 
   while (true) {
@@ -127,7 +131,7 @@ function resolveAll(state: GameState): GameState {
       animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
         hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
       if (animScript.length > 0) {
-        return { ...s, phase: "ANIMATING", resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
+        return { ...s, phase: "ANIMATING", resolveContext: emptyResolveContext(), animScript };
       }
       return s;
     }
@@ -159,7 +163,7 @@ function resolveAll(state: GameState): GameState {
     idx++;
   }
 
-  const base = { ...s, resolveQueue: [], resolveIndex: 0, resolveUnresolved: [], animScript };
+  const base = { ...s, resolveContext: emptyResolveContext(), animScript };
   if (animScript.length > 0) return { ...base, phase: "ANIMATING" };
   return endTurnCleanup(base);
 }
@@ -170,7 +174,7 @@ function resolveAll(state: GameState): GameState {
 
 /**
  * RESOLVE 페이즈 진입 시 호출.
- * resolveQueue를 구성하고 모든 카드를 즉시 처리 후 ANIMATING으로 전환.
+ * resolveContext를 구성하고 모든 카드를 즉시 처리 후 ANIMATING으로 전환.
  */
 export function enterResolving(state: GameState): GameState {
   if (state.phase !== "RESOLVE") return state;
@@ -181,21 +185,13 @@ export function enterResolving(state: GameState): GameState {
   if (state.AI.queue[0]) unresolvedArr.push("AI");
 
   if (items.length === 0) {
-    return endTurnCleanup({
-      ...state,
-      resolveQueue: [],
-      resolveIndex: 0,
-      resolveUnresolved: [],
-      animScript: [],
-    });
+    return endTurnCleanup({ ...state, resolveContext: emptyResolveContext(), animScript: [] });
   }
 
   return resolveAll({
     ...state,
     phase: "RESOLVING",
-    resolveQueue: items,
-    resolveIndex: 0,
-    resolveUnresolved: unresolvedArr,
+    resolveContext: { queue: items, index: 0, unresolved: unresolvedArr },
     animScript: [],
     animStartHp: { P1: state.P1.hp, AI: state.AI.hp },
   });
@@ -219,8 +215,6 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
 
   return resolveAll({
     ...s,
-    resolveQueue: ps.resolveItems,
-    resolveIndex: ps.resolveNextIndex,
-    resolveUnresolved: ps.unresolvedPlayers,
+    resolveContext: { queue: ps.resolveItems, index: ps.resolveNextIndex, unresolved: ps.unresolvedPlayers },
   });
 }
