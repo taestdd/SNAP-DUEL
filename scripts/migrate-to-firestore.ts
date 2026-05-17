@@ -1,26 +1,22 @@
 /**
  * One-time migration: uploads cards.json and decks.json to Firestore.
  *
- * Run with:
- *   npx tsx scripts/migrate-to-firestore.ts
+ * Setup:
+ *   1. Firebase Console → Project Settings → Service Accounts
+ *      → "Generate new private key" → save as scripts/serviceAccountKey.json
+ *   2. Run: npx tsx scripts/migrate-to-firestore.ts
  */
 
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB2WrnkhwrysAi5qlWLFl1l9EnkVDNzdlM",
-  authDomain: "snap-duel-5252.firebaseapp.com",
-  projectId: "snap-duel-5252",
-  storageBucket: "snap-duel-5252.firebasestorage.app",
-  messagingSenderId: "779186063602",
-  appId: "1:779186063602:web:adbbf5b6723e3a0e9f686b",
-};
+const keyPath = join(process.cwd(), "scripts/serviceAccountKey.json");
+const serviceAccount = JSON.parse(readFileSync(keyPath, "utf-8"));
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+initializeApp({ credential: cert(serviceAccount) });
+const db = getFirestore();
 
 async function migrate() {
   const dataDir = join(process.cwd(), "src/data");
@@ -30,13 +26,13 @@ async function migrate() {
 
   console.log(`Uploading ${Object.keys(cards).length} cards...`);
   for (const [id, card] of Object.entries(cards)) {
-    await setDoc(doc(db, "cards", id), card as object);
+    await db.collection("cards").doc(id).set(card as object);
     console.log(`  ✓ card: ${id}`);
   }
 
   console.log(`\nUploading ${Object.keys(decks).length} decks...`);
   for (const [id, deck] of Object.entries(decks)) {
-    await setDoc(doc(db, "decks", id), deck as object);
+    await db.collection("decks").doc(id).set(deck as object);
     console.log(`  ✓ deck: ${id}`);
   }
 
