@@ -118,6 +118,13 @@
   padding: 7px 10px;
   outline: none;
   transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.input,
+.select {
+  height: 36px;
+  line-height: 1;
 }
 
 .input:focus,
