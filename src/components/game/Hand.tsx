@@ -3,7 +3,7 @@ import type { Combatant, GameState, PlayerId, SelectedCard } from "@/game/engine
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
 import CardDetailModal from "./CardDetailModal";
-import { CARDS } from "@/game/engine/cards";
+import { getCard } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
 import { evaluateModifiers } from "@/game/engine/stateHelpers";
 
@@ -66,7 +66,7 @@ export default function Hand({
 
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
-          const card = CARDS[cardId];
+          const card = getCard(cardId);
           const mods = evaluateModifiers(gameState, playerId, card?.statModifiers);
           const effectiveCost = card ? Math.max(0, card.cost + (mods.cost ?? 0)) : 0;
           const costOk = !!card && effectiveCost <= me.deck.length;

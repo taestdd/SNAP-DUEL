@@ -1,4 +1,4 @@
-import { CARDS } from "@/game/engine/cards";
+import { getCard } from "@/game/engine/cards";
 import { effectBadgeClass, effectLabel } from "./CardView";
 import styles from "./CardDetailModal.module.css";
 import type { GameState, PlayerId, StatModifier } from "@/game/engine/types";
@@ -42,7 +42,7 @@ export default function CardDetailModal({
   gameState?: GameState;
   playerId?: PlayerId;
 }) {
-  const card = CARDS[cardId];
+  const card = getCard(cardId);
   if (!card) return null;
 
   const activeMods = gameState && playerId && card.statModifiers
