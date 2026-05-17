@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { DeckSchema } from "@/game/engine/deckSchema";
 
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     }
 
     await getAdminDb().collection("decks").doc(deck.id).set(deck);
+    revalidateTag("decks", "default");
     return NextResponse.json(deck, { status: 201 });
   } catch {
     return NextResponse.json({ error: "저장 실패" }, { status: 500 });

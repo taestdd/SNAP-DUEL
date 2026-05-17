@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { DeckSchema } from "@/game/engine/deckSchema";
 
@@ -17,6 +18,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     await getAdminDb().collection("decks").doc(id).set(parsed.data);
+    revalidateTag("decks", "default");
     return NextResponse.json(parsed.data);
   } catch {
     return NextResponse.json({ error: "수정 실패" }, { status: 500 });
@@ -32,6 +34,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     }
 
     await getAdminDb().collection("decks").doc(id).delete();
+    revalidateTag("decks", "default");
     return NextResponse.json({ deleted: id });
   } catch {
     return NextResponse.json({ error: "삭제 실패" }, { status: 500 });

@@ -4,11 +4,10 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
-import { initCards } from "@/game/engine/cards";
-import { initDecks } from "@/game/engine/state";
 import type { CharacterId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import SetupScreen from "@/components/game/SetupScreen";
+import { useGameData } from "@/hooks/useGameData";
 
 const TAG_ANIM_DURATION = 700;
 
@@ -100,24 +99,21 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
 
 export default function Page() {
   const router = useRouter();
-  const [loaded, setLoaded] = useState(false);
+  const dataStatus = useGameData();
   const [configs, setConfigs] = useState<{ player: SetupConfig; ai?: SetupConfig } | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/cards").then((r) => r.json()),
-      fetch("/api/decks").then((r) => r.json()),
-    ]).then(([cards, decks]) => {
-      initCards(cards);
-      initDecks(decks);
-      setLoaded(true);
-    });
-  }, []);
-
-  if (!loaded) {
+  if (dataStatus === "loading") {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#888" }}>
         로딩 중...
+      </div>
+    );
+  }
+
+  if (dataStatus === "error") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#f66" }}>
+        데이터를 불러올 수 없습니다. 새로고침 해주세요.
       </div>
     );
   }

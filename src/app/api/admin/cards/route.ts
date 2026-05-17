@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { CardSchema } from "@/game/engine/cardSchema";
 import { z } from "zod";
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     }
 
     await getAdminDb().collection("cards").doc(card.id).set(card);
+    revalidateTag("cards", "default");
     return NextResponse.json(card, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {

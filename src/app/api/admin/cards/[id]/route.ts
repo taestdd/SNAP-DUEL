@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { CardSchema } from "@/game/engine/cardSchema";
 import { z } from "zod";
@@ -18,6 +19,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     await getAdminDb().collection("cards").doc(id).set(parsed.data);
+    revalidateTag("cards", "default");
     return NextResponse.json(parsed.data);
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -36,6 +38,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     }
 
     await getAdminDb().collection("cards").doc(id).delete();
+    revalidateTag("cards", "default");
     return NextResponse.json({ deleted: id });
   } catch {
     return NextResponse.json({ error: "삭제 실패" }, { status: 500 });
