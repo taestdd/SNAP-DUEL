@@ -7,7 +7,7 @@ import {
   dealDamage,
   draw,
   checkGameOver,
-  filterCards,
+
   moveCardsBetweenZones,
   syncExhausted,
   clearAttackBuff,
@@ -269,7 +269,7 @@ export function applyCardEffectsWithPause(
       const zone: CardZone = effect.zone ?? "deck";
       const count = effect.value ?? 1;
 
-      const pool = filterCards(s[fromPlayerId][zone] as string[]);
+      const pool = s[fromPlayerId][zone] as string[];
       const candidates = pool.filter((id) => getCard(id)?.tags?.includes(tag));
 
       if (candidates.length === 0) {
@@ -310,7 +310,7 @@ export function applyCardEffectsWithPause(
       const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
       const count = effect.count ?? 1;
 
-      const allCards = filterCards(s[fromPlayerId][fromZone] as string[]);
+      const allCards = s[fromPlayerId][fromZone] as string[];
       const candidates = effect.tag
         ? allCards.filter((id) => getCard(id)?.tags?.includes(effect.tag!))
         : allCards;

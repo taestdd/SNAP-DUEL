@@ -1,10 +1,6 @@
 import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
-import { canUseCard, getBenchChar } from "./rules";
-
-function opponentOf(player: PlayerId): PlayerId {
-  return player === "P1" ? "AI" : "P1";
-}
+import { canUseCard, getBenchChar, opponentOf } from "./rules";
 
 function getMinAttackSpeed(): number {
   const speeds = Object.values(getAllCards())
