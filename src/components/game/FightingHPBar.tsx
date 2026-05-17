@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Combatant } from "@/game/engine/types";
-import { CHARACTERS } from "@/game/engine/characters";
+import { CHARACTERS, getCharacter } from "@/game/engine/characters";
 import { getBenchChar } from "@/game/engine/stateHelpers";
 import StatusBadges from "./StatusBadges";
 import styles from "./FightingHPBar.module.css";
@@ -62,7 +62,7 @@ export default function FightingHPBar({
               ].join(" ")}
             >
               <img
-                src={`/sprites/charactor_profile/profile_char_${charId.toLowerCase()}.png`}
+                src={`/sprites/charactor_profile/profile_char_${getCharacter(charId)?.spriteId ?? charId}.png`}
                 alt={`char ${charId}`}
                 className={styles.portraitImg}
               />

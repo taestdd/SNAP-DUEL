@@ -88,6 +88,8 @@ export type CharacterDef = {
   id: CharacterId;
   name: string;
   maxHp: number;
+  /** spriteMap.ts의 CHARACTER_SPRITES 키. 스프라이트 에셋과 캐릭터 ID를 분리 */
+  spriteId: string;
   /** 이 캐릭터로 교체될 때 발동 */
   entryEffect: CardEffect | null;
   /** 이 캐릭터에서 다른 캐릭터로 교체될 때 발동 */

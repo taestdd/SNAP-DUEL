@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import type { CharacterId, FighterPose } from "@/game/engine/types";
+import type { FighterPose } from "@/game/engine/types";
 import FighterSprite from "./FighterSprite";
 import HitEffect from "./HitEffect";
 import styles from "./ArenaStage.module.css";
@@ -12,10 +12,10 @@ export type HitSide = "player" | "ai" | null;
 interface ArenaStageProps {
   playerPose?: FighterPose;
   playerPoseKey?: string | number;
-  playerCharacter?: CharacterId;
+  playerCharacter?: string;
   aiPose?: FighterPose;
   aiPoseKey?: string | number;
-  aiCharacter?: CharacterId;
+  aiCharacter?: string;
   shakeLevel?: ShakeLevel;
   hitSide?: HitSide;
   playerFrozenUntil?: number;
@@ -35,10 +35,10 @@ interface ArenaStageProps {
 export default function ArenaStage({
   playerPose = "idle",
   playerPoseKey = "p1-idle",
-  playerCharacter = "A",
+  playerCharacter = "fighter",
   aiPose = "idle",
   aiPoseKey = "ai-idle",
-  aiCharacter = "A",
+  aiCharacter = "fighter",
   shakeLevel = "none",
   hitSide = null,
   playerFrozenUntil = 0,

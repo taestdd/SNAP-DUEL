@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { CharacterId, FighterPose } from "@/game/engine/types";
+import type { FighterPose } from "@/game/engine/types";
+import { CHARACTERS } from "@/game/engine/characters";
 import { CHARACTER_SPRITES, frameToBackgroundPosition, backgroundSize } from "@/game/animation/spriteMap";
 import styles from "./FighterSprite.module.css";
 
@@ -12,7 +13,7 @@ interface FighterSpriteProps {
    * (같은 포즈를 다시 재생할 때도 key처럼 사용)
    */
   poseKey: string | number;
-  characterId: CharacterId;
+  characterId: string;
   /** true = scaleX(-1) 로 좌우 반전 (AI측 파이터) */
   flip?: boolean;
   className?: string;
@@ -31,7 +32,8 @@ export default function FighterSprite({
   frozenUntil = 0,
   flashKey = 0,
 }: FighterSpriteProps) {
-  const config = CHARACTER_SPRITES[characterId];
+  const spriteId = CHARACTERS[characterId]?.spriteId ?? characterId;
+  const config = CHARACTER_SPRITES[spriteId] ?? Object.values(CHARACTER_SPRITES)[0]!;
   const entry = config.poses[pose];
   const [frameIdx, setFrameIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
