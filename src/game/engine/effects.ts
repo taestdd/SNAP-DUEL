@@ -172,42 +172,6 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       );
     }
 
-    case "draw_tagged": {
-      const tag = effect.tag;
-      const count = effect.value ?? 1;
-      const zone = effect.zone ?? "deck";
-      if (!tag) return state;
-
-      const me = state[target];
-      const pool = zone === "cooldown" ? me.cooldown : me.deck;
-
-      const matchedIndices: number[] = [];
-      for (let i = 0; i < pool.length; i++) {
-        const c = getCard(pool[i]);
-        if (c?.tags?.includes(tag)) matchedIndices.push(i);
-      }
-      if (matchedIndices.length === 0) {
-        return pushLog(state, `draw_tagged(${tag}): no matching cards in ${zone}`);
-      }
-
-      const toDraw = matchedIndices.slice(0, count);
-      const newPool = pool.filter((_, i) => !toDraw.includes(i));
-      const drawnIds = toDraw.map((i) => pool[i]);
-      const newHand = [...me.hand, ...drawnIds];
-
-      return pushLog(
-        {
-          ...state,
-          [target]: {
-            ...me,
-            ...(zone === "cooldown" ? { cooldown: newPool } : { deck: newPool }),
-            hand: newHand,
-          },
-        },
-        `${target} draws ${drawnIds.length} tagged card(s) [${tag}] from ${zone}`,
-      );
-    }
-
     case "shuffle": {
       const zone = effect.zone ?? "deck";
       const arr = state[target][zone] as string[];
@@ -297,6 +261,46 @@ export function applyCardEffectsWithPause(
   }
 
   for (const effect of card.effects) {
+    if (effect.type === "draw_tagged") {
+      const tag = effect.tag;
+      if (!tag) continue;
+      const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+      const zone: CardZone = effect.zone ?? "deck";
+      const count = effect.value ?? 1;
+
+      const pool = filterCards(s[fromPlayerId][zone] as string[]);
+      const candidates = pool.filter((id) => getCard(id)?.tags?.includes(tag));
+
+      if (candidates.length === 0) {
+        s = pushLog(s, `draw_tagged(${tag}): no matching cards in ${zone}`);
+        continue;
+      }
+
+      if (player === "P1") {
+        const pendingSelection: PendingSelection = {
+          selectingPlayer: player,
+          candidates: [...candidates],
+          count,
+          fromZone: zone,
+          fromPlayerId,
+          toZone: "hand",
+          toPlayerId: player,
+          toPosition: "bottom",
+          sourcePlayer: player,
+          sourceCardId: cardId,
+          resolveItems,
+          resolveNextIndex,
+          unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
+        };
+        return { ...s, phase: "WAITING_SELECTION", pendingSelection } as GameState;
+      }
+
+      const autoSelected = candidates.slice(0, count);
+      s = moveCardsBetweenZones(s, fromPlayerId, zone, player, "hand", autoSelected, "bottom");
+      s = pushLog(s, `${player} draw_tagged [${tag}] ${autoSelected.length} card(s) from ${zone}`);
+      continue;
+    }
+
     if (effect.type === "move_cards") {
       const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
       const toPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
