@@ -26,6 +26,8 @@ const DAMAGE_TYPES = ["ground", "anti-air"] as const;
 const ZONES = ["hand", "deck", "trash", "cooldown", "queue"] as const;
 const POSITIONS = ["top", "bottom", "random"] as const;
 
+// ── 공용 UI 컴포넌트 ──────────────────────────────────────────
+
 function NumericInput({
   value,
   onChange,
@@ -37,9 +39,7 @@ function NumericInput({
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type">) {
   const [str, setStr] = useState(String(value));
 
-  useEffect(() => {
-    setStr(String(value));
-  }, [value]);
+  useEffect(() => { setStr(String(value)); }, [value]);
 
   return (
     <input
@@ -57,6 +57,62 @@ function NumericInput({
     />
   );
 }
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  children,
+  ...rest
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  children: React.ReactNode;
+} & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
+        {children}
+      </select>
+    </div>
+  );
+}
+
+function NumericField({
+  label,
+  ...rest
+}: {
+  label: string;
+} & Omit<React.ComponentProps<typeof NumericInput>, "className">) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <NumericInput className={styles.input} {...rest} />
+    </div>
+  );
+}
+
+function ItemCard({ title, onRemove, children }: {
+  title: string;
+  onRemove: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={styles.effectItem}>
+      <div className={styles.effectHeader}>
+        <span className={styles.effectIndex}>{title}</span>
+        <button type="button" className={styles.removeBtn} onClick={onRemove}>
+          ✕ 삭제
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 
 function emptyEffect(): CardEffect {
   return { type: "damage", value: 0, target: "enemy" };
@@ -83,17 +139,10 @@ export default function CardEditor({ initial, mode }: Props) {
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
   const [actionTag, setActionTag] = useState<string>(initial?.actionTag ?? "");
   const [actionTagAirborne, setActionTagAirborne] = useState<string>(initial?.actionTagAirborne ?? "");
-  const [effects, setEffects] = useState<CardEffect[]>(
-    initial?.effects ?? [emptyEffect()]
-  );
-  const [hitTimings, setHitTimings] = useState(
-    initial?.hitTimings ?? []
-  );
+  const [effects, setEffects] = useState<CardEffect[]>(initial?.effects ?? [emptyEffect()]);
+  const [hitTimings, setHitTimings] = useState(initial?.hitTimings ?? []);
   const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
-  const [statModifiers, setStatModifiers] = useState<StatModifier[]>(
-    initial?.statModifiers ?? []
-  );
-
+  const [statModifiers, setStatModifiers] = useState<StatModifier[]>(initial?.statModifiers ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -120,9 +169,7 @@ export default function CardEditor({ initial, mode }: Props) {
   }
 
   function toggleTag(tag: string) {
-    setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+    setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
   }
 
   function updateEffect(index: number, patch: Partial<CardEffect>) {
@@ -216,528 +263,269 @@ export default function CardEditor({ initial, mode }: Props) {
       {success && <div className={styles.successBox}>저장 완료! 목록으로 이동 중...</div>}
 
       <div className={styles.formBody}>
-      <form id="card-editor-form" onSubmit={handleSubmit}>
+        <form id="card-editor-form" onSubmit={handleSubmit}>
 
-        {/* 식별 */}
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>식별</div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>ID *</label>
-              <input
-                className={styles.input}
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                placeholder="weak_punch"
-                disabled={mode === "edit"}
-                required
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>이름 *</label>
-              <input
-                className={styles.input}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Weak Punch"
-                required
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>카드 타입</label>
-              <select
-                className={styles.select}
-                value={cardType}
-                onChange={(e) => setCardType(e.target.value as CardType)}
-              >
-                {CardTypeSchema.options.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className={styles.fieldFull}>
-            <label className={styles.label}>카드 설명 *</label>
-            <textarea
-              className={styles.textarea}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="카드 효과를 설명하는 텍스트"
-              required
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>카드 태그</label>
-            <div className={styles.tagGroup}>
-              {CARD_TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={`${styles.tagBtn} ${tags.includes(tag) ? styles.active : ""}`}
-                  onClick={() => toggleTag(tag)}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 수치 & 스탯 보정 */}
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>수치 & 스탯 보정</div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>코스트</label>
-              <NumericInput
-                className={styles.input}
-                min={0}
-                value={cost}
-                onChange={setCost}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>스피드</label>
-              <NumericInput
-                className={styles.input}
-                min={0}
-                value={speed}
-                onChange={setSpeed}
-              />
-            </div>
-          </div>
-          {cardType === "attack" && (
+          {/* 식별 */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>식별</div>
             <div className={styles.row}>
               <div className={styles.field}>
-                <label className={styles.label}>지상 공격력</label>
-                <NumericInput
+                <label className={styles.label}>ID *</label>
+                <input
                   className={styles.input}
-                  min={0}
-                  value={groundAttack}
-                  onChange={setGroundAttack}
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  placeholder="weak_punch"
+                  disabled={mode === "edit"}
+                  required
                 />
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>대공 공격력</label>
-                <NumericInput
+                <label className={styles.label}>이름 *</label>
+                <input
                   className={styles.input}
-                  min={0}
-                  value={antiAirAttack}
-                  onChange={setAntiAirAttack}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Weak Punch"
+                  required
                 />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>게인</label>
-                <NumericInput
-                  className={styles.input}
-                  min={0}
-                  value={gain}
-                  onChange={setGain}
-                />
+              <SelectField label="카드 타입" value={cardType} onChange={(v) => setCardType(v as CardType)}>
+                {CardTypeSchema.options.map((t) => <option key={t} value={t}>{t}</option>)}
+              </SelectField>
+            </div>
+            <div className={styles.fieldFull}>
+              <label className={styles.label}>카드 설명 *</label>
+              <textarea
+                className={styles.textarea}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="카드 효과를 설명하는 텍스트"
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>카드 태그</label>
+              <div className={styles.tagGroup}>
+                {CARD_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`${styles.tagBtn} ${tags.includes(tag) ? styles.active : ""}`}
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-          {statModifiers.map((mod, i) => (
-            <div key={i} className={styles.effectItem}>
-              <div className={styles.effectHeader}>
-                <span className={styles.effectIndex}>보정 #{i + 1}</span>
-                <button type="button" className={styles.removeBtn} onClick={() => removeModifier(i)}>
-                  ✕ 삭제
-                </button>
-              </div>
+          </div>
+
+          {/* 수치 & 스탯 보정 */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>수치 & 스탯 보정</div>
+            <div className={styles.row}>
+              <NumericField label="코스트" min={0} value={cost} onChange={setCost} />
+              <NumericField label="스피드" min={0} value={speed} onChange={setSpeed} />
+            </div>
+            {cardType === "attack" && (
               <div className={styles.row}>
-                <div className={styles.field}>
-                  <label className={styles.label}>조건 대상</label>
-                  <select
-                    className={styles.select}
-                    value={mod.condition.target}
-                    onChange={(e) => updateModifierCondition(i, { target: e.target.value as "self" | "enemy" })}
-                  >
+                <NumericField label="지상 공격력" min={0} value={groundAttack} onChange={setGroundAttack} />
+                <NumericField label="대공 공격력" min={0} value={antiAirAttack} onChange={setAntiAirAttack} />
+                <NumericField label="게인" min={0} value={gain} onChange={setGain} />
+              </div>
+            )}
+            {statModifiers.map((mod, i) => (
+              <ItemCard key={i} title={`보정 #${i + 1}`} onRemove={() => removeModifier(i)}>
+                <div className={styles.row}>
+                  <SelectField label="조건 대상" value={mod.condition.target} onChange={(v) => updateModifierCondition(i, { target: v as "self" | "enemy" })}>
                     <option value="self">self</option>
                     <option value="enemy">enemy</option>
-                  </select>
+                  </SelectField>
+                  <SelectField label="체크 항목" value={mod.condition.check} onChange={(v) => updateModifierCondition(i, { check: v as StatModifier["condition"]["check"] })}>
+                    {ConditionCheckSchema.options.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </SelectField>
+                  <SelectField label="연산자" value={mod.condition.op} onChange={(v) => updateModifierCondition(i, { op: v as "<" | ">" | "=" })}>
+                    {CompareOpSchema.options.map((op) => <option key={op} value={op}>{op}</option>)}
+                  </SelectField>
+                  <NumericField label="값" value={mod.condition.value} onChange={(n) => updateModifierCondition(i, { value: n })} />
                 </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>체크 항목</label>
-                  <select
-                    className={styles.select}
-                    value={mod.condition.check}
-                    onChange={(e) => updateModifierCondition(i, { check: e.target.value as StatModifier["condition"]["check"] })}
-                  >
-                    {ConditionCheckSchema.options.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                <div className={styles.row}>
+                  <SelectField label="보정 스탯" value={mod.stat} onChange={(v) => updateModifier(i, { stat: v as StatModifier["stat"] })}>
+                    {StatTargetSchema.options.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </SelectField>
+                  <NumericField label="Delta" value={mod.delta} onChange={(n) => updateModifier(i, { delta: n })} />
                 </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>연산자</label>
-                  <select
-                    className={styles.select}
-                    value={mod.condition.op}
-                    onChange={(e) => updateModifierCondition(i, { op: e.target.value as "<" | ">" | "=" })}
-                  >
-                    {CompareOpSchema.options.map((op) => (
-                      <option key={op} value={op}>{op}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>값</label>
-                  <NumericInput
-                    className={styles.input}
-                    value={mod.condition.value}
-                    onChange={(n) => updateModifierCondition(i, { value: n })}
-                  />
-                </div>
-              </div>
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label className={styles.label}>보정 스탯</label>
-                  <select
-                    className={styles.select}
-                    value={mod.stat}
-                    onChange={(e) => updateModifier(i, { stat: e.target.value as StatModifier["stat"] })}
-                  >
-                    {StatTargetSchema.options.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>Delta</label>
-                  <NumericInput
-                    className={styles.input}
-                    value={mod.delta}
-                    onChange={(n) => updateModifier(i, { delta: n })}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={styles.addBtn} onClick={addModifier}>
-            + 스탯 보정 추가
-          </button>
-        </div>
+              </ItemCard>
+            ))}
+            <button type="button" className={styles.addBtn} onClick={addModifier}>
+              + 스탯 보정 추가
+            </button>
+          </div>
 
-        {/* 발동 조건 */}
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>발동 조건</div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>사용 조건</label>
-              <select
-                className={styles.select}
-                value={useCondition}
-                onChange={(e) => setUseCondition(e.target.value)}
-              >
+          {/* 발동 조건 */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>발동 조건</div>
+            <div className={styles.row}>
+              <SelectField label="사용 조건" value={useCondition} onChange={setUseCondition}>
                 <option value="">없음</option>
                 <option value="ground">ground</option>
                 <option value="airborne">airborne</option>
-              </select>
+              </SelectField>
             </div>
           </div>
-        </div>
 
-        {/* 효과 */}
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>효과 (Effects) *</div>
-          {effects.map((effect, i) => (
-            <div key={i} className={styles.effectItem}>
-              <div className={styles.effectHeader}>
-                <span className={styles.effectIndex}>효과 #{i + 1}</span>
-                <button type="button" className={styles.removeBtn} onClick={() => removeEffect(i)}>
-                  ✕ 삭제
-                </button>
-              </div>
-
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label className={styles.label}>Type *</label>
-                  <select
-                    className={styles.select}
-                    value={effect.type}
-                    onChange={(e) => updateEffect(i, { type: e.target.value as CardEffect["type"] })}
-                  >
+          {/* 효과 */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>효과 (Effects) *</div>
+            {effects.map((effect, i) => (
+              <ItemCard key={i} title={`효과 #${i + 1}`} onRemove={() => removeEffect(i)}>
+                <div className={styles.row}>
+                  <SelectField label="Type *" value={effect.type} onChange={(v) => updateEffect(i, { type: v as CardEffect["type"] })}>
                     {EFFECT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  </SelectField>
+                  {!["tag", "move_cards", "shuffle", "generate"].includes(effect.type) && (
+                    <NumericField label="Value" value={effect.value ?? 0} onChange={(n) => updateEffect(i, { value: n })} />
+                  )}
+                  {effect.type !== "tag" && (
+                    <SelectField label="Target" value={effect.target ?? "enemy"} onChange={(v) => updateEffect(i, { target: v as "self" | "enemy" })}>
+                      {TARGETS.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </SelectField>
+                  )}
                 </div>
 
-                {!["tag", "move_cards", "shuffle", "generate"].includes(effect.type) && (
-                  <div className={styles.field}>
-                    <label className={styles.label}>Value</label>
-                    <NumericInput
-                      className={styles.input}
-                      value={effect.value ?? 0}
-                      onChange={(n) => updateEffect(i, { value: n })}
-                    />
-                  </div>
-                )}
-
-                {!["tag"].includes(effect.type) && (
-                  <div className={styles.field}>
-                    <label className={styles.label}>Target</label>
-                    <select
-                      className={styles.select}
-                      value={effect.target ?? "enemy"}
-                      onChange={(e) => updateEffect(i, { target: e.target.value as "self" | "enemy" })}
-                    >
-                      {TARGETS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {effect.type === "damage" && (
-                <div className={styles.row}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Damage Type</label>
-                    <select
-                      className={styles.select}
-                      value={effect.damageType ?? ""}
-                      onChange={(e) => updateEffect(i, { damageType: (e.target.value || undefined) as CardEffect["damageType"] })}
-                    >
+                {effect.type === "damage" && (
+                  <div className={styles.row}>
+                    <SelectField label="Damage Type" value={effect.damageType ?? ""} onChange={(v) => updateEffect(i, { damageType: (v || undefined) as CardEffect["damageType"] })}>
                       <option value="">항상 적용</option>
                       {DAMAGE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    </SelectField>
                   </div>
-                </div>
-              )}
+                )}
 
-              {effect.type === "move_cards" && (
-                <>
-                  <div className={styles.row}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>From Zone</label>
-                      <select
-                        className={styles.select}
-                        value={effect.fromZone ?? "deck"}
-                        onChange={(e) => updateEffect(i, { fromZone: e.target.value as CardEffect["fromZone"] })}
-                      >
+                {effect.type === "move_cards" && (
+                  <>
+                    <div className={styles.row}>
+                      <SelectField label="From Zone" value={effect.fromZone ?? "deck"} onChange={(v) => updateEffect(i, { fromZone: v as CardEffect["fromZone"] })}>
                         {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>To Zone</label>
-                      <select
-                        className={styles.select}
-                        value={effect.toZone ?? "hand"}
-                        onChange={(e) => updateEffect(i, { toZone: e.target.value as CardEffect["toZone"] })}
-                      >
+                      </SelectField>
+                      <SelectField label="To Zone" value={effect.toZone ?? "hand"} onChange={(v) => updateEffect(i, { toZone: v as CardEffect["toZone"] })}>
                         {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Count</label>
-                      <NumericInput
-                        className={styles.input}
-                        min={1}
-                        value={effect.count ?? 1}
-                        onChange={(n) => updateEffect(i, { count: n })}
-                      />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>To Position</label>
-                      <select
-                        className={styles.select}
-                        value={effect.toPosition ?? ""}
-                        onChange={(e) => updateEffect(i, { toPosition: (e.target.value || undefined) as CardEffect["toPosition"] })}
-                      >
+                      </SelectField>
+                      <NumericField label="Count" min={1} value={effect.count ?? 1} onChange={(n) => updateEffect(i, { count: n })} />
+                      <SelectField label="To Position" value={effect.toPosition ?? ""} onChange={(v) => updateEffect(i, { toPosition: (v || undefined) as CardEffect["toPosition"] })}>
                         <option value="">기본</option>
                         {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                      </select>
+                      </SelectField>
                     </div>
-                  </div>
-                  <div className={styles.checkRow}>
-                    <input
-                      className={styles.checkbox}
-                      type="checkbox"
-                      id={`userSelects-${i}`}
-                      checked={effect.userSelects ?? false}
-                      onChange={(e) => updateEffect(i, { userSelects: e.target.checked })}
-                    />
-                    <label htmlFor={`userSelects-${i}`}>P1이 직접 선택 (userSelects)</label>
-                  </div>
-                </>
-              )}
+                    <div className={styles.checkRow}>
+                      <input
+                        className={styles.checkbox}
+                        type="checkbox"
+                        id={`userSelects-${i}`}
+                        checked={effect.userSelects ?? false}
+                        onChange={(e) => updateEffect(i, { userSelects: e.target.checked })}
+                      />
+                      <label htmlFor={`userSelects-${i}`}>P1이 직접 선택 (userSelects)</label>
+                    </div>
+                  </>
+                )}
 
-              {effect.type === "generate" && (
-                <div className={styles.row}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Card ID *</label>
-                    <input
-                      className={styles.input}
-                      value={effect.cardId ?? ""}
-                      onChange={(e) => updateEffect(i, { cardId: e.target.value || undefined })}
-                      placeholder="weak_punch"
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Count</label>
-                    <NumericInput
-                      className={styles.input}
-                      min={1}
-                      value={effect.count ?? 1}
-                      onChange={(n) => updateEffect(i, { count: n })}
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>To Zone</label>
-                    <select
-                      className={styles.select}
-                      value={effect.toZone ?? "hand"}
-                      onChange={(e) => updateEffect(i, { toZone: e.target.value as CardEffect["toZone"] })}
-                    >
+                {effect.type === "generate" && (
+                  <div className={styles.row}>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Card ID *</label>
+                      <input
+                        className={styles.input}
+                        value={effect.cardId ?? ""}
+                        onChange={(e) => updateEffect(i, { cardId: e.target.value || undefined })}
+                        placeholder="weak_punch"
+                      />
+                    </div>
+                    <NumericField label="Count" min={1} value={effect.count ?? 1} onChange={(n) => updateEffect(i, { count: n })} />
+                    <SelectField label="To Zone" value={effect.toZone ?? "hand"} onChange={(v) => updateEffect(i, { toZone: v as CardEffect["toZone"] })}>
                       {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </select>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>To Position</label>
-                    <select
-                      className={styles.select}
-                      value={effect.toPosition ?? ""}
-                      onChange={(e) => updateEffect(i, { toPosition: (e.target.value || undefined) as CardEffect["toPosition"] })}
-                    >
+                    </SelectField>
+                    <SelectField label="To Position" value={effect.toPosition ?? ""} onChange={(v) => updateEffect(i, { toPosition: (v || undefined) as CardEffect["toPosition"] })}>
                       <option value="">기본</option>
                       {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                    </select>
+                    </SelectField>
                   </div>
-                </div>
-              )}
+                )}
 
-              {effect.type === "shuffle" && (
-                <div className={styles.row}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Zone</label>
-                    <select
-                      className={styles.select}
-                      value={effect.zone ?? "deck"}
-                      onChange={(e) => updateEffect(i, { zone: e.target.value as CardEffect["zone"] })}
-                    >
+                {effect.type === "shuffle" && (
+                  <div className={styles.row}>
+                    <SelectField label="Zone" value={effect.zone ?? "deck"} onChange={(v) => updateEffect(i, { zone: v as CardEffect["zone"] })}>
                       {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </select>
+                    </SelectField>
                   </div>
-                </div>
-              )}
+                )}
 
-              {effect.type === "draw_tagged" && (
-                <div className={styles.row}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Tag</label>
-                    <select
-                      className={styles.select}
-                      value={effect.tag ?? ""}
-                      onChange={(e) => updateEffect(i, { tag: (e.target.value || undefined) as CardEffect["tag"] })}
-                    >
+                {effect.type === "draw_tagged" && (
+                  <div className={styles.row}>
+                    <SelectField label="Tag" value={effect.tag ?? ""} onChange={(v) => updateEffect(i, { tag: (v || undefined) as CardEffect["tag"] })}>
                       <option value="">선택</option>
                       {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Zone</label>
-                    <select
-                      className={styles.select}
-                      value={effect.zone ?? "deck"}
-                      onChange={(e) => updateEffect(i, { zone: e.target.value as CardEffect["zone"] })}
-                    >
+                    </SelectField>
+                    <SelectField label="Zone" value={effect.zone ?? "deck"} onChange={(v) => updateEffect(i, { zone: v as CardEffect["zone"] })}>
                       {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </select>
+                    </SelectField>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            className={styles.addBtn}
-            onClick={() => setEffects((prev) => [...prev, emptyEffect()])}
-          >
-            + 효과 추가
-          </button>
-        </div>
-
-        {/* 애니메이션 */}
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>애니메이션</div>
-          <div className={styles.field}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={superFlash}
-                onChange={(e) => setSuperFlash(e.target.checked)}
-              />
-              슈퍼 플래시 연출
-            </label>
+                )}
+              </ItemCard>
+            ))}
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => setEffects((prev) => [...prev, emptyEffect()])}
+            >
+              + 효과 추가
+            </button>
           </div>
-          <div className={styles.row} style={{ marginTop: 12 }}>
+
+          {/* 애니메이션 */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>애니메이션</div>
             <div className={styles.field}>
-              <label className={styles.label}>Action Tag</label>
-              <select
-                className={styles.select}
-                value={actionTag}
-                onChange={(e) => setActionTag(e.target.value)}
-              >
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={superFlash}
+                  onChange={(e) => setSuperFlash(e.target.checked)}
+                />
+                슈퍼 플래시 연출
+              </label>
+            </div>
+            <div className={styles.row} style={{ marginTop: 12 }}>
+              <SelectField label="Action Tag" value={actionTag} onChange={setActionTag}>
                 <option value="">없음</option>
                 {ACTION_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Action Tag (공중)</label>
-              <select
-                className={styles.select}
-                value={actionTagAirborne}
-                onChange={(e) => setActionTagAirborne(e.target.value)}
-              >
+              </SelectField>
+              <SelectField label="Action Tag (공중)" value={actionTagAirborne} onChange={setActionTagAirborne}>
                 <option value="">없음</option>
                 {ACTION_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              </SelectField>
             </div>
+            <div className={styles.sectionTitle} style={{ marginTop: 16 }}>Hit Timings</div>
+            {hitTimings.map((ht, i) => (
+              <ItemCard key={i} title={`Hit Timing #${i + 1}`} onRemove={() => removeHitTiming(i)}>
+                <div className={styles.row}>
+                  <NumericField label="ms" min={0} value={ht.ms} onChange={(n) => updateHitTiming(i, { ms: n })} />
+                  <SelectField label="Ground 포즈" value={ht.ground} onChange={(v) => updateHitTiming(i, { ground: v as "hit_weak" | "hit_strong" | "hit_aerial" })}>
+                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </SelectField>
+                  <SelectField label="Airborne 포즈" value={ht.airborne} onChange={(v) => updateHitTiming(i, { airborne: v as "hit_weak" | "hit_strong" | "hit_aerial" })}>
+                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </SelectField>
+                </div>
+              </ItemCard>
+            ))}
+            <button type="button" className={styles.addBtn} onClick={addHitTiming}>
+              + Hit Timing 추가
+            </button>
           </div>
-          <div className={styles.sectionTitle} style={{ marginTop: 16 }}>Hit Timings</div>
-          {hitTimings.map((ht, i) => (
-            <div key={i} className={styles.effectItem}>
-              <div className={styles.effectHeader}>
-                <span className={styles.effectIndex}>Hit Timing #{i + 1}</span>
-                <button type="button" className={styles.removeBtn} onClick={() => removeHitTiming(i)}>
-                  ✕ 삭제
-                </button>
-              </div>
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label className={styles.label}>ms</label>
-                  <NumericInput
-                    className={styles.input}
-                    min={0}
-                    value={ht.ms}
-                    onChange={(n) => updateHitTiming(i, { ms: n })}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>Ground 포즈</label>
-                  <select
-                    className={styles.select}
-                    value={ht.ground}
-                    onChange={(e) => updateHitTiming(i, { ground: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
-                  >
-                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>Airborne 포즈</label>
-                  <select
-                    className={styles.select}
-                    value={ht.airborne}
-                    onChange={(e) => updateHitTiming(i, { airborne: e.target.value as "hit_weak" | "hit_strong" | "hit_aerial" })}
-                  >
-                    {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={styles.addBtn} onClick={addHitTiming}>
-            + Hit Timing 추가
-          </button>
-        </div>
 
-      </form>
+        </form>
       </div>
     </div>
   );
