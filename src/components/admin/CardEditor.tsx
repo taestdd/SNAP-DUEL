@@ -4,16 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./CardEditor.module.css";
-import { CardTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
+import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CardEffect, CardType, StatModifier } from "@/game/engine/types";
 
-const ACTION_TAGS = [
-  "block", "draw", "tag_switch", "reclaim",
-  "weak_punch", "strong_punch", "aerial_punch",
-  "weak_kick", "strong_kick", "aerial_kick",
-  "dragon_kick", "rising_punch", "hadouken", "use_item",
-] as const;
+const ACTION_TAGS = ActionTagSchema.options;
 
 const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = CardTagSchema.options;
