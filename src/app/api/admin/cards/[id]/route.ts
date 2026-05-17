@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { CardSchema } from "@/game/engine/cardSchema";
 import { z } from "zod";
 
@@ -13,12 +12,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const existing = await getDoc(doc(db, "cards", id));
-    if (!existing.exists()) {
+    const existing = await getAdminDb().collection("cards").doc(id).get();
+    if (!existing.exists) {
       return NextResponse.json({ error: `카드를 찾을 수 없음: ${id}` }, { status: 404 });
     }
 
-    await setDoc(doc(db, "cards", id), parsed.data);
+    await getAdminDb().collection("cards").doc(id).set(parsed.data);
     return NextResponse.json(parsed.data);
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -31,12 +30,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const existing = await getDoc(doc(db, "cards", id));
-    if (!existing.exists()) {
+    const existing = await getAdminDb().collection("cards").doc(id).get();
+    if (!existing.exists) {
       return NextResponse.json({ error: `카드를 찾을 수 없음: ${id}` }, { status: 404 });
     }
 
-    await deleteDoc(doc(db, "cards", id));
+    await getAdminDb().collection("cards").doc(id).delete();
     return NextResponse.json({ deleted: id });
   } catch {
     return NextResponse.json({ error: "삭제 실패" }, { status: 500 });

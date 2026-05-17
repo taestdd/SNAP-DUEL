@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { CardsRecordSchema } from "@/game/engine/cardSchema";
 
 export async function GET() {
   try {
-    const snapshot = await getDocs(collection(db, "cards"));
+    const snapshot = await getAdminDb().collection("cards").get();
     const raw: Record<string, unknown> = {};
     snapshot.forEach((d) => { raw[d.id] = d.data(); });
 

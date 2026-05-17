@@ -1,21 +1,19 @@
 import { NextResponse } from "next/server";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getAdminDb } from "@/lib/firebase-admin";
 import cardsData from "@/data/cards.json";
 import decksData from "@/data/decks.json";
 
 // One-time migration endpoint — DELETE after use.
-// Visit /api/admin/migrate in browser to trigger.
 
 async function runMigration() {
   const cards = cardsData as Record<string, unknown>;
   const decks = decksData as Record<string, unknown>;
 
   for (const [id, card] of Object.entries(cards)) {
-    await setDoc(doc(db, "cards", id), card as object);
+    await getAdminDb().collection("cards").doc(id).set(card as object);
   }
   for (const [id, deck] of Object.entries(decks)) {
-    await setDoc(doc(db, "decks", id), deck as object);
+    await getAdminDb().collection("decks").doc(id).set(deck as object);
   }
 
   return {
