@@ -93,7 +93,7 @@ export default function AdminPage() {
                   )}
                 </div>
                 <div className={styles.effectList}>
-                  {card.effects.map((e, i) => (
+                  {(card.effects ?? []).map((e, i) => (
                     <span key={i} className={styles.effectTag}>
                       {e.type}{e.value !== undefined ? ` ${e.value}` : ""}{e.target ? ` → ${e.target}` : ""}
                     </span>
