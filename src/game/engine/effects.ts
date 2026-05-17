@@ -12,6 +12,7 @@ import {
   syncExhausted,
   clearAttackBuff,
   evaluateModifiers,
+  getBenchChar,
 } from "./stateHelpers";
 import { shuffle } from "./rng";
 
@@ -28,7 +29,7 @@ import { shuffle } from "./rng";
 export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
   const me = state[player];
   const currentChar = me.activeCharacter;
-  const newChar = (currentChar === "A" ? "B" : "A") as import("./types").CharacterId;
+  const newChar = getBenchChar(me);
 
   const currentDef = CHARACTERS[currentChar];
   const newDef = CHARACTERS[newChar];

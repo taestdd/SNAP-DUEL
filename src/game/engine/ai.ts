@@ -1,6 +1,6 @@
 import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
-import { canUseCard } from "./rules";
+import { canUseCard, getBenchChar } from "./rules";
 
 function opponentOf(player: PlayerId): PlayerId {
   return player === "P1" ? "AI" : "P1";
@@ -129,7 +129,7 @@ function cancelRiskFactor(state: GameState, player: PlayerId): number {
  */
 export function shouldTag(state: GameState, player: PlayerId): boolean {
   const me = state[player];
-  const benchChar: import("./types").CharacterId = me.activeCharacter === "A" ? "B" : "A";
+  const benchChar = getBenchChar(me);
   const benchHp = me.characterHp[benchChar];
   return benchHp > me.hp && benchHp > 0;
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CharacterId, Combatant } from "@/game/engine/types";
-import { CHARACTERS } from "@/game/engine/characters";
+import type { Combatant } from "@/game/engine/types";
+import { CHARACTERS, getCharacter } from "@/game/engine/characters";
+import { getBenchChar } from "@/game/engine/stateHelpers";
 import StatusBadges from "./StatusBadges";
 import styles from "./FightingHPBar.module.css";
 
 const GHOST_DELAY_MS = 500;
-const CHARS: CharacterId[] = ["A", "B"];
 
 export default function FightingHPBar({
   combatant,
@@ -21,37 +21,34 @@ export default function FightingHPBar({
   label: string;
   isThinking?: boolean;
   /** ANIMATING 중 표시용 HP 오버라이드. 설정 시 combatant.characterHp 대신 사용 */
-  overrideCharacterHp?: Record<CharacterId, number>;
+  overrideCharacterHp?: Record<string, number>;
 }) {
-  // overrideCharacterHp가 있으면 그 값을, 없으면 combatant.characterHp를 사용
   const effectiveCharHp = overrideCharacterHp ?? combatant.characterHp;
-  const charAHp = effectiveCharHp.A;
-  const charBHp = effectiveCharHp.B;
+  const charIds = Object.keys(combatant.characterHp);
 
-  const [ghostHp, setGhostHp] = useState<Record<CharacterId, number>>(
-    () => ({ A: charAHp, B: charBHp })
-  );
-  const prevHpRef = useRef<Record<CharacterId, number>>({ A: charAHp, B: charBHp });
+  const [ghostHp, setGhostHp] = useState<Record<string, number>>(() => ({ ...effectiveCharHp }));
+  const prevHpRef = useRef<Record<string, number>>({ ...effectiveCharHp });
 
   useEffect(() => {
     const prev = prevHpRef.current;
-    const next = { A: charAHp, B: charBHp };
-    const hasDamage = CHARS.some((id) => (next as Record<CharacterId, number>)[id] < prev[id]);
+    const next = { ...effectiveCharHp };
+    const hasDamage = charIds.some((id) => (next[id] ?? 0) < (prev[id] ?? 0));
     prevHpRef.current = { ...next };
     if (!hasDamage) { setGhostHp({ ...next }); return; }
     const timer = setTimeout(() => setGhostHp({ ...next }), GHOST_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [charAHp, charBHp]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(effectiveCharHp)]);
 
   const { status, block, airborneStack, activeCharacter } = combatant;
   const burn = status.burn;
   const isRight = side === "right";
-  const benchChar: CharacterId = activeCharacter === "A" ? "B" : "A";
+  const benchChar = getBenchChar(combatant);
 
   function renderPortraits() {
     return (
       <div className={[styles.portraits, isRight ? styles.portraitsRight : ""].join(" ")}>
-        {CHARS.map((charId) => {
+        {charIds.map((charId) => {
           const isActive = charId === activeCharacter;
           const dead = combatant.characterHp[charId] <= 0;
           return (
@@ -65,7 +62,7 @@ export default function FightingHPBar({
               ].join(" ")}
             >
               <img
-                src={`/sprites/charactor_profile/profile_char_${charId.toLowerCase()}.png`}
+                src={`/sprites/charactor_profile/profile_char_${getCharacter(charId)?.spriteId ?? charId}.png`}
                 alt={`char ${charId}`}
                 className={styles.portraitImg}
               />
@@ -76,7 +73,7 @@ export default function FightingHPBar({
     );
   }
 
-  function renderBar(charId: CharacterId, isActive: boolean) {
+  function renderBar(charId: string, isActive: boolean) {
     const maxHp = CHARACTERS[charId].maxHp;
     const currentHp = Math.max(0, effectiveCharHp[charId]);
     const ghost = Math.max(0, ghostHp[charId] ?? maxHp);

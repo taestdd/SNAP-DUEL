@@ -1,6 +1,6 @@
 "use client";
 
-import type { CharacterId, Combatant } from "@/game/engine/types";
+import type { Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import { useDamagedChars } from "./useDamagedChars";
 import StatusBadges from "./StatusBadges";
@@ -17,7 +17,7 @@ export default function ArenaHeader({ ai, isThinking }: { ai: Combatant; isThink
       </div>
 
       <div className={styles.charRow}>
-        {(["A", "B"] as CharacterId[]).map((charId) => {
+        {Object.keys(ai.characterHp).map((charId) => {
           const isActive = ai.activeCharacter === charId;
           const charHp = ai.characterHp[charId];
           const maxHp = CHARACTERS[charId].maxHp;

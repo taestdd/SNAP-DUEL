@@ -1,5 +1,5 @@
 /**
- * One-time migration: uploads cards.json and decks.json to Firestore.
+ * One-time migration: uploads cards.json, decks.json, and characters to Firestore.
  *
  * Setup:
  *   1. Firebase Console → Project Settings → Service Accounts
@@ -18,6 +18,27 @@ const serviceAccount = JSON.parse(readFileSync(keyPath, "utf-8"));
 initializeApp({ credential: cert(serviceAccount) });
 const db = getFirestore();
 
+const CHARACTERS = {
+  fighter: {
+    id: "fighter",
+    name: "길거리 격투가",
+    maxHp: 12,
+    spriteId: "a",
+    entryEffect: null,
+    exitEffect: null,
+    affinities: ["격투", "구룡권"],
+  },
+  ninja: {
+    id: "ninja",
+    name: "닌자",
+    maxHp: 10,
+    spriteId: "b",
+    entryEffect: null,
+    exitEffect: { type: "draw", value: 1, target: "self" },
+    affinities: ["MOLAR", "인법", "격투", "암기"],
+  },
+};
+
 async function migrate() {
   const dataDir = join(process.cwd(), "src/data");
 
@@ -34,6 +55,12 @@ async function migrate() {
   for (const [id, deck] of Object.entries(decks)) {
     await db.collection("decks").doc(id).set(deck as object);
     console.log(`  ✓ deck: ${id}`);
+  }
+
+  console.log(`\nUploading ${Object.keys(CHARACTERS).length} characters...`);
+  for (const [id, char] of Object.entries(CHARACTERS)) {
+    await db.collection("characters").doc(id).set(char);
+    console.log(`  ✓ character: ${id}`);
   }
 
   console.log("\nMigration complete.");

@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { CardZone, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget } from "./types";
+import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget } from "./types";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -11,6 +11,11 @@ import { LOG_LIMIT, HAND_LIMIT } from "./constants";
 export { LOG_LIMIT };
 
 /* ── 공통 유틸 ──────────────────────────────────── */
+
+/** 벤치(비활성) 캐릭터 ID를 반환한다. characterHp의 키에서 활성 캐릭터를 제외한 첫 번째. */
+export function getBenchChar(combatant: Combatant): string {
+  return Object.keys(combatant.characterHp).find((id) => id !== combatant.activeCharacter) ?? combatant.activeCharacter;
+}
 
 export function opponentOf(p: PlayerId): PlayerId {
   return p === "P1" ? "AI" : "P1";
@@ -66,8 +71,7 @@ export function evaluateModifiers(
       case "cooldown_count": checkVal = condTarget.cooldown.length; break;
       case "hp":             checkVal = condTarget.hp; break;
       case "bench_hp": {
-        const bench = condTarget.activeCharacter === "A" ? "B" : "A";
-        checkVal = condTarget.characterHp[bench];
+        checkVal = condTarget.characterHp[getBenchChar(condTarget)] ?? 0;
         break;
       }
       case "airborne_stack": checkVal = condTarget.airborneStack; break;

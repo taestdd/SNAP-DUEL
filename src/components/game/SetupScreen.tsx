@@ -50,7 +50,7 @@ function PlayerSetup({ label, deckId, charOrder, onDeckSelect, onSwap, onCharSel
           </h2>
           <div className={styles.orderRow}>
             {selectedDeck.characters.map((charId) => {
-              const char = CHARACTERS[charId as CharacterId];
+              const char = CHARACTERS[charId];
               const isStarter = charOrder?.[0] === charId;
               const isBackup = charOrder?.[1] === charId;
               return (
@@ -58,7 +58,7 @@ function PlayerSetup({ label, deckId, charOrder, onDeckSelect, onSwap, onCharSel
                   key={charId}
                   type="button"
                   className={`${styles.charCard} ${isStarter ? styles.charStarter : ""} ${isBackup ? styles.charBackup : ""}`}
-                  onClick={() => onCharSelect(charId as CharacterId)}
+                  onClick={() => onCharSelect(charId)}
                 >
                   {isStarter && <div className={styles.charBadge}>선발</div>}
                   {isBackup && <div className={`${styles.charBadge} ${styles.charBadgeBackup}`}>후발</div>}
@@ -102,7 +102,7 @@ export default function SetupScreen({ showAi = false, onConfirm }: Props) {
 
   function handleDeckSelect(who: "player" | "ai", deckId: string) {
     const deck = getDeckRegistry()[deckId];
-    const defaultOrder = [deck.characters[0], deck.characters[1]] as [CharacterId, CharacterId];
+    const defaultOrder: [string, string] = [deck.characters[0], deck.characters[1]];
     if (who === "player") {
       setPlayerDeckId(deckId);
       setPlayerCharOrder(defaultOrder);
@@ -116,8 +116,8 @@ export default function SetupScreen({ showAi = false, onConfirm }: Props) {
     const deckId = who === "player" ? playerDeckId : aiDeckId;
     if (!deckId) return;
     const deck = getDeckRegistry()[deckId];
-    const other = deck.characters.find((c) => c !== charId) as CharacterId;
-    const newOrder: [CharacterId, CharacterId] = [charId, other];
+    const other = deck.characters.find((c) => c !== charId)!;
+    const newOrder: [string, string] = [charId, other];
     if (who === "player") setPlayerCharOrder(newOrder);
     else setAiCharOrder(newOrder);
   }

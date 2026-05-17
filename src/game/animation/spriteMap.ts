@@ -1,4 +1,4 @@
-import type { CharacterId, FighterPose } from "@/game/engine/types";
+import type { FighterPose } from "@/game/engine/types";
 
 export type SheetSpec = {
   frameW: number;
@@ -64,13 +64,14 @@ const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   tag_entry:          { frames: [19, 20],                 fps: 8,  hold: true  },
 };
 
-export const CHARACTER_SPRITES: Record<CharacterId, CharacterSpriteConfig> = {
-  A: {
+/** spriteId → 스프라이트 설정. 새 스프라이트 추가 시 여기에만 등록. */
+export const CHARACTER_SPRITES: Record<string, CharacterSpriteConfig> = {
+  a: {
     imagePath: "/sprites/char_a.png",
     sheet: DEFAULT_SHEET,
     poses: DEFAULT_POSES,
   },
-  B: {
+  b: {
     imagePath: "/sprites/char_b.png",
     sheet: DEFAULT_SHEET,
     poses: DEFAULT_POSES,

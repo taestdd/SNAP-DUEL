@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT } from "./rules";
+import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
 
@@ -96,8 +96,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.P1.ready) return state;
       if (state.p1TaggedThisTurn) return state;
 
-      const benchCharP1 = state.P1.activeCharacter === "A" ? "B" : "A";
-      if (state.P1.characterHp[benchCharP1] <= 0) return state;
+      if (state.P1.characterHp[getBenchChar(state.P1)] <= 0) return state;
 
       let s = applyTagSwitch(state, "P1");
       if (s.phase === "GAME_OVER") return s;
@@ -123,8 +122,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
       if (state.AI.ready) return state;
 
-      const aiBenchChar = state.AI.activeCharacter === "A" ? "B" : "A";
-      if (state.AI.characterHp[aiBenchChar] <= 0) return state;
+      if (state.AI.characterHp[getBenchChar(state.AI)] <= 0) return state;
 
       const s = applyTagSwitch(state, "AI");
       if (s.phase === "GAME_OVER") return s;

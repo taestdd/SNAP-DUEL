@@ -3,8 +3,8 @@
     "id": "PROTOTYPE",
     "name": "Prototype Deck",
     "characters": [
-      "A",
-      "B"
+      "fighter",
+      "ninja"
     ],
     "cards": [
       "jab",
@@ -43,8 +43,8 @@
     "id": "PROTO2",
     "name": "proto2",
     "characters": [
-      "A",
-      "B"
+      "fighter",
+      "ninja"
     ],
     "cards": [
       "molar_single",
