@@ -6,10 +6,9 @@ import Link from "next/link";
 import styles from "./DeckEditor.module.css";
 import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
+import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 
 const MIN_CARDS = 20;
-const CHARACTERS = ["A", "B"] as const;
-type CharId = "A" | "B";
 
 interface Props {
   initial?: DeckSchemaType;
@@ -21,10 +20,11 @@ export default function DeckEditor({ initial, mode }: Props) {
 
   const [id, setId] = useState(initial?.id ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [chars, setChars] = useState<[CharId | null, CharId | null]>([
-    (initial?.characters[0] as CharId) ?? null,
-    (initial?.characters[1] as CharId) ?? null,
+  const [chars, setChars] = useState<[string | null, string | null]>([
+    initial?.characters[0] ?? null,
+    initial?.characters[1] ?? null,
   ]);
+  const [availableChars, setAvailableChars] = useState<CharacterDefSchemaType[]>([]);
   // 덱 = cardId별 카운트
   const [deckCounts, setDeckCounts] = useState<Record<string, number>>(() => {
     const counts: Record<string, number> = {};
@@ -44,6 +44,9 @@ export default function DeckEditor({ initial, mode }: Props) {
     fetch("/api/admin/cards")
       .then((r) => r.json())
       .then((data: Record<string, CardSchemaType>) => setAllCards(Object.values(data)));
+    fetch("/api/admin/characters")
+      .then((r) => r.json())
+      .then((data: Record<string, CharacterDefSchemaType>) => setAvailableChars(Object.values(data)));
   }, []);
 
   const totalCards = Object.values(deckCounts).reduce((s, c) => s + c, 0);
@@ -67,7 +70,7 @@ export default function DeckEditor({ initial, mode }: Props) {
     });
   }
 
-  function handleCharClick(charId: CharId) {
+  function handleCharClick(charId: string) {
     setChars((prev) => {
       const [s1, s2] = prev;
       if (s1 === charId) return [s2, null];
@@ -191,15 +194,15 @@ export default function DeckEditor({ initial, mode }: Props) {
             </div>
           </div>
           <div className={styles.charBtns}>
-            {CHARACTERS.map((charId) => (
+            {availableChars.map((char) => (
               <button
-                key={charId}
+                key={char.id}
                 type="button"
-                className={`${styles.charBtn} ${chars.includes(charId) ? styles.charBtnActive : ""}`}
-                onClick={() => handleCharClick(charId)}
+                className={`${styles.charBtn} ${chars.includes(char.id) ? styles.charBtnActive : ""}`}
+                onClick={() => handleCharClick(char.id)}
               >
-                캐릭터 {charId}
-                {chars[0] === charId ? " (선발)" : chars[1] === charId ? " (후발)" : ""}
+                {char.name} ({char.id})
+                {chars[0] === char.id ? " · 선발" : chars[1] === char.id ? " · 후발" : ""}
               </button>
             ))}
           </div>
