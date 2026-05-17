@@ -50,9 +50,11 @@ function createCombatant(
 }
 
 export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig): GameState {
-  const fallback = Object.values(_decks)[0]!;
-  const p1DeckDef = _decks[config.deckId] ?? fallback;
-  const aiDeckDef = aiConfig ? (_decks[aiConfig.deckId] ?? fallback) : fallback;
+  const p1DeckDef = _decks[config.deckId];
+  if (!p1DeckDef) throw new Error(`덱을 찾을 수 없습니다: ${config.deckId}`);
+  const aiDeckId = aiConfig?.deckId ?? config.deckId;
+  const aiDeckDef = _decks[aiDeckId];
+  if (!aiDeckDef) throw new Error(`덱을 찾을 수 없습니다: ${aiDeckId}`);
 
   const state: GameState = {
     round: 1,
@@ -63,7 +65,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     initiative: Math.random() < 0.5 ? "P1" : "AI",
 
     P1: createCombatant("P1", config.characters, shuffle([...p1DeckDef.cards])),
-    AI: createCombatant("AI", aiConfig ? aiConfig.characters : fallback.characters, shuffle([...aiDeckDef.cards])),
+    AI: createCombatant("AI", aiConfig ? aiConfig.characters : aiDeckDef.characters, shuffle([...aiDeckDef.cards])),
 
     selected: null,
     pendingSelection: null,

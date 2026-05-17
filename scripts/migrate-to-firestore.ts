@@ -40,7 +40,7 @@ const CHARACTERS = {
 };
 
 async function migrate() {
-  const dataDir = join(process.cwd(), "src/data");
+  const dataDir = join(process.cwd(), "scripts/data");
 
   const cards = JSON.parse(readFileSync(join(dataDir, "cards.json"), "utf-8")) as Record<string, unknown>;
   const decks = JSON.parse(readFileSync(join(dataDir, "decks.json"), "utf-8")) as Record<string, unknown>;

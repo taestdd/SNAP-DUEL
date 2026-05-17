@@ -448,7 +448,7 @@ export type TurnLogEntry = {
   airborne: { P1: number; AI: number };
 };
 
-/** 덱 정의 — decks.json에 저장 */
+/** 덱 정의 */
 export type DeckDef = {
   id: string;
   name: string;
@@ -462,7 +462,6 @@ export type DeckDef = {
 export type SetupConfig = {
   /** [0] = 선발, [1] = 후발 */
   characters: [CharacterId, CharacterId];
-  /** decks.json 키 */
   deckId: string;
 };
 
