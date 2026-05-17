@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
+import { CardTagSchema } from "@/game/engine/cardSchema";
 import styles from "./DeckEditor.module.css";
 
 interface Props {
@@ -11,10 +12,7 @@ interface Props {
   mode: "create" | "edit";
 }
 
-const AVAILABLE_TAGS = [
-  "마법", "검술", "격투", "방어", "방패", "한손검", "제압독",
-  "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "암기", "구룡권",
-];
+const AVAILABLE_TAGS = CardTagSchema.options;
 
 export default function CharacterEditor({ initial, mode }: Props) {
   const router = useRouter();
