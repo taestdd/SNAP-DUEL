@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const snapshot = await getAdminDb().collection("cards").get();
     const cards: Record<string, unknown> = {};
-    snapshot.forEach((d) => { cards[d.id] = d.data(); });
+    snapshot.forEach((d) => { cards[d.id] = { id: d.id, ...d.data() }; });
     return NextResponse.json(cards);
   } catch {
     return NextResponse.json({ error: "카드 데이터를 읽을 수 없습니다." }, { status: 500 });

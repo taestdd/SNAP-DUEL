@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const snapshot = await getAdminDb().collection("decks").get();
     const decks: Record<string, unknown> = {};
-    snapshot.forEach((d) => { decks[d.id] = d.data(); });
+    snapshot.forEach((d) => { decks[d.id] = { id: d.id, ...d.data() }; });
     return NextResponse.json(decks);
   } catch {
     return NextResponse.json({ error: "덱 데이터를 읽을 수 없습니다." }, { status: 500 });
