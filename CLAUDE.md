@@ -238,6 +238,7 @@ resolveContext: {
 ## 게임 규칙 핵심
 
 - **스피드**: 낮을수록 빠름 (0이 최속). 동률 시 initiative 플레이어 우선
+- **주도권(initiative)**: 라운드 시작 시 랜덤 결정. 이후 직접 타격 성공 시 공격자가 주도권을 획득(`applyInitiativeOnHit`). 주도권은 턴마다 타격 결과에 따라 이동한다. 라운드 종료 시 재추첨.
 - **캔슬**: 먼저 처리된 카드가 직접 타격 시 상대 큐의 damage 카드를 캔슬
 - **airborne**: airborneStack ≥ 1이면 ground 공격 무효, 0이면 anti-air 무효
 - **코스트**: 카드 사용 시 deck 상단에서 cost장 소비 → trash
