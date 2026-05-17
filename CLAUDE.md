@@ -23,61 +23,114 @@ UI에서 HP 바 변경, 캔슬 연출은 `damage_resolve` 이벤트 타이밍에
 
 ---
 
+## 데이터 레이어: Firestore 기반
+
+카드/덱/캐릭터 데이터는 **Firestore에 저장**되며, 로컬 JSON 파일은 더 이상 사용하지 않는다.
+
+### Firebase 설정
+- **클라이언트 SDK** (`src/lib/firebase.ts`): 온라인 대전 실시간 동기화에 사용
+- **Admin SDK** (`src/lib/firebase-admin.ts`): 서버사이드 API 라우트에서 사용
+  - `getAdminDb()` lazy 초기화 — 빌드 시점 실행 방지
+  - Vercel 환경변수 `FIREBASE_SERVICE_ACCOUNT` 필요 (서비스 계정 JSON 전체)
+
+### 데이터 로딩 흐름 (클라이언트)
+`src/hooks/useGameData.ts`의 `useGameData()` 훅을 사용:
+```
+/api/cards → initCards()
+/api/decks → initDecks()        ← 병렬 fetch
+/api/characters → initCharacters()
+```
+반환값: `"loading" | "ready" | "error"`
+
+게임 화면(`/game`, `/online/game`)은 `useGameData()`가 "ready"가 될 때까지 로딩 화면 표시.
+
+### Firestore 컬렉션
+- `cards/{cardId}` — 카드 데이터
+- `decks/{deckId}` — 덱 데이터
+- `characters/{characterId}` — 캐릭터 데이터
+
+---
+
 ## 파일 구조
 
 ```
 src/
-├── app/                        # Next.js App Router 라우트
-│   ├── game/page.tsx           # 싱글플레이 게임 화면
-│   ├── online/                 # 온라인 대전 (host/join/game)
-│   └── admin/                  # 카드/덱 편집 어드민
+├── app/                            # Next.js App Router 라우트
+│   ├── game/page.tsx               # 싱글플레이 게임 화면
+│   ├── online/                     # 온라인 대전 (host/join/game)
+│   ├── admin/                      # 어드민 (Cards / Decks / Characters 탭)
+│   │   ├── page.tsx                # 탭 인터페이스 목록
+│   │   ├── cards/new/page.tsx
+│   │   ├── cards/[id]/edit/page.tsx
+│   │   ├── decks/new/page.tsx
+│   │   ├── decks/[id]/edit/page.tsx
+│   │   ├── characters/new/page.tsx
+│   │   └── characters/[id]/edit/page.tsx
+│   │
+│   └── api/
+│       ├── cards/route.ts          # GET — 공개 (unstable_cache)
+│       ├── decks/route.ts          # GET — 공개 (unstable_cache)
+│       ├── characters/route.ts     # GET — 공개 (unstable_cache)
+│       └── admin/
+│           ├── cards/route.ts          # GET, POST
+│           ├── cards/[id]/route.ts     # GET, PUT, DELETE + revalidateTag
+│           ├── decks/route.ts          # GET, POST
+│           ├── decks/[id]/route.ts     # GET, PUT, DELETE + revalidateTag
+│           ├── characters/route.ts     # GET, POST
+│           └── characters/[id]/route.ts # GET, PUT, DELETE + revalidateTag
 │
 ├── components/
-│   ├── game/                   # 게임 UI 컴포넌트
-│   │   ├── GameScreen.tsx      # 최상위 게임 뷰 (상태 → UI 연결)
-│   │   ├── ArenaStage.tsx      # 전투 스테이지 레이아웃
-│   │   ├── FighterSprite.tsx   # 캐릭터 스프라이트 + 포즈 애니메이션
-│   │   ├── FightingHPBar.tsx   # 캐릭터별 HP 바 (overrideCharacterHp 지원)
-│   │   ├── Hand.tsx            # 플레이어 핸드
-│   │   ├── QueuePreview.tsx    # 이번 턴 예약 카드 표시
-│   │   ├── ToastMessage.tsx    # 라운드/전투 시작 알림 (상단, 1.6s)
+│   ├── game/                       # 게임 UI 컴포넌트
+│   │   ├── GameScreen.tsx          # 최상위 게임 뷰 (상태 → UI 연결)
+│   │   ├── ArenaStage.tsx          # 전투 스테이지 레이아웃
+│   │   ├── FighterSprite.tsx       # 캐릭터 스프라이트 (spriteId 기반)
+│   │   ├── FightingHPBar.tsx       # 캐릭터별 HP 바
+│   │   ├── Hand.tsx                # 플레이어 핸드
+│   │   ├── QueuePreview.tsx        # 이번 턴 예약 카드 표시
+│   │   ├── ToastMessage.tsx        # 라운드/전투 시작 알림 (상단, 1.6s)
+│   │   ├── SetupScreen.tsx         # 게임 시작 전 덱/캐릭터 선택
+│   │   ├── OnlineGameApp.tsx       # HostGameApp / GuestGameApp
 │   │   └── ...
-│   └── admin/                  # 카드/덱 편집기
+│   └── admin/                      # 어드민 편집기
+│       ├── CardEditor.tsx
+│       ├── DeckEditor.tsx
+│       └── CharacterEditor.tsx
 │
 ├── game/
-│   ├── engine/                 # 순수 게임 로직 (UI 무관)
-│   │   ├── types.ts            # 모든 타입 정의 (GameState, Card, Action 등)
-│   │   ├── state.ts            # 초기 상태 생성
-│   │   ├── reducer.ts          # gameReducer — Action → GameState
-│   │   ├── rules.ts            # re-export 파사드 (직접 구현 없음)
-│   │   ├── constants.ts        # LOG_LIMIT=200, HAND_LIMIT=10
-│   │   ├── stateHelpers.ts     # 저수준 상태 조작 (dealDamage, draw, ...)
-│   │   ├── effects.ts          # 카드 효과 적용 (applyCardEffectsWithPause, canUseCard)
-│   │   ├── turn.ts             # 턴/라운드 라이프사이클 (beginTurn, endTurnCleanup)
-│   │   ├── resolve.ts          # 리졸브 루프 (enterResolving, resumeResolve)
-│   │   ├── ai.ts               # AI 카드 선택 로직
-│   │   ├── cards.ts            # cards.json 로더 + getCard()
-│   │   ├── characters.ts       # 캐릭터 정의 (CHARACTERS 맵)
-│   │   ├── cardSchema.ts       # Zod 카드 스키마
-│   │   ├── deckSchema.ts       # Zod 덱 스키마
-│   │   └── rng.ts              # shuffle
+│   ├── engine/                     # 순수 게임 로직 (UI 무관)
+│   │   ├── types.ts                # 모든 타입 정의
+│   │   ├── state.ts                # 초기 상태 생성 + initDecks/getDeckRegistry
+│   │   ├── reducer.ts              # gameReducer — Action → GameState
+│   │   ├── rules.ts                # re-export 파사드
+│   │   ├── constants.ts            # LOG_LIMIT=200, HAND_LIMIT=10
+│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, ...)
+│   │   ├── effects.ts              # 카드 효과 적용
+│   │   ├── turn.ts                 # 턴/라운드 라이프사이클
+│   │   ├── resolve.ts              # 리졸브 루프
+│   │   ├── ai.ts                   # AI 카드 선택 로직
+│   │   ├── cards.ts                # initCards / getCard / getAllCards
+│   │   ├── characters.ts           # initCharacters / getCharacter / CHARACTERS
+│   │   ├── cardSchema.ts           # Zod 카드 스키마
+│   │   ├── deckSchema.ts           # Zod 덱 스키마
+│   │   ├── characterSchema.ts      # Zod 캐릭터 스키마
+│   │   └── rng.ts                  # shuffle
 │   │
 │   ├── animation/
-│   │   ├── makeQueue.ts        # animScript → CombatAnimationEvent[] 변환
-│   │   ├── useArenaAnimation.ts # 이벤트 큐 소비 + displayedHp/displayedCancelledPlayer
-│   │   ├── useAnimQueue.ts     # 이벤트 큐 타이머 구동
-│   │   └── spriteMap.ts        # ActionTag/FighterPose → 스프라이트 프레임 맵
+│   │   ├── makeQueue.ts
+│   │   ├── useArenaAnimation.ts
+│   │   ├── useAnimQueue.ts
+│   │   └── spriteMap.ts
 │   │
 │   └── tests/
 │       └── engine.test.ts
 │
-├── data/
-│   ├── cards.json              # 카드 데이터
-│   └── decks.json              # 덱 데이터
+├── hooks/
+│   └── useGameData.ts              # 카드/덱/캐릭터 병렬 로딩 훅
 │
 └── lib/
-    ├── firebase.ts
-    └── roomService.ts          # 온라인 대전 Firebase 룸 관리
+    ├── firebase.ts                 # 클라이언트 SDK (온라인 대전)
+    ├── firebase-admin.ts           # Admin SDK (API 라우트)
+    └── roomService.ts              # 온라인 대전 Firebase 룸 관리
 ```
 
 ---
@@ -89,7 +142,7 @@ src/
 ```
 types ← constants ← stateHelpers ← effects ← turn ← resolve
                                               ↑
-                                           cards, characters
+                                    cards, characters
 ```
 
 - `stateHelpers`: 순수 조작. rules/engine 모듈 import 없음
@@ -130,7 +183,16 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE
 - `P1 / AI`: Combatant (hp, characterHp, hand, deck, trash, cooldown, queue, airborneStack, status)
 - `animScript`: ANIMATING 재생용 AnimScriptEntry[]
 - `animStartHp`: resolve 직전 HP 스냅샷 (HP 바 지연 표시 초기값)
-- `resolveQueue/Index/Unresolved`: resolve 루프 상태
+- `resolveContext`: resolve 루프 상태 (아래 참고)
+
+**resolveContext 구조** (구 resolveQueue/Index/Unresolved)
+```ts
+resolveContext: {
+  queue: { player: PlayerId; cardId: string }[];
+  index: number;
+  unresolved: PlayerId[];
+}
+```
 
 **Combatant 카드 영역**
 - `hand`: 현재 사용 가능한 카드
@@ -139,11 +201,20 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE
 - `cooldown`: 정상 사용된 카드 (라운드 말에 trash로)
 - `queue`: 이번 턴 예약된 카드 (1장)
 
+**CharacterDef**
+- `id: string` — lowercase + 숫자 + 언더스코어 (동적, "A"/"B" 하드코딩 아님)
+- `name: string`
+- `maxHp: number`
+- `spriteId: string` — 스프라이트 에셋 ID (캐릭터 ID와 분리)
+- `entryEffect: CardEffect | null` — 등장 시 효과
+- `exitEffect: CardEffect | null` — 퇴장 시 효과
+- `affinities: string[]` — 사용 가능한 카드 태그 조건
+
 **AnimScriptEntry**
 - `actor`: 행동 플레이어
 - `cardId`: 사용한 카드
 - `actorAirborne / targetAirborne`: 해결 시점 체공 스택
-- `hpAfter`: 이 카드 효과 적용 후 HP (damage_resolve 이벤트에 전달)
+- `hpAfter`: 이 카드 효과 적용 후 HP
 - `cancelledPlayer`: 이 카드로 캔슬된 상대 (있을 때만)
 
 ---
@@ -153,7 +224,7 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE
 `CombatAnimationEvent` 타입:
 - `super_flash`: 슈퍼 플래시 연출 (공격 전)
 - `action_start`: 공격자 포즈 전환
-- `visual_hit`: 피격자 hit 포즈 (airborne 상태로 ground 공격 무효 시 생략)
+- `visual_hit`: 피격자 hit 포즈
 - `damage_resolve`: HP 바 업데이트 타이밍 (hpAfter, cancelledPlayer 포함)
 - `action_end`: 포즈 유지
 
@@ -172,6 +243,20 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE
 - **코스트**: 카드 사용 시 deck 상단에서 cost장 소비 → trash
 - **exhausted**: deck이 0장이면 exhausted. 양쪽 모두 exhausted면 라운드 종료
 - **라운드**: 3라운드 후 총 HP 합계로 승부
+- **어피니티**: 캐릭터의 `affinities` 태그에 해당하는 카드만 사용 가능
+
+---
+
+## 어드민 패널
+
+`/admin` — 카드 / 덱 / 캐릭터 탭으로 구성.
+
+- **CardEditor**: 카드 생성/편집. 효과(effects), 히트타이밍, 태그, 스탯보정 등
+- **DeckEditor**: 덱 생성/편집. 덱에 포함할 카드 목록 + 캐릭터 구성
+- **CharacterEditor**: 캐릭터 생성/편집. ID, name, maxHp, spriteId, affinities, entryEffect/exitEffect
+
+어드민 CRUD는 `/api/admin/*` 라우트를 통해 Firestore에 직접 저장.
+저장 후 `revalidateTag()`를 호출해 `/api/cards`, `/api/decks`, `/api/characters` 캐시를 무효화.
 
 ---
 
