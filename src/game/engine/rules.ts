@@ -12,4 +12,4 @@ export { applyTagSwitch, applyCardEffectsWithPause, canUseCard } from "./effects
 export { beginTurn, endTurnCleanup, queueCard, submitDraft } from "./turn";
 export { enterResolving, resumeResolve } from "./resolve";
 export { LOG_LIMIT } from "./constants";
-export { draw, checkGameOver, filterCards } from "./stateHelpers";
+export { draw, checkGameOver, filterCards, getBenchChar } from "./stateHelpers";

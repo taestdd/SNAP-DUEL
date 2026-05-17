@@ -23,16 +23,17 @@ const emptyStatus = (): Status => ({
 
 function createCombatant(
   id: "P1" | "AI",
-  activeChar: CharacterId,
+  characters: CharacterId[],
   deck: string[]
 ): Combatant {
+  const activeChar = characters[0];
   return {
     id,
     hp: CHARACTERS[activeChar].maxHp,
     block: 0,
 
     activeCharacter: activeChar,
-    characterHp: { A: CHARACTERS.A.maxHp, B: CHARACTERS.B.maxHp },
+    characterHp: Object.fromEntries(characters.map((cid) => [cid, CHARACTERS[cid].maxHp])),
     airborneStack: 0,
 
     status: emptyStatus(),
@@ -52,7 +53,6 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
   const fallback = Object.values(_decks)[0]!;
   const p1DeckDef = _decks[config.deckId] ?? fallback;
   const aiDeckDef = aiConfig ? (_decks[aiConfig.deckId] ?? fallback) : fallback;
-  const aiChar = aiConfig ? aiConfig.characters[0] : fallback.characters[0];
 
   const state: GameState = {
     round: 1,
@@ -62,8 +62,8 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
 
     initiative: Math.random() < 0.5 ? "P1" : "AI",
 
-    P1: createCombatant("P1", config.characters[0], shuffle([...p1DeckDef.cards])),
-    AI: createCombatant("AI", aiChar, shuffle([...aiDeckDef.cards])),
+    P1: createCombatant("P1", config.characters, shuffle([...p1DeckDef.cards])),
+    AI: createCombatant("AI", aiConfig ? aiConfig.characters : fallback.characters, shuffle([...aiDeckDef.cards])),
 
     selected: null,
     pendingSelection: null,

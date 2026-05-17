@@ -1,6 +1,6 @@
 "use client";
 
-import type { CharacterId, Combatant } from "@/game/engine/types";
+import type { Combatant } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import { useDamagedChars } from "./useDamagedChars";
 import StatusBadges from "./StatusBadges";
@@ -14,7 +14,7 @@ export default function PlayerBar({ me }: { me: Combatant }) {
       <div className={styles.name}>YOU</div>
 
       <div className={styles.charRow}>
-        {(["A", "B"] as CharacterId[]).map((charId) => {
+        {Object.keys(me.characterHp).map((charId) => {
           const isActive = me.activeCharacter === charId;
           const charHp = me.characterHp[charId];
           const maxHp = CHARACTERS[charId].maxHp;

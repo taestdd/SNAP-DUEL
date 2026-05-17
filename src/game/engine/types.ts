@@ -82,7 +82,7 @@ export interface CombatAnimationEvent {
   cancelledPlayer?: PlayerId;
 }
 
-export type CharacterId = "A" | "B";
+export type CharacterId = string;
 
 export type CharacterDef = {
   id: CharacterId;

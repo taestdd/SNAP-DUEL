@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
+import { getBenchChar } from "@/game/engine/stateHelpers";
 import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
@@ -367,7 +368,7 @@ export default function GameScreen({
                     !canAct ||
                     isTagAnimating ||
                     state.p1TaggedThisTurn ||
-                    state.P1.characterHp[state.P1.activeCharacter === "A" ? "B" : "A"] <= 0
+                    state.P1.characterHp[getBenchChar(state.P1)] <= 0
                   }
                   onClick={() => dispatch({ type: "TURN/TAG" })}
                 />
