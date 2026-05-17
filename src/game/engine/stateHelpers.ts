@@ -188,8 +188,8 @@ export function draw(state: GameState, player: PlayerId, n: number): GameState {
 }
 
 export function checkGameOver(state: GameState): GameState {
-  const p1Dead = state.P1.characterHp.A <= 0 || state.P1.characterHp.B <= 0;
-  const aiDead = state.AI.characterHp.A <= 0 || state.AI.characterHp.B <= 0;
+  const p1Dead = Object.values(state.P1.characterHp).some((hp) => hp <= 0);
+  const aiDead = Object.values(state.AI.characterHp).some((hp) => hp <= 0);
 
   if (p1Dead && aiDead) return { ...state, phase: "GAME_OVER", winner: "DRAW" };
   if (p1Dead) return { ...state, phase: "GAME_OVER", winner: "AI" };
@@ -198,8 +198,9 @@ export function checkGameOver(state: GameState): GameState {
 }
 
 export function decideWinnerByHp(state: GameState): GameState {
-  const p1Total = state.P1.characterHp.A + state.P1.characterHp.B;
-  const aiTotal = state.AI.characterHp.A + state.AI.characterHp.B;
+  const sum = (hp: Record<string, number>) => Object.values(hp).reduce((a, b) => a + b, 0);
+  const p1Total = sum(state.P1.characterHp);
+  const aiTotal = sum(state.AI.characterHp);
 
   if (p1Total > aiTotal) return { ...state, phase: "GAME_OVER", winner: "P1" };
   if (aiTotal > p1Total) return { ...state, phase: "GAME_OVER", winner: "AI" };
@@ -208,10 +209,6 @@ export function decideWinnerByHp(state: GameState): GameState {
 
 /* ── 존 조작 ────────────────────────────────────── */
 
-/** 조건에 맞는 카드 필터 (현재는 전체 반환) */
-export function filterCards(cards: string[]): string[] {
-  return cards;
-}
 
 export function moveCardsBetweenZones(
   state: GameState,
