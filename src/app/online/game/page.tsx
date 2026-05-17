@@ -6,6 +6,7 @@ import { subscribeRoom } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
 import type { SetupConfig } from "@/game/engine/types";
 import { HostGameApp, GuestGameApp } from "@/components/game/OnlineGameApp";
+import { useGameData } from "@/hooks/useGameData";
 
 function OnlineGame() {
   const router = useRouter();
@@ -13,11 +14,12 @@ function OnlineGame() {
   const code = searchParams.get("code") ?? "";
   const role = searchParams.get("role") as "host" | "guest" | null;
 
+  const dataStatus = useGameData();
   const [hostConfig, setHostConfig] = useState<SetupConfig | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!code) return;
+    if (!code || dataStatus !== "ready") return;
 
     const unsubscribe = subscribeRoom(code, (data: RoomData) => {
       if (data.status === "in_progress" && data.hostConfig) {
@@ -27,7 +29,7 @@ function OnlineGame() {
     });
 
     return () => unsubscribe();
-  }, [code]);
+  }, [code, dataStatus]);
 
   if (!code || !role) {
     return (
@@ -37,10 +39,18 @@ function OnlineGame() {
     );
   }
 
+  if (dataStatus === "error") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#f66" }}>
+        데이터를 불러올 수 없습니다. 새로고침 해주세요.
+      </div>
+    );
+  }
+
   if (!ready) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#888", fontSize: "1.1rem" }}>
-        게임 시작 대기 중...
+        {dataStatus === "loading" ? "로딩 중..." : "게임 시작 대기 중..."}
       </div>
     );
   }

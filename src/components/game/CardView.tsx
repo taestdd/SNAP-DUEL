@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import styles from "./CardView.module.css";
-import { CARDS } from "@/game/engine/cards";
+import { getCard } from "@/game/engine/cards";
 import type { StatTarget } from "@/game/engine/types";
 import { effectLabel } from "./cardLabels";
 
@@ -42,7 +42,7 @@ export default function CardView({
   onClick: () => void;
   onLongPress?: () => void;
 }) {
-  const card = CARDS[cardId];
+  const card = getCard(cardId);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longFiredRef = useRef(false);
 

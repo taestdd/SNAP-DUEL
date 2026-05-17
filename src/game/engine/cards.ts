@@ -1,9 +1,16 @@
 import type { Card } from "./types";
 import { CardsRecordSchema } from "./cardSchema";
-import cardsData from "@/data/cards.json";
 
-export const CARDS: Record<string, Card> = CardsRecordSchema.parse(cardsData);
+let _cards: Record<string, Card> = {};
+
+export function initCards(data: unknown): void {
+  _cards = CardsRecordSchema.parse(data);
+}
 
 export function getCard(id: string): Card | undefined {
-  return CARDS[id];
+  return _cards[id];
+}
+
+export function getAllCards(): Record<string, Card> {
+  return _cards;
 }

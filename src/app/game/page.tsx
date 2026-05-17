@@ -7,6 +7,7 @@ import { createInitialState } from "@/game/engine/state";
 import type { CharacterId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import SetupScreen from "@/components/game/SetupScreen";
+import { useGameData } from "@/hooks/useGameData";
 
 const TAG_ANIM_DURATION = 700;
 
@@ -98,7 +99,24 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
 
 export default function Page() {
   const router = useRouter();
+  const dataStatus = useGameData();
   const [configs, setConfigs] = useState<{ player: SetupConfig; ai?: SetupConfig } | null>(null);
+
+  if (dataStatus === "loading") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#888" }}>
+        로딩 중...
+      </div>
+    );
+  }
+
+  if (dataStatus === "error") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", color: "#f66" }}>
+        데이터를 불러올 수 없습니다. 새로고침 해주세요.
+      </div>
+    );
+  }
 
   if (!configs) {
     return (

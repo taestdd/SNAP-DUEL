@@ -1,17 +1,17 @@
 import type { Card, GameState, PlayerId } from "./types";
-import { CARDS, getCard } from "./cards";
+import { getAllCards, getCard } from "./cards";
 import { canUseCard } from "./rules";
 
 function opponentOf(player: PlayerId): PlayerId {
   return player === "P1" ? "AI" : "P1";
 }
 
-// 게임 내 공격 카드(damage 효과 보유) 중 최소 speed — 공개 정보이므로 상수로 계산
-const MIN_ATTACK_SPEED = Math.min(
-  ...Object.values(CARDS)
+function getMinAttackSpeed(): number {
+  const speeds = Object.values(getAllCards())
     .filter((c) => c.effects.some((e) => e.type === "damage"))
-    .map((c) => c.speed)
-);
+    .map((c) => c.speed);
+  return speeds.length > 0 ? Math.min(...speeds) : 0;
+}
 
 /**
  * 상대의 현재 airborne 상태를 기반으로 실제로 적중할 데미지만 계산한다.
@@ -71,7 +71,7 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   // 이미 콤보 중(speedBonus>0)이면 콤보 유지 가치가 더 높음
   score += (card.gain ?? 0) * (speedBonus > 0 ? 7 : 5);
 
-  // 빠른 카드 안전 보너스: base speed ≤ 2는 MIN_ATTACK_SPEED 이하라 캔슬당하지 않음
+  // 빠른 카드 안전 보너스: base speed ≤ 2는 getMinAttackSpeed() 이하라 캔슬당하지 않음
   if (card.speed <= 2) score += 6;
 
   // 발사 콤보: 지상 상대를 공중으로 띄우면 다음 턴 anti-air 기회 생성
@@ -166,7 +166,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
   if (opp.ready) return Infinity;
   if (opp.hand.length === 0 || opp.status.exhausted) return Infinity;
 
-  return Math.max(0, MIN_ATTACK_SPEED - oppBonus);
+  return Math.max(0, getMinAttackSpeed() - oppBonus);
 }
 
 /**
