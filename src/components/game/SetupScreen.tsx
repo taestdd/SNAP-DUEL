@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DECK_REGISTRY } from "@/game/engine/state";
+import { getDeckRegistry } from "@/game/engine/state";
 import { CHARACTERS } from "@/game/engine/characters";
 import type { CharacterId, DeckDef, SetupConfig } from "@/game/engine/types";
 import styles from "./SetupScreen.module.css";
@@ -16,8 +16,8 @@ interface PlayerSetupProps {
 }
 
 function PlayerSetup({ label, deckId, charOrder, onDeckSelect, onSwap, onCharSelect }: PlayerSetupProps) {
-  const decks = Object.values(DECK_REGISTRY);
-  const selectedDeck: DeckDef | null = deckId ? DECK_REGISTRY[deckId] : null;
+  const decks = Object.values(getDeckRegistry());
+  const selectedDeck: DeckDef | null = deckId ? getDeckRegistry()[deckId] : null;
 
   return (
     <div className={styles.playerBlock}>
@@ -101,7 +101,7 @@ export default function SetupScreen({ showAi = false, onConfirm }: Props) {
   }, []);
 
   function handleDeckSelect(who: "player" | "ai", deckId: string) {
-    const deck = DECK_REGISTRY[deckId];
+    const deck = getDeckRegistry()[deckId];
     const defaultOrder = [deck.characters[0], deck.characters[1]] as [CharacterId, CharacterId];
     if (who === "player") {
       setPlayerDeckId(deckId);
@@ -115,7 +115,7 @@ export default function SetupScreen({ showAi = false, onConfirm }: Props) {
   function handleCharSelect(who: "player" | "ai", charId: CharacterId) {
     const deckId = who === "player" ? playerDeckId : aiDeckId;
     if (!deckId) return;
-    const deck = DECK_REGISTRY[deckId];
+    const deck = getDeckRegistry()[deckId];
     const other = deck.characters.find((c) => c !== charId) as CharacterId;
     const newOrder: [CharacterId, CharacterId] = [charId, other];
     if (who === "player") setPlayerCharOrder(newOrder);

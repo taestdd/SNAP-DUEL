@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import { CardSchema, CardsRecordSchema } from "@/game/engine/cardSchema";
+import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { CardSchema } from "@/game/engine/cardSchema";
 import { z } from "zod";
 
-const CARDS_PATH = path.join(process.cwd(), "src/data/cards.json");
-
 async function readCards(): Promise<Record<string, unknown>> {
-  const raw = await fs.readFile(CARDS_PATH, "utf-8");
-  return JSON.parse(raw);
-}
-
-async function writeCards(cards: Record<string, unknown>): Promise<void> {
-  await fs.writeFile(CARDS_PATH, JSON.stringify(cards, null, 2) + "\n", "utf-8");
+  const snapshot = await getDocs(collection(db, "cards"));
+  const cards: Record<string, unknown> = {};
+  snapshot.forEach((d) => { cards[d.id] = d.data(); });
+  return cards;
 }
 
 export async function GET() {
@@ -33,16 +29,12 @@ export async function POST(req: Request) {
     }
 
     const card = parsed.data;
-    const cards = await readCards();
-
-    if (cards[card.id]) {
+    const existing = await getDoc(doc(db, "cards", card.id));
+    if (existing.exists()) {
       return NextResponse.json({ error: `이미 존재하는 id: ${card.id}` }, { status: 409 });
     }
 
-    cards[card.id] = card;
-    const validated = CardsRecordSchema.parse(cards);
-    await writeCards(validated as Record<string, unknown>);
-
+    await setDoc(doc(db, "cards", card.id), card);
     return NextResponse.json(card, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {

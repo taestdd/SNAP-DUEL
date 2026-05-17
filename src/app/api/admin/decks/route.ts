@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { DeckSchema } from "@/game/engine/deckSchema";
 
-const DECKS_PATH = path.join(process.cwd(), "src/data/decks.json");
-
 async function readDecks(): Promise<Record<string, unknown>> {
-  const raw = await fs.readFile(DECKS_PATH, "utf-8");
-  return JSON.parse(raw);
-}
-
-async function writeDecks(decks: Record<string, unknown>): Promise<void> {
-  await fs.writeFile(DECKS_PATH, JSON.stringify(decks, null, 2) + "\n", "utf-8");
+  const snapshot = await getDocs(collection(db, "decks"));
+  const decks: Record<string, unknown> = {};
+  snapshot.forEach((d) => { decks[d.id] = d.data(); });
+  return decks;
 }
 
 export async function GET() {
@@ -32,15 +28,12 @@ export async function POST(req: Request) {
     }
 
     const deck = parsed.data;
-    const decks = await readDecks();
-
-    if (decks[deck.id]) {
+    const existing = await getDoc(doc(db, "decks", deck.id));
+    if (existing.exists()) {
       return NextResponse.json({ error: `이미 존재하는 id: ${deck.id}` }, { status: 409 });
     }
 
-    decks[deck.id] = deck;
-    await writeDecks(decks);
-
+    await setDoc(doc(db, "decks", deck.id), deck);
     return NextResponse.json(deck, { status: 201 });
   } catch {
     return NextResponse.json({ error: "저장 실패" }, { status: 500 });

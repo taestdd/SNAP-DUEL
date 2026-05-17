@@ -2,11 +2,16 @@ import type { CharacterId, Combatant, DeckDef, GameState, SetupConfig, Status } 
 import { shuffle } from "./rng";
 import { CHARACTERS } from "./characters";
 import { DecksRecordSchema } from "./deckSchema";
-import decksData from "@/data/decks.json";
 
-export const DECK_REGISTRY: Record<string, DeckDef> = DecksRecordSchema.parse(decksData);
+let _decks: Record<string, DeckDef> = {};
 
-const FALLBACK_DECK = DECK_REGISTRY["PROTOTYPE"];
+export function initDecks(data: unknown): void {
+  _decks = DecksRecordSchema.parse(data);
+}
+
+export function getDeckRegistry(): Record<string, DeckDef> {
+  return _decks;
+}
 
 const emptyStatus = (): Status => ({
   attackBuff: 0,
@@ -44,9 +49,10 @@ function createCombatant(
 }
 
 export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig): GameState {
-  const p1DeckDef = DECK_REGISTRY[config.deckId] ?? FALLBACK_DECK;
-  const aiDeckDef = aiConfig ? (DECK_REGISTRY[aiConfig.deckId] ?? FALLBACK_DECK) : FALLBACK_DECK;
-  const aiChar = aiConfig ? aiConfig.characters[0] : FALLBACK_DECK.characters[0];
+  const fallback = Object.values(_decks)[0]!;
+  const p1DeckDef = _decks[config.deckId] ?? fallback;
+  const aiDeckDef = aiConfig ? (_decks[aiConfig.deckId] ?? fallback) : fallback;
+  const aiChar = aiConfig ? aiConfig.characters[0] : fallback.characters[0];
 
   const state: GameState = {
     round: 1,
