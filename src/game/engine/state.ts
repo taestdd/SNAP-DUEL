@@ -78,6 +78,8 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     resolveContext: { queue: [], index: 0, unresolved: [] },
     animScript: [],
     animStartHp: null,
+    animStartCombo: null,
+    comboCount: 0,
     draftSelections: { P1: null, AI: null },
     turnLog: [],
   };

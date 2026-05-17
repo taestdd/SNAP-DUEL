@@ -37,3 +37,11 @@
   border-color: rgba(255, 200, 50, 0.35);
   color: #ffcc44;
 }
+
+.badgeCombo {
+  background: rgba(255, 80, 80, 0.22);
+  border-color: rgba(255, 80, 80, 0.55);
+  color: #ff6666;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}

@@ -63,6 +63,7 @@ export default function GameScreen({
     superFlashActor,
     displayedHp,
     displayedCancelledPlayer,
+    displayedCombo,
     animLog,
   } = useArenaAnimation(state, dispatch);
 
@@ -82,6 +83,11 @@ export default function GameScreen({
   const effectiveCancelledPlayer = isAnimating
     ? displayedCancelledPlayer
     : state.recentlyCancelledPlayer;
+
+  // 콤보: ANIMATING 중에는 displayedCombo, 그 외에는 gameState에서 직접
+  const effectiveCombo = isAnimating && displayedCombo !== null
+    ? displayedCombo
+    : { count: state.comboCount, holder: state.initiative };
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
@@ -229,7 +235,7 @@ export default function GameScreen({
             </div>
           </div>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} overrideCharacterHp={aiDisplayCharHp} />
+            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} overrideCharacterHp={aiDisplayCharHp} combo={effectiveCombo.count} isInitiative={effectiveCombo.holder === "AI"} />
           </div>
         </div>
 
@@ -291,7 +297,7 @@ export default function GameScreen({
         {/* P1 패널: 좌측 HP 바 + 우측 액션 버튼 */}
         <div className={styles.p1Panel}>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.P1} side="left" label="YOU" overrideCharacterHp={p1DisplayCharHp} />
+            <FightingHPBar combatant={state.P1} side="left" label="YOU" overrideCharacterHp={p1DisplayCharHp} combo={effectiveCombo.count} isInitiative={effectiveCombo.holder === "P1"} />
           </div>
           <div className={styles.actionArea}>
             <button

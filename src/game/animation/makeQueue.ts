@@ -6,6 +6,8 @@ export const SUPER_FLASH_DUR = 700;
 export type ActorHpData = {
   hpAfter: { P1: number; AI: number };
   cancelledPlayer?: PlayerId;
+  comboAfter?: number;
+  comboHolder?: PlayerId;
 };
 
 /**
@@ -151,6 +153,8 @@ function pushSequenceWithHold(
       actor,
       hpAfter: hpData?.hpAfter,
       cancelledPlayer: hpData?.cancelledPlayer,
+      comboAfter: hpData?.comboAfter,
+      comboHolder: hpData?.comboHolder,
     });
   }
 
@@ -173,10 +177,10 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const aiAirborne = aiEntry?.actorAirborne ?? 0;
 
   const p1HpData: ActorHpData | undefined = p1Entry
-    ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer }
+    ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
     : undefined;
   const aiHpData: ActorHpData | undefined = aiEntry
-    ? { hpAfter: aiEntry.hpAfter, cancelledPlayer: aiEntry.cancelledPlayer }
+    ? { hpAfter: aiEntry.hpAfter, cancelledPlayer: aiEntry.cancelledPlayer, comboAfter: aiEntry.comboAfter, comboHolder: aiEntry.comboHolder }
     : undefined;
 
   const initiative: "player" | "ai" =

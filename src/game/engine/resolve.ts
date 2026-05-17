@@ -140,10 +140,18 @@ function resolveAll(state: GameState): GameState {
     unresolved.delete(it.player);
 
     let cancelledPlayerByThisCard: PlayerId | undefined;
+    let comboAfterThisCard: number | undefined;
+    let comboHolderAfterThisCard: PlayerId | undefined;
     const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
     if (hit) {
+      const prevInitiative = s.initiative;
       s = applyInitiativeOnHit(s, it.player);
       s = applyGainOnHit(s, it.player, it.cardId);
+      // 주도권 유지 시 콤보 ++, 주도권 획득 시 콤보 1로 시작
+      const newCombo = prevInitiative === it.player ? s.comboCount + 1 : 1;
+      s = { ...s, comboCount: newCombo };
+      comboAfterThisCard = newCombo;
+      comboHolderAfterThisCard = s.initiative;
       const prevCancelled = s.recentlyCancelledPlayer;
       s = applyCancelOnHit(s, it.player, unresolved);
       if (s.recentlyCancelledPlayer !== prevCancelled) {
@@ -158,6 +166,8 @@ function resolveAll(state: GameState): GameState {
       targetAirborne,
       hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
       cancelledPlayer: cancelledPlayerByThisCard,
+      comboAfter: comboAfterThisCard,
+      comboHolder: comboHolderAfterThisCard,
     });
 
     idx++;
@@ -194,6 +204,7 @@ export function enterResolving(state: GameState): GameState {
     resolveContext: { queue: items, index: 0, unresolved: unresolvedArr },
     animScript: [],
     animStartHp: { P1: state.P1.hp, AI: state.AI.hp },
+    animStartCombo: { count: state.comboCount, holder: state.initiative },
   });
 }
 

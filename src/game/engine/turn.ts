@@ -35,6 +35,8 @@ function prepareNextRound(state: GameState): GameState {
     selected: null,
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
+    comboCount: 0,
+    animStartCombo: null,
     draftSelections: { P1: null, AI: null },
     P1: { ...s.P1, queue: [], ready: false, block: 0 },
     AI: { ...s.AI, queue: [], ready: false, block: 0 },
