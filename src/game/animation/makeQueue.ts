@@ -13,8 +13,9 @@ export type ActorHpData = {
 /**
  * 두 카드와 이니셔티브 정보를 받아 CombatAnimationEvent[] 를 생성한다.
  *
- * superFlash 카드는 action_start 전에 super_flash 이벤트를 삽입하고
- * 이후 이벤트를 SUPER_FLASH_DUR(700ms)만큼 뒤로 밀어낸다.
+ * 각 플레이어의 actorAirborne / targetAirborne을 별도로 받는다.
+ * 순차 리졸브 시 선공 카드가 에어본을 변경할 수 있으므로,
+ * 후공 카드의 targetAirborne은 선공 처리 이후 값을 사용해야 한다.
  *
  * 단일 공격자 (슈퍼 플래시 없음):
  *   t=  0  action_start
@@ -37,8 +38,10 @@ export function makeQueue(
   playerCard: Card | null,
   aiCard: Card | null,
   initiative: "player" | "ai" | "tie",
-  p1Airborne: number,
-  aiAirborne: number,
+  p1ActorAirborne: number,
+  p1TargetAirborne: number,
+  aiActorAirborne: number,
+  aiTargetAirborne: number,
   playerHpData?: ActorHpData,
   aiHpData?: ActorHpData,
 ): CombatAnimationEvent[] {
@@ -52,14 +55,14 @@ export function makeQueue(
   if (p1Acts && !aiActs) {
     const fd = flashDur(playerCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
-    pushSequence(events, "P1", "AI", playerCard!, fd, aiAirborne, p1Airborne, playerHpData);
+    pushSequence(events, "P1", "AI", playerCard!, fd, p1TargetAirborne, p1ActorAirborne, playerHpData);
     return events;
   }
 
   if (!p1Acts && aiActs) {
     const fd = flashDur(aiCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "AI", "P1", aiCard!, fd, p1Airborne, aiAirborne, aiHpData);
+    pushSequence(events, "AI", "P1", aiCard!, fd, aiTargetAirborne, aiActorAirborne, aiHpData);
     return events;
   }
 
@@ -69,8 +72,8 @@ export function makeQueue(
     const maxFd = Math.max(p1fd, aifd);
     if (p1fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
     if (aifd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "P1", "AI", playerCard!, maxFd, aiAirborne, p1Airborne, playerHpData);
-    pushSequence(events, "AI", "P1", aiCard!, maxFd, p1Airborne, aiAirborne, aiHpData);
+    pushSequence(events, "P1", "AI", playerCard!, maxFd, p1TargetAirborne, p1ActorAirborne, playerHpData);
+    pushSequence(events, "AI", "P1", aiCard!, maxFd, aiTargetAirborne, aiActorAirborne, aiHpData);
     return events;
   }
 
@@ -78,10 +81,10 @@ export function makeQueue(
   const second: PlayerId = initiative === "player" ? "AI" : "P1";
   const firstCard = initiative === "player" ? playerCard! : aiCard!;
   const secondCard = initiative === "player" ? aiCard! : playerCard!;
-  const firstTargetAirborne = initiative === "player" ? aiAirborne : p1Airborne;
-  const secondTargetAirborne = initiative === "player" ? p1Airborne : aiAirborne;
-  const firstActorAirborne = initiative === "player" ? p1Airborne : aiAirborne;
-  const secondActorAirborne = initiative === "player" ? aiAirborne : p1Airborne;
+  const firstActorAirborne = initiative === "player" ? p1ActorAirborne : aiActorAirborne;
+  const firstTargetAirborne = initiative === "player" ? p1TargetAirborne : aiTargetAirborne;
+  const secondActorAirborne = initiative === "player" ? aiActorAirborne : p1ActorAirborne;
+  const secondTargetAirborne = initiative === "player" ? aiTargetAirborne : p1TargetAirborne;
   const firstHpData = initiative === "player" ? playerHpData : aiHpData;
   const secondHpData = initiative === "player" ? aiHpData : playerHpData;
 
@@ -173,10 +176,12 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const p1Card = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
   const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
 
-  // actorAirborne이 없으면 상대 entry의 targetAirborne으로 폴백
-  // (한 명만 카드를 낸 경우 상대의 airborne 상태를 정확히 반영)
-  const p1Airborne = p1Entry?.actorAirborne ?? (aiEntry?.targetAirborne ?? 0);
-  const aiAirborne = aiEntry?.actorAirborne ?? (p1Entry?.targetAirborne ?? 0);
+  // 각 카드가 실제로 처리되는 시점의 actor/target airborne을 entry에서 직접 읽는다.
+  // 순차 리졸브 시 선공 카드가 에어본을 변경하므로 actorAirborne과 targetAirborne이 다를 수 있다.
+  const p1ActorAirborne = p1Entry?.actorAirborne ?? 0;
+  const p1TargetAirborne = p1Entry?.targetAirborne ?? 0;
+  const aiActorAirborne = aiEntry?.actorAirborne ?? 0;
+  const aiTargetAirborne = aiEntry?.targetAirborne ?? 0;
 
   const p1HpData: ActorHpData | undefined = p1Entry
     ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
@@ -188,5 +193,5 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 
-  return makeQueue(p1Card, aiCard, initiative, p1Airborne, aiAirborne, p1HpData, aiHpData);
+  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1HpData, aiHpData);
 }
