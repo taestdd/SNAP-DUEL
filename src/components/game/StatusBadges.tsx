@@ -4,14 +4,19 @@ import styles from "./StatusBadges.module.css";
 export default function StatusBadges({
   combatant,
   alignRight = false,
+  combo = 0,
+  isInitiative = false,
 }: {
   combatant: Combatant;
   alignRight?: boolean;
+  combo?: number;
+  isInitiative?: boolean;
 }) {
   const { status, block, airborneStack } = combatant;
   const burn = status.burn;
 
   const hasAny =
+    (combo > 0 && isInitiative) ||
     airborneStack >= 1 ||
     block > 0 ||
     status.attackBuff > 0 ||
@@ -24,6 +29,9 @@ export default function StatusBadges({
 
   return (
     <div className={[styles.badges, alignRight ? styles.badgesRight : ""].join(" ")}>
+      {combo > 0 && isInitiative && (
+        <span className={[styles.badge, styles.badgeCombo].join(" ")}>{combo} HIT</span>
+      )}
       {airborneStack >= 1 && (
         <span className={[styles.badge, styles.badgeAir].join(" ")}>⬆ ×{airborneStack}</span>
       )}

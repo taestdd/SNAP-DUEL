@@ -97,6 +97,13 @@
   text-transform: uppercase;
   opacity: 0.80;
   flex-shrink: 0;
+  transition: color 200ms ease, opacity 200ms ease;
+}
+
+.nameInitiative {
+  color: #ffcc44;
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(255, 204, 68, 0.55);
 }
 
 .zoneInfo {

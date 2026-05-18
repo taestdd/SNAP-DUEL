@@ -80,6 +80,10 @@ export interface CombatAnimationEvent {
   hpAfter?: { P1: number; AI: number };
   /** damage_resolve: 이 카드로 인해 캔슬된 플레이어 (UI 표시용) */
   cancelledPlayer?: PlayerId;
+  /** damage_resolve: 이 카드 효과 적용 후의 콤보 카운트 (UI 표시용) */
+  comboAfter?: number;
+  /** damage_resolve: 이 카드 효과 적용 후의 콤보 보유 플레이어 (UI 표시용) */
+  comboHolder?: PlayerId;
 }
 
 export type CharacterId = string;
@@ -347,6 +351,10 @@ export type AnimScriptEntry = {
   hpAfter: { P1: number; AI: number };
   /** 이 카드 공격으로 인해 캔슬된 플레이어 (UI 지연 표시용) */
   cancelledPlayer?: PlayerId;
+  /** 이 카드 효과 적용 후의 콤보 카운트 (UI 지연 표시용) */
+  comboAfter?: number;
+  /** 이 카드 효과 적용 후의 콤보 보유 플레이어 (UI 지연 표시용) */
+  comboHolder?: PlayerId;
 };
 
 /**
@@ -432,6 +440,12 @@ export type GameState = {
 
   /** ANIMATING 페이즈: 카드 효과 적용 직전 HP 스냅샷 (UI 지연 표시 초기값) */
   animStartHp: { P1: number; AI: number } | null;
+
+  /** ANIMATING 페이즈: resolve 직전 콤보 스냅샷 (UI 지연 표시 초기값) */
+  animStartCombo: { count: number; holder: PlayerId } | null;
+
+  /** 현재 initiative 보유자의 연속 타격 횟수. 타격 시 +1, 주도권 이동 시 1로 리셋, 라운드 변경 시 0으로 리셋. */
+  comboCount: number;
 
   /** ROUND_DRAFT 페이즈: 드래프트 제출 현황 (null = 미제출) */
   draftSelections: { P1: string[] | null; AI: string[] | null };

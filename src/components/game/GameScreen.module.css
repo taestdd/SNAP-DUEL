@@ -313,6 +313,20 @@
   font-weight: 700;
   opacity: 0.72;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.initiativeBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255, 204, 68, 0.18);
+  border: 1px solid rgba(255, 204, 68, 0.5);
+  color: #ffcc44;
+  letter-spacing: 0.03em;
 }
 
 .queueEmpty {

@@ -54,7 +54,12 @@ function flipState(state: GameState): GameState {
     animScript: state.animScript.map((entry) => ({
       ...entry,
       actor: flipId(entry.actor),
+      cancelledPlayer: entry.cancelledPlayer ? flipId(entry.cancelledPlayer) : undefined,
+      comboHolder: entry.comboHolder ? flipId(entry.comboHolder) : undefined,
     })),
+    animStartCombo: state.animStartCombo
+      ? { ...state.animStartCombo, holder: flipId(state.animStartCombo.holder) }
+      : null,
     recentlyCancelledPlayer:
       state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
     p1TaggedThisTurn: false,

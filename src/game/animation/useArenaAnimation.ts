@@ -8,6 +8,7 @@ import type {
   CombatAnimationEvent,
   FighterPose,
   GameState,
+  PlayerId,
 } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
 import { makeQueueFromScript, SUPER_FLASH_DUR } from "./makeQueue";
@@ -77,6 +78,8 @@ export type ArenaAnimState = {
   displayedHp: { P1: number; AI: number } | null;
   /** ANIMATING 중 UI에 표시할 캔슬 플레이어 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
   displayedCancelledPlayer: "P1" | "AI" | null;
+  /** ANIMATING 중 UI에 표시할 콤보 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
+  displayedCombo: { count: number; holder: PlayerId } | null;
   animLog: string[];
 };
 
@@ -111,9 +114,10 @@ export function useArenaAnimation(
   const [superFlashActor, setSuperFlashActor] = useState<"P1" | "AI" | null>(null);
   const superFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 애니메이션 중 표시용 HP / 캔슬 플레이어 (damage_resolve 이벤트 타이밍에 갱신)
+  // 애니메이션 중 표시용 HP / 캔슬 플레이어 / 콤보 (damage_resolve 이벤트 타이밍에 갱신)
   const [displayedHp, setDisplayedHp] = useState<{ P1: number; AI: number } | null>(null);
   const [displayedCancelledPlayer, setDisplayedCancelledPlayer] = useState<"P1" | "AI" | null>(null);
+  const [displayedCombo, setDisplayedCombo] = useState<{ count: number; holder: PlayerId } | null>(null);
 
   // 태그 애니메이션: exit 재생 후 스프라이트 전환
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
@@ -171,12 +175,16 @@ export function useArenaAnimation(
       setAnimRunning(false);
       setDisplayedHp(null);
       setDisplayedCancelledPlayer(null);
+      setDisplayedCombo(null);
       return;
     }
 
-    // 카드 효과 적용 직전 HP로 초기화 → damage_resolve까지 HP바 그대로 유지
+    // 카드 효과 적용 직전 스냅샷으로 초기화 → damage_resolve까지 이전 값 유지
     if (state.animStartHp) {
       setDisplayedHp({ ...state.animStartHp });
+    }
+    if (state.animStartCombo) {
+      setDisplayedCombo({ ...state.animStartCombo });
     }
     setDisplayedCancelledPlayer(null);
 
@@ -286,6 +294,9 @@ export function useArenaAnimation(
         if (event.cancelledPlayer) {
           setDisplayedCancelledPlayer(event.cancelledPlayer);
         }
+        if (event.comboAfter !== undefined && event.comboHolder) {
+          setDisplayedCombo({ count: event.comboAfter, holder: event.comboHolder });
+        }
         break;
       }
     }
@@ -315,6 +326,7 @@ export function useArenaAnimation(
     superFlashActor,
     displayedHp,
     displayedCancelledPlayer,
+    displayedCombo,
     animLog,
   };
 }

@@ -15,6 +15,8 @@ export default function FightingHPBar({
   label,
   isThinking,
   overrideCharacterHp,
+  combo = 0,
+  isInitiative = false,
 }: {
   combatant: Combatant;
   side: "left" | "right";
@@ -22,6 +24,8 @@ export default function FightingHPBar({
   isThinking?: boolean;
   /** ANIMATING 중 표시용 HP 오버라이드. 설정 시 combatant.characterHp 대신 사용 */
   overrideCharacterHp?: Record<string, number>;
+  combo?: number;
+  isInitiative?: boolean;
 }) {
   const effectiveCharHp = overrideCharacterHp ?? combatant.characterHp;
   const charIds = Object.keys(combatant.characterHp);
@@ -121,7 +125,7 @@ export default function FightingHPBar({
 
       <div className={styles.content}>
         <div className={[styles.nameRow, isRight ? styles.nameRowRight : ""].join(" ")}>
-          <span className={styles.name}>{label}</span>
+          <span className={[styles.name, isInitiative ? styles.nameInitiative : ""].join(" ")}>{label}</span>
           {isThinking && <span className={styles.thinking}>Thinking…</span>}
           <span className={styles.zoneInfo}>
             H:{combatant.hand.length} · CD:{combatant.cooldown.length} · TR:{combatant.trash.length}
@@ -141,7 +145,7 @@ export default function FightingHPBar({
           <div className={styles.deckCount}>{combatant.deck.length}</div>
         </div>
 
-        <StatusBadges combatant={combatant} alignRight={isRight} />
+        <StatusBadges combatant={combatant} alignRight={isRight} combo={combo} isInitiative={isInitiative} />
       </div>
 
       {/* AI측 초상화는 오른쪽 */}
