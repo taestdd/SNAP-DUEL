@@ -173,8 +173,10 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const p1Card = p1Entry ? (getCard(p1Entry.cardId) ?? null) : null;
   const aiCard = aiEntry ? (getCard(aiEntry.cardId) ?? null) : null;
 
-  const p1Airborne = p1Entry?.actorAirborne ?? 0;
-  const aiAirborne = aiEntry?.actorAirborne ?? 0;
+  // actorAirborne이 없으면 상대 entry의 targetAirborne으로 폴백
+  // (한 명만 카드를 낸 경우 상대의 airborne 상태를 정확히 반영)
+  const p1Airborne = p1Entry?.actorAirborne ?? (aiEntry?.targetAirborne ?? 0);
+  const aiAirborne = aiEntry?.actorAirborne ?? (p1Entry?.targetAirborne ?? 0);
 
   const p1HpData: ActorHpData | undefined = p1Entry
     ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
