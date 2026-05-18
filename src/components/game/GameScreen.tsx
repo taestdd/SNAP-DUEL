@@ -252,6 +252,7 @@ export default function GameScreen({
                   (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
                 }
+                isInitiative={effectiveCombo.holder === "P1"}
               />
             </div>
             <div className={styles.queuePanel}>
@@ -264,6 +265,7 @@ export default function GameScreen({
                   (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
                 }
+                isInitiative={effectiveCombo.holder === "AI"}
               />
             </div>
           </div>

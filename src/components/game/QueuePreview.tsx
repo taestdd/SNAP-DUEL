@@ -16,12 +16,14 @@ export default function QueuePreview({
   phase,
   recentlyCancelledPlayer,
   isMyTurn = false,
+  isInitiative = false,
 }: {
   title: string;
   me: Combatant;
   phase: string;
   recentlyCancelledPlayer: "P1" | "AI" | null;
   isMyTurn?: boolean;
+  isInitiative?: boolean;
 }) {
   const [detailCardId, setDetailCardId] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,7 +56,10 @@ export default function QueuePreview({
 
   return (
     <div className={styles.queueBox}>
-      <div className={styles.queueTitle}>{title}</div>
+      <div className={styles.queueTitle}>
+        {title}
+        {isInitiative && <span className={styles.initiativeBadge}>주도권</span>}
+      </div>
 
       {!card ? (
         <div className={`${styles.queueEmpty} ${showCancel ? styles.queueCancelAnim : ""}`}>
