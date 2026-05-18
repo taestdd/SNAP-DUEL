@@ -125,7 +125,7 @@ export default function FightingHPBar({
 
       <div className={styles.content}>
         <div className={[styles.nameRow, isRight ? styles.nameRowRight : ""].join(" ")}>
-          <span className={styles.name}>{label}</span>
+          <span className={[styles.name, isInitiative ? styles.nameInitiative : ""].join(" ")}>{label}</span>
           {isThinking && <span className={styles.thinking}>Thinking…</span>}
           <span className={styles.zoneInfo}>
             H:{combatant.hand.length} · CD:{combatant.cooldown.length} · TR:{combatant.trash.length}
