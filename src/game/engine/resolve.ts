@@ -144,14 +144,14 @@ function resolveAll(state: GameState): GameState {
     let comboHolderAfterThisCard: PlayerId | undefined;
     const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
     if (hit) {
-      const prevInitiative = s.initiative;
+      const hadInitiative = s.initiative === it.player;
       s = applyInitiativeOnHit(s, it.player);
       s = applyGainOnHit(s, it.player, it.cardId);
       // 주도권 유지 시 콤보 ++, 주도권 획득 시 콤보 1로 시작
-      const newCombo = prevInitiative === it.player ? s.comboCount + 1 : 1;
+      const newCombo = hadInitiative ? s.comboCount + 1 : 1;
       s = { ...s, comboCount: newCombo };
       comboAfterThisCard = newCombo;
-      comboHolderAfterThisCard = s.initiative;
+      comboHolderAfterThisCard = it.player;
       const prevCancelled = s.recentlyCancelledPlayer;
       s = applyCancelOnHit(s, it.player, unresolved);
       if (s.recentlyCancelledPlayer !== prevCancelled) {

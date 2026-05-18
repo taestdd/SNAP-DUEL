@@ -88,6 +88,8 @@ export default function GameScreen({
   const effectiveCombo = isAnimating && displayedCombo !== null
     ? displayedCombo
     : { count: state.comboCount, holder: state.initiative };
+  const isP1Initiative = effectiveCombo.holder === "P1";
+  const isAIInitiative = effectiveCombo.holder === "AI";
 
   // ROUND_DRAFT: AI 자동 드래프트 (10초 후) — 온라인 모드에서는 비활성화
   useEffect(() => {
@@ -235,7 +237,7 @@ export default function GameScreen({
             </div>
           </div>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} overrideCharacterHp={aiDisplayCharHp} combo={effectiveCombo.count} isInitiative={effectiveCombo.holder === "AI"} />
+            <FightingHPBar combatant={state.AI} side="right" label="AI" isThinking={isAiThinking} overrideCharacterHp={aiDisplayCharHp} combo={effectiveCombo.count} isInitiative={isAIInitiative} />
           </div>
         </div>
 
@@ -252,7 +254,7 @@ export default function GameScreen({
                   (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
                 }
-                isInitiative={effectiveCombo.holder === "P1"}
+                isInitiative={isP1Initiative}
               />
             </div>
             <div className={styles.queuePanel}>
@@ -265,7 +267,7 @@ export default function GameScreen({
                   (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
                   (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
                 }
-                isInitiative={effectiveCombo.holder === "AI"}
+                isInitiative={isAIInitiative}
               />
             </div>
           </div>
@@ -299,7 +301,7 @@ export default function GameScreen({
         {/* P1 패널: 좌측 HP 바 + 우측 액션 버튼 */}
         <div className={styles.p1Panel}>
           <div className={styles.hpWrap}>
-            <FightingHPBar combatant={state.P1} side="left" label="YOU" overrideCharacterHp={p1DisplayCharHp} combo={effectiveCombo.count} isInitiative={effectiveCombo.holder === "P1"} />
+            <FightingHPBar combatant={state.P1} side="left" label="YOU" overrideCharacterHp={p1DisplayCharHp} combo={effectiveCombo.count} isInitiative={isP1Initiative} />
           </div>
           <div className={styles.actionArea}>
             <button
