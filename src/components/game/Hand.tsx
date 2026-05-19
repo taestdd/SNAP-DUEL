@@ -8,7 +8,7 @@ import { CHARACTERS } from "@/game/engine/characters";
 import { evaluateModifiers } from "@/game/engine/stateHelpers";
 
 const CARD_W = 110;
-const CARD_H = 100;
+const CARD_H = 160;
 
 export default function Hand({
   me,

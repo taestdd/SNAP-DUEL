@@ -154,34 +154,68 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── 핸드 카드 ── */
+/* ── 핸드 카드 (110×160, 좌측 스트립 구조) ── */
 .handCard {
-  height: 100%;
+  width: 110px;
+  height: 160px;
   min-height: unset;
   overflow: hidden;
-  justify-content: flex-start;
-  gap: 3px;
-  background: var(--clr-bg2);
+  flex-direction: row;
+  gap: 0;
+  padding: 0;
+  background: rgba(14, 18, 40, 0.85);
   border-color: var(--clr-border);
-  padding: 7px 8px;
 }
 
 .handCard:hover {
-  background: rgba(0, 217, 255, 0.07);
-  border-color: rgba(0, 217, 255, 0.3);
+  background: rgba(14, 18, 40, 0.95);
+  border-color: rgba(0, 217, 255, 0.35);
 }
 
 .handCard.disabled {
-  background: var(--clr-bg);
+  background: rgba(10, 10, 16, 0.7);
 }
 
-.handStatRow {
+/* 좌측 스트립 */
+.strip {
+  width: 30px;
+  flex-shrink: 0;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  padding: 8px 0 6px;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.speedCircle {
+.stripCost {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.altCostDot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  font-size: 9px;
+  line-height: 1;
+  color: #ffa032;
+  pointer-events: none;
+}
+
+.stripSpeed {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -189,10 +223,26 @@
   place-items: center;
   font-weight: 700;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--clr-border);
-  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
+}
+
+.stripAtk {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.5px;
+}
+
+.stripGround {
+  color: #5de68a;
+}
+
+.stripAntiAir {
+  color: #ffaa55;
 }
 
 .speedDown {
@@ -219,27 +269,28 @@
   color: var(--clr-danger);
 }
 
-.handAtkList {
+/* 우측 본문 */
+.handBody {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  min-width: 0;
 }
 
-.handAtkLine {
-  font-size: 11px;
-  font-weight: 700;
-  color: #ffcc66;
-  line-height: 1.2;
-  font-family: 'JetBrains Mono', monospace;
+.illustArea {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .handCardName {
   font-weight: 700;
-  font-size: 11px;
-  line-height: 1.1;
+  font-size: 10px;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 4px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
   opacity: 0.9;
 }
 
