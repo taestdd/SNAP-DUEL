@@ -153,6 +153,22 @@ export type DamageType =
 
 export type Target = "self" | "enemy";
 
+/**
+ * 카드 발동 전 지불하는 추가 코스트.
+ * move_cards 파라미터 구조를 재사용: target/fromZone/toZone/count/tag/userSelects
+ */
+export type AltCost = {
+  /** 카드를 가져올 플레이어 ("self" = 사용자, "enemy" = 상대, 미지정 시 self) */
+  target?: Target;
+  fromZone: CardZone;
+  toZone: CardZone;
+  toPosition?: DeckInsertPosition;
+  count: number;
+  tag?: CardTag;
+  /** true면 P1이 직접 선택. AI는 항상 자동 선택 */
+  userSelects?: boolean;
+};
+
 export type CardEffect = {
   type: EffectType;
   value?: number;
@@ -263,6 +279,9 @@ export type Card = {
 
   /** 조건부 스탯 보정 목록. 조건 충족 시 해당 스탯에 delta 누적 */
   statModifiers?: StatModifier[];
+
+  /** 카드 발동 전 지불하는 추가 코스트. ready 시점에 처리 */
+  altCost?: AltCost;
 };
 
 export type SelectedCard = {
@@ -332,6 +351,7 @@ export type TurnPhase =
   | "RESOLVING"
   | "ANIMATING"
   | "WAITING_SELECTION"
+  | "WAITING_COST_PAYMENT"
   | "WAITING_DISCARD"
   | "TURN_END"
   | "GAME_OVER";
@@ -365,6 +385,30 @@ export type PendingDiscard = {
   count: number;
   /** 현재 P1 핸드 카드 목록 (선택 대상) */
   candidates: string[];
+};
+
+/**
+ * altCost 코스트 지불 대기 상태 (WAITING_COST_PAYMENT 페이즈)
+ * ready 시점에 P1이 직접 카드를 선택해 코스트를 지불할 때 사용
+ */
+export type PendingCostPayment = {
+  player: PlayerId;
+  /** 코스트 지불 후 큐에 올릴 카드 */
+  cardId: string;
+  handIndex: number;
+  /** 취소 시 복귀할 페이즈 */
+  originalPhase: "SETUP_INIT" | "SETUP_OTHER";
+  /** 코스트 지불 완료 후 진행할 페이즈 */
+  returnPhase: "SETUP_OTHER" | "RESOLVE";
+  /** 선택 가능한 카드 목록 */
+  candidates: string[];
+  /** altCost 이동 파라미터 */
+  fromPlayerId: PlayerId;
+  fromZone: CardZone;
+  toPlayerId: PlayerId;
+  toZone: CardZone;
+  toPosition: DeckInsertPosition;
+  count: number;
 };
 
 /**
@@ -410,6 +454,9 @@ export type GameState = {
   AI: Combatant;
 
   selected: SelectedCard | null;
+
+  /** WAITING_COST_PAYMENT 페이즈일 때 설정됨 */
+  pendingCostPayment: PendingCostPayment | null;
 
   /** WAITING_SELECTION 페이즈일 때 설정됨 */
   pendingSelection: PendingSelection | null;
@@ -494,6 +541,8 @@ export type Action =
   | { type: "DEBUG/RESET" }
   | { type: "SELECTION/CONFIRM"; selectedCards: string[] }
   | { type: "SELECTION/SKIP" }
+  | { type: "COST/CONFIRM"; selectedCards: string[] }
+  | { type: "COST/CANCEL" }
   | { type: "DISCARD/CONFIRM"; discardCards: string[] }
   | { type: "TURN/TAG" }
   | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] }

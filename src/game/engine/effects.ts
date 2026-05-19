@@ -363,6 +363,15 @@ export function canUseCard(state: GameState, player: PlayerId, cardId: string): 
     if (!card.tags.every((t) => charAffinities.includes(t))) return false;
   }
 
+  if (card.altCost) {
+    const cost = card.altCost;
+    const fromPlayerId: PlayerId = cost.target === "enemy" ? opponentOf(player) : player;
+    const pool = (state[fromPlayerId][cost.fromZone] as string[])
+      .filter(id => id !== cardId)
+      .filter(id => !cost.tag || getCard(id)?.tags?.includes(cost.tag));
+    if (pool.length < cost.count) return false;
+  }
+
   if (!card.useCondition) return true;
   const stack = state[player].airborneStack;
   if (card.useCondition === "ground") return stack === 0;

@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
+import { CardTagSchema } from "@/game/engine/cardSchema";
 
 type Tab = "cards" | "decks" | "characters";
+type SortField = "id" | "name" | "cost" | "speed" | "gain";
+type SortDir = "asc" | "desc";
+
+const CARD_TAGS = CardTagSchema.options;
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("cards");
@@ -15,6 +20,15 @@ export default function AdminPage() {
   const [decks, setDecks] = useState<Record<string, DeckSchemaType>>({});
   const [characters, setCharacters] = useState<Record<string, CharacterDefSchemaType>>({});
   const [loading, setLoading] = useState(true);
+
+  // 카드 필터/정렬 상태
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterTag, setFilterTag] = useState("");
+  const [filterCondition, setFilterCondition] = useState("");
+  const [filterAltCost, setFilterAltCost] = useState("");
+  const [sortField, setSortField] = useState<SortField>("id");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   useEffect(() => {
     setLoading(true);
@@ -31,6 +45,44 @@ export default function AdminPage() {
       })
       .finally(() => setLoading(false));
   }, [tab]);
+
+  const filteredCards = useMemo(() => {
+    let list = Object.values(cards);
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+    }
+    if (filterType) {
+      list = list.filter((c) => c.cardType === filterType);
+    }
+    if (filterTag) {
+      list = list.filter((c) => (c.tags ?? []).includes(filterTag as NonNullable<CardSchemaType["tags"]>[number]));
+    }
+    if (filterCondition) {
+      list = list.filter((c) => c.useCondition === filterCondition);
+    }
+    if (filterAltCost === "yes") {
+      list = list.filter((c) => !!c.altCost);
+    } else if (filterAltCost === "no") {
+      list = list.filter((c) => !c.altCost);
+    }
+
+    list.sort((a, b) => {
+      let av: string | number = sortField === "name" ? a.name : sortField === "id" ? a.id : a[sortField] ?? 0;
+      let bv: string | number = sortField === "name" ? b.name : sortField === "id" ? b.id : b[sortField] ?? 0;
+      if (typeof av === "string" && typeof bv === "string") {
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+
+    return list;
+  }, [cards, search, filterType, filterTag, filterCondition, filterAltCost, sortField, sortDir]);
+
+  function toggleSortDir() {
+    setSortDir((d) => d === "asc" ? "desc" : "asc");
+  }
 
   async function handleDeleteCard(id: string) {
     if (!confirm(`"${id}" 카드를 삭제하시겠습니까?`)) return;
@@ -93,17 +145,61 @@ export default function AdminPage() {
       {/* 카드 목록 */}
       {!loading && tab === "cards" && (
         <>
-          {Object.keys(cards).length === 0 && (
-            <div className={styles.empty}>카드가 없습니다.</div>
+          {/* 필터 & 정렬 바 */}
+          <div className={styles.filterBar}>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="이름 / ID 검색..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select className={styles.filterSelect} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option value="">타입 전체</option>
+              <option value="attack">attack</option>
+              <option value="skill">skill</option>
+            </select>
+            <select className={styles.filterSelect} value={filterTag} onChange={(e) => setFilterTag(e.target.value)}>
+              <option value="">태그 전체</option>
+              {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
+              <option value="">조건 전체</option>
+              <option value="ground">ground</option>
+              <option value="airborne">airborne</option>
+            </select>
+            <select className={styles.filterSelect} value={filterAltCost} onChange={(e) => setFilterAltCost(e.target.value)}>
+              <option value="">altCost 전체</option>
+              <option value="yes">altCost 있음</option>
+              <option value="no">altCost 없음</option>
+            </select>
+            <div className={styles.sortGroup}>
+              <select className={styles.filterSelect} value={sortField} onChange={(e) => setSortField(e.target.value as SortField)}>
+                <option value="id">ID</option>
+                <option value="name">이름</option>
+                <option value="cost">코스트</option>
+                <option value="speed">스피드</option>
+                <option value="gain">게인</option>
+              </select>
+              <button className={styles.sortDirBtn} onClick={toggleSortDir} title="정렬 방향 전환">
+                {sortDir === "asc" ? "↑" : "↓"}
+              </button>
+            </div>
+            <span className={styles.resultCount}>{filteredCards.length}개</span>
+          </div>
+
+          {filteredCards.length === 0 && (
+            <div className={styles.empty}>조건에 맞는 카드가 없습니다.</div>
           )}
           <div className={styles.grid}>
-            {Object.values(cards).map((card) => (
+            {filteredCards.map((card) => (
               <div key={card.id} className={styles.card}>
                 <div className={styles.cardHeader}>
                   <div>
                     <div className={styles.cardName}>{card.name}</div>
                     <div className={styles.cardId}>{card.id}</div>
                   </div>
+                  {card.altCost && <span className={styles.altCostBadge}>altCost</span>}
                 </div>
                 <div className={styles.stats}>
                   <span className={styles.stat}>코스트 <span className={styles.statVal}>{card.cost}</span></span>
@@ -114,6 +210,9 @@ export default function AdminPage() {
                   )}
                 </div>
                 <div className={styles.effectList}>
+                  {(card.tags ?? []).map((t) => (
+                    <span key={t} className={styles.tagBadge}>{t}</span>
+                  ))}
                   {(card.effects ?? []).map((e, i) => (
                     <span key={i} className={styles.effectTag}>
                       {e.type}{e.value !== undefined ? ` ${e.value}` : ""}{e.target ? ` → ${e.target}` : ""}

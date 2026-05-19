@@ -8,9 +8,10 @@ interface Props {
   pendingSelection: PendingSelection;
   onConfirm: (selectedCards: string[]) => void;
   onSkip: () => void;
+  isCostPayment?: boolean;
 }
 
-export default function CardSelectionModal({ pendingSelection, onConfirm, onSkip }: Props) {
+export default function CardSelectionModal({ pendingSelection, onConfirm, onSkip, isCostPayment }: Props) {
   const { candidates, count, fromZone, toZone } = pendingSelection;
 
   return (
@@ -18,10 +19,12 @@ export default function CardSelectionModal({ pendingSelection, onConfirm, onSkip
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {fromZone}에서 {count}장 선택
+            {isCostPayment ? `코스트: ${fromZone}에서 ${count}장 선택` : `${fromZone}에서 ${count}장 선택`}
           </h2>
           <div className={styles.subtitle}>
-            선택한 카드는 {toZone}으로 이동합니다.
+            {isCostPayment
+              ? `선택한 카드를 ${toZone}으로 보내야 카드를 발동할 수 있습니다.`
+              : `선택한 카드는 ${toZone}으로 이동합니다.`}
           </div>
         </div>
 

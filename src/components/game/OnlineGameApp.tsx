@@ -32,6 +32,14 @@ function flipState(state: GameState): GameState {
       P1: state.draftSelections.AI,
       AI: state.draftSelections.P1,
     },
+    pendingCostPayment: state.pendingCostPayment
+      ? {
+          ...state.pendingCostPayment,
+          player: flipId(state.pendingCostPayment.player),
+          fromPlayerId: flipId(state.pendingCostPayment.fromPlayerId),
+          toPlayerId: flipId(state.pendingCostPayment.toPlayerId),
+        }
+      : null,
     pendingSelection: state.pendingSelection
       ? {
           ...state.pendingSelection,

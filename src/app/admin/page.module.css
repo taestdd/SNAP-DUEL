@@ -207,3 +207,106 @@
   padding: 80px 0;
   font-size: 14px;
 }
+
+/* ── 필터 & 정렬 바 ── */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 160px;
+  background: #0f0f0f;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 2px;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #444;
+}
+
+.searchInput:focus {
+  border-color: #555;
+}
+
+.filterSelect {
+  background: #0f0f0f;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+}
+
+.filterSelect:focus {
+  border-color: #555;
+}
+
+.sortGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortDirBtn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #aaa;
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.sortDirBtn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.resultCount {
+  font-size: 12px;
+  color: #555;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.altCostBadge {
+  font-size: 10px;
+  background: rgba(255, 160, 50, 0.15);
+  color: #ffa032;
+  border: 1px solid rgba(255, 160, 50, 0.35);
+  padding: 2px 6px;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.tagBadge {
+  font-size: 11px;
+  background: #1a1e2a;
+  color: #7c9cff;
+  border: 1px solid #2a3a7c;
+  padding: 2px 7px;
+  border-radius: 0;
+}

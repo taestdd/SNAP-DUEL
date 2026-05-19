@@ -68,6 +68,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig):
     AI: createCombatant("AI", aiConfig ? aiConfig.characters : aiDeckDef.characters, shuffle([...aiDeckDef.cards])),
 
     selected: null,
+    pendingCostPayment: null,
     pendingSelection: null,
     pendingDiscard: null,
     recentlyCancelledId: null,
