@@ -69,6 +69,16 @@ export const CardEffectSchema = z.object({
   cardId: z.string().optional(),
 });
 
+export const AltCostSchema = z.object({
+  target: TargetSchema.optional(),
+  fromZone: CardZoneSchema,
+  toZone: CardZoneSchema,
+  toPosition: DeckInsertPositionSchema.optional(),
+  count: z.number().int().min(1),
+  tag: CardTagSchema.optional(),
+  userSelects: z.boolean().optional(),
+});
+
 export const HitTimingSchema = z.object({
   ms: z.number().int().min(0),
   ground: HitPoseSchema,
@@ -93,6 +103,7 @@ export const CardSchema = z.object({
   hitTimings: z.array(HitTimingSchema).optional(),
   superFlash: z.boolean().optional(),
   statModifiers: z.array(StatModifierSchema).optional(),
+  altCost: AltCostSchema.optional(),
 });
 
 export const CardsRecordSchema = z.record(z.string(), CardSchema);

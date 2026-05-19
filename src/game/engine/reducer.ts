@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
+import { beginTurn, queueCard, resumeResolve, resumeCostPayment, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
 
@@ -55,6 +55,37 @@ export function gameReducer(state: GameState, action: Action): GameState {
         const picked = s.selected;
 
         if (picked) {
+          const pickedCard = getCard(picked.cardId);
+          // altCost + userSelects → 코스트 선택 UI 진입
+          if (pickedCard?.altCost?.userSelects) {
+            const cost = pickedCard.altCost;
+            const fromPlayerId = cost.target === "enemy" ? ("AI" as const) : ("P1" as const);
+            const allCards = s[fromPlayerId][cost.fromZone] as string[];
+            const candidates = cost.tag
+              ? allCards.filter(id => id !== picked.cardId && getCard(id)?.tags?.includes(cost.tag!))
+              : allCards.filter(id => id !== picked.cardId);
+            const originalPhase = s.phase as "SETUP_INIT" | "SETUP_OTHER";
+            const returnPhase = s.phase === "SETUP_INIT" ? "SETUP_OTHER" : "RESOLVE";
+            return {
+              ...s,
+              phase: "WAITING_COST_PAYMENT",
+              selected: null,
+              pendingCostPayment: {
+                player: "P1",
+                cardId: picked.cardId,
+                handIndex: picked.handIndex,
+                originalPhase,
+                returnPhase,
+                candidates,
+                fromPlayerId,
+                fromZone: cost.fromZone,
+                toPlayerId: "P1",
+                toZone: cost.toZone,
+                toPosition: cost.toPosition ?? "bottom",
+                count: cost.count,
+              },
+            };
+          }
           // 선택 카드가 있으면 예약
           s = queueCard(s, "P1", picked.cardId, picked.handIndex);
           s = { ...s, selected: null };
@@ -208,6 +239,21 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case "SELECTION/SKIP": {
       if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return state;
       return resumeResolve(state, []);
+    }
+
+    case "COST/CONFIRM": {
+      if (state.phase !== "WAITING_COST_PAYMENT" || !state.pendingCostPayment) return state;
+      return resumeCostPayment(state, action.selectedCards);
+    }
+
+    case "COST/CANCEL": {
+      if (state.phase !== "WAITING_COST_PAYMENT" || !state.pendingCostPayment) return state;
+      return {
+        ...state,
+        phase: state.pendingCostPayment.originalPhase,
+        pendingCostPayment: null,
+        selected: null,
+      };
     }
 
     case "DISCARD/CONFIRM": {

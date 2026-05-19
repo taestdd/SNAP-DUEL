@@ -1,4 +1,4 @@
-import type { GameState, PendingDiscard, PlayerId } from "./types";
+import type { GameState, PendingCostPayment, PendingDiscard, PlayerId } from "./types";
 import { getCard } from "./cards";
 import {
   pushLog,
@@ -10,6 +10,7 @@ import {
   moveCooldownToTrash,
   decideWinnerByHp,
   moveQueuedCard,
+  moveCardsBetweenZones,
   evaluateModifiers,
 } from "./stateHelpers";
 import { HAND_LIMIT } from "./constants";
@@ -177,6 +178,63 @@ export function endTurnCleanup(state: GameState): GameState {
 }
 
 /* -------------------------- */
+/* altCost 지불 재개          */
+/* -------------------------- */
+
+/**
+ * WAITING_COST_PAYMENT 상태에서 플레이어가 코스트 카드를 선택 확정한 후 호출.
+ * 1. 선택 카드를 altCost toZone으로 이동 (코스트 지불)
+ * 2. 원래 카드를 큐에 올리고 덱 코스트 지불 (canUseCard 재검사 없이)
+ * 3. ready=true, returnPhase로 진행
+ */
+export function resumeCostPayment(state: GameState, selectedCards: string[]): GameState {
+  if (!state.pendingCostPayment) return state;
+  const pc = state.pendingCostPayment;
+
+  if (selectedCards.length !== pc.count) return state;
+
+  let s: GameState = { ...state, pendingCostPayment: null };
+
+  // 1. altCost 지불
+  s = moveCardsBetweenZones(s, pc.fromPlayerId, pc.fromZone, pc.toPlayerId, pc.toZone, selectedCards, pc.toPosition);
+  s = pushLog(s, `${pc.player} pays altCost: ${selectedCards.length} card(s) ${pc.fromZone}→${pc.toZone}`);
+
+  // 2. 카드를 큐에 올림 (altCost 지불 완료 후이므로 canUseCard 우회)
+  const card = getCard(pc.cardId);
+  if (!card) return state;
+  const me = s[pc.player];
+  const newHandIndex = me.hand.indexOf(pc.cardId);
+  if (newHandIndex < 0) return state;
+
+  const mods = evaluateModifiers(s, pc.player, card.statModifiers);
+  const effectiveCost = Math.max(0, card.cost + (mods.cost ?? 0));
+  if (me.deck.length < effectiveCost) return state;
+
+  const nextHand = [...me.hand];
+  nextHand.splice(newHandIndex, 1);
+  const deckCostCards = me.deck.slice(0, effectiveCost);
+  const remainingDeck = me.deck.slice(effectiveCost);
+
+  s = {
+    ...s,
+    [pc.player]: {
+      ...s[pc.player],
+      hand: nextHand,
+      deck: remainingDeck,
+      trash: [...s[pc.player].trash, ...deckCostCards],
+      queue: [...s[pc.player].queue, pc.cardId],
+    },
+  } as GameState;
+
+  s = pushLog(s, `${pc.player} queued ${card.name} (cost: ${effectiveCost} cards)`);
+  s = syncExhausted(s, pc.player);
+
+  // 3. ready + 페이즈 진행
+  s = { ...s, [pc.player]: { ...s[pc.player], ready: true } };
+  return { ...s, phase: pc.returnPhase };
+}
+
+/* -------------------------- */
 /* 카드 예약                  */
 /* -------------------------- */
 
@@ -214,5 +272,22 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
 
   s = pushLog(s, `${player} queued ${card.name} (cost: ${effectiveCost} cards)`);
   s = syncExhausted(s, player);
+
+  // altCost 자동 지불: userSelects=false이거나 AI인 경우
+  if (card.altCost && (player === "AI" || !card.altCost.userSelects)) {
+    const cost = card.altCost;
+    const fromPlayerId: PlayerId = cost.target === "enemy" ? (player === "P1" ? "AI" : "P1") : player;
+    const toPlayerId: PlayerId = player;
+    const allCards = s[fromPlayerId][cost.fromZone] as string[];
+    const pool = cost.tag
+      ? allCards.filter(id => getCard(id)?.tags?.includes(cost.tag!))
+      : allCards;
+    const toMove = pool.slice(0, cost.count);
+    if (toMove.length > 0) {
+      s = moveCardsBetweenZones(s, fromPlayerId, cost.fromZone, toPlayerId, cost.toZone, toMove, cost.toPosition ?? "bottom");
+      s = pushLog(s, `${player} pays altCost: ${toMove.length} card(s) ${cost.fromZone}→${cost.toZone}`);
+    }
+  }
+
   return s;
 }

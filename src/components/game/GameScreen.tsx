@@ -170,6 +170,31 @@ export default function GameScreen({
         <DraftModal state={state} dispatch={dispatch} />
       )}
 
+      {state.phase === "WAITING_COST_PAYMENT" && state.pendingCostPayment && (
+        <CardSelectionModal
+          pendingSelection={{
+            selectingPlayer: "P1",
+            candidates: state.pendingCostPayment.candidates,
+            count: state.pendingCostPayment.count,
+            fromZone: state.pendingCostPayment.fromZone,
+            fromPlayerId: state.pendingCostPayment.fromPlayerId,
+            toZone: state.pendingCostPayment.toZone,
+            toPlayerId: state.pendingCostPayment.toPlayerId,
+            toPosition: state.pendingCostPayment.toPosition,
+            sourcePlayer: "P1",
+            sourceCardId: state.pendingCostPayment.cardId,
+            resolveItems: [],
+            resolveNextIndex: 0,
+            unresolvedPlayers: [],
+          }}
+          onConfirm={(selectedCards) =>
+            dispatch({ type: "COST/CONFIRM", selectedCards })
+          }
+          onSkip={() => dispatch({ type: "COST/CANCEL" })}
+          isCostPayment
+        />
+      )}
+
       {state.phase === "WAITING_SELECTION" && state.pendingSelection && state.pendingSelection.selectingPlayer === "P1" && (
         <CardSelectionModal
           pendingSelection={state.pendingSelection}
