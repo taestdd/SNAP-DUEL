@@ -3,7 +3,13 @@
   background: #0f0f0f;
   color: #e0e0e0;
   font-family: monospace;
-  padding: 32px 24px;
+  padding: 20px 16px;
+}
+
+@media (min-width: 640px) {
+  .page {
+    padding: 32px 24px;
+  }
 }
 
 :global(html),
@@ -14,18 +20,34 @@
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
+  gap: 10px;
+  margin-bottom: 20px;
   border-bottom: 1px solid #333;
-  padding-bottom: 16px;
+  padding-bottom: 14px;
+}
+
+@media (min-width: 640px) {
+  .header {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
 }
 
 .title {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 22px;
+  }
 }
 
 .badge {
@@ -40,11 +62,12 @@
 
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   background: #111;
   border: 1px solid #2a2a2a;
   border-radius: 2px;
   padding: 3px;
+  flex-shrink: 0;
 }
 
 .tabBtn {
@@ -52,11 +75,19 @@
   border: none;
   color: #666;
   font-family: monospace;
-  font-size: 13px;
-  padding: 5px 14px;
+  font-size: 12px;
+  padding: 5px 10px;
   border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .tabBtn {
+    font-size: 13px;
+    padding: 5px 14px;
+  }
 }
 
 .tabBtn:hover {
@@ -71,20 +102,28 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  margin-left: auto;
 }
 
 .bulkBtn {
   background: #1a2a1a;
   color: #4dbe6d;
   border: 1px solid #2a4a2a;
-  padding: 7px 16px;
+  padding: 6px 12px;
   border-radius: 2px;
-  font-size: 13px;
+  font-size: 12px;
   font-family: monospace;
   cursor: pointer;
   transition: background 0.15s;
   white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .bulkBtn {
+    font-size: 13px;
+    padding: 7px 16px;
+  }
 }
 
 .bulkBtn:hover {
@@ -95,13 +134,21 @@
   background: #3a3aff;
   color: #fff;
   border: none;
-  padding: 8px 18px;
+  padding: 6px 12px;
   border-radius: 2px;
-  font-size: 14px;
+  font-size: 12px;
   font-family: monospace;
   cursor: pointer;
   text-decoration: none;
   transition: background 0.15s;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .newBtn {
+    font-size: 14px;
+    padding: 8px 18px;
+  }
 }
 
 .newBtn:hover {
@@ -110,8 +157,15 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
 }
 
 .card {
@@ -237,9 +291,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding: 12px 16px;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
   background: #141414;
   border: 1px solid #2a2a2a;
   border-radius: 4px;
@@ -247,13 +301,13 @@
 
 .searchInput {
   flex: 1;
-  min-width: 160px;
+  min-width: 120px;
   background: #0f0f0f;
   border: 1px solid #333;
   color: #e0e0e0;
   font-family: monospace;
-  font-size: 13px;
-  padding: 6px 10px;
+  font-size: 12px;
+  padding: 5px 8px;
   border-radius: 2px;
   outline: none;
 }
@@ -271,11 +325,12 @@
   border: 1px solid #333;
   color: #e0e0e0;
   font-family: monospace;
-  font-size: 12px;
-  padding: 6px 8px;
+  font-size: 11px;
+  padding: 5px 6px;
   border-radius: 2px;
   cursor: pointer;
   outline: none;
+  max-width: 120px;
 }
 
 .filterSelect:focus {
