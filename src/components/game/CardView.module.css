@@ -163,17 +163,17 @@
   flex-direction: row;
   gap: 0;
   padding: 0;
-  background: rgba(14, 18, 40, 0.85);
+  background: #0e1228;
   border-color: var(--clr-border);
 }
 
 .handCard:hover {
-  background: rgba(14, 18, 40, 0.95);
-  border-color: rgba(0, 217, 255, 0.35);
+  background: #131830;
+  border-color: #1a6080;
 }
 
 .handCard.disabled {
-  background: rgba(10, 10, 16, 0.7);
+  background: #0a0a14;
 }
 
 /* 좌측 스트립 */
@@ -186,8 +186,8 @@
   align-items: center;
   padding: 8px 0 6px;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.35);
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  background: #080c1a;
+  border-right: 1px solid #1a1d30;
 }
 
 .stripCost {
@@ -199,8 +199,8 @@
   place-items: center;
   font-weight: 800;
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #1c2038;
+  border: 1px solid #2e3254;
   flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -223,8 +223,8 @@
   place-items: center;
   font-weight: 700;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #141828;
+  border: 1px solid #1e2238;
   flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -246,26 +246,26 @@
 }
 
 .speedDown {
-  background: rgba(0, 247, 125, 0.18);
-  border-color: rgba(0, 247, 125, 0.45);
+  background: #0d2818;
+  border-color: #1a5030;
   color: var(--clr-green);
 }
 
 .speedUp {
-  background: rgba(255, 56, 96, 0.18);
-  border-color: rgba(255, 56, 96, 0.45);
+  background: #2a0c14;
+  border-color: #5a1c28;
   color: var(--clr-danger);
 }
 
 .statBoosted {
-  background: rgba(0, 247, 125, 0.18);
-  border-color: rgba(0, 247, 125, 0.45);
+  background: #0d2818;
+  border-color: #1a5030;
   color: var(--clr-green);
 }
 
 .statNerfed {
-  background: rgba(255, 56, 96, 0.18);
-  border-color: rgba(255, 56, 96, 0.45);
+  background: #2a0c14;
+  border-color: #5a1c28;
   color: var(--clr-danger);
 }
 
@@ -279,7 +279,7 @@
 
 .illustArea {
   flex: 1;
-  background: rgba(255, 255, 255, 0.015);
+  background: #0d1124;
 }
 
 .handCardName {
@@ -290,8 +290,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 4px 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  opacity: 0.9;
+  border-top: 1px solid #1c1f35;
+  color: #c8cce0;
 }
 
 .selected {
