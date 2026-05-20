@@ -68,6 +68,29 @@
   color: #fff;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulkBtn {
+  background: #1a2a1a;
+  color: #4dbe6d;
+  border: 1px solid #2a4a2a;
+  padding: 7px 16px;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: monospace;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.bulkBtn:hover {
+  background: #253525;
+}
+
 .newBtn {
   background: #3a3aff;
   color: #fff;
