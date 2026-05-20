@@ -365,11 +365,15 @@ export function canUseCard(state: GameState, player: PlayerId, cardId: string): 
 
   if (card.altCost) {
     const cost = card.altCost;
-    const fromPlayerId: PlayerId = cost.target === "enemy" ? opponentOf(player) : player;
-    const pool = (state[fromPlayerId][cost.fromZone] as string[])
-      .filter(id => id !== cardId)
-      .filter(id => !cost.tag || getCard(id)?.tags?.includes(cost.tag));
-    if (pool.length < cost.count) return false;
+    if (cost.type === "hp") {
+      if (state[player].hp <= cost.amount) return false;
+    } else {
+      const fromPlayerId: PlayerId = cost.target === "enemy" ? opponentOf(player) : player;
+      const pool = (state[fromPlayerId][cost.fromZone] as string[])
+        .filter(id => id !== cardId)
+        .filter(id => !cost.tag || getCard(id)?.tags?.includes(cost.tag));
+      if (pool.length < cost.count) return false;
+    }
   }
 
   if (!card.useCondition) return true;

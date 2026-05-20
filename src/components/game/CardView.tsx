@@ -95,7 +95,11 @@ export default function CardView({
           <div className={styles.strip}>
             <div className={[styles.stripCost, deltaClass(costDelta, false)].join(" ")}>
               {effectiveCost}
-              {card.altCost && <span className={styles.altCostDot}>•</span>}
+              {card.altCost && (
+                <span className={card.altCost.type === "hp" ? styles.altCostHp : styles.altCostDot}>
+                  {card.altCost.type === "hp" ? "♥" : "•"}
+                </span>
+              )}
             </div>
             <div className={[
               styles.stripSpeed,

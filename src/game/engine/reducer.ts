@@ -56,8 +56,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
         if (picked) {
           const pickedCard = getCard(picked.cardId);
-          // altCost + userSelects → 코스트 선택 UI 진입
-          if (pickedCard?.altCost?.userSelects) {
+          // altCost + userSelects → 코스트 선택 UI 진입 (move_cards 타입만)
+          if (pickedCard?.altCost && pickedCard.altCost.type !== "hp" && pickedCard.altCost.userSelects) {
             const cost = pickedCard.altCost;
             const fromPlayerId = cost.target === "enemy" ? ("AI" as const) : ("P1" as const);
             const allCards = s[fromPlayerId][cost.fromZone] as string[];

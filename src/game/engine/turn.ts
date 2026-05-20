@@ -273,8 +273,21 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
   s = pushLog(s, `${player} queued ${card.name} (cost: ${effectiveCost} cards)`);
   s = syncExhausted(s, player);
 
-  // altCost 자동 지불: userSelects=false이거나 AI인 경우
-  if (card.altCost && (player === "AI" || !card.altCost.userSelects)) {
+  // altCost 지불
+  if (card.altCost?.type === "hp") {
+    const amount = card.altCost.amount;
+    const me2 = s[player];
+    const newHp = me2.hp - amount;
+    s = {
+      ...s,
+      [player]: {
+        ...s[player],
+        hp: newHp,
+        characterHp: { ...s[player].characterHp, [s[player].activeCharacter]: newHp },
+      },
+    } as GameState;
+    s = pushLog(s, `${player} pays ${amount} HP (altCost)`);
+  } else if (card.altCost && (player === "AI" || !card.altCost.userSelects)) {
     const cost = card.altCost;
     const fromPlayerId: PlayerId = cost.target === "enemy" ? (player === "P1" ? "AI" : "P1") : player;
     const toPlayerId: PlayerId = player;
