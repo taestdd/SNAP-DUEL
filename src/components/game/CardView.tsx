@@ -91,24 +91,35 @@ export default function CardView({
     >
       {handMode ? (
         <>
-          <div className={styles.handStatRow}>
-            <div className={[styles.cost, deltaClass(costDelta, false)].join(" ")}>{effectiveCost}</div>
-            <div className={[
-              styles.speedCircle,
-              speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
-            ].join(" ")}>{Math.max(0, card.speed - speedBonus)}</div>
-          </div>
-          <div className={styles.handCardName}>{card.name}</div>
-          {card.cardType === "attack" && (
-            <div className={styles.handAtkList}>
-              {(card.antiAirAttack ?? 0) > 0 && (
-                <div className={[styles.handAtkLine, deltaClass(aaDelta)].join(" ")}>🔼{effectiveAA}</div>
-              )}
-              {(card.groundAttack ?? 0) > 0 && (
-                <div className={[styles.handAtkLine, deltaClass(gaDelta)].join(" ")}>🔽{effectiveGA}</div>
-              )}
+          {/* 좌측 스트립: 겹쳐도 보이는 핵심 정보 */}
+          <div className={styles.strip}>
+            <div className={[styles.stripCost, deltaClass(costDelta, false)].join(" ")}>
+              {effectiveCost}
+              {card.altCost && <span className={styles.altCostDot}>•</span>}
             </div>
-          )}
+            <div className={[
+              styles.stripSpeed,
+              speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
+            ].join(" ")}>
+              {Math.max(0, card.speed - speedBonus)}
+            </div>
+            {effectiveGA > 0 && (
+              <div className={[styles.stripAtk, styles.stripGround, deltaClass(gaDelta)].join(" ")}>
+                ▼{effectiveGA}
+              </div>
+            )}
+            {effectiveAA > 0 && (
+              <div className={[styles.stripAtk, styles.stripAntiAir, deltaClass(aaDelta)].join(" ")}>
+                ▲{effectiveAA}
+              </div>
+            )}
+          </div>
+
+          {/* 우측 본문: 일러스트 영역 + 카드 이름 */}
+          <div className={styles.handBody}>
+            <div className={styles.illustArea} />
+            <div className={styles.handCardName}>{card.name}</div>
+          </div>
         </>
       ) : (
         <div className={styles.top}>
