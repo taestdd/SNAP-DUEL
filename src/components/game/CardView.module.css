@@ -157,7 +157,7 @@
 /* ── 핸드 카드 (110×160, 좌측 스트립 구조) ── */
 .handCard {
   width: 110px;
-  height: 160px;
+  height: 144px;
   min-height: unset;
   overflow: hidden;
   flex-direction: row;
