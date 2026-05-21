@@ -122,19 +122,19 @@ export default function AdminPage() {
             className={`${styles.tabBtn} ${tab === "cards" ? styles.tabActive : ""}`}
             onClick={() => setTab("cards")}
           >
-            카드 관리
+            카드
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "decks" ? styles.tabActive : ""}`}
             onClick={() => setTab("decks")}
           >
-            덱 관리
+            덱
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "characters" ? styles.tabActive : ""}`}
             onClick={() => setTab("characters")}
           >
-            캐릭터 관리
+            캐릭터
           </button>
         </div>
         <div className={styles.headerActions}>
