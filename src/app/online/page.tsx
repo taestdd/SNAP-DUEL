@@ -1,10 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./page.module.css";
 
-export default function OnlineLobby() {
+function OnlineLobbyInner() {
   const router = useRouter();
+  const params = useSearchParams();
+  const qs = params.toString() ? `?${params.toString()}` : "";
 
   return (
     <div className={styles.page}>
@@ -16,7 +19,7 @@ export default function OnlineLobby() {
           <button
             type="button"
             className={styles.btn}
-            onClick={() => router.push("/online/host")}
+            onClick={() => router.push(`/online/host${qs}`)}
           >
             방 만들기
             <span className={styles.btnSub}>코드 생성 후 친구 초대</span>
@@ -25,7 +28,7 @@ export default function OnlineLobby() {
           <button
             type="button"
             className={styles.btn}
-            onClick={() => router.push("/online/join")}
+            onClick={() => router.push(`/online/join${qs}`)}
           >
             방 참여
             <span className={styles.btnSub}>6자리 코드로 입장</span>
@@ -41,5 +44,13 @@ export default function OnlineLobby() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function OnlineLobby() {
+  return (
+    <Suspense>
+      <OnlineLobbyInner />
+    </Suspense>
   );
 }

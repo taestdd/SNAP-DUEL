@@ -4,19 +4,24 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { joinRoom, saveGuestConfig, subscribeRoom } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
-import type { SetupConfig } from "@/game/engine/types";
-import SetupScreen from "@/components/game/SetupScreen";
+import { decodeSetupParams } from "@/lib/setupConfig";
 import styles from "./page.module.css";
 
-type Stage = "input" | "joining" | "setup" | "waitingHost" | "error";
+type Stage = "input" | "joining" | "waitingHost" | "error";
 
 function JoinForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { player } = decodeSetupParams(searchParams);
+
   const [code, setCode] = useState(searchParams.get("code") ?? "");
   const [stage, setStage] = useState<Stage>("input");
-  const [confirmedCode, setConfirmedCode] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!player) router.replace("/");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // QR 스캔으로 들어온 경우 자동 참여
   useEffect(() => {
@@ -26,6 +31,7 @@ function JoinForm() {
   }, []);
 
   async function handleJoin(joinCode?: string) {
+    if (!player) return;
     const target = (joinCode ?? code).toUpperCase().trim();
     if (target.length !== 6) {
       setError("6자리 코드를 입력해주세요");
@@ -42,43 +48,32 @@ function JoinForm() {
         setStage("input");
         return;
       }
-      setConfirmedCode(target);
-      setStage("setup");
+
+      // 게스트 config 바로 저장
+      await saveGuestConfig(target, player);
+      setStage("waitingHost");
+
+      // 호스트가 게임 시작하면 이동
+      const unsubscribe = subscribeRoom(target, (data: RoomData) => {
+        if (data.status === "in_progress") {
+          unsubscribe();
+          router.push(`/online/game?code=${target}&role=guest`);
+        }
+      });
     } catch {
       setError("연결 오류. 다시 시도해주세요");
       setStage("input");
     }
   }
 
-  async function handleSetupConfirm(config: SetupConfig, _aiConfig?: SetupConfig) {
-    setStage("waitingHost");
-    try {
-      await saveGuestConfig(confirmedCode, config);
-    } catch (e: unknown) {
-      setError((e as Error).message ?? "저장 실패");
-      setStage("setup");
-      return;
-    }
-
-    // 호스트가 게임을 시작하면 이동
-    const unsubscribe = subscribeRoom(confirmedCode, (data: RoomData) => {
-      if (data.status === "in_progress") {
-        unsubscribe();
-        router.push(`/online/game?code=${confirmedCode}&role=guest`);
-      }
-    });
-  }
-
-  if (stage === "setup") {
-    return <SetupScreen onConfirm={handleSetupConfirm} />;
-  }
+  if (!player) return null;
 
   if (stage === "waitingHost") {
     return (
       <div className={styles.page}>
         <div className={styles.shell}>
-          <p className={styles.waiting}>호스트 덱 선택 대기 중...</p>
-          <p className={styles.sub}>상대방이 캐릭터와 덱을 선택하고 있습니다</p>
+          <p className={styles.waiting}>호스트 대기 중...</p>
+          <p className={styles.sub}>상대방이 게임을 시작하면 자동으로 입장합니다</p>
         </div>
       </div>
     );

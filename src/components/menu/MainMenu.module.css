@@ -1,4 +1,20 @@
 .page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 60px;
+  background: #0b1020;
+  color: #e9ecf5;
+}
+
+.shell {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.center {
   position: fixed;
   inset: 0;
   display: flex;
@@ -8,24 +24,21 @@
   color: #e9ecf5;
 }
 
-.shell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 48px;
-  width: min(360px, 90vw);
-}
+.loadingText { font-size: 14px; opacity: 0.5; }
+.errorText { font-size: 14px; color: #f66; }
 
-/* ── 타이틀 ── */
-.titleBlock {
+/* ── 헤더 ── */
+.header {
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding: 8px 0 4px;
 }
 
 .title {
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 900;
   letter-spacing: -0.5px;
   margin: 0;
@@ -36,28 +49,203 @@
 }
 
 .subtitle {
-  font-size: 13px;
-  opacity: 0.45;
+  font-size: 12px;
+  opacity: 0.4;
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 
-/* ── 메뉴 버튼 목록 ── */
-.menuList {
+/* ── 섹션 ── */
+.section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 100%;
+  gap: 14px;
+  padding: 18px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: opacity 0.2s;
 }
 
-.menuBtn {
+.sectionLocked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── 덱 피커 ── */
+.pickerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pickerLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(110, 231, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.deckGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.deckCard {
+  padding: 12px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deckCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.deckSelected {
+  border-color: rgba(110, 231, 255, 0.7);
+  background: rgba(110, 231, 255, 0.08);
+}
+
+.deckName {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.deckMeta {
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+/* ── 캐릭터 순서 ── */
+.charRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.charCard {
+  position: relative;
+  flex: 1;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.charCard:hover {
+  transform: translateY(-2px);
+}
+
+.charStarter {
+  border-color: rgba(110, 231, 255, 0.7);
+  background: rgba(110, 231, 255, 0.08);
+}
+
+.charBackup {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  opacity: 0.65;
+}
+
+.charBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6ee7ff;
+  background: rgba(110, 231, 255, 0.15);
+  border: 1px solid rgba(110, 231, 255, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.charBadgeBackup {
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.charName {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.charHp {
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.swapBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+}
+
+.swapBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.swapBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── 모드 버튼 ── */
+.modeList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modeBtn {
   width: 100%;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.05);
   color: #e9ecf5;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -67,26 +255,19 @@
   justify-content: space-between;
 }
 
-.menuBtn:hover:not(:disabled) {
+.modeBtn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.menuBtn:disabled {
+.modeBtn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.adminLink {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
-  text-decoration: none;
-  letter-spacing: 0.5px;
-  transition: color 0.15s;
-}
-
-.adminLink:hover {
-  color: rgba(255, 255, 255, 0.6);
+.modeBtnActive {
+  border-color: rgba(110, 231, 255, 0.5);
+  background: rgba(110, 231, 255, 0.08);
 }
 
 .soon {
@@ -98,4 +279,45 @@
   padding: 2px 8px;
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── 게임 시작 버튼 ── */
+.startBtn {
+  align-self: flex-end;
+  padding: 12px 32px;
+  border-radius: 4px;
+  border: 1px solid rgba(110, 231, 255, 0.4);
+  background: rgba(110, 231, 255, 0.12);
+  color: #6ee7ff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  letter-spacing: 0.3px;
+}
+
+.startBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(110, 231, 255, 0.2);
+  border-color: rgba(110, 231, 255, 0.65);
+}
+
+.startBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── 어드민 링크 ── */
+.adminLink {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.15s;
+  padding: 4px 0;
+}
+
+.adminLink:hover {
+  color: rgba(255, 255, 255, 0.55);
 }
