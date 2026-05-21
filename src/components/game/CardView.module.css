@@ -66,32 +66,6 @@
   text-overflow: ellipsis;
 }
 
-.body {
-  flex: 1;
-}
-
-.text {
-  font-size: 12px;
-  opacity: 0.9;
-  line-height: 1.25;
-}
-
-.tagRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.cardTagBadge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(181, 55, 242, 0.12);
-  border: 1px solid rgba(181, 55, 242, 0.30);
-  color: #d07ff5;
-  letter-spacing: 0.2px;
-}
-
 .footer {
   display: flex;
   justify-content: space-between;

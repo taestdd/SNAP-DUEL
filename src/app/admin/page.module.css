@@ -50,16 +50,6 @@
   }
 }
 
-.badge {
-  font-size: 11px;
-  background: #1a1a2e;
-  color: #7c7cff;
-  border: 1px solid #3a3a7c;
-  padding: 2px 8px;
-  border-radius: 0;
-  margin-left: 10px;
-}
-
 .tabs {
   display: flex;
   gap: 2px;
