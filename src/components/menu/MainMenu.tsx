@@ -32,19 +32,18 @@ function DeckPicker({
     <div className={styles.pickerBlock}>
       {label && <div className={styles.pickerLabel}>{label}</div>}
 
-      <div className={styles.deckGrid}>
+      <select
+        className={styles.deckSelect}
+        value={deckId ?? ""}
+        onChange={(e) => e.target.value && onDeckSelect(e.target.value)}
+      >
+        <option value="">덱을 선택하세요</option>
         {decks.map((deck) => (
-          <button
-            key={deck.id}
-            type="button"
-            className={`${styles.deckCard} ${deckId === deck.id ? styles.deckSelected : ""}`}
-            onClick={() => onDeckSelect(deck.id)}
-          >
-            <div className={styles.deckName}>{deck.name}</div>
-            <div className={styles.deckMeta}>{deck.cards.length}장</div>
-          </button>
+          <option key={deck.id} value={deck.id}>
+            {deck.name} ({deck.cards.length}장)
+          </option>
         ))}
-      </div>
+      </select>
 
       {selectedDeck && (
         <div className={styles.charRow}>
