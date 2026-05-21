@@ -7,6 +7,7 @@ import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { CardTagSchema } from "@/game/engine/cardSchema";
+import BulkImportModal from "@/components/admin/BulkImportModal";
 
 type Tab = "cards" | "decks" | "characters";
 type SortField = "id" | "name" | "cost" | "speed" | "gain";
@@ -20,6 +21,7 @@ export default function AdminPage() {
   const [decks, setDecks] = useState<Record<string, DeckSchemaType>>({});
   const [characters, setCharacters] = useState<Record<string, CharacterDefSchemaType>>({});
   const [loading, setLoading] = useState(true);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   // 카드 필터/정렬 상태
   const [search, setSearch] = useState("");
@@ -120,25 +122,44 @@ export default function AdminPage() {
             className={`${styles.tabBtn} ${tab === "cards" ? styles.tabActive : ""}`}
             onClick={() => setTab("cards")}
           >
-            카드 관리
+            카드
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "decks" ? styles.tabActive : ""}`}
             onClick={() => setTab("decks")}
           >
-            덱 관리
+            덱
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "characters" ? styles.tabActive : ""}`}
             onClick={() => setTab("characters")}
           >
-            캐릭터 관리
+            캐릭터
           </button>
         </div>
-        <Link href={newHref} className={styles.newBtn}>
-          + {newLabel}
-        </Link>
+        <div className={styles.headerActions}>
+          {tab === "cards" && (
+            <button className={styles.bulkBtn} onClick={() => setShowBulkImport(true)}>
+              ↑ 일괄 등록
+            </button>
+          )}
+          <Link href={newHref} className={styles.newBtn}>
+            + {newLabel}
+          </Link>
+        </div>
       </div>
+
+      {showBulkImport && (
+        <BulkImportModal
+          onClose={() => setShowBulkImport(false)}
+          onSuccess={() => {
+            setShowBulkImport(false);
+            fetch("/api/admin/cards")
+              .then((r) => r.json())
+              .then(setCards);
+          }}
+        />
+      )}
 
       {loading && <div className={styles.empty}>로딩 중...</div>}
 

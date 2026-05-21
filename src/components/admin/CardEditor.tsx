@@ -6,7 +6,7 @@ import Link from "next/link";
 import styles from "./CardEditor.module.css";
 import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { AltCost, CardEffect, CardType, StatModifier } from "@/game/engine/types";
+import type { AltCost, AltCostMoveCards, CardEffect, CardType, StatModifier } from "@/game/engine/types";
 
 const ACTION_TAGS = ActionTagSchema.options;
 
@@ -366,44 +366,72 @@ export default function CardEditor({ initial, mode }: Props) {
             {altCost ? (
               <>
                 <div className={styles.row}>
-                  <SelectField label="대상" value={altCost.target ?? "self"} onChange={(v) => setAltCost({ ...altCost, target: v as AltCost["target"] })}>
-                    <option value="self">self</option>
-                    <option value="enemy">enemy</option>
-                  </SelectField>
-                  <SelectField label="From Zone" value={altCost.fromZone} onChange={(v) => setAltCost({ ...altCost, fromZone: v as AltCost["fromZone"] })}>
-                    {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                  </SelectField>
-                  <SelectField label="To Zone" value={altCost.toZone} onChange={(v) => setAltCost({ ...altCost, toZone: v as AltCost["toZone"] })}>
-                    {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                  </SelectField>
-                </div>
-                <div className={styles.row}>
-                  <NumericField label="Count" min={1} value={altCost.count} onChange={(n) => setAltCost({ ...altCost, count: n })} />
-                  <SelectField label="To Position" value={altCost.toPosition ?? ""} onChange={(v) => setAltCost({ ...altCost, toPosition: (v || undefined) as AltCost["toPosition"] })}>
-                    <option value="">기본</option>
-                    {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </SelectField>
-                  <SelectField label="Tag 필터" value={altCost.tag ?? ""} onChange={(v) => setAltCost({ ...altCost, tag: (v || undefined) as AltCost["tag"] })}>
-                    <option value="">없음</option>
-                    {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  <SelectField
+                    label="타입"
+                    value={altCost.type === "hp" ? "hp" : "move_cards"}
+                    onChange={(v) => {
+                      if (v === "hp") setAltCost({ type: "hp", amount: 3 });
+                      else setAltCost({ type: "move_cards", fromZone: "hand", toZone: "trash", count: 1 });
+                    }}
+                  >
+                    <option value="move_cards">move_cards (카드 이동)</option>
+                    <option value="hp">hp (체력 지불)</option>
                   </SelectField>
                 </div>
-                <div className={styles.checkRow}>
-                  <input
-                    className={styles.checkbox}
-                    type="checkbox"
-                    id="altCostUserSelects"
-                    checked={altCost.userSelects ?? false}
-                    onChange={(e) => setAltCost({ ...altCost, userSelects: e.target.checked || undefined })}
-                  />
-                  <label htmlFor="altCostUserSelects">userSelects (P1이 직접 선택)</label>
-                </div>
+
+                {altCost.type === "hp" ? (
+                  <div className={styles.row}>
+                    <NumericField
+                      label="HP 소모량"
+                      min={1}
+                      value={altCost.amount}
+                      onChange={(n) => setAltCost({ type: "hp", amount: n })}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.row}>
+                      <SelectField label="대상" value={(altCost as AltCostMoveCards).target ?? "self"} onChange={(v) => setAltCost({ ...(altCost as AltCostMoveCards), target: v as AltCostMoveCards["target"] })}>
+                        <option value="self">self</option>
+                        <option value="enemy">enemy</option>
+                      </SelectField>
+                      <SelectField label="From Zone" value={(altCost as AltCostMoveCards).fromZone} onChange={(v) => setAltCost({ ...(altCost as AltCostMoveCards), fromZone: v as AltCostMoveCards["fromZone"] })}>
+                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                      </SelectField>
+                      <SelectField label="To Zone" value={(altCost as AltCostMoveCards).toZone} onChange={(v) => setAltCost({ ...(altCost as AltCostMoveCards), toZone: v as AltCostMoveCards["toZone"] })}>
+                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                      </SelectField>
+                    </div>
+                    <div className={styles.row}>
+                      <NumericField label="Count" min={1} value={(altCost as AltCostMoveCards).count} onChange={(n) => setAltCost({ ...(altCost as AltCostMoveCards), count: n })} />
+                      <SelectField label="To Position" value={(altCost as AltCostMoveCards).toPosition ?? ""} onChange={(v) => setAltCost({ ...(altCost as AltCostMoveCards), toPosition: (v || undefined) as AltCostMoveCards["toPosition"] })}>
+                        <option value="">기본</option>
+                        {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </SelectField>
+                      <SelectField label="Tag 필터" value={(altCost as AltCostMoveCards).tag ?? ""} onChange={(v) => setAltCost({ ...(altCost as AltCostMoveCards), tag: (v || undefined) as AltCostMoveCards["tag"] })}>
+                        <option value="">없음</option>
+                        {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </SelectField>
+                    </div>
+                    <div className={styles.checkRow}>
+                      <input
+                        className={styles.checkbox}
+                        type="checkbox"
+                        id="altCostUserSelects"
+                        checked={(altCost as AltCostMoveCards).userSelects ?? false}
+                        onChange={(e) => setAltCost({ ...(altCost as AltCostMoveCards), userSelects: e.target.checked || undefined })}
+                      />
+                      <label htmlFor="altCostUserSelects">userSelects (P1이 직접 선택)</label>
+                    </div>
+                  </>
+                )}
+
                 <button type="button" className={styles.removeBtn} onClick={() => setAltCost(null)}>
                   altCost 제거
                 </button>
               </>
             ) : (
-              <button type="button" className={styles.addBtn} onClick={() => setAltCost({ fromZone: "hand", toZone: "trash", count: 1 })}>
+              <button type="button" className={styles.addBtn} onClick={() => setAltCost({ type: "move_cards", fromZone: "hand", toZone: "trash", count: 1 })}>
                 + altCost 추가
               </button>
             )}

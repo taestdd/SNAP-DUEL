@@ -69,7 +69,13 @@ export const CardEffectSchema = z.object({
   cardId: z.string().optional(),
 });
 
-export const AltCostSchema = z.object({
+export const AltCostHpSchema = z.object({
+  type: z.literal("hp"),
+  amount: z.number().int().min(1),
+});
+
+export const AltCostMoveCardsSchema = z.object({
+  type: z.literal("move_cards").optional(),
   target: TargetSchema.optional(),
   fromZone: CardZoneSchema,
   toZone: CardZoneSchema,
@@ -78,6 +84,8 @@ export const AltCostSchema = z.object({
   tag: CardTagSchema.optional(),
   userSelects: z.boolean().optional(),
 });
+
+export const AltCostSchema = z.union([AltCostHpSchema, AltCostMoveCardsSchema]);
 
 export const HitTimingSchema = z.object({
   ms: z.number().int().min(0),

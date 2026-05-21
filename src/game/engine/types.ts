@@ -155,9 +155,11 @@ export type Target = "self" | "enemy";
 
 /**
  * 카드 발동 전 지불하는 추가 코스트.
- * move_cards 파라미터 구조를 재사용: target/fromZone/toZone/count/tag/userSelects
+ * move_cards 타입: 카드 이동으로 지불 (target/fromZone/toZone/count/tag/userSelects)
+ * hp 타입: HP를 직접 지불
  */
-export type AltCost = {
+export type AltCostMoveCards = {
+  type?: "move_cards";
   /** 카드를 가져올 플레이어 ("self" = 사용자, "enemy" = 상대, 미지정 시 self) */
   target?: Target;
   fromZone: CardZone;
@@ -168,6 +170,14 @@ export type AltCost = {
   /** true면 P1이 직접 선택. AI는 항상 자동 선택 */
   userSelects?: boolean;
 };
+
+export type AltCostHp = {
+  type: "hp";
+  /** 지불할 HP 량. 사용자 HP가 이 값보다 많아야 사용 가능 (= 즉사 불가) */
+  amount: number;
+};
+
+export type AltCost = AltCostMoveCards | AltCostHp;
 
 export type CardEffect = {
   type: EffectType;

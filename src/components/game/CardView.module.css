@@ -66,32 +66,6 @@
   text-overflow: ellipsis;
 }
 
-.body {
-  flex: 1;
-}
-
-.text {
-  font-size: 12px;
-  opacity: 0.9;
-  line-height: 1.25;
-}
-
-.tagRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.cardTagBadge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(181, 55, 242, 0.12);
-  border: 1px solid rgba(181, 55, 242, 0.30);
-  color: #d07ff5;
-  letter-spacing: 0.2px;
-}
-
 .footer {
   display: flex;
   justify-content: space-between;
@@ -212,6 +186,16 @@
   font-size: 9px;
   line-height: 1;
   color: #ffa032;
+  pointer-events: none;
+}
+
+.altCostHp {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 8px;
+  line-height: 1;
+  color: #ff4466;
   pointer-events: none;
 }
 
