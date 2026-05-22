@@ -240,8 +240,10 @@ export function applyCardEffectsWithPause(
 
   let s = pushLog(state, `${player} resolves "${card.name}"`);
 
+  const opponent = opponentOf(player);
+  const hpBeforeAttack = s[opponent].hp;
+
   if (card.cardType === "attack") {
-    const opponent = opponentOf(player);
     const targetAirborne = s[opponent].airborneStack;
     const attackBuff = s[player].status.attackBuff ?? 0;
     const mods = evaluateModifiers(s, player, card.statModifiers);
@@ -259,6 +261,12 @@ export function applyCardEffectsWithPause(
       s = checkGameOver(s);
       if (s.phase === "GAME_OVER") return s;
     }
+  }
+
+  // 태그 효과 제외 공격 카드는 데미지가 1 이상 들어가야 추가 효과 발동
+  const isTagAttack = card.cardType === "attack" && card.effects.some((e) => e.type === "tag");
+  if (card.cardType === "attack" && !isTagAttack && s[opponent].hp >= hpBeforeAttack) {
+    return pushLog(s, `${player}'s attack missed — bonus effects skipped`);
   }
 
   for (const effect of card.effects) {
