@@ -313,3 +313,23 @@ export function discardAIExcess(state: GameState): GameState {
   };
   return pushLog(s, `AI discards ${excess} card(s) to hand limit`);
 }
+
+/* ── 공격 적중 판정 ─────────────────────────────── */
+
+/**
+ * 공격 카드가 상대에게 실제로 데미지를 입혔는지 판정한다.
+ * - 태그 효과만 있는 공격 카드는 제외 (캐릭터 교체 목적)
+ * - 상대 HP가 감소했으면 적중(hit)
+ */
+export function didDirectAttackHit(
+  stateBefore: GameState,
+  stateAfter: GameState,
+  player: PlayerId,
+  cardId: string,
+): boolean {
+  const card = getCard(cardId);
+  if (!card) return false;
+  if (card.cardType !== "attack") return false;
+  if (card.effects.some((e) => e.type === "tag")) return false;
+  return stateAfter[opponentOf(player)].hp < stateBefore[opponentOf(player)].hp;
+}

@@ -7,6 +7,7 @@ import {
   moveQueuedCard,
   moveCardsBetweenZones,
   evaluateModifiers,
+  didDirectAttackHit,
 } from "./stateHelpers";
 import { applyCardEffectsWithPause } from "./effects";
 import { endTurnCleanup } from "./turn";
@@ -35,14 +36,6 @@ function buildResolveOrder(state: GameState): { player: PlayerId; cardId: string
 /* -------------------------- */
 /* 적중 / 주도권 / 이득 / 캔슬 */
 /* -------------------------- */
-
-function didDirectAttackHit(stateBefore: GameState, stateAfter: GameState, player: PlayerId, cardId: string): boolean {
-  const card = getCard(cardId);
-  if (!card) return false;
-  if (card.cardType !== "attack") return false;
-  if (card.effects.some((e) => e.type === "tag")) return false;
-  return stateAfter[opponentOf(player)].hp < stateBefore[opponentOf(player)].hp;
-}
 
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   if (state.initiative === player) return state;
