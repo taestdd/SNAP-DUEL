@@ -201,7 +201,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  height: 70px;
+  height: 90px;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
