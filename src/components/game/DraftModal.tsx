@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
-import { getCard } from "@/game/engine/cards";
-import { effectLabel } from "./QueuePreview";
 import CardPickList from "./CardPickList";
 import modalStyles from "./CardSelectionModal.module.css";
 import styles from "./DraftModal.module.css";
@@ -48,19 +46,6 @@ export default function DraftModal({
             count={maxPick}
             confirmLabel="확정"
             onConfirm={handleConfirm}
-            renderExtra={(cardId) => {
-              const card = getCard(cardId);
-              if (!card || card.effects.length === 0) return null;
-              return (
-                <div className={styles.effectRow}>
-                  {card.effects.map((e, i) => (
-                    <span key={i} className={styles.effectBadge}>
-                      {effectLabel(e.type, e.damageType)}{e.value !== undefined ? ` ${e.value}` : ""}
-                    </span>
-                  ))}
-                </div>
-              );
-            }}
           />
         ) : (
           <div className={styles.waitingBox}>
