@@ -17,6 +17,19 @@
   box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
 }
 
+.primary {
+  background: var(--clr-cyan);
+  border-color: var(--clr-cyan);
+  color: #0a0e27;
+}
+
+.primary:hover {
+  background: #33e5ff;
+  border-color: #33e5ff;
+  box-shadow: 0 0 16px rgba(0, 217, 255, 0.5);
+  transform: translateY(-1px);
+}
+
 .disabled {
   opacity: 0.4;
   cursor: not-allowed;

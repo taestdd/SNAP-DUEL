@@ -397,6 +397,7 @@ export default function GameScreen({
                   label={readyLabel}
                   disabled={!canAct}
                   onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
+                  variant={hasSelection ? "primary" : "default"}
                 />
                 <EndTurnButton
                   label="Tag"
