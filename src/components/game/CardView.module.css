@@ -230,15 +230,15 @@
 
 .handCardName {
   flex: 1;
+  min-width: 0;
   font-weight: 700;
   font-size: 11px;
-  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 6px;
-  display: flex;
-  align-items: center;
+  display: block;
+  line-height: 32px;
   color: #e8ecff;
   background: #131830;
 }
