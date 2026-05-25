@@ -10,6 +10,7 @@ import { evaluateModifiers } from "@/game/engine/stateHelpers";
 const CARD_W = 110;
 const CARD_H = 144;
 const CYCLE_DURATION = 220;
+const RIPPLE_STAGGER = 35;
 
 export default function Hand({
   me,
@@ -34,7 +35,9 @@ export default function Hand({
   const rowRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
   const [cyclingIdx, setCyclingIdx] = useState<number | null>(null);
+  const [isRippling, setIsRippling] = useState(false);
   const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rippleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
     if (rowRef.current) {
@@ -54,6 +57,7 @@ export default function Hand({
 
   useEffect(() => () => {
     if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
+    if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
   }, []);
 
   const n = me.hand.length;
@@ -64,10 +68,13 @@ export default function Hand({
   const handleCycle = useCallback(() => {
     if (n < 2 || cyclingIdx !== null) return;
     setCyclingIdx(n - 1);
+    setIsRippling(true);
     cycleTimerRef.current = setTimeout(() => {
       setCyclingIdx(null);
       onCycleHand();
     }, CYCLE_DURATION);
+    const rippleClearDelay = CYCLE_DURATION + (n - 2) * RIPPLE_STAGGER + 200;
+    rippleTimerRef.current = setTimeout(() => setIsRippling(false), rippleClearDelay);
   }, [n, cyclingIdx, onCycleHand]);
 
   return (
@@ -112,15 +119,19 @@ export default function Hand({
           // 우측 끝 카드가 좌측 끝으로 이동하는 오프셋
           const cycleOffset = isCycling ? -(n - 1) * step : 0;
 
+          const rippleDelay = (n - 2 - idx) * RIPPLE_STAGGER;
+          const showRipple = isRippling && !isCycling && !isSelected;
+
           return (
             <div
               key={`${cardId}-${idx}`}
+              className={showRipple ? styles.ripple : undefined}
               style={{
                 position: "absolute",
                 left: groupLeft + idx * step,
                 width: CARD_W,
                 height: CARD_H,
-                zIndex: isCycling ? n + 20 : isSelected ? n + 10 : idx + 1,
+                zIndex: isCycling ? 0 : isSelected ? n + 10 : idx + 1,
                 transform: isCycling
                   ? `translateX(${cycleOffset}px) translateY(-8px)`
                   : isSelected
@@ -128,8 +139,11 @@ export default function Hand({
                   : "translateY(0)",
                 transition: isCycling
                   ? `transform ${CYCLE_DURATION}ms ease`
+                  : showRipple
+                  ? "none"
                   : "transform 150ms ease, left 200ms ease",
                 opacity: isCycling ? 0.85 : 1,
+                animationDelay: showRipple ? `${rippleDelay}ms` : undefined,
               }}
             >
               <CardView

@@ -69,6 +69,16 @@
   cursor: not-allowed;
 }
 
+@keyframes cardRipple {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-7px); }
+  100% { transform: translateY(0); }
+}
+
+.ripple {
+  animation: cardRipple 200ms ease both;
+}
+
 .row {
   position: relative;
   width: 100%;
