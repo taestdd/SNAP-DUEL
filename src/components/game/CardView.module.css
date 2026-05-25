@@ -166,8 +166,8 @@
   place-items: center;
   font-weight: 800;
   font-size: 18px;
-  background: var(--clr-cyan);
-  color: #0a0e27;
+  background: #1a2240;
+  color: var(--clr-cyan);
   font-family: var(--font-inter), 'JetBrains Mono', monospace;
 }
 
