@@ -390,6 +390,7 @@ export default function GameScreen({
             onSelectCard={(cardId, handIndex) =>
               dispatch({ type: "CARD/SELECT", cardId, handIndex })
             }
+            onCycleHand={() => dispatch({ type: "HAND/CYCLE" })}
             endTurnButton={
               <>
                 <EndTurnButton

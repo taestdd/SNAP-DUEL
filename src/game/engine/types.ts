@@ -555,5 +555,6 @@ export type Action =
   | { type: "COST/CANCEL" }
   | { type: "DISCARD/CONFIRM"; discardCards: string[] }
   | { type: "TURN/TAG" }
+  | { type: "HAND/CYCLE" }
   | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] }
   | { type: "ANIM/DONE" };

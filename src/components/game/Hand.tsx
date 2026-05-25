@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
 import type { Combatant, GameState, PlayerId, SelectedCard } from "@/game/engine/types";
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
@@ -9,12 +9,14 @@ import { evaluateModifiers } from "@/game/engine/stateHelpers";
 
 const CARD_W = 110;
 const CARD_H = 144;
+const CYCLE_DURATION = 220;
 
 export default function Hand({
   me,
   selected,
   disabled,
   onSelectCard,
+  onCycleHand,
   endTurnButton,
   gameState,
   playerId,
@@ -23,6 +25,7 @@ export default function Hand({
   selected: SelectedCard | null;
   disabled: boolean;
   onSelectCard: (cardId: string, handIndex: number) => void;
+  onCycleHand: () => void;
   endTurnButton?: React.ReactNode;
   gameState: GameState;
   playerId: PlayerId;
@@ -30,6 +33,8 @@ export default function Hand({
   const [detailCard, setDetailCard] = useState<{ cardId: string; handIndex: number } | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
+  const [cyclingIdx, setCyclingIdx] = useState<number | null>(null);
+  const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
     if (rowRef.current) {
@@ -47,21 +52,42 @@ export default function Hand({
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => () => {
+    if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
+  }, []);
+
   const n = me.hand.length;
   const step = n <= 1 ? 0 : Math.min(CARD_W, (containerWidth - CARD_W) / (n - 1));
   const totalSpread = n === 0 ? 0 : CARD_W + step * (n - 1);
   const groupLeft = Math.max(0, (containerWidth - totalSpread) / 2);
+
+  const handleCycle = useCallback(() => {
+    if (n < 2 || cyclingIdx !== null) return;
+    setCyclingIdx(n - 1);
+    cycleTimerRef.current = setTimeout(() => {
+      setCyclingIdx(null);
+      onCycleHand();
+    }, CYCLE_DURATION);
+  }, [n, cyclingIdx, onCycleHand]);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.top}>
         <div className={styles.titleRow}>
           <div className={styles.title}>Hand ({me.hand.length}/10)</div>
-          {endTurnButton && (
-            <div className={styles.headerButtons}>{endTurnButton}</div>
-          )}
+          <div className={styles.headerButtons}>
+            {endTurnButton}
+            <button
+              type="button"
+              className={styles.cycleBtn}
+              onClick={handleCycle}
+              disabled={n < 2}
+              title="핸드 순환"
+            >
+              ↺
+            </button>
+          </div>
         </div>
-
       </div>
 
       <div className={styles.row} ref={rowRef}>
@@ -81,6 +107,10 @@ export default function Hand({
           const canSelect = !disabled && costOk && conditionMet && affinityMet;
           const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
+          const isCycling = cyclingIdx === idx;
+
+          // 우측 끝 카드가 좌측 끝으로 이동하는 오프셋
+          const cycleOffset = isCycling ? -(n - 1) * step : 0;
 
           return (
             <div
@@ -90,9 +120,16 @@ export default function Hand({
                 left: groupLeft + idx * step,
                 width: CARD_W,
                 height: CARD_H,
-                zIndex: isSelected ? n + 10 : idx + 1,
-                transform: isSelected ? "translateY(-10px)" : "translateY(0)",
-                transition: "transform 150ms ease, left 200ms ease",
+                zIndex: isCycling ? n + 20 : isSelected ? n + 10 : idx + 1,
+                transform: isCycling
+                  ? `translateX(${cycleOffset}px) translateY(-8px)`
+                  : isSelected
+                  ? "translateY(-10px)"
+                  : "translateY(0)",
+                transition: isCycling
+                  ? `transform ${CYCLE_DURATION}ms ease`
+                  : "transform 150ms ease, left 200ms ease",
+                opacity: isCycling ? 0.85 : 1,
               }}
             >
               <CardView
