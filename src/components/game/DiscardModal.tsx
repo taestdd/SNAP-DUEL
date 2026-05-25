@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getCard } from "@/game/engine/cards";
+import CardListItem from "./CardListItem";
 import modalStyles from "./CardSelectionModal.module.css";
 
 export default function DiscardModal({
@@ -38,26 +38,18 @@ export default function DiscardModal({
 
         <div className={modalStyles.cardList}>
           {candidates.map((cardId, idx) => {
-            const card = getCard(cardId);
             const key = `${cardId}::${idx}`;
             const isSelected = selected.includes(key);
             const isDisabled = !isSelected && selected.length >= count;
-
             return (
-              <button
+              <CardListItem
                 key={key}
-                type="button"
-                className={`${modalStyles.cardItem} ${isSelected ? modalStyles.cardSelected : ""} ${isDisabled ? modalStyles.cardDisabled : ""}`}
-                onClick={() => !isDisabled && toggleCard(cardId, idx)}
-              >
-                <div className={modalStyles.cardName}>{card?.name ?? cardId}</div>
-                {card && (
-                  <div className={modalStyles.cardMeta}>
-                    C{card.cost} · S{card.speed}
-                  </div>
-                )}
-                {card && <div className={modalStyles.cardText}>{card.text}</div>}
-              </button>
+                cardId={cardId}
+                listIndex={idx}
+                selected={isSelected}
+                disabled={isDisabled}
+                onToggle={() => toggleCard(cardId, idx)}
+              />
             );
           })}
         </div>
