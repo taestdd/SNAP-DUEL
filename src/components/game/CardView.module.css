@@ -147,7 +147,44 @@
 }
 
 .handCard.disabled {
-  background: #0a0a14;
+  background: #090c18;
+  border-color: rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
+}
+
+.handCard.disabled:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  background: #090c18;
+}
+
+.handCard.disabled .costBox {
+  background: #111520;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.handCard.disabled .handCardName {
+  background: #0d1020;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.handCard.disabled .illustArea {
+  background: #0b0e1c;
+}
+
+.handCard.disabled .speedCircle {
+  background: #2a2e44;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.handCard.disabled .atkStrip {
+  background: #1e2438;
+}
+
+.handCard.disabled .atkValue,
+.handCard.disabled .atkSep {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 /* 상단 헤더: 코스트 박스 + 카드 이름 */
