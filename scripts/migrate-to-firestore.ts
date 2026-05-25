@@ -1,10 +1,14 @@
 /**
- * One-time migration: uploads cards.json, decks.json, and characters to Firestore.
+ * One-time migration: uploads characters to Firestore.
+ * Cards/Decks는 어드민 UI(/admin)에서 직접 관리.
+ * 스냅샷이 필요하면: npx tsx scripts/export-firestore.ts
  *
  * Setup:
- *   1. Firebase Console → Project Settings → Service Accounts
- *      → "Generate new private key" → save as scripts/serviceAccountKey.json
- *   2. Run: npx tsx scripts/migrate-to-firestore.ts
+ *   Firebase Console → Project Settings → Service Accounts
+ *   → "Generate new private key" → save as scripts/serviceAccountKey.json
+ *
+ * Usage:
+ *   npx tsx scripts/migrate-to-firestore.ts
  */
 
 import { initializeApp, cert } from "firebase-admin/app";
@@ -40,24 +44,7 @@ const CHARACTERS = {
 };
 
 async function migrate() {
-  const dataDir = join(process.cwd(), "scripts/data");
-
-  const cards = JSON.parse(readFileSync(join(dataDir, "cards.json"), "utf-8")) as Record<string, unknown>;
-  const decks = JSON.parse(readFileSync(join(dataDir, "decks.json"), "utf-8")) as Record<string, unknown>;
-
-  console.log(`Uploading ${Object.keys(cards).length} cards...`);
-  for (const [id, card] of Object.entries(cards)) {
-    await db.collection("cards").doc(id).set(card as object);
-    console.log(`  ✓ card: ${id}`);
-  }
-
-  console.log(`\nUploading ${Object.keys(decks).length} decks...`);
-  for (const [id, deck] of Object.entries(decks)) {
-    await db.collection("decks").doc(id).set(deck as object);
-    console.log(`  ✓ deck: ${id}`);
-  }
-
-  console.log(`\nUploading ${Object.keys(CHARACTERS).length} characters...`);
+  console.log(`Uploading ${Object.keys(CHARACTERS).length} characters...`);
   for (const [id, char] of Object.entries(CHARACTERS)) {
     await db.collection("characters").doc(id).set(char);
     console.log(`  ✓ character: ${id}`);
