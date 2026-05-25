@@ -308,14 +308,45 @@
   padding: 8px 0 4px;
 }
 
+.queueHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
 .queueTitle {
   font-size: 12px;
   font-weight: 700;
   opacity: 0.72;
-  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
+}
+
+.queueViewBtn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.queueViewBtn:hover:not(:disabled) {
+  border-color: var(--clr-cyan);
+  color: var(--clr-cyan);
+}
+
+.queueViewBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 .initiativeBadge {
@@ -377,43 +408,6 @@
   gap: 7px;
 }
 
-.queueCost {
-  width: 22px;
-  height: 22px;
-  border-radius: 2px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex-shrink: 0;
-}
-
-.queueSpeed {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex-shrink: 0;
-}
-
-.queueSpeedDown {
-  background: rgba(80, 200, 120, 0.20);
-  border-color: rgba(80, 200, 120, 0.50);
-  color: #7ee8a2;
-}
-
-.queueSpeedUp {
-  background: rgba(255, 80, 80, 0.20);
-  border-color: rgba(255, 80, 80, 0.50);
-  color: #ff8080;
-}
 
 .queueCardName {
   font-size: 13px;

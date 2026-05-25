@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Combatant } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import CardDetailModal from "./CardDetailModal";
+import CostBox from "./CostBox";
+import SpeedCircle from "./SpeedCircle";
 export { effectLabel } from "./cardLabels";
-
-const LONG_PRESS_MS = 480;
 
 
 export default function QueuePreview({
@@ -26,8 +26,6 @@ export default function QueuePreview({
   isInitiative?: boolean;
 }) {
   const [detailCardId, setDetailCardId] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longFiredRef = useRef(false);
 
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
@@ -38,27 +36,24 @@ export default function QueuePreview({
   const isSelecting = isSetup && !me.ready && !queuedId && isMyTurn;
   const isWaiting   = isSetup && !me.ready && !queuedId && !isMyTurn;
 
-  function startPress() {
-    if (!queuedId) return;
-    longFiredRef.current = false;
-    timerRef.current = setTimeout(() => {
-      longFiredRef.current = true;
-      setDetailCardId(queuedId);
-    }, LONG_PRESS_MS);
-  }
-
-  function cancelPress() {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }
-
   const effectiveSpeed = card ? Math.max(0, card.speed - me.status.speedBonus) : 0;
   const speedBonusApplied = card ? me.status.speedBonus : 0;
 
   return (
     <div className={styles.queueBox}>
-      <div className={styles.queueTitle}>
-        {title}
-        {isInitiative && <span className={styles.initiativeBadge}>주도권</span>}
+      <div className={styles.queueHeader}>
+        <span className={styles.queueTitle}>
+          {title}
+          {isInitiative && <span className={styles.initiativeBadge}>주도권</span>}
+        </span>
+        <button
+          type="button"
+          className={styles.queueViewBtn}
+          disabled={!queuedId}
+          onClick={() => queuedId && setDetailCardId(queuedId)}
+        >
+          View
+        </button>
       </div>
 
       {!card ? (
@@ -74,20 +69,10 @@ export default function QueuePreview({
           ) : "—"}
         </div>
       ) : (
-        <div
-          key={queuedId}
-          className={`${styles.queueCard} ${styles.queueCardAnim}`}
-          onPointerDown={startPress}
-          onPointerUp={cancelPress}
-          onPointerLeave={cancelPress}
-          onPointerCancel={cancelPress}
-        >
+        <div key={queuedId} className={`${styles.queueCard} ${styles.queueCardAnim}`}>
           <div className={styles.queueCardRow}>
-            <div className={styles.queueCost}>{card.cost}</div>
-            <div className={[
-              styles.queueSpeed,
-              speedBonusApplied > 0 ? styles.queueSpeedDown : speedBonusApplied < 0 ? styles.queueSpeedUp : "",
-            ].join(" ")}>{effectiveSpeed}</div>
+            <CostBox value={card.cost} />
+            <SpeedCircle value={effectiveSpeed} bonus={speedBonusApplied} />
             <div className={styles.queueCardName}>{card.name}</div>
           </div>
         </div>

@@ -1,0 +1,29 @@
+.circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  background: #ffffff;
+  color: #0a0e27;
+  font-family: var(--font-inter), 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+
+.down {
+  background: #00f77d;
+  color: #0a0e27;
+}
+
+.up {
+  background: #ff4466;
+  color: #ffffff;
+}
+
+.disabled {
+  background: #2a2e44;
+  color: rgba(255, 255, 255, 0.25);
+}

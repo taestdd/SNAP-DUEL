@@ -3,6 +3,8 @@ import styles from "./CardView.module.css";
 import { getCard } from "@/game/engine/cards";
 import type { StatTarget } from "@/game/engine/types";
 import { effectLabel } from "./cardLabels";
+import CostBox from "./CostBox";
+import SpeedCircle from "./SpeedCircle";
 
 export { effectLabel };
 
@@ -93,25 +95,28 @@ export default function CardView({
         <>
           {/* 상단 헤더: 코스트 박스 + 카드 이름 */}
           <div className={styles.header}>
-            <div className={[styles.costBox, deltaClass(costDelta, false)].join(" ")}>
-              {effectiveCost}
+            <CostBox
+              value={effectiveCost}
+              size="lg"
+              disabled={disabled}
+              className={deltaClass(costDelta, false)}
+            >
               {card.altCost && (
                 <span className={card.altCost.type === "hp" ? styles.altCostHp : styles.altCostDot}>
                   {card.altCost.type === "hp" ? "♥" : "•"}
                 </span>
               )}
-            </div>
+            </CostBox>
             <div className={styles.handCardName}>{card.name}</div>
           </div>
 
           {/* 일러스트 영역: 스피드 원 + 공격 스트립 */}
           <div className={styles.illustArea}>
-            <div className={[
-              styles.speedCircle,
-              speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
-            ].join(" ")}>
-              {Math.max(0, card.speed - speedBonus)}
-            </div>
+            <SpeedCircle
+              value={Math.max(0, card.speed - speedBonus)}
+              bonus={speedBonus}
+              disabled={disabled}
+            />
 
             {(card.antiAirAttack !== undefined || card.groundAttack !== undefined) && (
               <div className={styles.atkStrip}>

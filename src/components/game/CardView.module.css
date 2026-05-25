@@ -128,7 +128,8 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── 핸드 카드 (110×144, 상단 헤더 + 일러스트 구조) ── */
+/* ── 핸드 카드 (110×144, 상단 헤더 + 일러스트 구조) ──
+   CostBox(lg) + SpeedCircle은 공통 컴포넌트에서 스타일링됨 */
 .handCard {
   width: 110px;
   height: 144px;
@@ -159,11 +160,6 @@
   background: #090c18;
 }
 
-.handCard.disabled .costBox {
-  background: #111520;
-  color: rgba(255, 255, 255, 0.2);
-}
-
 .handCard.disabled .handCardName {
   background: #0d1020;
   color: rgba(255, 255, 255, 0.2);
@@ -171,11 +167,6 @@
 
 .handCard.disabled .illustArea {
   background: #0b0e1c;
-}
-
-.handCard.disabled .speedCircle {
-  background: #2a2e44;
-  color: rgba(255, 255, 255, 0.25);
 }
 
 .handCard.disabled .atkStrip {
@@ -192,20 +183,6 @@
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
-}
-
-.costBox {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 18px;
-  background: #1a2240;
-  color: var(--clr-cyan);
-  font-family: var(--font-inter), 'JetBrains Mono', monospace;
 }
 
 .altCostDot {
@@ -250,31 +227,11 @@
   background: #0d1124;
 }
 
-/* 스피드 원 */
-.speedCircle {
+/* SpeedCircle 공통 컴포넌트를 일러스트 좌상단에 배치 */
+.illustArea > :first-child {
   position: absolute;
   top: 10px;
   left: 2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 11px;
-  background: #ffffff;
-  color: #0a0e27;
-  font-family: var(--font-inter), 'JetBrains Mono', monospace;
-}
-
-.speedDown {
-  background: #00f77d;
-  color: #0a0e27;
-}
-
-.speedUp {
-  background: #ff4466;
-  color: #ffffff;
 }
 
 /* 공격 스트립 (좌하단) */

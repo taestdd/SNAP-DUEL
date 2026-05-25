@@ -28,36 +28,6 @@
   opacity: 0.35;
 }
 
-/* cost box */
-.costBox {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background: #1a2240;
-  color: var(--clr-cyan);
-  font-size: 14px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  line-height: 1;
-}
-
-/* speed circle */
-.speedCircle {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #0a0e27;
-  font-size: 11px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  line-height: 1;
-}
-
 /* card name */
 .name {
   flex: 1;
