@@ -302,11 +302,6 @@
   flex-direction: column;
 }
 
-.spriteRow {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0 4px;
-}
 
 .queueHeader {
   display: flex;
@@ -418,17 +413,6 @@
   min-width: 0;
 }
 
-.effectBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(89, 156, 255, 0.18);
-}
-
 /* ── Animations ── */
 
 @keyframes slideUp {
@@ -442,10 +426,6 @@
   }
 }
 
-@keyframes effectPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.45; transform: scale(0.92); }
-}
 
 @keyframes cancelShake {
   0%, 100% { transform: translateX(0); }
@@ -465,9 +445,6 @@
   animation: slideUp 0.22s ease;
 }
 
-.effectBadgePulse {
-  animation: effectPulse 0.9s ease infinite;
-}
 
 .queueCancelAnim {
   animation: cancelShake 0.35s ease;

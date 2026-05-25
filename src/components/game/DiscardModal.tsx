@@ -45,7 +45,6 @@ export default function DiscardModal({
               <CardListItem
                 key={key}
                 cardId={cardId}
-                listIndex={idx}
                 selected={isSelected}
                 disabled={isDisabled}
                 onToggle={() => toggleCard(cardId, idx)}

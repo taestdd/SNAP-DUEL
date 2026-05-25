@@ -9,14 +9,12 @@ import styles from "./CardListItem.module.css";
 
 export default function CardListItem({
   cardId,
-  listIndex,
   selected,
   disabled,
   onToggle,
   renderExtra,
 }: {
   cardId: string;
-  listIndex: number;
   selected: boolean;
   disabled: boolean;
   onToggle: () => void;
