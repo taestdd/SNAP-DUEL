@@ -128,13 +128,14 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── 핸드 카드 (110×160, 좌측 스트립 구조) ── */
+/* ── 핸드 카드 (110×144, 상단 헤더 + 일러스트 구조) ──
+   CostBox(lg) + SpeedCircle은 공통 컴포넌트에서 스타일링됨 */
 .handCard {
   width: 110px;
   height: 144px;
   min-height: unset;
   overflow: hidden;
-  flex-direction: row;
+  flex-direction: column;
   gap: 0;
   padding: 0;
   background: #0e1228;
@@ -147,135 +148,133 @@
 }
 
 .handCard.disabled {
-  background: #0a0a14;
+  background: #090c18;
+  border-color: rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
 }
 
-/* 좌측 스트립 */
-.strip {
-  width: 30px;
-  flex-shrink: 0;
-  height: 100%;
+.handCard.disabled:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  background: #090c18;
+}
+
+.handCard.disabled .handCardName {
+  background: #0d1020;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.handCard.disabled .illustArea {
+  background: #0b0e1c;
+}
+
+.handCard.disabled .atkStrip {
+  background: #1e2438;
+}
+
+.handCard.disabled .atkValue,
+.handCard.disabled .atkSep {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* 상단 헤더: 코스트 박스 + 카드 이름 */
+.header {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0 6px;
-  gap: 6px;
-  background: #080c1a;
-  border-right: 1px solid #1a1d30;
-}
-
-.stripCost {
-  position: relative;
-  width: 22px;
-  height: 22px;
-  border-radius: 3px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 13px;
-  background: #1c2038;
-  border: 1px solid #2e3254;
+  align-items: stretch;
   flex-shrink: 0;
-  font-family: 'JetBrains Mono', monospace;
 }
 
 .altCostDot {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: 2px;
+  right: 3px;
   font-size: 9px;
   line-height: 1;
-  color: #ffa032;
+  color: #0a0e27;
   pointer-events: none;
 }
 
 .altCostHp {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: 2px;
+  right: 3px;
   font-size: 8px;
   line-height: 1;
-  color: #ff4466;
+  color: #0a0e27;
   pointer-events: none;
 }
 
-.stripSpeed {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 12px;
-  background: #141828;
-  border: 1px solid #1e2238;
-  flex-shrink: 0;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.stripAtk {
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-}
-
-.stripGround {
-  color: #5de68a;
-}
-
-.stripAntiAir {
-  color: #ffaa55;
-}
-
-.speedDown {
-  background: #0d2818;
-  border-color: #1a5030;
-  color: var(--clr-green);
-}
-
-.speedUp {
-  background: #2a0c14;
-  border-color: #5a1c28;
-  color: var(--clr-danger);
-}
-
-.statBoosted {
-  background: #0d2818;
-  border-color: #1a5030;
-  color: var(--clr-green);
-}
-
-.statNerfed {
-  background: #2a0c14;
-  border-color: #5a1c28;
-  color: var(--clr-danger);
-}
-
-/* 우측 본문 */
-.handBody {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.illustArea {
-  flex: 1;
-  background: #0d1124;
-}
-
 .handCardName {
+  flex: 1;
+  min-width: 0;
   font-weight: 700;
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 4px 6px;
-  border-top: 1px solid #1c1f35;
-  color: #c8cce0;
+  padding: 0 6px;
+  display: block;
+  line-height: 32px;
+  color: #e8ecff;
+  background: #131830;
+}
+
+/* 일러스트 영역 */
+.illustArea {
+  flex: 1;
+  position: relative;
+  background: #0d1124;
+}
+
+/* SpeedCircle 공통 컴포넌트를 일러스트 좌상단에 배치 */
+.illustArea > :first-child {
+  position: absolute;
+  top: 10px;
+  left: 2px;
+}
+
+/* 공격 스트립 (좌하단) */
+.atkStrip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  background: var(--clr-cyan);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  gap: 1px;
+}
+
+.atkValue {
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  color: #0a0e27;
+  font-family: var(--font-inter), 'JetBrains Mono', monospace;
+}
+
+.atkSep {
+  font-size: 10px;
+  line-height: 1;
+  color: #0a0e27;
+  font-weight: 700;
+}
+
+.atkDim {
+  opacity: 0.3;
+}
+
+.statBoosted {
+  background: var(--clr-green);
+  color: #0a0e27;
+}
+
+.statNerfed {
+  background: var(--clr-danger);
+  color: #ffffff;
 }
 
 .selected {

@@ -71,7 +71,7 @@ html, body {
   box-sizing: border-box;
   background: var(--clr-bg);
   color: var(--clr-text);
-  font-family: Inter, 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--font-inter), 'Noto Sans KR', system-ui, sans-serif;
 }
 
 body {

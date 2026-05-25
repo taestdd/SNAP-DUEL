@@ -201,7 +201,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  height: 70px;
+  height: 90px;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -302,20 +302,46 @@
   flex-direction: column;
 }
 
-.spriteRow {
+
+.queueHeader {
   display: flex;
-  justify-content: center;
-  padding: 8px 0 4px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .queueTitle {
   font-size: 12px;
   font-weight: 700;
   opacity: 0.72;
-  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
+}
+
+.queueViewBtn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.queueViewBtn:hover:not(:disabled) {
+  border-color: var(--clr-cyan);
+  color: var(--clr-cyan);
+}
+
+.queueViewBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 .initiativeBadge {
@@ -377,43 +403,6 @@
   gap: 7px;
 }
 
-.queueCost {
-  width: 22px;
-  height: 22px;
-  border-radius: 2px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex-shrink: 0;
-}
-
-.queueSpeed {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex-shrink: 0;
-}
-
-.queueSpeedDown {
-  background: rgba(80, 200, 120, 0.20);
-  border-color: rgba(80, 200, 120, 0.50);
-  color: #7ee8a2;
-}
-
-.queueSpeedUp {
-  background: rgba(255, 80, 80, 0.20);
-  border-color: rgba(255, 80, 80, 0.50);
-  color: #ff8080;
-}
 
 .queueCardName {
   font-size: 13px;
@@ -422,17 +411,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-}
-
-.effectBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(89, 156, 255, 0.18);
 }
 
 /* ── Animations ── */
@@ -448,10 +426,6 @@
   }
 }
 
-@keyframes effectPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.45; transform: scale(0.92); }
-}
 
 @keyframes cancelShake {
   0%, 100% { transform: translateX(0); }
@@ -471,9 +445,6 @@
   animation: slideUp 0.22s ease;
 }
 
-.effectBadgePulse {
-  animation: effectPulse 0.9s ease infinite;
-}
 
 .queueCancelAnim {
   animation: cancelShake 0.35s ease;

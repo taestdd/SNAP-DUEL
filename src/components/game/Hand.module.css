@@ -43,6 +43,42 @@
   opacity: 0.7;
 }
 
+.cycleBtn {
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  line-height: 1;
+}
+
+.cycleBtn:hover:not(:disabled) {
+  background: rgba(0, 217, 255, 0.12);
+  border-color: rgba(0, 217, 255, 0.4);
+  color: var(--clr-cyan);
+}
+
+.cycleBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@keyframes cardRipple {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-7px); }
+  100% { transform: translateY(0); }
+}
+
+.ripple {
+  animation: cardRipple 200ms ease both;
+}
+
 .row {
   position: relative;
   width: 100%;

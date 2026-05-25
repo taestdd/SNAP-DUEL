@@ -1,0 +1,104 @@
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--clr-border);
+  background: rgba(21, 27, 61, 0.8);
+  transition: var(--transition);
+  min-height: 44px;
+}
+
+.item:hover:not(.disabled) {
+  border-color: rgba(0, 217, 255, 0.4);
+  background: rgba(0, 217, 255, 0.06);
+}
+
+.selected {
+  border-color: var(--clr-cyan);
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.15) 0%, rgba(21, 27, 61, 0.8) 100%);
+}
+
+.selected .name {
+  color: var(--clr-cyan);
+}
+
+.disabled {
+  opacity: 0.35;
+}
+
+/* card name */
+.name {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* renderExtra slot */
+.extra {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+}
+
+/* View button */
+.viewBtn {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.viewBtn:hover {
+  border-color: var(--clr-cyan);
+  color: var(--clr-cyan);
+}
+
+/* checkbox button */
+.checkBtn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--clr-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: transparent;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: var(--transition);
+}
+
+.checkBtn:hover:not(:disabled) {
+  border-color: var(--clr-cyan);
+  color: var(--clr-cyan);
+}
+
+.checkBtn:disabled {
+  cursor: not-allowed;
+}
+
+.checkBtnSelected {
+  background: var(--clr-cyan);
+  border-color: var(--clr-cyan);
+  color: #0a0e27;
+}
+
+.checkBtnSelected:hover {
+  background: #33e5ff;
+  border-color: #33e5ff;
+}

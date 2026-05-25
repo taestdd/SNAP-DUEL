@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getCard } from "@/game/engine/cards";
+import CardListItem from "./CardListItem";
 import styles from "./CardPickList.module.css";
 
 interface Props {
@@ -53,28 +54,18 @@ export default function CardPickList({
           <div className={styles.empty}>선택 가능한 카드가 없습니다.</div>
         ) : (
           sorted.map(({ cardId, idx }) => {
-            const card = getCard(cardId);
             const key = `${cardId}::${idx}`;
             const isSelected = selected.includes(key);
             const isDisabled = !isSelected && selectedCount >= count;
             return (
-              <button
+              <CardListItem
                 key={key}
-                type="button"
-                className={[
-                  styles.cardItem,
-                  isSelected ? styles.cardSelected : "",
-                  isDisabled ? styles.cardDisabled : "",
-                ].join(" ")}
-                onClick={() => !isDisabled && toggleCard(cardId, idx)}
-              >
-                <div className={styles.cardName}>{card?.name ?? cardId}</div>
-                {card && (
-                  <div className={styles.cardMeta}>C{card.cost} · S{card.speed}</div>
-                )}
-                {card && <div className={styles.cardText}>{card.text}</div>}
-                {renderExtra?.(cardId)}
-              </button>
+                cardId={cardId}
+                selected={isSelected}
+                disabled={isDisabled}
+                onToggle={() => toggleCard(cardId, idx)}
+                renderExtra={renderExtra}
+              />
             );
           })
         )}

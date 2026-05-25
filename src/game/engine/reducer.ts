@@ -149,6 +149,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
+    case "HAND/CYCLE": {
+      const hand = state.P1.hand;
+      if (hand.length < 2) return state;
+      const cycled = [hand[hand.length - 1], ...hand.slice(0, hand.length - 1)];
+      return { ...state, P1: { ...state.P1, hand: cycled }, selected: null };
+    }
+
     case "AI/GUEST_TAG": {
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
       if (state.AI.ready) return state;

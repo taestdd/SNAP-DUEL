@@ -4,16 +4,23 @@ export default function EndTurnButton({
   label,
   disabled,
   onClick,
+  variant = "default",
 }: {
-  label: string; 
+  label: string;
   disabled: boolean;
   onClick: () => void;
+  variant?: "default" | "primary";
 }) {
   return (
     <button
-    className={`${styles.btn} ${disabled ? styles.disabled : ""}`}
-    disabled={disabled}
-    onClick={onClick}>
+      className={[
+        styles.btn,
+        variant === "primary" ? styles.primary : "",
+        disabled ? styles.disabled : "",
+      ].join(" ")}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {label}
     </button>
   );

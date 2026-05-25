@@ -390,12 +390,14 @@ export default function GameScreen({
             onSelectCard={(cardId, handIndex) =>
               dispatch({ type: "CARD/SELECT", cardId, handIndex })
             }
+            onCycleHand={() => dispatch({ type: "HAND/CYCLE" })}
             endTurnButton={
               <>
                 <EndTurnButton
                   label={readyLabel}
                   disabled={!canAct}
                   onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
+                  variant={hasSelection ? "primary" : "default"}
                 />
                 <EndTurnButton
                   label="Tag"
