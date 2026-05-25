@@ -91,9 +91,9 @@ export default function CardView({
     >
       {handMode ? (
         <>
-          {/* 좌측 스트립: 겹쳐도 보이는 핵심 정보 */}
-          <div className={styles.strip}>
-            <div className={[styles.stripCost, deltaClass(costDelta, false)].join(" ")}>
+          {/* 상단 헤더: 코스트 박스 + 카드 이름 */}
+          <div className={styles.header}>
+            <div className={[styles.costBox, deltaClass(costDelta, false)].join(" ")}>
               {effectiveCost}
               {card.altCost && (
                 <span className={card.altCost.type === "hp" ? styles.altCostHp : styles.altCostDot}>
@@ -101,28 +101,29 @@ export default function CardView({
                 </span>
               )}
             </div>
+            <div className={styles.handCardName}>{card.name}</div>
+          </div>
+
+          {/* 일러스트 영역: 스피드 원 + 공격 스트립 */}
+          <div className={styles.illustArea}>
             <div className={[
-              styles.stripSpeed,
+              styles.speedCircle,
               speedBonus > 0 ? styles.speedDown : speedBonus < 0 ? styles.speedUp : "",
             ].join(" ")}>
               {Math.max(0, card.speed - speedBonus)}
             </div>
-            {effectiveGA > 0 && (
-              <div className={[styles.stripAtk, styles.stripGround, deltaClass(gaDelta)].join(" ")}>
-                ▼{effectiveGA}
-              </div>
-            )}
-            {effectiveAA > 0 && (
-              <div className={[styles.stripAtk, styles.stripAntiAir, deltaClass(aaDelta)].join(" ")}>
-                ▲{effectiveAA}
-              </div>
-            )}
-          </div>
 
-          {/* 우측 본문: 일러스트 영역 + 카드 이름 */}
-          <div className={styles.handBody}>
-            <div className={styles.illustArea} />
-            <div className={styles.handCardName}>{card.name}</div>
+            {(card.antiAirAttack !== undefined || card.groundAttack !== undefined) && (
+              <div className={styles.atkStrip}>
+                <span className={[styles.atkValue, effectiveAA === 0 ? styles.atkDim : ""].join(" ")}>
+                  {effectiveAA}
+                </span>
+                <span className={styles.atkSep}>·</span>
+                <span className={[styles.atkValue, effectiveGA === 0 ? styles.atkDim : ""].join(" ")}>
+                  {effectiveGA}
+                </span>
+              </div>
+            )}
           </div>
         </>
       ) : (
