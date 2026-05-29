@@ -15,6 +15,12 @@
   image-rendering: pixelated;
 }
 
+/* 메인 스프라이트: ghost 위로 올라오도록 */
+.spriteMain {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── 속도 잔상 ── */
 
 .trailWrap {
@@ -27,6 +33,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
   filter: hue-rotate(160deg) saturate(4) brightness(1.4);
 }
 

@@ -97,7 +97,7 @@ export default function FighterSprite({
       </div>
       <div
         ref={spriteRef}
-        className={styles.sprite}
+        className={`${styles.sprite} ${styles.spriteMain}`}
         style={bgStyle}
         aria-hidden="true"
       />
