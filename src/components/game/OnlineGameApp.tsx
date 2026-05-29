@@ -212,10 +212,26 @@ export function GuestGameApp({
   // 게스트 로컬: 뒤집힌 상태에서 선택한 카드 (아직 전송 전)
   const [localSelected, setLocalSelected] = useState<{ cardId: string; handIndex: number } | null>(null);
 
+  // ANIMATING 구간 동안 Firestore 업데이트를 버퍼링
+  // 호스트의 ANIM/DONE이 Firestore를 통해 TURN_END로 오면 게스트 애님이 중단되는 문제 방지
+  const animLockedRef = useRef(false);
+  const pendingStateRef = useRef<GameState | null>(null);
+
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (data.gameState) setRawState(data.gameState);
-      if (data.status === "finished") onExit();
+      if (data.status === "finished") { onExit(); return; }
+      if (!data.gameState) return;
+
+      if (animLockedRef.current) {
+        // 애님 재생 중: 상태를 버퍼에만 저장
+        pendingStateRef.current = data.gameState;
+      } else {
+        setRawState(data.gameState);
+        if (data.gameState.phase === "ANIMATING") {
+          animLockedRef.current = true;
+          pendingStateRef.current = null;
+        }
+      }
     });
     return () => unsubscribe();
   }, [roomCode, onExit]);
@@ -234,6 +250,15 @@ export function GuestGameApp({
   const guestDispatch = useCallback(
     (action: Action) => {
       switch (action.type) {
+        // 애님 완료: lock 해제 후 버퍼링된 최신 상태 적용
+        case "ANIM/DONE": {
+          animLockedRef.current = false;
+          const pending = pendingStateRef.current;
+          pendingStateRef.current = null;
+          if (pending) setRawState(pending);
+          return;
+        }
+
         // 카드 선택: 로컬에만 저장 (Firestore 전송 X)
         case "CARD/SELECT":
           setLocalSelected((prev) =>
