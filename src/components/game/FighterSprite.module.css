@@ -31,11 +31,11 @@
 }
 
 .trail1 {
-  animation: trailSlide 550ms ease-out infinite;
+  animation: trailSlide 900ms ease-out infinite;
 }
 
 .trail2 {
-  animation: trailSlide 550ms ease-out 275ms infinite;
+  animation: trailSlide 900ms ease-out 450ms infinite;
   filter: hue-rotate(160deg) saturate(3) brightness(1.2);
 }
 
