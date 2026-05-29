@@ -1,13 +1,48 @@
-.sprite {
-  width: clamp(90px, 23vw, 140px);
-  height: clamp(90px, 23vw, 140px);
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
+.spriteWrap {
+  position: relative;
+  display: inline-block;
   flex-shrink: 0;
 }
 
 .flip {
   transform: scaleX(-1);
+}
+
+.sprite {
+  width: clamp(90px, 23vw, 140px);
+  height: clamp(90px, 23vw, 140px);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+/* ── 속도 잔상 ── */
+
+.trailWrap {
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.trail1,
+.trail2 {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  filter: hue-rotate(160deg) saturate(4) brightness(1.4);
+}
+
+.trail1 {
+  animation: trailSlide 550ms ease-out infinite;
+}
+
+.trail2 {
+  animation: trailSlide 550ms ease-out 275ms infinite;
+  filter: hue-rotate(160deg) saturate(3) brightness(1.2);
+}
+
+@keyframes trailSlide {
+  0%   { transform: translateX(0px);   opacity: 0.55; }
+  60%  { transform: translateX(-20px); opacity: 0.25; }
+  100% { transform: translateX(-30px); opacity: 0;    }
 }
 
 .flashing {

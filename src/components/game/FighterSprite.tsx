@@ -21,6 +21,8 @@ interface FighterSpriteProps {
   frozenUntil?: number;
   /** 값이 바뀔 때마다 흰색 플래시 재생 (피격 시) */
   flashKey?: number;
+  /** speedBonus/speedBonusNext 활성 시 청록 잔상 표시 */
+  showTrail?: boolean;
 }
 
 export default function FighterSprite({
@@ -31,6 +33,7 @@ export default function FighterSprite({
   className,
   frozenUntil = 0,
   flashKey = 0,
+  showTrail = false,
 }: FighterSpriteProps) {
   const spriteId = CHARACTERS[characterId]?.spriteId ?? characterId;
   const config = CHARACTER_SPRITES[spriteId] ?? Object.values(CHARACTER_SPRITES)[0]!;
@@ -79,17 +82,25 @@ export default function FighterSprite({
   }, [flashKey]);
 
   const absoluteFrame = entry.frames[frameIdx] ?? entry.frames[0];
+  const bgStyle = {
+    backgroundImage: `url("${config.imagePath}")`,
+    backgroundPosition: frameToBackgroundPosition(absoluteFrame, config.sheet),
+    backgroundSize: backgroundSize(config.sheet),
+  };
 
   return (
-    <div
-      ref={spriteRef}
-      className={`${styles.sprite} ${flip ? styles.flip : ""} ${className ?? ""}`}
-      style={{
-        backgroundImage: `url("${config.imagePath}")`,
-        backgroundPosition: frameToBackgroundPosition(absoluteFrame, config.sheet),
-        backgroundSize: backgroundSize(config.sheet),
-      }}
-      aria-hidden="true"
-    />
+    <div className={`${styles.spriteWrap} ${flip ? styles.flip : ""} ${className ?? ""}`}>
+      {/* 속도 잔상: flip 컨텍스트 안에 있으므로 translateX(-N)이 항상 '뒤쪽'으로 이동 */}
+      <div className={styles.trailWrap} style={{ opacity: showTrail ? 1 : 0 }}>
+        <div className={`${styles.sprite} ${styles.trail2}`} style={bgStyle} aria-hidden="true" />
+        <div className={`${styles.sprite} ${styles.trail1}`} style={bgStyle} aria-hidden="true" />
+      </div>
+      <div
+        ref={spriteRef}
+        className={styles.sprite}
+        style={bgStyle}
+        aria-hidden="true"
+      />
+    </div>
   );
 }

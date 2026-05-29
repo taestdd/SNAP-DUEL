@@ -69,6 +69,9 @@ export default function GameScreen({
 
   const isAnimating = state.phase === "ANIMATING";
 
+  const playerShowTrail = (state.P1.status.speedBonus ?? 0) > 0 || (state.P1.status.speedBonusNext ?? 0) > 0;
+  const aiShowTrail = (state.AI.status.speedBonus ?? 0) > 0 || (state.AI.status.speedBonusNext ?? 0) > 0;
+
   // ANIMATING 중에는 displayedHp로 HP바 표시 (damage_resolve 타이밍까지 이전 HP 유지)
   const p1DisplayCharHp =
     isAnimating && displayedHp !== null
@@ -319,6 +322,8 @@ export default function GameScreen({
             hitEffectTarget={hitEffectTarget}
             hitEffectStrength={hitEffectStrength}
             superFlashActor={superFlashActor}
+            playerShowTrail={playerShowTrail}
+            aiShowTrail={aiShowTrail}
           />
           </div>
         </div>
