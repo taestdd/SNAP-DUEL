@@ -78,14 +78,16 @@ function flipState(state: GameState): GameState {
 
 export function HostGameApp({
   config,
+  guestConfig,
   roomCode,
   onExit,
 }: {
   config: SetupConfig;
+  guestConfig: SetupConfig;
   roomCode: string;
   onExit: () => void;
 }) {
-  const [state, dispatch] = useReducer(gameReducer, config, createInitialState);
+  const [state, dispatch] = useReducer(gameReducer, undefined, () => createInitialState(config, guestConfig));
   const [isTagAnimating, setIsTagAnimating] = useState(false);
   const [waitingGuest, setWaitingGuest] = useState(false);
 
