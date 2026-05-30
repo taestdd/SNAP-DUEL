@@ -16,14 +16,16 @@ function OnlineGame() {
 
   const dataStatus = useGameData();
   const [hostConfig, setHostConfig] = useState<SetupConfig | null>(null);
+  const [guestConfig, setGuestConfig] = useState<SetupConfig | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!code || dataStatus !== "ready") return;
 
     const unsubscribe = subscribeRoom(code, (data: RoomData) => {
-      if (data.status === "in_progress" && data.hostConfig) {
+      if (data.status === "in_progress" && data.hostConfig && data.guestConfig) {
         setHostConfig(data.hostConfig);
+        setGuestConfig(data.guestConfig);
         setReady(true);
       }
     });
@@ -55,8 +57,8 @@ function OnlineGame() {
     );
   }
 
-  if (role === "host" && hostConfig) {
-    return <HostGameApp config={hostConfig} roomCode={code} onExit={() => router.push("/")} />;
+  if (role === "host" && hostConfig && guestConfig) {
+    return <HostGameApp config={hostConfig} guestConfig={guestConfig} roomCode={code} onExit={() => router.push("/")} />;
   }
 
   if (role === "guest") {
