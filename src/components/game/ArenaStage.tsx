@@ -30,6 +30,8 @@ interface ArenaStageProps {
   hitEffectTarget?: "P1" | "AI" | null;
   hitEffectStrength?: "weak" | "strong";
   superFlashActor?: "P1" | "AI" | null;
+  playerShowTrail?: boolean;
+  aiShowTrail?: boolean;
 }
 
 export default function ArenaStage({
@@ -53,6 +55,8 @@ export default function ArenaStage({
   hitEffectTarget = null,
   hitEffectStrength = "weak",
   superFlashActor = null,
+  playerShowTrail = false,
+  aiShowTrail = false,
 }: ArenaStageProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const aiRef = useRef<HTMLDivElement>(null);
@@ -112,13 +116,13 @@ export default function ArenaStage({
           ref={playerRef}
           className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
         >
-          <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} />
+          <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
         </div>
         <div
           ref={aiRef}
           className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
         >
-          <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} />
+          <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
         </div>
       </div>
     </div>

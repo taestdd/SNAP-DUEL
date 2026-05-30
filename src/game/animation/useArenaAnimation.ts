@@ -21,9 +21,9 @@ const ANIM_DONE_BUFFER_MS = 150;
 
 /** 히트 포즈별 히트스톱 지속 시간 (ms) */
 const HIT_FREEZE_MS: Record<string, number> = {
-  hit_strong: 300,
-  hit_aerial: 220,
-  hit_weak:   150,
+  hit_strong: 1800,
+  hit_aerial: 1320,
+  hit_weak:    900,
 };
 
 /** 히트 포즈별 화면 흔들림 지속 시간 (ms) */
