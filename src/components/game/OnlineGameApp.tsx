@@ -214,9 +214,25 @@ export function GuestGameApp({
   // 게스트 로컬: 뒤집힌 상태에서 선택한 카드 (아직 전송 전)
   const [localSelected, setLocalSelected] = useState<{ cardId: string; handIndex: number } | null>(null);
 
+  // ANIMATING 중 Firestore 업데이트 버퍼링:
+  // 호스트 ANIM/DONE → TURN_END가 게스트 애니메이션 완료 전에 도착하면
+  // 두 번째 카드(delay=700ms)가 재생되기 전에 상태가 덮어써진다.
+  // ANIMATING 수신 시 잠금 → ANIM/DONE 시 해제 후 버퍼 적용.
+  const animLockedRef = useRef(false);
+  const pendingStateRef = useRef<GameState | null>(null);
+
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (data.gameState) setRawState(data.gameState);
+      if (data.gameState) {
+        if (data.gameState.phase === "ANIMATING") {
+          animLockedRef.current = true;
+          setRawState(data.gameState);
+        } else if (animLockedRef.current) {
+          pendingStateRef.current = data.gameState;
+        } else {
+          setRawState(data.gameState);
+        }
+      }
       if (data.status === "finished") onExit();
     });
     return () => unsubscribe();
@@ -269,6 +285,16 @@ export function GuestGameApp({
         case "SELECTION/CONFIRM":
         case "SELECTION/SKIP":
           sendGuestAction(roomCode, action).catch(console.error);
+          return;
+
+        // 애니메이션 완료: 잠금 해제 후 버퍼된 상태 적용
+        case "ANIM/DONE":
+          animLockedRef.current = false;
+          if (pendingStateRef.current) {
+            const pending = pendingStateRef.current;
+            pendingStateRef.current = null;
+            setRawState(pending);
+          }
           return;
 
         default:
