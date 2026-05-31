@@ -218,6 +218,10 @@ export function GuestGameApp({
   const isLocallyAnimatingRef = useRef(false);
   const pendingStateRef = useRef<GameState | null>(null);
 
+  // onExit을 ref로 관리: subscription deps에서 제외해 리스너 재생성 방지
+  const onExitRef = useRef(onExit);
+  useEffect(() => { onExitRef.current = onExit; });
+
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
       if (data.gameState) {
@@ -234,10 +238,12 @@ export function GuestGameApp({
           setRawState(incoming);
         }
       }
-      if (data.status === "finished") onExit();
+      if (data.status === "finished") onExitRef.current();
     });
     return () => unsubscribe();
-  }, [roomCode, onExit]);
+  // onExit은 ref로 관리하므로 deps에서 제외 — 리스너 불필요한 재생성 방지
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode]);
 
   const handleAnimDone = useCallback(() => {
     isLocallyAnimatingRef.current = false;
