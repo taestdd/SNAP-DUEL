@@ -27,6 +27,7 @@ export default function GameScreen({
   isTagAnimating = false,
   disableAiDraft = false,
   onExit,
+  onAnimDone,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
@@ -34,6 +35,7 @@ export default function GameScreen({
   isTagAnimating?: boolean;
   disableAiDraft?: boolean;
   onExit?: () => void;
+  onAnimDone?: () => void;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -65,7 +67,7 @@ export default function GameScreen({
     displayedCancelledPlayer,
     displayedCombo,
     animLog,
-  } = useArenaAnimation(state, dispatch);
+  } = useArenaAnimation(state, dispatch, onAnimDone);
 
   const isAnimating = state.phase === "ANIMATING";
 

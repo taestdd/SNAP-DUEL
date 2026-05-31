@@ -214,13 +214,38 @@ export function GuestGameApp({
   // 게스트 로컬: 뒤집힌 상태에서 선택한 카드 (아직 전송 전)
   const [localSelected, setLocalSelected] = useState<{ cardId: string; handIndex: number } | null>(null);
 
+  // 로컬 애니메이션 진행 중 Firestore 상태 버퍼링
+  const isLocallyAnimatingRef = useRef(false);
+  const pendingStateRef = useRef<GameState | null>(null);
+
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (data.gameState) setRawState(data.gameState);
+      if (data.gameState) {
+        const incoming = data.gameState;
+        if (incoming.phase === "ANIMATING") {
+          // 새 애니메이션 시작: 즉시 적용 + 애니메이션 진행 중 플래그 설정
+          isLocallyAnimatingRef.current = true;
+          pendingStateRef.current = null;
+          setRawState(incoming);
+        } else if (isLocallyAnimatingRef.current) {
+          // 로컬 애니메이션 중 다음 상태 도착: 버퍼에 보관
+          pendingStateRef.current = incoming;
+        } else {
+          setRawState(incoming);
+        }
+      }
       if (data.status === "finished") onExit();
     });
     return () => unsubscribe();
   }, [roomCode, onExit]);
+
+  const handleAnimDone = useCallback(() => {
+    isLocallyAnimatingRef.current = false;
+    if (pendingStateRef.current) {
+      setRawState(pendingStateRef.current);
+      pendingStateRef.current = null;
+    }
+  }, []);
 
   // 게스트 상태: P1/AI 뒤집힌 버전 + 로컬 선택 반영
   const flippedState: GameState | null = rawState
@@ -293,6 +318,7 @@ export function GuestGameApp({
       isAiThinking={!isGuestTurn && (rawState?.phase === "SETUP_INIT" || rawState?.phase === "SETUP_OTHER")}
       disableAiDraft
       onExit={onExit}
+      onAnimDone={handleAnimDone}
     />
   );
 }

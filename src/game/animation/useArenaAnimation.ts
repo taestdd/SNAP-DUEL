@@ -88,6 +88,7 @@ export type ArenaAnimState = {
 export function useArenaAnimation(
   state: GameState,
   dispatch: React.Dispatch<Action>,
+  onAnimDone?: () => void,
 ): ArenaAnimState {
   // 포즈
   const [playerPose, setPlayerPose] = useState<FighterPose>("idle");
@@ -130,9 +131,11 @@ export function useArenaAnimation(
   const [animRunning, setAnimRunning] = useState(false);
   const [animLog, setAnimLog] = useState<string[]>([]);
 
-  // dispatch 레퍼런스 (타이머 클로저에서 안정적으로 사용)
+  // dispatch / onAnimDone 레퍼런스 (타이머 클로저에서 안정적으로 사용)
   const dispatchRef = useRef(dispatch);
   useEffect(() => { dispatchRef.current = dispatch; });
+  const onAnimDoneRef = useRef(onAnimDone);
+  useEffect(() => { onAnimDoneRef.current = onAnimDone; });
 
   // ── 태그 애니메이션 (P1 + AI 통합) ───────────────────────────────────────────
   useEffect(() => {
@@ -195,7 +198,10 @@ export function useArenaAnimation(
 
     const maxDelay = queue.reduce((m, e) => Math.max(m, e.delay), 0);
     const t = setTimeout(
-      () => dispatchRef.current({ type: "ANIM/DONE" }),
+      () => {
+        onAnimDoneRef.current?.();
+        dispatchRef.current({ type: "ANIM/DONE" });
+      },
       maxDelay + ANIM_DONE_BUFFER_MS,
     );
     return () => clearTimeout(t);
