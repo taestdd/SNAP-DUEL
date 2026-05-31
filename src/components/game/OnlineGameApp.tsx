@@ -226,6 +226,7 @@ export function GuestGameApp({
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
       if (data.gameState) {
         const incoming = data.gameState;
+        console.log("[Guest] Firestore phase:", incoming.phase, "| animScript.length:", incoming.animScript?.length, "| isLocallyAnimating:", isLocallyAnimatingRef.current);
         if (incoming.phase === "ANIMATING") {
           // 새 애니메이션 시작: 즉시 적용 + 애니메이션 진행 중 플래그 설정
           isLocallyAnimatingRef.current = true;
@@ -233,6 +234,7 @@ export function GuestGameApp({
           setRawState(incoming);
         } else if (isLocallyAnimatingRef.current) {
           // 로컬 애니메이션 중 다음 상태 도착: 버퍼에 보관
+          console.log("[Guest] Buffering phase:", incoming.phase);
           pendingStateRef.current = incoming;
         } else {
           setRawState(incoming);
