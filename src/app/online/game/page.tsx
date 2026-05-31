@@ -22,8 +22,12 @@ function OnlineGame() {
   useEffect(() => {
     if (!code || dataStatus !== "ready") return;
 
+    // 초기 설정 수신 후엔 state 업데이트 불필요 — 매 syncState마다 재렌더 방지
+    let initialized = false;
     const unsubscribe = subscribeRoom(code, (data: RoomData) => {
+      if (initialized) return;
       if (data.status === "in_progress" && data.hostConfig && data.guestConfig) {
+        initialized = true;
         setHostConfig(data.hostConfig);
         setGuestConfig(data.guestConfig);
         setReady(true);

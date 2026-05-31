@@ -5,9 +5,15 @@ import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import type { Action, CharacterId, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
-import { syncState, clearGuestAction, subscribeRoom } from "@/lib/roomService";
+import {
+  syncState,
+  clearGuestAction,
+  clearHostAction,
+  sendHostAction,
+  sendGuestAction,
+  subscribeRoom,
+} from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
-import { sendGuestAction } from "@/lib/roomService";
 
 const TAG_ANIM_DURATION = 700;
 
@@ -74,6 +80,20 @@ function flipState(state: GameState): GameState {
   };
 }
 
+// ── 게스트 로컬 리듀서 ────────────────────────────────────────────────────────
+// SYNC/OVERRIDE: 호스트가 보내온 정규 상태로 강제 교체 (매 턴 SETUP_INIT)
+
+type LocalAction = Action | { type: "SYNC/OVERRIDE"; state: GameState };
+
+function guestLocalReducer(
+  state: GameState | null,
+  action: LocalAction,
+): GameState | null {
+  if (action.type === "SYNC/OVERRIDE") return action.state;
+  if (!state) return null;
+  return gameReducer(state, action as Action);
+}
+
 // ── 호스트 게임 앱 ───────────────────────────────────────────────────────────
 
 export function HostGameApp({
@@ -106,10 +126,39 @@ export function HostGameApp({
     return () => clearTimeout(t);
   }, [state.P1.activeCharacter, state.AI.activeCharacter]);
 
-  // 상태 변경 시 Firestore 동기화
+  // ── 상태 동기화: SETUP_INIT / ROUND_DRAFT / GAME_OVER 진입 시 1회만 전송
+  // (round:turn:phase) 키로 추적해 중복 전송 방지
+  const lastSyncKeyRef = useRef("");
   useEffect(() => {
+    const syncPhases = ["SETUP_INIT", "ROUND_DRAFT", "GAME_OVER"] as const;
+    if (!(syncPhases as readonly string[]).includes(state.phase)) return;
+    const key = `${state.round}:${state.turn}:${state.phase}`;
+    if (key === lastSyncKeyRef.current) return;
+    lastSyncKeyRef.current = key;
     syncState(roomCode, state).catch(console.error);
   }, [state, roomCode]);
+
+  // ── wrappedDispatch: 로컬 dispatch + 게스트에게 hostAction 전파 ─────────────
+  // 아래 액션들은 게스트가 로컬 리듀서에 그대로 반영해야 하므로 hostAction으로 전송
+  const wrappedDispatch = useCallback(
+    (action: Action) => {
+      dispatch(action);
+      const hostActionTypes: Action["type"][] = [
+        "PLAYER/READY",
+        "TURN/TAG",
+        "COST/CONFIRM",
+        "COST/CANCEL",
+        "SELECTION/CONFIRM",
+        "SELECTION/SKIP",
+        "SUBMIT_DRAFT",
+        "DISCARD/CONFIRM",
+      ];
+      if (hostActionTypes.includes(action.type)) {
+        sendHostAction(roomCode, action).catch(console.error);
+      }
+    },
+    [roomCode],
+  );
 
   // TURN_START → TURN/BEGIN
   useEffect(() => {
@@ -192,7 +241,7 @@ export function HostGameApp({
   return (
     <GameScreen
       state={state}
-      dispatch={dispatch}
+      dispatch={wrappedDispatch}
       isAiThinking={waitingGuest}
       isTagAnimating={isTagAnimating}
       disableAiDraft
@@ -202,6 +251,9 @@ export function HostGameApp({
 }
 
 // ── 게스트 게임 앱 ───────────────────────────────────────────────────────────
+// 로컬 리듀서로 게임 로직을 직접 실행 — Firestore는 동기화 포인트
+// (SETUP_INIT / ROUND_DRAFT / GAME_OVER)에서만 정규 상태를 수신하고,
+// 그 사이 턴 처리(RESOLVE → ANIMATING → TURN_END)는 로컬에서 독립 수행.
 
 export function GuestGameApp({
   roomCode,
@@ -210,73 +262,144 @@ export function GuestGameApp({
   roomCode: string;
   onExit: () => void;
 }) {
-  const [rawState, setRawState] = useState<GameState | null>(null);
-  // 게스트 로컬: 뒤집힌 상태에서 선택한 카드 (아직 전송 전)
+  // 로컬 리듀서: null = 첫 SYNC/OVERRIDE 수신 전 미초기화 상태
+  const [localState, localDispatch] = useReducer(guestLocalReducer, null);
   const [localSelected, setLocalSelected] = useState<{ cardId: string; handIndex: number } | null>(null);
 
+  // onExit ref (subscription 클로저 안정화)
+  const onExitRef = useRef(onExit);
+  useEffect(() => { onExitRef.current = onExit; });
+
+  // 동기화 중복 방지: (round:turn:phase) 키로 추적
+  const lastSyncKeyRef = useRef("");
+
+  // ── Firestore 구독 ─────────────────────────────────────────────────────────
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (data.gameState) setRawState(data.gameState);
-      if (data.status === "finished") onExit();
+      const gs = data.gameState;
+
+      // 1. 정규 동기화 포인트 수신 → 로컬 상태 교체
+      //    매 턴 시작(SETUP_INIT)에서 호스트 정규 상태로 덮어써
+      //    셔플 등 무작위 요소가 반영된 올바른 상태를 확보
+      if (gs && (gs.phase === "SETUP_INIT" || gs.phase === "ROUND_DRAFT" || gs.phase === "GAME_OVER")) {
+        const syncKey = `${gs.round}:${gs.turn}:${gs.phase}`;
+        if (syncKey !== lastSyncKeyRef.current) {
+          lastSyncKeyRef.current = syncKey;
+          localDispatch({ type: "SYNC/OVERRIDE", state: gs });
+        }
+      }
+
+      // 2. hostAction: 호스트(P1)의 플레이 액션 → 로컬 리듀서에 직접 반영
+      if (data.hostAction) {
+        localDispatch(data.hostAction as Action);
+        clearHostAction(roomCode).catch(console.error);
+      }
+
+      if (data.status === "finished") onExitRef.current();
     });
     return () => unsubscribe();
-  }, [roomCode, onExit]);
+  // onExit은 ref로 관리 — deps에서 제외해 리스너 불필요한 재생성 방지
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode]);
 
-  // 게스트 상태: P1/AI 뒤집힌 버전 + 로컬 선택 반영
-  const flippedState: GameState | null = rawState
-    ? { ...flipState(rawState), selected: localSelected }
-    : null;
+  // ── 자동 페이즈 전환 (HostGameApp과 동일 로직, localState 사용) ──────────────
 
-  // 게스트가 보내는 턴 (원본 상태 기준 AI 차례)
-  const isGuestTurn = rawState
-    ? (rawState.phase === "SETUP_INIT" && rawState.initiative === "AI") ||
-      (rawState.phase === "SETUP_OTHER" && rawState.initiative === "P1")
-    : false;
+  // TURN_START → TURN/BEGIN (드래프트 완료 후)
+  useEffect(() => {
+    if (!localState) return;
+    if (localState.phase === "TURN_START" && localState.P1.hand.length > 0 && localState.AI.hand.length > 0) {
+      localDispatch({ type: "TURN/BEGIN" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localState?.phase, localState?.P1.hand.length, localState?.AI.hand.length]);
 
+  // TURN_END → TURN/BEGIN (600ms 딜레이)
+  useEffect(() => {
+    if (!localState || localState.phase !== "TURN_END" || localState.winner) return;
+    const t = setTimeout(() => localDispatch({ type: "TURN/BEGIN" }), 600);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localState?.phase, localState?.winner]);
+
+  // RESOLVE → RESOLVE/STEP (500ms 딜레이)
+  useEffect(() => {
+    if (!localState || localState.phase !== "RESOLVE") return;
+    const t = setTimeout(() => localDispatch({ type: "RESOLVE/STEP" }), 500);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localState?.phase]);
+
+  // ── 게스트 dispatch (GameScreen에 전달) ────────────────────────────────────
   const guestDispatch = useCallback(
     (action: Action) => {
       switch (action.type) {
-        // 카드 선택: 로컬에만 저장 (Firestore 전송 X)
+
+        // 카드 선택: 로컬 UI 상태만 변경 (Firestore 전송 X)
         case "CARD/SELECT":
           setLocalSelected((prev) =>
             prev?.cardId === action.cardId && prev?.handIndex === action.handIndex
               ? null
-              : { cardId: action.cardId, handIndex: action.handIndex }
+              : { cardId: action.cardId, handIndex: action.handIndex },
           );
           return;
 
-        // Ready: AI/GUEST_READY로 변환해 Firestore 전송
+        // Ready: 게스트(AI) 관점의 PLAYER/READY → AI/GUEST_READY로 변환
         case "PLAYER/READY": {
           const guestAction: Action = localSelected
             ? { type: "AI/GUEST_READY", cardId: localSelected.cardId, handIndex: localSelected.handIndex }
             : { type: "AI/GUEST_READY" };
           setLocalSelected(null);
+          localDispatch(guestAction);
           sendGuestAction(roomCode, guestAction).catch(console.error);
           return;
         }
 
         // 태그: AI/GUEST_TAG로 변환
         case "TURN/TAG":
+          localDispatch({ type: "AI/GUEST_TAG" });
           sendGuestAction(roomCode, { type: "AI/GUEST_TAG" }).catch(console.error);
           return;
 
         // 드래프트: player를 AI로 변환
-        case "SUBMIT_DRAFT":
-          sendGuestAction(roomCode, { type: "SUBMIT_DRAFT", player: "AI", cardIds: action.cardIds }).catch(console.error);
+        case "SUBMIT_DRAFT": {
+          const draftAction: Action = { type: "SUBMIT_DRAFT", player: "AI", cardIds: action.cardIds };
+          localDispatch(draftAction);
+          sendGuestAction(roomCode, draftAction).catch(console.error);
           return;
+        }
 
-        // 카드 선택 확정/스킵: 그대로 전송
+        // 카드 선택 확정 / 스킵: 로컬 + Firestore 전송
         case "SELECTION/CONFIRM":
         case "SELECTION/SKIP":
+          localDispatch(action);
           sendGuestAction(roomCode, action).catch(console.error);
           return;
 
+        // 호스트 전용 액션 — UI에서 발화돼도 무시 (hostAction으로 수신 시 자동 적용)
+        case "COST/CONFIRM":
+        case "COST/CANCEL":
+        case "DISCARD/CONFIRM":
+          return;
+
+        // 그 외 시스템 액션 (ANIM/DONE, TURN/BEGIN, RESOLVE/STEP 등): 로컬만
         default:
+          localDispatch(action);
           return;
       }
     },
-    [roomCode, localSelected]
+    [roomCode, localSelected],
   );
+
+  // ── 뷰 ────────────────────────────────────────────────────────────────────
+  const flippedState: GameState | null = localState
+    ? { ...flipState(localState), selected: localSelected }
+    : null;
+
+  // 게스트가 직접 카드를 선택해야 하는 턴 (로딩/대기 표시용)
+  const isGuestTurn = localState
+    ? (localState.phase === "SETUP_INIT" && localState.initiative === "AI") ||
+      (localState.phase === "SETUP_OTHER" && localState.initiative === "P1")
+    : false;
 
   if (!flippedState) {
     return (
@@ -290,7 +413,7 @@ export function GuestGameApp({
     <GameScreen
       state={flippedState}
       dispatch={guestDispatch}
-      isAiThinking={!isGuestTurn && (rawState?.phase === "SETUP_INIT" || rawState?.phase === "SETUP_OTHER")}
+      isAiThinking={!isGuestTurn && (localState?.phase === "SETUP_INIT" || localState?.phase === "SETUP_OTHER")}
       disableAiDraft
       onExit={onExit}
     />
