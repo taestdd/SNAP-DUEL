@@ -542,7 +542,7 @@ export type Action =
   | { type: "GAME/START" }
   | { type: "TURN/BEGIN" }
   | { type: "CARD/SELECT"; cardId: string; handIndex: number }
-  | { type: "PLAYER/READY"; player: PlayerId }
+  | { type: "PLAYER/READY"; player: PlayerId; cardId?: string; handIndex?: number }
   | { type: "AI/SETUP_AUTO" }
   | { type: "AI/GUEST_READY"; cardId?: string; handIndex?: number }
   | { type: "AI/GUEST_TAG" }

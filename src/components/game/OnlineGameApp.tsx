@@ -113,6 +113,9 @@ export function HostGameApp({
 
   const prevP1CharRef = useRef<CharacterId>(state.P1.activeCharacter);
   const prevAICharRef = useRef<CharacterId>(state.AI.activeCharacter);
+  // PLAYER/READY hostAction에 포함할 selected 카드 정보를 안정적으로 참조
+  const selectedRef = useRef(state.selected);
+  useEffect(() => { selectedRef.current = state.selected; });
 
   // 캐릭터 교체 감지
   useEffect(() => {
@@ -139,12 +142,25 @@ export function HostGameApp({
   }, [state, roomCode]);
 
   // ── wrappedDispatch: 로컬 dispatch + 게스트에게 hostAction 전파 ─────────────
-  // 아래 액션들은 게스트가 로컬 리듀서에 그대로 반영해야 하므로 hostAction으로 전송
+  // 게스트 로컬 리듀서에 그대로 반영해야 하는 호스트 액션들을 hostAction으로 전송.
+  // PLAYER/READY: state.selected는 클로저에서 stale할 수 있으므로 selectedRef 사용.
+  //   카드 정보(cardId/handIndex)를 포함해 전송 → 게스트 리듀서가 올바르게 큐에 등록.
   const wrappedDispatch = useCallback(
     (action: Action) => {
       dispatch(action);
+
+      let hostAction: Action = action;
+
+      if (action.type === "PLAYER/READY") {
+        const sel = selectedRef.current;
+        hostAction = sel
+          ? { type: "PLAYER/READY", player: action.player, cardId: sel.cardId, handIndex: sel.handIndex }
+          : action;
+        sendHostAction(roomCode, hostAction).catch(console.error);
+        return;
+      }
+
       const hostActionTypes: Action["type"][] = [
-        "PLAYER/READY",
         "TURN/TAG",
         "COST/CONFIRM",
         "COST/CANCEL",
@@ -154,7 +170,7 @@ export function HostGameApp({
         "DISCARD/CONFIRM",
       ];
       if (hostActionTypes.includes(action.type)) {
-        sendHostAction(roomCode, action).catch(console.error);
+        sendHostAction(roomCode, hostAction).catch(console.error);
       }
     },
     [roomCode],
