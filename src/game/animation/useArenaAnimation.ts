@@ -192,7 +192,6 @@ export function useArenaAnimation(
     setDisplayedCancelledPlayer(null);
 
     const queue = makeQueueFromScript(state.animScript);
-    console.log("[useArenaAnimation] ANIMATING start | animScript.length:", state.animScript.length, "| queue.length:", queue.length);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);

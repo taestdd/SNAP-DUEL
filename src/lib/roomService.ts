@@ -8,9 +8,21 @@ import {
   deleteField,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Action, GameState, SetupConfig } from "@/game/engine/types";
+import type { Action, AnimScriptEntry, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 
 export type RoomStatus = "waiting" | "ready" | "in_progress" | "finished";
+
+/**
+ * 호스트가 ANIMATING 진입 시 gameState와 함께 단일 write로 저장하는 애니메이션 신호.
+ * TURN_END가 되어도 지우지 않으므로, 게스트가 ANIMATING snapshot을 놓쳐도
+ * 다음 수신 snapshot에서 새 version을 감지해 애니메이션을 재생할 수 있다.
+ */
+export type AnimSignal = {
+  version: number;
+  script: AnimScriptEntry[];
+  startHp: { P1: number; AI: number } | null;
+  startCombo: { count: number; holder: PlayerId } | null;
+};
 
 export type RoomData = {
   status: RoomStatus;
@@ -19,6 +31,7 @@ export type RoomData = {
   guestConfig: SetupConfig | null;
   gameState: GameState | null;
   guestAction: Action | null;
+  animSignal: AnimSignal | null;
 };
 
 function generateCode(): string {
@@ -84,6 +97,16 @@ export async function startGame(code: string, hostConfig: SetupConfig, guestConf
 export async function syncState(code: string, state: GameState): Promise<void> {
   const ref = doc(db, "rooms", code);
   await updateDoc(ref, { gameState: state });
+}
+
+/** ANIMATING 진입 시 gameState + animSignal을 단일 write로 저장 */
+export async function syncStateWithAnim(
+  code: string,
+  state: GameState,
+  signal: AnimSignal,
+): Promise<void> {
+  const ref = doc(db, "rooms", code);
+  await updateDoc(ref, { gameState: state, animSignal: signal });
 }
 
 export async function sendGuestAction(code: string, action: Action): Promise<void> {

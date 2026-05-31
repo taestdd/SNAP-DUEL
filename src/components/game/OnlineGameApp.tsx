@@ -5,8 +5,8 @@ import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import type { Action, CharacterId, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
-import { syncState, clearGuestAction, subscribeRoom } from "@/lib/roomService";
-import type { RoomData } from "@/lib/roomService";
+import { syncState, syncStateWithAnim, clearGuestAction, subscribeRoom } from "@/lib/roomService";
+import type { AnimSignal, RoomData } from "@/lib/roomService";
 import { sendGuestAction } from "@/lib/roomService";
 
 const TAG_ANIM_DURATION = 700;
@@ -107,8 +107,20 @@ export function HostGameApp({
   }, [state.P1.activeCharacter, state.AI.activeCharacter]);
 
   // 상태 변경 시 Firestore 동기화
+  // ANIMATING 진입 시 animSignal을 함께 단일 write — 게스트가 snapshot을 놓쳐도 복구 가능
+  const animSignalVersionRef = useRef(0);
   useEffect(() => {
-    syncState(roomCode, state).catch(console.error);
+    if (state.phase === "ANIMATING") {
+      const signal: AnimSignal = {
+        version: ++animSignalVersionRef.current,
+        script: state.animScript,
+        startHp: state.animStartHp ?? null,
+        startCombo: state.animStartCombo ?? null,
+      };
+      syncStateWithAnim(roomCode, state, signal).catch(console.error);
+    } else {
+      syncState(roomCode, state).catch(console.error);
+    }
   }, [state, roomCode]);
 
   // TURN_START → TURN/BEGIN
@@ -217,6 +229,8 @@ export function GuestGameApp({
   // 로컬 애니메이션 진행 중 Firestore 상태 버퍼링
   const isLocallyAnimatingRef = useRef(false);
   const pendingStateRef = useRef<GameState | null>(null);
+  // 마지막으로 처리한 animSignal version (중복 재생 방지)
+  const lastAnimVersionRef = useRef(0);
 
   // onExit을 ref로 관리: subscription deps에서 제외해 리스너 재생성 방지
   const onExitRef = useRef(onExit);
@@ -226,16 +240,35 @@ export function GuestGameApp({
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
       if (data.gameState) {
         const incoming = data.gameState;
-        console.log("[Guest] Firestore phase:", incoming.phase, "| animScript.length:", incoming.animScript?.length, "| isLocallyAnimating:", isLocallyAnimatingRef.current);
+        const signal = data.animSignal ?? null;
+        const isNewAnim = signal !== null && signal.version > lastAnimVersionRef.current;
+
         if (incoming.phase === "ANIMATING") {
-          // 새 애니메이션 시작: 즉시 적용 + 애니메이션 진행 중 플래그 설정
+          // Firestore가 ANIMATING snapshot을 정상 전달한 경우
+          if (signal) lastAnimVersionRef.current = signal.version;
           isLocallyAnimatingRef.current = true;
           pendingStateRef.current = null;
           setRawState(incoming);
+
+        } else if (isNewAnim && signal) {
+          // Firestore가 ANIMATING snapshot을 건너뛰고 TURN_END 등이 도착한 경우.
+          // animSignal에서 복원한 가짜 ANIMATING rawState로 애니메이션 재생 후 실제 상태 적용.
+          lastAnimVersionRef.current = signal.version;
+          isLocallyAnimatingRef.current = true;
+          pendingStateRef.current = incoming; // 실제 상태 버퍼링
+          const fakeAnimating: GameState = {
+            ...incoming,
+            phase: "ANIMATING",
+            animScript: signal.script,
+            animStartHp: signal.startHp,
+            animStartCombo: signal.startCombo,
+          };
+          setRawState(fakeAnimating);
+
         } else if (isLocallyAnimatingRef.current) {
-          // 로컬 애니메이션 중 다음 상태 도착: 버퍼에 보관
-          console.log("[Guest] Buffering phase:", incoming.phase);
+          // 로컬 애니메이션 진행 중 — 다음 상태 버퍼에 보관
           pendingStateRef.current = incoming;
+
         } else {
           setRawState(incoming);
         }
