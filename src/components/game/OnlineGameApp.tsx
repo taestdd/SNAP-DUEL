@@ -12,7 +12,6 @@ import {
   sendHostAction,
   sendGuestAction,
   subscribeRoom,
-  pushDebugLog,
 } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
 
@@ -133,6 +132,8 @@ export function HostGameApp({
   // ── 상태 동기화: SETUP_INIT / ROUND_DRAFT / GAME_OVER 진입 시 1회만 전송
   // (round:turn:phase) 키로 추적해 중복 전송 방지
   const lastSyncKeyRef = useRef("");
+  // guestAction 중복 처리 방지: clearGuestAction 완료 전 같은 스냅샷이 재발화할 수 있음
+  const lastGuestActionKeyRef = useRef("");
   useEffect(() => {
     const syncPhases = ["SETUP_INIT", "ROUND_DRAFT", "GAME_OVER"] as const;
     if (!(syncPhases as readonly string[]).includes(state.phase)) return;
@@ -197,7 +198,10 @@ export function HostGameApp({
 
     setWaitingGuest(true);
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (!data.guestAction) return;
+      if (!data.guestAction) { lastGuestActionKeyRef.current = ""; return; }
+      const key = JSON.stringify(data.guestAction);
+      if (key === lastGuestActionKeyRef.current) return;
+      lastGuestActionKeyRef.current = key;
       const action = data.guestAction;
       clearGuestAction(roomCode).catch(console.error);
       dispatch(action);
@@ -215,9 +219,12 @@ export function HostGameApp({
     if (state.draftSelections.AI !== null) return;
 
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (!data.guestAction) return;
+      if (!data.guestAction) { lastGuestActionKeyRef.current = ""; return; }
       const action = data.guestAction;
       if (action.type !== "SUBMIT_DRAFT" || action.player !== "AI") return;
+      const key = JSON.stringify(action);
+      if (key === lastGuestActionKeyRef.current) return;
+      lastGuestActionKeyRef.current = key;
       clearGuestAction(roomCode).catch(console.error);
       dispatch(action);
     });
@@ -238,9 +245,12 @@ export function HostGameApp({
     if (state.pendingSelection.selectingPlayer !== "AI") return;
 
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (!data.guestAction) return;
+      if (!data.guestAction) { lastGuestActionKeyRef.current = ""; return; }
       const action = data.guestAction;
       if (action.type !== "SELECTION/CONFIRM" && action.type !== "SELECTION/SKIP") return;
+      const key = JSON.stringify(action);
+      if (key === lastGuestActionKeyRef.current) return;
+      lastGuestActionKeyRef.current = key;
       clearGuestAction(roomCode).catch(console.error);
       dispatch(action);
     });
@@ -287,10 +297,6 @@ export function GuestGameApp({
   const onExitRef = useRef(onExit);
   useEffect(() => { onExitRef.current = onExit; });
 
-  // localState ref — subscription 클로저 안에서 최신 상태 참조용
-  const localStateRef = useRef(localState);
-  useEffect(() => { localStateRef.current = localState; });
-
   // 동기화 중복 방지: (round:turn:phase) 키로 추적
   const lastSyncKeyRef = useRef("");
   // hostAction 중복 처리 방지: JSON 직렬화 키로 추적
@@ -319,15 +325,6 @@ export function GuestGameApp({
         const actionKey = JSON.stringify(data.hostAction);
         if (actionKey !== lastHostActionKeyRef.current) {
           lastHostActionKeyRef.current = actionKey;
-          // [CP1] hostAction 수신 시점의 localState phase와 P1.hand 기록
-          const cur = localStateRef.current;
-          pushDebugLog(roomCode, [
-            "[CP1] hostAction 수신",
-            `action=${actionKey}`,
-            `phase=${cur?.phase ?? "null"}`,
-            `P1.hand=${JSON.stringify(cur?.P1.hand ?? [])}`,
-            `P1.hand[${(data.hostAction as { handIndex?: number }).handIndex}]=${cur?.P1.hand[(data.hostAction as { handIndex?: number }).handIndex ?? -1] ?? "없음"}`,
-          ].join(" | ")).catch(console.error);
           localDispatch(data.hostAction as Action);
           clearHostAction(roomCode).catch(console.error);
         }
@@ -365,13 +362,6 @@ export function GuestGameApp({
   // RESOLVE → RESOLVE/STEP (500ms 딜레이)
   useEffect(() => {
     if (!localState || localState.phase !== "RESOLVE") return;
-    // [CP3] RESOLVE 진입 시 양쪽 큐 상태 기록
-    pushDebugLog(roomCode, [
-      "[CP3] RESOLVE 진입",
-      `P1.queue=${JSON.stringify(localState.P1.queue)}`,
-      `AI.queue=${JSON.stringify(localState.AI.queue)}`,
-      `initiative=${localState.initiative}`,
-    ].join(" | ")).catch(console.error);
     const t = setTimeout(() => localDispatch({ type: "RESOLVE/STEP" }), 500);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -437,16 +427,6 @@ export function GuestGameApp({
     },
     [roomCode, localSelected],
   );
-
-  // [CP4] ANIMATING 진입 시 animScript(flip 전) 기록
-  useEffect(() => {
-    if (!localState || localState.phase !== "ANIMATING") return;
-    pushDebugLog(roomCode, [
-      "[CP4] ANIMATING 진입 (flip 전)",
-      `animScript=${JSON.stringify(localState.animScript.map(e => ({ actor: e.actor, cardId: e.cardId })))}`,
-    ].join(" | ")).catch(console.error);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localState?.phase]);
 
   // ── 뷰 ────────────────────────────────────────────────────────────────────
   const flippedState: GameState | null = localState

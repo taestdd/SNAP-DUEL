@@ -6,7 +6,6 @@ import {
   onSnapshot,
   serverTimestamp,
   deleteField,
-  arrayUnion,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Action, GameState, SetupConfig } from "@/game/engine/types";
@@ -27,7 +26,6 @@ export type RoomData = {
    *  SELECTION/CONFIRM, SELECTION/SKIP, SUBMIT_DRAFT, DISCARD/CONFIRM)
    */
   hostAction: Action | null;
-  debugLogs?: string[];
 };
 
 function generateCode(): string {
@@ -53,7 +51,6 @@ export async function createRoom(): Promise<string> {
         gameState: null,
         guestAction: null,
         hostAction: null,
-        debugLogs: [],
       });
       return code;
     }
@@ -117,17 +114,6 @@ export async function sendHostAction(code: string, action: Action): Promise<void
 export async function clearHostAction(code: string): Promise<void> {
   const ref = doc(db, "rooms", code);
   await updateDoc(ref, { hostAction: deleteField() });
-}
-
-export async function pushDebugLog(code: string, message: string): Promise<void> {
-  const ref = doc(db, "rooms", code);
-  const entry = `[${new Date().toISOString()}] ${message}`;
-  await updateDoc(ref, { debugLogs: arrayUnion(entry) });
-}
-
-export async function clearDebugLogs(code: string): Promise<void> {
-  const ref = doc(db, "rooms", code);
-  await updateDoc(ref, { debugLogs: [] });
 }
 
 export function subscribeRoom(
