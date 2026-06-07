@@ -322,6 +322,22 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return submitDraft(state, action.player, action.cardIds);
     }
 
+    case "SURRENDER": {
+      if (state.phase === "GAME_OVER") return state;
+      return {
+        ...state,
+        phase: "GAME_OVER",
+        winner: action.player === "P1" ? "AI" : "P1",
+        animScript: [],
+        animStartHp: null,
+        animStartCombo: null,
+        pendingSelection: null,
+        pendingCostPayment: null,
+        pendingDiscard: null,
+        resolveContext: { queue: [], index: 0, unresolved: [] },
+      };
+    }
+
     case "DEBUG/RESET": {
       return state;
     }

@@ -125,6 +125,12 @@
   color: #e9ecf5;
 }
 
+.menuBtn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e9ecf5;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .gameInfo {
   display: flex;
   flex-direction: column;
@@ -439,6 +445,126 @@
   0%   { opacity: 1; }
   60%  { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* ── 햄버거 메뉴 패널 ── */
+.menuPanel {
+  position: fixed;
+  z-index: 210;
+  min-width: 140px;
+  background: #141929;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menuPanelBtn {
+  padding: 9px 16px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: #e9ecf5;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.menuPanelBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menuPanelBtnDanger {
+  color: #ff6b6b;
+}
+
+.menuPanelBtnDanger:hover {
+  background: rgba(255, 80, 80, 0.12);
+}
+
+/* ── 항복 확인 다이얼로그 ── */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.confirmBox {
+  background: #141929;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 28px 28px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: min(320px, 90vw);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.confirmTitle {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: #e9ecf5;
+}
+
+.confirmDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: -8px;
+}
+
+.confirmBtns {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.confirmBtnCancel {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e9ecf5;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.confirmBtnCancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.confirmBtnSurrender {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 80, 80, 0.45);
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.confirmBtnSurrender:hover {
+  background: rgba(255, 80, 80, 0.28);
 }
 
 .queueCardAnim {
