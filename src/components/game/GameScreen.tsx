@@ -118,13 +118,17 @@ export default function GameScreen({
 
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmSurrender, setConfirmSurrender] = useState(false);
   const logPopoverRef = useRef<HTMLDivElement>(null);
   const deckPopoverRef = useRef<HTMLDivElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
   const logBtnRef = useRef<HTMLButtonElement>(null);
   const deckBtnRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!logOpen && !deckOpen) return;
+    if (!logOpen && !deckOpen && !menuOpen) return;
     function handleMouseDown(e: MouseEvent) {
       const target = e.target as Node;
       if (logOpen && logPopoverRef.current && !logPopoverRef.current.contains(target) && logBtnRef.current && !logBtnRef.current.contains(target)) {
@@ -133,10 +137,13 @@ export default function GameScreen({
       if (deckOpen && deckPopoverRef.current && !deckPopoverRef.current.contains(target) && deckBtnRef.current && !deckBtnRef.current.contains(target)) {
         setDeckOpen(false);
       }
+      if (menuOpen && menuPanelRef.current && !menuPanelRef.current.contains(target) && menuBtnRef.current && !menuBtnRef.current.contains(target)) {
+        setMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [logOpen, deckOpen]);
+  }, [logOpen, deckOpen, menuOpen]);
 
   useEffect(() => {
     const prev = prevPhaseRef.current;
@@ -250,11 +257,46 @@ export default function GameScreen({
         </div>
       )}
 
+      {confirmSurrender && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.confirmBox}>
+            <div className={styles.confirmTitle}>항복하시겠습니까?</div>
+            <div className={styles.confirmDesc}>항복하면 즉시 패배로 처리됩니다.</div>
+            <div className={styles.confirmBtns}>
+              <button
+                type="button"
+                className={styles.confirmBtnCancel}
+                onClick={() => setConfirmSurrender(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={styles.confirmBtnSurrender}
+                onClick={() => {
+                  setConfirmSurrender(false);
+                  dispatch({ type: "SURRENDER", player: "P1" });
+                }}
+              >
+                항복
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.shell}>
         {/* AI 패널: 좌측 게임 정보 + 우측 HP 바 */}
         <div className={styles.aiPanel}>
           <div className={styles.gameInfoArea}>
-            <button type="button" className={styles.menuBtn} aria-label="메뉴">☰</button>
+            <button
+              ref={menuBtnRef}
+              type="button"
+              className={`${styles.menuBtn} ${menuOpen ? styles.active : ""}`}
+              aria-label="메뉴"
+              disabled={isGameOver}
+              onClick={() => setMenuOpen((v) => !v)}
+            >☰</button>
             <div className={styles.gameInfo}>
               <span className={styles.gameInfoLine}>R{state.round}/3 · T{state.turn}</span>
               {isGameOver && (
@@ -348,6 +390,19 @@ export default function GameScreen({
             >🃏</button>
           </div>
         </div>
+
+        {/* 햄버거 메뉴 패널 */}
+        {menuOpen && (
+          <div ref={menuPanelRef} className={styles.menuPanel}>
+            <button
+              type="button"
+              className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
+              onClick={() => { setMenuOpen(false); setConfirmSurrender(true); }}
+            >
+              항복
+            </button>
+          </div>
+        )}
 
         {/* Popovers */}
         {logOpen && (

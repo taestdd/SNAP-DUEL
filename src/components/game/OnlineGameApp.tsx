@@ -170,6 +170,7 @@ export function HostGameApp({
         "SELECTION/SKIP",
         "SUBMIT_DRAFT",
         "DISCARD/CONFIRM",
+        "SURRENDER",
       ];
       if (hostActionTypes.includes(action.type)) {
         sendHostAction(roomCode, hostAction).catch(console.error);
@@ -257,6 +258,19 @@ export function HostGameApp({
 
     return () => unsubscribe();
   }, [state.phase, state.pendingSelection, roomCode]);
+
+  // 게스트 항복 감지: 언제든 발생할 수 있으므로 항상 활성 상태로 구독
+  useEffect(() => {
+    const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
+      if (!data.guestAction || data.guestAction.type !== "SURRENDER") return;
+      const key = JSON.stringify(data.guestAction);
+      if (key === lastGuestActionKeyRef.current) return;
+      lastGuestActionKeyRef.current = key;
+      clearGuestAction(roomCode).catch(console.error);
+      dispatch({ type: "SURRENDER", player: "AI" });
+    });
+    return () => unsubscribe();
+  }, [roomCode]);
 
   // 턴 종료
   useEffect(() => {
@@ -412,6 +426,15 @@ export function GuestGameApp({
           localDispatch(action);
           sendGuestAction(roomCode, action).catch(console.error);
           return;
+
+        // 항복: 로컬 상태 즉시 반영 + 호스트에 신호 전송
+        // 게스트는 로컬에서 AI 역할이므로 player를 AI로 변환
+        case "SURRENDER": {
+          const surrenderAction: Action = { type: "SURRENDER", player: "AI" };
+          localDispatch(surrenderAction);
+          sendGuestAction(roomCode, surrenderAction).catch(console.error);
+          return;
+        }
 
         // 호스트 전용 액션 — UI에서 발화돼도 무시 (hostAction으로 수신 시 자동 적용)
         case "COST/CONFIRM":

@@ -557,4 +557,5 @@ export type Action =
   | { type: "TURN/TAG" }
   | { type: "HAND/CYCLE" }
   | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] }
-  | { type: "ANIM/DONE" };
+  | { type: "ANIM/DONE" }
+  | { type: "SURRENDER"; player: PlayerId };

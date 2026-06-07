@@ -322,6 +322,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return submitDraft(state, action.player, action.cardIds);
     }
 
+    case "SURRENDER": {
+      if (state.phase === "GAME_OVER") return state;
+      return {
+        ...state,
+        phase: "GAME_OVER",
+        winner: action.player === "P1" ? "AI" : "P1",
+      };
+    }
+
     case "DEBUG/RESET": {
       return state;
     }
