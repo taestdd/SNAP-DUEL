@@ -262,7 +262,8 @@ export function HostGameApp({
   // 게스트 항복 감지: 언제든 발생할 수 있으므로 항상 활성 상태로 구독
   useEffect(() => {
     const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (!data.guestAction || data.guestAction.type !== "SURRENDER") return;
+      if (!data.guestAction) { lastGuestActionKeyRef.current = ""; return; }
+      if (data.guestAction.type !== "SURRENDER") return;
       const key = JSON.stringify(data.guestAction);
       if (key === lastGuestActionKeyRef.current) return;
       lastGuestActionKeyRef.current = key;

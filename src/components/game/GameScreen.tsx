@@ -127,6 +127,14 @@ export default function GameScreen({
   const deckBtnRef = useRef<HTMLButtonElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
 
+  // 외부 원인(상대 항복, 게임 종료 등)으로 GAME_OVER가 되면 열린 메뉴/다이얼로그를 닫음
+  useEffect(() => {
+    if (isGameOver) {
+      setMenuOpen(false);
+      setConfirmSurrender(false);
+    }
+  }, [isGameOver]);
+
   useEffect(() => {
     if (!logOpen && !deckOpen && !menuOpen) return;
     function handleMouseDown(e: MouseEvent) {
@@ -297,6 +305,17 @@ export default function GameScreen({
               disabled={isGameOver}
               onClick={() => setMenuOpen((v) => !v)}
             >☰</button>
+            {menuOpen && (
+              <div ref={menuPanelRef} className={styles.menuPanel}>
+                <button
+                  type="button"
+                  className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
+                  onClick={() => { setMenuOpen(false); setConfirmSurrender(true); }}
+                >
+                  항복
+                </button>
+              </div>
+            )}
             <div className={styles.gameInfo}>
               <span className={styles.gameInfoLine}>R{state.round}/3 · T{state.turn}</span>
               {isGameOver && (
@@ -390,19 +409,6 @@ export default function GameScreen({
             >🃏</button>
           </div>
         </div>
-
-        {/* 햄버거 메뉴 패널 */}
-        {menuOpen && (
-          <div ref={menuPanelRef} className={styles.menuPanel}>
-            <button
-              type="button"
-              className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
-              onClick={() => { setMenuOpen(false); setConfirmSurrender(true); }}
-            >
-              항복
-            </button>
-          </div>
-        )}
 
         {/* Popovers */}
         {logOpen && (

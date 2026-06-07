@@ -105,6 +105,7 @@
   padding: 8px 10px;
   gap: 4px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
 }
 
 .menuBtn {
@@ -449,9 +450,9 @@
 
 /* ── 햄버거 메뉴 패널 ── */
 .menuPanel {
-  position: fixed;
-  top: 44px;
-  left: max(10px, calc(50vw - 240px + 10px));
+  position: absolute;
+  top: 100%;
+  left: 0;
   z-index: 210;
   min-width: 140px;
   background: #141929;

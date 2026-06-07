@@ -328,6 +328,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
         ...state,
         phase: "GAME_OVER",
         winner: action.player === "P1" ? "AI" : "P1",
+        animScript: [],
+        animStartHp: null,
+        animStartCombo: null,
+        pendingSelection: null,
+        pendingCostPayment: null,
+        pendingDiscard: null,
+        resolveContext: { queue: [], index: 0, unresolved: [] },
       };
     }
 
