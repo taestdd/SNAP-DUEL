@@ -12,6 +12,7 @@ import {
   sendHostAction,
   sendGuestAction,
   subscribeRoom,
+  pushDebugLog,
 } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
 
@@ -286,6 +287,10 @@ export function GuestGameApp({
   const onExitRef = useRef(onExit);
   useEffect(() => { onExitRef.current = onExit; });
 
+  // localState ref — subscription 클로저 안에서 최신 상태 참조용
+  const localStateRef = useRef(localState);
+  useEffect(() => { localStateRef.current = localState; });
+
   // 동기화 중복 방지: (round:turn:phase) 키로 추적
   const lastSyncKeyRef = useRef("");
 
@@ -307,6 +312,15 @@ export function GuestGameApp({
 
       // 2. hostAction: 호스트(P1)의 플레이 액션 → 로컬 리듀서에 직접 반영
       if (data.hostAction) {
+        // [CP1] hostAction 수신 시점의 localState phase와 P1.hand 기록
+        const cur = localStateRef.current;
+        pushDebugLog(roomCode, [
+          "[CP1] hostAction 수신",
+          `action=${JSON.stringify(data.hostAction)}`,
+          `phase=${cur?.phase ?? "null"}`,
+          `P1.hand=${JSON.stringify(cur?.P1.hand ?? [])}`,
+          `P1.hand[${(data.hostAction as { handIndex?: number }).handIndex}]=${cur?.P1.hand[(data.hostAction as { handIndex?: number }).handIndex ?? -1] ?? "없음"}`,
+        ].join(" | ")).catch(console.error);
         localDispatch(data.hostAction as Action);
         clearHostAction(roomCode).catch(console.error);
       }
@@ -340,6 +354,13 @@ export function GuestGameApp({
   // RESOLVE → RESOLVE/STEP (500ms 딜레이)
   useEffect(() => {
     if (!localState || localState.phase !== "RESOLVE") return;
+    // [CP3] RESOLVE 진입 시 양쪽 큐 상태 기록
+    pushDebugLog(roomCode, [
+      "[CP3] RESOLVE 진입",
+      `P1.queue=${JSON.stringify(localState.P1.queue)}`,
+      `AI.queue=${JSON.stringify(localState.AI.queue)}`,
+      `initiative=${localState.initiative}`,
+    ].join(" | ")).catch(console.error);
     const t = setTimeout(() => localDispatch({ type: "RESOLVE/STEP" }), 500);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -405,6 +426,16 @@ export function GuestGameApp({
     },
     [roomCode, localSelected],
   );
+
+  // [CP4] ANIMATING 진입 시 animScript(flip 전) 기록
+  useEffect(() => {
+    if (!localState || localState.phase !== "ANIMATING") return;
+    pushDebugLog(roomCode, [
+      "[CP4] ANIMATING 진입 (flip 전)",
+      `animScript=${JSON.stringify(localState.animScript.map(e => ({ actor: e.actor, cardId: e.cardId })))}`,
+    ].join(" | ")).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localState?.phase]);
 
   // ── 뷰 ────────────────────────────────────────────────────────────────────
   const flippedState: GameState | null = localState
