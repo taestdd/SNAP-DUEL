@@ -19,6 +19,13 @@ export type RoomData = {
   guestConfig: SetupConfig | null;
   gameState: GameState | null;
   guestAction: Action | null;
+  /**
+   * 호스트가 보내는 액션 신호.
+   * 게스트는 이를 받아 로컬 리듀서에 직접 적용한다.
+   * (PLAYER/READY, TURN/TAG, COST/CONFIRM, COST/CANCEL,
+   *  SELECTION/CONFIRM, SELECTION/SKIP, SUBMIT_DRAFT, DISCARD/CONFIRM)
+   */
+  hostAction: Action | null;
 };
 
 function generateCode(): string {
@@ -43,6 +50,7 @@ export async function createRoom(): Promise<string> {
         guestConfig: null,
         gameState: null,
         guestAction: null,
+        hostAction: null,
       });
       return code;
     }
@@ -94,6 +102,18 @@ export async function sendGuestAction(code: string, action: Action): Promise<voi
 export async function clearGuestAction(code: string): Promise<void> {
   const ref = doc(db, "rooms", code);
   await updateDoc(ref, { guestAction: deleteField() });
+}
+
+/** 호스트가 자신의 액션을 게스트에게 전달 */
+export async function sendHostAction(code: string, action: Action): Promise<void> {
+  const ref = doc(db, "rooms", code);
+  await updateDoc(ref, { hostAction: action });
+}
+
+/** 게스트가 hostAction 수신 후 클리어 */
+export async function clearHostAction(code: string): Promise<void> {
+  const ref = doc(db, "rooms", code);
+  await updateDoc(ref, { hostAction: deleteField() });
 }
 
 export function subscribeRoom(

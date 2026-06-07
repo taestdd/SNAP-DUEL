@@ -52,7 +52,20 @@ export function gameReducer(state: GameState, action: Action): GameState {
         // ✅ P1은 자기 차례가 아니면 ready 불가
         if (!isP1TurnToPick(s)) return s;
 
-        const picked = s.selected;
+        // action.cardId가 있으면 사용 (hostAction 경유 — 게스트 로컬 리듀서용)
+        // handIndex는 호스트 hand 기준이므로 게스트 hand에서 cardId로 재탐색
+        // (HAND/CYCLE이 호스트 로컬에서만 적용되면 인덱스가 달라질 수 있음)
+        // 없으면 로컬 state.selected 사용 (일반 dispatch)
+        const picked = (() => {
+          if (action.cardId !== undefined && action.handIndex !== undefined) {
+            const localIdx = s.P1.hand.indexOf(action.cardId);
+            return {
+              cardId: action.cardId,
+              handIndex: localIdx >= 0 ? localIdx : action.handIndex,
+            };
+          }
+          return s.selected;
+        })();
 
         if (picked) {
           const pickedCard = getCard(picked.cardId);
