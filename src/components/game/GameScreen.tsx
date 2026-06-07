@@ -119,6 +119,7 @@ export default function GameScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const logPopoverRef = useRef<HTMLDivElement>(null);
   const deckPopoverRef = useRef<HTMLDivElement>(null);
@@ -265,6 +266,22 @@ export default function GameScreen({
         </div>
       )}
 
+      {menuOpen && menuPos && (
+        <div
+          ref={menuPanelRef}
+          className={styles.menuPanel}
+          style={{ top: menuPos.top, left: menuPos.left }}
+        >
+          <button
+            type="button"
+            className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
+            onClick={() => { setMenuOpen(false); setConfirmSurrender(true); }}
+          >
+            항복
+          </button>
+        </div>
+      )}
+
       {confirmSurrender && (
         <div className={styles.confirmOverlay}>
           <div className={styles.confirmBox}>
@@ -303,19 +320,14 @@ export default function GameScreen({
               className={`${styles.menuBtn} ${menuOpen ? styles.active : ""}`}
               aria-label="메뉴"
               disabled={isGameOver}
-              onClick={() => setMenuOpen((v) => !v)}
+              onClick={() => {
+                if (!menuOpen && menuBtnRef.current) {
+                  const rect = menuBtnRef.current.getBoundingClientRect();
+                  setMenuPos({ top: rect.bottom + 4, left: rect.left });
+                }
+                setMenuOpen((v) => !v);
+              }}
             >☰</button>
-            {menuOpen && (
-              <div ref={menuPanelRef} className={styles.menuPanel}>
-                <button
-                  type="button"
-                  className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
-                  onClick={() => { setMenuOpen(false); setConfirmSurrender(true); }}
-                >
-                  항복
-                </button>
-              </div>
-            )}
             <div className={styles.gameInfo}>
               <span className={styles.gameInfoLine}>R{state.round}/3 · T{state.turn}</span>
               {isGameOver && (
