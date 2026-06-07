@@ -293,6 +293,9 @@ export function GuestGameApp({
 
   // 동기화 중복 방지: (round:turn:phase) 키로 추적
   const lastSyncKeyRef = useRef("");
+  // hostAction 중복 처리 방지: JSON 직렬화 키로 추적
+  // clearHostAction이 비동기이므로 클리어 전 같은 스냅샷이 여러 번 발화할 수 있음
+  const lastHostActionKeyRef = useRef("");
 
   // ── Firestore 구독 ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -311,18 +314,26 @@ export function GuestGameApp({
       }
 
       // 2. hostAction: 호스트(P1)의 플레이 액션 → 로컬 리듀서에 직접 반영
+      //    clearHostAction 완료 전 같은 스냅샷이 재발화할 수 있으므로 키로 중복 방지
       if (data.hostAction) {
-        // [CP1] hostAction 수신 시점의 localState phase와 P1.hand 기록
-        const cur = localStateRef.current;
-        pushDebugLog(roomCode, [
-          "[CP1] hostAction 수신",
-          `action=${JSON.stringify(data.hostAction)}`,
-          `phase=${cur?.phase ?? "null"}`,
-          `P1.hand=${JSON.stringify(cur?.P1.hand ?? [])}`,
-          `P1.hand[${(data.hostAction as { handIndex?: number }).handIndex}]=${cur?.P1.hand[(data.hostAction as { handIndex?: number }).handIndex ?? -1] ?? "없음"}`,
-        ].join(" | ")).catch(console.error);
-        localDispatch(data.hostAction as Action);
-        clearHostAction(roomCode).catch(console.error);
+        const actionKey = JSON.stringify(data.hostAction);
+        if (actionKey !== lastHostActionKeyRef.current) {
+          lastHostActionKeyRef.current = actionKey;
+          // [CP1] hostAction 수신 시점의 localState phase와 P1.hand 기록
+          const cur = localStateRef.current;
+          pushDebugLog(roomCode, [
+            "[CP1] hostAction 수신",
+            `action=${actionKey}`,
+            `phase=${cur?.phase ?? "null"}`,
+            `P1.hand=${JSON.stringify(cur?.P1.hand ?? [])}`,
+            `P1.hand[${(data.hostAction as { handIndex?: number }).handIndex}]=${cur?.P1.hand[(data.hostAction as { handIndex?: number }).handIndex ?? -1] ?? "없음"}`,
+          ].join(" | ")).catch(console.error);
+          localDispatch(data.hostAction as Action);
+          clearHostAction(roomCode).catch(console.error);
+        }
+      } else {
+        // hostAction 클리어 확인 → 다음 액션을 위해 키 초기화
+        lastHostActionKeyRef.current = "";
       }
 
       if (data.status === "finished") onExitRef.current();
