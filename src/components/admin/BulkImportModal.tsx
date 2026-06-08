@@ -30,12 +30,83 @@ export default function BulkImportModal({
   const [progress, setProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  function parseCSV(text: string): string {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return "[]";
+
+    function splitCSVLine(line: string): string[] {
+      const result: string[] = [];
+      let cur = "";
+      let inQuote = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQuote = !inQuote;
+        } else if (ch === "," && !inQuote) {
+          result.push(cur); cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    const headers = splitCSVLine(lines[0]);
+    const cards: Record<string, unknown>[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const vals = splitCSVLine(lines[i]);
+      const row: Record<string, string> = {};
+      headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] ?? "").trim(); });
+      if (!row.id) continue;
+
+      const card: Record<string, unknown> = {
+        id: row.id,
+        name: row.name,
+        cost: Number(row.cost || 0),
+        speed: Number(row.speed || 0),
+        gain: Number(row.gain || 0),
+        text: row.text || row.name,
+      };
+
+      if (row.cardType) card.cardType = row.cardType;
+      if (row.groundAttack) card.groundAttack = Number(row.groundAttack);
+      if (row.antiAirAttack) card.antiAirAttack = Number(row.antiAirAttack);
+      if (row.useCondition) card.useCondition = row.useCondition;
+      if (row.tags) {
+        const tags = row.tags.split(",").map((t) => t.trim()).filter(Boolean);
+        if (tags.length) card.tags = tags;
+      }
+
+      // "dack" 오타 자동 수정
+      const fixTypo = (s: string) => s.replace(/dack/g, "deck");
+
+      try { card.effects = row.effects ? JSON.parse(fixTypo(row.effects)) : []; }
+      catch { card.effects = []; }
+      if (row.statModifiers) {
+        try { card.statModifiers = JSON.parse(row.statModifiers); } catch { /* skip */ }
+      }
+      if (row.altCost) {
+        try { card.altCost = JSON.parse(fixTypo(row.altCost)); } catch { /* skip */ }
+      }
+
+      cards.push(card);
+    }
+
+    return JSON.stringify(cards, null, 2);
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setJson((ev.target?.result as string) ?? "");
-    reader.readAsText(file);
+    reader.onload = (ev) => {
+      const text = (ev.target?.result as string) ?? "";
+      setJson(file.name.endsWith(".csv") ? parseCSV(text) : text);
+    };
+    reader.readAsText(file, "utf-8");
   }
 
   function handleParse() {
@@ -107,18 +178,18 @@ export default function BulkImportModal({
         {stage === "edit" && (
           <>
             <div className={styles.hint}>
-              JSON 배열로 카드를 붙여넣거나 .json 파일을 업로드하세요.
+              JSON 배열 또는 CSV 파일을 업로드하세요. CSV는 자동으로 JSON으로 변환됩니다.
             </div>
             <div className={styles.fileRow}>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".json"
+                accept=".json,.csv"
                 className={styles.fileInput}
                 onChange={handleFileChange}
               />
               <button className={styles.fileBtn} onClick={() => fileRef.current?.click()}>
-                파일 선택
+                파일 선택 (JSON / CSV)
               </button>
               {fileRef.current?.files?.[0] && (
                 <span className={styles.fileName}>{fileRef.current.files[0].name}</span>
