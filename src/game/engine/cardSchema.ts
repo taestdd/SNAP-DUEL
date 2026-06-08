@@ -103,7 +103,7 @@ export const CardSchema = z.object({
   antiAirAttack: z.number().int().min(0).optional(),
   gain: z.number().int().min(0),
   effects: z.array(CardEffectSchema).default([]),
-  text: z.string().min(1),
+  text: z.string(),
   useCondition: UseConditionSchema.optional(),
   tags: z.array(CardTagSchema).optional(),
   actionTag: ActionTagSchema.optional(),

@@ -68,7 +68,7 @@ export default function BulkImportModal({
         cost: Number(row.cost || 0),
         speed: Number(row.speed || 0),
         gain: Number(row.gain || 0),
-        text: row.text || row.name,
+        text: row.text || "",
       };
 
       if (row.cardType) card.cardType = row.cardType;
