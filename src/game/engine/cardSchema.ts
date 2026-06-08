@@ -9,7 +9,7 @@ export const ActionTagSchema = z.enum([
 
 export const HitPoseSchema = z.enum(["hit_weak", "hit_strong", "hit_aerial"]);
 
-export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "암기", "구룡권"]);
+export const CardTagSchema = z.enum(["마법", "검술", "격투", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "암기", "구룡권", "독", "마나", "특공인법", "혈계권", "제압투척구 3형"]);
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
@@ -94,7 +94,7 @@ export const HitTimingSchema = z.object({
 });
 
 export const CardSchema = z.object({
-  id: z.string().min(1).regex(/^[a-z0-9_]+$/, "id는 소문자, 숫자, 언더스코어만 허용"),
+  id: z.string().min(1).regex(/^[a-z0-9_-]+$/, "id는 소문자, 숫자, 언더스코어, 하이픈만 허용"),
   name: z.string().min(1),
   cardType: CardTypeSchema.optional(),
   cost: z.number().int().min(0),
@@ -103,7 +103,7 @@ export const CardSchema = z.object({
   antiAirAttack: z.number().int().min(0).optional(),
   gain: z.number().int().min(0),
   effects: z.array(CardEffectSchema).default([]),
-  text: z.string().min(1),
+  text: z.string(),
   useCondition: UseConditionSchema.optional(),
   tags: z.array(CardTagSchema).optional(),
   actionTag: ActionTagSchema.optional(),
