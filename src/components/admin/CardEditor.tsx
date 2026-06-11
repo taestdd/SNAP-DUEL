@@ -292,13 +292,12 @@ export default function CardEditor({ initial, mode }: Props) {
               </SelectField>
             </div>
             <div className={styles.fieldFull}>
-              <label className={styles.label}>카드 설명 *</label>
+              <label className={styles.label}>카드 설명</label>
               <textarea
                 className={styles.textarea}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="카드 효과를 설명하는 텍스트"
-                required
               />
             </div>
             <div className={styles.field}>
