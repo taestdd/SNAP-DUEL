@@ -80,8 +80,10 @@ export default function BulkImportModal({
         if (tags.length) card.tags = tags;
       }
 
-      // "dack" 오타 자동 수정
-      const fixTypo = (s: string) => s.replace(/dack/g, "deck");
+      // "dack" 오타 및 cardId 하이픈→언더스코어 자동 수정
+      const fixTypo = (s: string) =>
+        s.replace(/dack/g, "deck").replace(/"cardId"\s*:\s*"([^"]+)"/g, (_, id) => `"cardId":"${id.replace(/-/g, "_")}"`);
+
 
       try { card.effects = row.effects ? JSON.parse(fixTypo(row.effects)) : []; }
       catch { card.effects = []; }
