@@ -129,21 +129,21 @@
 
 .charBtns {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-top: 10px;
 }
 
 .charBtn {
-  flex: 1;
   background: #111;
   border: 1px solid #333;
   color: #aaa;
-  font-family: monospace;
-  font-size: 14px;
-  padding: 8px;
+  font-size: 13px;
+  padding: 6px 12px;
   border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .charBtnActive {
