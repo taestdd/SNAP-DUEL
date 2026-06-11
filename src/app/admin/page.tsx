@@ -14,6 +14,12 @@ type SortField = "id" | "name" | "cost" | "speed" | "gain";
 type SortDir = "asc" | "desc";
 
 const CARD_TAGS = CardTagSchema.options;
+const FILTER_KEY = "adminCardFilter";
+
+function loadFilter(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(sessionStorage.getItem(FILTER_KEY) ?? "{}"); } catch { return {}; }
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("cards");
@@ -23,14 +29,18 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [showBulkImport, setShowBulkImport] = useState(false);
 
-  // 카드 필터/정렬 상태
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [filterTag, setFilterTag] = useState("");
-  const [filterCondition, setFilterCondition] = useState("");
-  const [filterAltCost, setFilterAltCost] = useState("");
-  const [sortField, setSortField] = useState<SortField>("id");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  // 카드 필터/정렬 상태 — sessionStorage로 복원
+  const [search, setSearch] = useState(() => loadFilter().search ?? "");
+  const [filterType, setFilterType] = useState(() => loadFilter().filterType ?? "");
+  const [filterTag, setFilterTag] = useState(() => loadFilter().filterTag ?? "");
+  const [filterCondition, setFilterCondition] = useState(() => loadFilter().filterCondition ?? "");
+  const [filterAltCost, setFilterAltCost] = useState(() => loadFilter().filterAltCost ?? "");
+  const [sortField, setSortField] = useState<SortField>(() => (loadFilter().sortField as SortField) ?? "id");
+  const [sortDir, setSortDir] = useState<SortDir>(() => (loadFilter().sortDir as SortDir) ?? "asc");
+
+  useEffect(() => {
+    sessionStorage.setItem(FILTER_KEY, JSON.stringify({ search, filterType, filterTag, filterCondition, filterAltCost, sortField, sortDir }));
+  }, [search, filterType, filterTag, filterCondition, filterAltCost, sortField, sortDir]);
 
   useEffect(() => {
     setLoading(true);
