@@ -280,11 +280,6 @@ export function applyCardEffectsWithPause(
       const pool = s[fromPlayerId][zone] as string[];
       const candidates = pool.filter((id) => getCard(id)?.tags?.includes(tag));
 
-      if (candidates.length === 0) {
-        s = pushLog(s, `draw_tagged(${tag}): no matching cards in ${zone}`);
-        continue;
-      }
-
       if (player === "P1") {
         const pendingSelection: PendingSelection = {
           selectingPlayer: player,
