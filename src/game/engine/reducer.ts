@@ -209,6 +209,22 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       let s = state;
 
+      // 튜토리얼: 스크립트된 AI 행동
+      if (s.tutorialAiScript) {
+        const script = s.tutorialAiScript[s.turn - 1] ?? [];
+        if (script.length > 0) {
+          const cardId = script[0];
+          const handIdx = s.AI.hand.indexOf(cardId);
+          if (handIdx >= 0) {
+            s = queueCard(s, "AI", cardId, handIdx);
+          }
+        }
+        s = { ...s, AI: { ...s.AI, ready: true } };
+        if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
+        if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
+        return s;
+      }
+
       // AI 태그: shouldTag 판단 (ai.ts와 동일 로직)
       if (shouldTag(s, "AI")) {
         s = applyTagSwitch(s, "AI");

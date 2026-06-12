@@ -299,6 +299,27 @@
   cursor: not-allowed;
 }
 
+/* ── 튜토리얼 버튼 ── */
+.tutorialBtn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+  background: #1a2a1a;
+  border: 1px solid #2a5a2a;
+  border-radius: 6px;
+  color: #70c070;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.tutorialBtn:hover {
+  background: #243424;
+  color: #90e090;
+}
+
 /* ── 어드민 링크 ── */
 .adminLink {
   text-align: center;

@@ -515,6 +515,9 @@ export type GameState = {
 
   /** 플레이 로그: 턴별 요약 (게임 종료 후 JSON 다운로드용) */
   turnLog: TurnLogEntry[];
+
+  /** 튜토리얼 전용: 턴별 AI 행동 스크립트. index = turn-1. 빈 배열 = 패스 */
+  tutorialAiScript?: string[][];
 };
 
 /** 턴 요약 — 게임 로그 분석용 */
