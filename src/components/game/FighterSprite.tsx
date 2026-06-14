@@ -55,6 +55,7 @@ export default function FighterSprite({
         if (next >= entryRef.current.frames.length) {
           if (entryRef.current.hold) {
             if (intervalRef.current) clearInterval(intervalRef.current);
+            intervalRef.current = null;
             return prev;
           }
           return 0;
