@@ -193,7 +193,10 @@ export function useArenaAnimation(
     setAnimRunning(true);
     setAnimLog([]);
 
-    const maxDelay = queue.reduce((m, e) => Math.max(m, e.delay), 0);
+    const maxDelay = queue.reduce((m, e) => {
+      const freeze = e.type === "visual_hit" ? (HIT_FREEZE_MS[e.hitPose ?? ""] ?? 150) : 0;
+      return Math.max(m, e.delay + freeze);
+    }, 0);
     const t = setTimeout(
       () => dispatchRef.current({ type: "ANIM/DONE" }),
       maxDelay + ANIM_DONE_BUFFER_MS,
