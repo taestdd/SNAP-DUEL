@@ -189,6 +189,7 @@ export function useArenaAnimation(
     setDisplayedCancelledPlayer(null);
 
     const queue = makeQueueFromScript(state.animScript);
+    console.log("[animQueue]", queue.map(e => `${e.type}@${e.delay}ms${e.type === "visual_hit" ? `[${e.hitPose}]` : ""}`));
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
@@ -248,11 +249,14 @@ export function useArenaAnimation(
       case "visual_hit": {
         const pose = event.hitPose ?? "hit_weak";
         const freezeMs = HIT_FREEZE_MS[pose] ?? 150;
+        console.log("[visual_hit]", { pose, freezeMs, target: event.target, now: Date.now() });
         const shakeDuration = SHAKE_DURATION_MS[pose] ?? 100;
         const sl: ShakeLevel = pose === "hit_strong" ? "heavy" : "light";
 
-        setPlayerFrozenUntil(Date.now() + freezeMs);
-        setAiFrozenUntil(Date.now() + freezeMs);
+        const freezeUntil = Date.now() + freezeMs;
+        console.log("[hitstop] frozenUntil:", freezeUntil, "duration:", freezeMs);
+        setPlayerFrozenUntil(freezeUntil);
+        setAiFrozenUntil(freezeUntil);
 
         if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
         setShakeLevel(sl);
