@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FighterPose } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import { CHARACTER_SPRITES, frameToBackgroundPosition, backgroundSize } from "@/game/animation/spriteMap";
@@ -42,21 +42,18 @@ export default function FighterSprite({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frozenUntilRef = useRef(frozenUntil);
   frozenUntilRef.current = frozenUntil;
+  const entryRef = useRef(entry);
+  entryRef.current = entry;
   const spriteRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setFrameIdx(0);
-
+  const startInterval = useCallback((ms: number) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-
-    const ms = Math.round(1000 / entry.fps);
-
     intervalRef.current = setInterval(() => {
       setFrameIdx((prev) => {
         if (Date.now() < frozenUntilRef.current) return prev;
         const next = prev + 1;
-        if (next >= entry.frames.length) {
-          if (entry.hold) {
+        if (next >= entryRef.current.frames.length) {
+          if (entryRef.current.hold) {
             if (intervalRef.current) clearInterval(intervalRef.current);
             return prev;
           }
@@ -65,12 +62,24 @@ export default function FighterSprite({
         return next;
       });
     }, ms);
+  }, []);
 
+  useEffect(() => {
+    setFrameIdx(0);
+    startInterval(Math.round(1000 / entry.fps));
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poseKey, pose]);
+
+  // hold:true 포즈에서 interval이 클리어된 뒤 frozenUntil이 세팅되면 interval 재시작
+  useEffect(() => {
+    if (frozenUntil <= Date.now()) return;
+    if (intervalRef.current !== null) return; // 이미 살아있으면 스킵
+    startInterval(Math.round(1000 / entry.fps));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frozenUntil]);
 
   useLayoutEffect(() => {
     if (flashKey === 0) return;
