@@ -97,32 +97,34 @@ export default function ArenaStage({
 
   return (
     <div className={styles.zoomWrap}>
-      <div ref={zoomRef} className={`${styles.arena} ${shakeClass}`}>
-        <div className={styles.arenaBg} style={{ backgroundPositionX: `${bgOffset}px` }} />
-        {superFlashActor && (
-          <div key={superFlashActor} className={styles.superFlashOverlay} />
-        )}
-        {hitEffectKey > 0 && hitEffectTarget && (
-          <HitEffect
-            key={hitEffectKey}
-            strength={hitEffectStrength}
-            style={{
-              left: hitEffectTarget === "P1" ? "32%" : "68%",
-              top: "55%",
-            }}
-          />
-        )}
-        <div
-          ref={playerRef}
-          className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
-        >
-          <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
-        </div>
-        <div
-          ref={aiRef}
-          className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
-        >
-          <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
+      <div className={`${styles.arena} ${shakeClass}`}>
+        <div ref={zoomRef} className={styles.arenaInner}>
+          <div className={styles.arenaBg} style={{ backgroundPositionX: `${bgOffset}px` }} />
+          {superFlashActor && (
+            <div key={superFlashActor} className={styles.superFlashOverlay} />
+          )}
+          {hitEffectKey > 0 && hitEffectTarget && (
+            <HitEffect
+              key={hitEffectKey}
+              strength={hitEffectStrength}
+              style={{
+                left: hitEffectTarget === "P1" ? "32%" : "68%",
+                top: "55%",
+              }}
+            />
+          )}
+          <div
+            ref={playerRef}
+            className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
+          >
+            <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
+          </div>
+          <div
+            ref={aiRef}
+            className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
+          >
+            <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
+          </div>
         </div>
       </div>
     </div>
