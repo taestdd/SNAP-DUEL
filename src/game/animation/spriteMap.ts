@@ -78,4 +78,14 @@ export const CHARACTER_SPRITES: Record<string, CharacterSpriteConfig> = {
     sheet: DEFAULT_SHEET,
     poses: DEFAULT_POSES,
   },
+  c: {
+    imagePath: "/sprites/char_c.png",
+    sheet: DEFAULT_SHEET,
+    poses: DEFAULT_POSES,
+  },
+  d: {
+    imagePath: "/sprites/char_d.png",
+    sheet: DEFAULT_SHEET,
+    poses: DEFAULT_POSES,
+  },
 };
