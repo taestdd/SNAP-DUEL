@@ -7,6 +7,10 @@ export function initCards(data: unknown): void {
   _cards = CardsRecordSchema.parse(data);
 }
 
+export function registerCards(extra: Record<string, Card>): void {
+  Object.assign(_cards, extra);
+}
+
 export function getCard(id: string): Card | undefined {
   return _cards[id];
 }

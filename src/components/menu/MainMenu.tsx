@@ -161,6 +161,14 @@ export default function MainMenu() {
           />
         </section>
 
+        {/* 튜토리얼 */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>처음이신가요?</h2>
+          <a href="/tutorial" className={styles.tutorialBtn}>
+            튜토리얼 시작
+          </a>
+        </section>
+
         {/* 모드 선택 */}
         <section className={`${styles.section} ${!playerReady ? styles.sectionLocked : ""}`}>
           <h2 className={styles.sectionTitle}>모드 선택</h2>
