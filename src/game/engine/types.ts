@@ -40,7 +40,9 @@ export type FighterPose =
   | "attack_hadouken"
   | "use_item"
   | "tag_exit"
-  | "tag_entry";
+  | "tag_entry"
+  | "throw"
+  | "jump";
 
 /** 피격 애니메이션 포즈 — hitTimings 및 visual_hit 이벤트에 사용 */
 export type HitPose = "hit_weak" | "hit_strong" | "hit_aerial";
