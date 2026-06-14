@@ -83,10 +83,12 @@ export default function ArenaStage({
   useLayoutEffect(() => {
     if (zoomKey === 0) return;
     const el = zoomRef.current;
+    console.log("[zoom] zoomKey:", zoomKey, "el:", el);
     if (!el) return;
     el.classList.remove(styles.zooming);
     void el.offsetWidth;
     el.classList.add(styles.zooming);
+    console.log("[zoom] classes after add:", el.className);
   }, [zoomKey]);
   const shakeClass =
     shakeLevel === "light"
