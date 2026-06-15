@@ -1,25 +1,31 @@
 export type PlayerId = "P1" | "AI";
 
 /**
- * 카드 액션 태그 — 애니메이션 포즈 결정에 사용
+ * ActionTag → FighterPose 매핑 (단일 소스).
+ * 새 액션 추가 시 이 객체에만 한 줄 추가하면 ActionTag 타입·스키마·매핑이 자동 반영됨.
+ * null = 포즈 전환 없음 (효과음/이펙트 전용 태그)
  */
-export type ActionTag =
-  | "block"
-  | "draw"
-  | "tag_switch"
-  | "reclaim"
-  | "weak_punch"
-  | "strong_punch"
-  | "aerial_punch"
-  | "weak_kick"
-  | "strong_kick"
-  | "aerial_kick"
-  | "dragon_kick"
-  | "rising_punch"
-  | "hadouken"
-  | "use_item"
-  | "throw"
-  | "jump";
+export const ACTION_TAG_TO_POSE = {
+  block:         "block",
+  draw:          null,
+  tag_switch:    null,
+  reclaim:       null,
+  weak_punch:    "attack_weak_punch",
+  strong_punch:  "attack_strong_punch",
+  aerial_punch:  "attack_aerial_punch",
+  weak_kick:     "attack_weak_kick",
+  strong_kick:   "attack_strong_kick",
+  aerial_kick:   "attack_aerial_kick",
+  dragon_kick:   "attack_dragon_kick",
+  rising_punch:  "attack_rising_punch",
+  hadouken:      "attack_hadouken",
+  use_item:      "use_item",
+  throw:         "throw",
+  jump:          "jump",
+} as const satisfies Record<string, FighterPose | null>;
+
+/** 카드 액션 태그 — ACTION_TAG_TO_POSE 키에서 자동 파생 */
+export type ActionTag = keyof typeof ACTION_TAG_TO_POSE;
 
 /**
  * 파이터 포즈 — 스프라이트 시퀀스 키

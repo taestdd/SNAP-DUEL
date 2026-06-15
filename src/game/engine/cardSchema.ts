@@ -1,12 +1,11 @@
 import { z } from "zod";
+import { ACTION_TAG_TO_POSE } from "./types";
 
-export const ActionTagSchema = z.enum([
-  "block", "draw", "tag_switch", "reclaim",
-  "weak_punch", "strong_punch", "aerial_punch",
-  "weak_kick", "strong_kick", "aerial_kick",
-  "dragon_kick", "rising_punch", "hadouken", "use_item",
-  "throw", "jump",
-]);
+const ACTION_TAG_KEYS = Object.keys(ACTION_TAG_TO_POSE) as [
+  keyof typeof ACTION_TAG_TO_POSE,
+  ...(keyof typeof ACTION_TAG_TO_POSE)[]
+];
+export const ActionTagSchema = z.enum(ACTION_TAG_KEYS);
 
 export const HitPoseSchema = z.enum(["hit_weak", "hit_strong", "hit_aerial"]);
 

@@ -10,6 +10,7 @@ import type {
   GameState,
   PlayerId,
 } from "@/game/engine/types";
+import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
 import { makeQueueFromScript, SUPER_FLASH_DUR } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
@@ -36,22 +37,8 @@ const SHAKE_DURATION_MS: Record<string, number> = {
 // ── 유틸 ────────────────────────────────────────────────────────────────────────
 
 function actionTagToPose(tag?: ActionTag): FighterPose | null {
-  switch (tag) {
-    case "block":         return "block";
-    case "aerial_punch":  return "attack_aerial_punch";
-    case "aerial_kick":   return "attack_aerial_kick";
-    case "weak_punch":    return "attack_weak_punch";
-    case "strong_punch":  return "attack_strong_punch";
-    case "weak_kick":     return "attack_weak_kick";
-    case "strong_kick":   return "attack_strong_kick";
-    case "dragon_kick":   return "attack_dragon_kick";
-    case "rising_punch":  return "attack_rising_punch";
-    case "hadouken":      return "attack_hadouken";
-    case "use_item":      return "use_item";
-    case "throw":         return "throw";
-    case "jump":          return "jump";
-    default:              return null;
-  }
+  if (!tag) return null;
+  return ACTION_TAG_TO_POSE[tag] ?? null;
 }
 
 // ── 훅 반환 타입 ────────────────────────────────────────────────────────────────
