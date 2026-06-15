@@ -239,6 +239,12 @@ export default function AdminPage() {
                   {card.useCondition && (
                     <span className={styles.stat}>조건 <span className={styles.statVal}>{card.useCondition}</span></span>
                   )}
+                  {card.actionTag && (
+                    <span className={styles.stat}>애니 <span className={styles.statVal}>{card.actionTag}</span></span>
+                  )}
+                  {card.actionTagAirborne && (
+                    <span className={styles.stat}>애니↑ <span className={styles.statVal}>{card.actionTagAirborne}</span></span>
+                  )}
                 </div>
                 <div className={styles.effectList}>
                   {(card.tags ?? []).map((t) => (
