@@ -48,6 +48,8 @@ function actionTagToPose(tag?: ActionTag): FighterPose | null {
     case "rising_punch":  return "attack_rising_punch";
     case "hadouken":      return "attack_hadouken";
     case "use_item":      return "use_item";
+    case "throw":         return "throw";
+    case "jump":          return "jump";
     default:              return null;
   }
 }

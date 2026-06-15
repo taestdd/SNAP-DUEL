@@ -5,6 +5,7 @@ export const ActionTagSchema = z.enum([
   "weak_punch", "strong_punch", "aerial_punch",
   "weak_kick", "strong_kick", "aerial_kick",
   "dragon_kick", "rising_punch", "hadouken", "use_item",
+  "throw", "jump",
 ]);
 
 export const HitPoseSchema = z.enum(["hit_weak", "hit_strong", "hit_aerial"]);

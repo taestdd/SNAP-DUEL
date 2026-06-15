@@ -17,7 +17,9 @@ export type ActionTag =
   | "dragon_kick"
   | "rising_punch"
   | "hadouken"
-  | "use_item";
+  | "use_item"
+  | "throw"
+  | "jump";
 
 /**
  * 파이터 포즈 — 스프라이트 시퀀스 키
