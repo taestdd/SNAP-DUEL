@@ -352,7 +352,6 @@ export function GuestGameApp({
     });
     return () => unsubscribe();
   // onExit은 ref로 관리 — deps에서 제외해 리스너 불필요한 재생성 방지
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode]);
 
   // ── 자동 페이즈 전환 (HostGameApp과 동일 로직, localState 사용) ──────────────

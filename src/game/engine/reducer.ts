@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, resumeCostPayment, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
+import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
 
@@ -142,7 +142,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       if (state.P1.characterHp[getBenchChar(state.P1)] <= 0) return state;
 
-      let s = applyTagSwitch(state, "P1");
+      const s = applyTagSwitch(state, "P1");
       if (s.phase === "GAME_OVER") return s;
 
       // airborne 카드가 선택된 상태였다면 클리어

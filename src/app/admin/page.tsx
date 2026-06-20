@@ -81,8 +81,8 @@ export default function AdminPage() {
     }
 
     list.sort((a, b) => {
-      let av: string | number = sortField === "name" ? a.name : sortField === "id" ? a.id : a[sortField] ?? 0;
-      let bv: string | number = sortField === "name" ? b.name : sortField === "id" ? b.id : b[sortField] ?? 0;
+      const av: string | number = sortField === "name" ? a.name : sortField === "id" ? a.id : a[sortField] ?? 0;
+      const bv: string | number = sortField === "name" ? b.name : sortField === "id" ? b.id : b[sortField] ?? 0;
       if (typeof av === "string" && typeof bv === "string") {
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       }

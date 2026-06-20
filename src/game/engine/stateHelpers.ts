@@ -285,7 +285,7 @@ export function recycleTrashIntoDeck(state: GameState, player: PlayerId): GameSt
   const me = state[player];
   if (me.trash.length === 0) return syncExhausted(state, player);
 
-  let s = {
+  const s = {
     ...state,
     [player]: { ...me, deck: shuffle([...me.deck, ...me.trash]), trash: [] },
   } as GameState;

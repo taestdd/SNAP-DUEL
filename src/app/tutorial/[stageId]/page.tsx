@@ -50,7 +50,6 @@ function TutorialGame({
     if (state.phase !== "TURN_START") return;
     const t = setTimeout(() => dispatch({ type: "TURN/BEGIN" }), 100);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.turn]);
 
   // AI auto-play

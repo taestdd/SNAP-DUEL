@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDeckRegistry } from "@/game/engine/state";
 import { CHARACTERS } from "@/game/engine/characters";
@@ -164,9 +165,9 @@ export default function MainMenu() {
         {/* 튜토리얼 */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>처음이신가요?</h2>
-          <a href="/tutorial" className={styles.tutorialBtn}>
+          <Link href="/tutorial" className={styles.tutorialBtn}>
             튜토리얼 시작
-          </a>
+          </Link>
         </section>
 
         {/* 모드 선택 */}

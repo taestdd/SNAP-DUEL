@@ -1,4 +1,4 @@
-import type { GameState, PendingCostPayment, PendingDiscard, PlayerId } from "./types";
+import type { GameState, PendingDiscard, PlayerId } from "./types";
 import { getCard } from "./cards";
 import {
   pushLog,
@@ -9,7 +9,6 @@ import {
   recycleTrashIntoDeck,
   moveCooldownToTrash,
   decideWinnerByHp,
-  moveQueuedCard,
   moveCardsBetweenZones,
   evaluateModifiers,
 } from "./stateHelpers";
