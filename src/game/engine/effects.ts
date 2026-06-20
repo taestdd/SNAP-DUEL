@@ -147,20 +147,6 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       );
     }
 
-    case "burn": {
-      const amount = effect.value ?? 0;
-      return pushLog(
-        {
-          ...state,
-          [target]: {
-            ...state[target],
-            status: { ...state[target].status, burn: { turns: 2, dmgPerTurn: amount } },
-          },
-        } as GameState,
-        `${target} is Burned (${amount}/turn)`,
-      );
-    }
-
     case "tag":
       return applyTagSwitch(state, player);
 

@@ -26,12 +26,6 @@
   color: #ffcc66;
 }
 
-.badgeBurn {
-  background: rgba(255, 100, 50, 0.18);
-  border-color: rgba(255, 100, 50, 0.40);
-  color: #ff8855;
-}
-
 .badgeWarn {
   background: rgba(255, 200, 50, 0.14);
   border-color: rgba(255, 200, 50, 0.35);

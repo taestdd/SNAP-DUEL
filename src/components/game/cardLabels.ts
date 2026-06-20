@@ -7,7 +7,6 @@ export function effectLabel(type: string, damageType?: string): string {
     case "draw":        return "Draw";
     case "heal":        return "Heal";
     case "buff_attack": return "ATK+";
-    case "burn":        return "Burn";
     case "tag":         return "⇄ Tag";
     case "airborne":    return "⬆ Launch";
     case "move_cards":  return "Move";
