@@ -16,7 +16,7 @@ export const CardTagSchema = z.enum([
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle", "generate",
+  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
 ]);
 
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);

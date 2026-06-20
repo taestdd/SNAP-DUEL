@@ -45,7 +45,6 @@ export default function FightingHPBar({
   }, [JSON.stringify(effectiveCharHp)]);
 
   const { status, block, airborneStack, activeCharacter } = combatant;
-  const burn = status.burn;
   const isRight = side === "right";
   const benchChar = getBenchChar(combatant);
 

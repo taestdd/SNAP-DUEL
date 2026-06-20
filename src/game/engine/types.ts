@@ -155,7 +155,6 @@ export type EffectType =
   | "draw_tagged"
   | "heal"
   | "buff_attack"
-  | "burn"
   | "tag"
   | "airborne"
   | "move_cards"
@@ -317,11 +316,6 @@ export type SelectedCard = {
 
 export type Status = {
   attackBuff: number;
-
-  burn: {
-    turns: number;
-    dmgPerTurn: number;
-  } | null;
 
   speedBonus: number;
   speedBonusNext: number;

@@ -22,7 +22,6 @@ function registerTutorialAssets(maxHp: number): void {
 function emptyStatus(): Status {
   return {
     attackBuff: 0,
-    burn: null,
     speedBonus: 0,
     speedBonusNext: 0,
     exhausted: false,

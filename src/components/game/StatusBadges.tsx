@@ -13,14 +13,12 @@ export default function StatusBadges({
   isInitiative?: boolean;
 }) {
   const { status, block, airborneStack } = combatant;
-  const burn = status.burn;
 
   const hasAny =
     (combo > 0 && isInitiative) ||
     airborneStack >= 1 ||
     block > 0 ||
     status.attackBuff > 0 ||
-    !!burn ||
     status.exhausted ||
     status.speedBonus > 0 ||
     status.speedBonusNext > 0;
@@ -37,11 +35,6 @@ export default function StatusBadges({
       )}
       {block > 0 && <span className={styles.badge}>🛡 {block}</span>}
       {status.attackBuff > 0 && <span className={styles.badge}>ATK+{status.attackBuff}</span>}
-      {burn && (
-        <span className={[styles.badge, styles.badgeBurn].join(" ")}>
-          BURN {burn.turns}t · {burn.dmgPerTurn}/t
-        </span>
-      )}
       {status.exhausted && (
         <span className={[styles.badge, styles.badgeWarn].join(" ")}>EXHAUSTED</span>
       )}

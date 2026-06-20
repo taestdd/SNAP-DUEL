@@ -15,7 +15,6 @@ export function getDeckRegistry(): Record<string, DeckDef> {
 
 const emptyStatus = (): Status => ({
   attackBuff: 0,
-  burn: null,
   speedBonus: 0,
   speedBonusNext: 0,
   exhausted: false,

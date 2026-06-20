@@ -2,9 +2,7 @@ import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 declare global {
-  // eslint-disable-next-line no-var
   var _firebaseAdminApp: App | undefined;
-  // eslint-disable-next-line no-var
   var _firebaseAdminDb: Firestore | undefined;
 }
 

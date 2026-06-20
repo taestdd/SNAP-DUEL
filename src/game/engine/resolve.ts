@@ -8,6 +8,8 @@ import {
   moveCardsBetweenZones,
   evaluateModifiers,
   didDirectAttackHit,
+  updateCombatant,
+  updateStatus,
 } from "./stateHelpers";
 import { applyCardEffectsWithPause } from "./effects";
 import { endTurnCleanup } from "./turn";
@@ -50,16 +52,9 @@ function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): Gam
   const gain = Math.max(0, (card.gain ?? 0) + (mods.gain ?? 0));
   if (gain <= 0) return state;
 
-  const s = {
-    ...state,
-    [player]: {
-      ...state[player],
-      status: {
-        ...state[player].status,
-        speedBonusNext: (state[player].status.speedBonusNext ?? 0) + gain,
-      },
-    },
-  } as GameState;
+  const s = updateStatus(state, player, {
+    speedBonusNext: (state[player].status.speedBonusNext ?? 0) + gain,
+  });
   return pushLog(s, `${player} gains SPEED -${gain} next turn`);
 }
 
@@ -73,12 +68,8 @@ function applyCancelOnHit(state: GameState, attacker: PlayerId, unresolved: Set<
   const cancelledCardDef = getCard(cancelledCard);
 
   let s = moveQueuedCard(state, other, cancelledCard, "trash");
-  s = {
-    ...s,
-    recentlyCancelledId: cancelledCard,
-    recentlyCancelledPlayer: other,
-    [other]: { ...s[other], ready: false },
-  } as GameState;
+  s = updateCombatant(s, other, { ready: false });
+  s = { ...s, recentlyCancelledId: cancelledCard, recentlyCancelledPlayer: other };
   s = pushLog(s, `${other} cancelled — "${cancelledCardDef?.name ?? cancelledCard}" sent to trash`);
 
   unresolved.delete(other);

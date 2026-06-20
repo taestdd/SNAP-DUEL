@@ -1,13 +1,19 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, resumeCostPayment, checkGameOver, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
+import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
+import { isSetupTurnOf } from "./stateHelpers";
 
 
 function isP1TurnToPick(state: GameState): boolean {
-  if (state.phase === "SETUP_INIT") return state.initiative === "P1";
-  if (state.phase === "SETUP_OTHER") return state.initiative !== "P1";
-  return false;
+  return isSetupTurnOf(state, "P1");
+}
+
+/** SETUP_INIT → SETUP_OTHER → RESOLVE 로 한 단계 진행한다. */
+function advanceSetupPhase(s: GameState): GameState {
+  if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
+  if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
+  return s;
 }
 
 export function gameReducer(state: GameState, action: Action): GameState {
@@ -121,15 +127,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       }
 
       // ✅ 단계 진행: INIT → OTHER → RESOLVE
-      if (s.phase === "SETUP_INIT") {
-        return { ...s, phase: "SETUP_OTHER" };
-      }
-
-      if (s.phase === "SETUP_OTHER") {
-        return { ...s, phase: "RESOLVE" };
-      }
-
-      return s;
+      return advanceSetupPhase(s);
     }
 
     case "TURN/TAG": {
@@ -142,7 +140,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       if (state.P1.characterHp[getBenchChar(state.P1)] <= 0) return state;
 
-      let s = applyTagSwitch(state, "P1");
+      const s = applyTagSwitch(state, "P1");
       if (s.phase === "GAME_OVER") return s;
 
       // airborne 카드가 선택된 상태였다면 클리어
@@ -197,9 +195,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       s = { ...s, AI: { ...s.AI, ready: true } };
 
-      if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
-      if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
-      return s;
+      return advanceSetupPhase(s);
     }
 
     case "AI/SETUP_AUTO": {
@@ -220,9 +216,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
           }
         }
         s = { ...s, AI: { ...s.AI, ready: true } };
-        if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
-        if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
-        return s;
+        return advanceSetupPhase(s);
       }
 
       // AI 태그: shouldTag 판단 (ai.ts와 동일 로직)
@@ -242,14 +236,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       s = { ...s, AI: { ...s.AI, ready: true } };
 
-      if (s.phase === "SETUP_INIT") {
-        return { ...s, phase: "SETUP_OTHER" };
-      }
-      if (s.phase === "SETUP_OTHER") {
-        return { ...s, phase: "RESOLVE" };
-      }
-
-      return s;
+      return advanceSetupPhase(s);
     }
 
     case "RESOLVE/STEP": {

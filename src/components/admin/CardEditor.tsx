@@ -14,7 +14,7 @@ const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = CardTagSchema.options;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "burn", "tag", "airborne", "move_cards", "shuffle", "generate",
+  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
 ] as const;
 const TARGETS = ["self", "enemy"] as const;
 const DAMAGE_TYPES = ["ground", "anti-air"] as const;
