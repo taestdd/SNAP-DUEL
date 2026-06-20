@@ -21,6 +21,40 @@ export function opponentOf(p: PlayerId): PlayerId {
   return p === "P1" ? "AI" : "P1";
 }
 
+/**
+ * SETUP 단계에서 지정한 플레이어가 카드를 선택할 차례인지 판정한다.
+ * SETUP_INIT은 initiative 플레이어, SETUP_OTHER는 나머지 플레이어 차례.
+ */
+export function isSetupTurnOf(state: GameState, player: PlayerId): boolean {
+  if (state.phase === "SETUP_INIT") return state.initiative === player;
+  if (state.phase === "SETUP_OTHER") return state.initiative !== player;
+  return false;
+}
+
+/**
+ * 카드들을 대상 영역 배열에 위치 규칙에 맞게 삽입한 새 배열을 반환한다.
+ * top/random은 덱에만 적용되며, 그 외에는 하단에 추가한다.
+ */
+export function insertCards(
+  target: string[],
+  cards: string[],
+  toZone: CardZone,
+  toPosition: DeckInsertPosition,
+): string[] {
+  if (toZone === "deck" && toPosition === "top") {
+    return [...cards, ...target];
+  }
+  if (toZone === "deck" && toPosition === "random") {
+    const result = [...target];
+    for (const id of cards) {
+      const pos = Math.floor(Math.random() * (result.length + 1));
+      result.splice(pos, 0, id);
+    }
+    return result;
+  }
+  return [...target, ...cards];
+}
+
 export function pushLog(state: GameState, msg: string): GameState {
   return {
     ...state,
@@ -234,19 +268,7 @@ export function moveCardsBetweenZones(
   } as GameState;
 
   const targetArr = s[toPlayer][toZone] as string[];
-  let newTargetArr: string[];
-
-  if (toZone === "deck" && toPosition === "top") {
-    newTargetArr = [...cardIds, ...targetArr];
-  } else if (toZone === "deck" && toPosition === "random") {
-    newTargetArr = [...targetArr];
-    for (const id of cardIds) {
-      const pos = Math.floor(Math.random() * (newTargetArr.length + 1));
-      newTargetArr.splice(pos, 0, id);
-    }
-  } else {
-    newTargetArr = [...targetArr, ...cardIds];
-  }
+  const newTargetArr = insertCards(targetArr, cardIds, toZone, toPosition);
 
   s = {
     ...s,

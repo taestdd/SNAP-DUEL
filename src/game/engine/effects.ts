@@ -9,6 +9,7 @@ import {
   checkGameOver,
 
   moveCardsBetweenZones,
+  insertCards,
   syncExhausted,
   clearAttackBuff,
   evaluateModifiers,
@@ -181,18 +182,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const generated = Array.from({ length: count }, () => genCardId);
 
       const targetArr = state[target][toZone] as string[];
-      let newArr: string[];
-      if (toZone === "deck" && toPosition === "top") {
-        newArr = [...generated, ...targetArr];
-      } else if (toZone === "deck" && toPosition === "random") {
-        newArr = [...targetArr];
-        for (const id of generated) {
-          const pos = Math.floor(Math.random() * (newArr.length + 1));
-          newArr.splice(pos, 0, id);
-        }
-      } else {
-        newArr = [...targetArr, ...generated];
-      }
+      const newArr = insertCards(targetArr, generated, toZone, toPosition);
 
       let s = { ...state, [target]: { ...state[target], [toZone]: newArr } } as GameState;
       if (toZone === "deck") s = syncExhausted(s, target);

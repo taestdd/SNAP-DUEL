@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState, useCallback } from "react";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
+import { isSetupTurnOf } from "@/game/engine/stateHelpers";
 import type { Action, CharacterId, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
 import {
@@ -188,9 +189,7 @@ export function HostGameApp({
 
   // 게스트 액션 대기: AI 차례일 때 Firestore에서 guestAction 수신
   useEffect(() => {
-    const isGuestTurn =
-      (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
-      (state.phase === "SETUP_OTHER" && state.initiative === "P1");
+    const isGuestTurn = isSetupTurnOf(state, "AI");
 
     if (!isGuestTurn || isTagAnimating) {
       setWaitingGuest(false);
@@ -457,10 +456,7 @@ export function GuestGameApp({
     : null;
 
   // 게스트가 직접 카드를 선택해야 하는 턴 (로딩/대기 표시용)
-  const isGuestTurn = localState
-    ? (localState.phase === "SETUP_INIT" && localState.initiative === "AI") ||
-      (localState.phase === "SETUP_OTHER" && localState.initiative === "P1")
-    : false;
+  const isGuestTurn = localState ? isSetupTurnOf(localState, "AI") : false;
 
   if (!flippedState) {
     return (

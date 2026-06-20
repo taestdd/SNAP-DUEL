@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
-import { getBenchChar } from "@/game/engine/stateHelpers";
+import { getBenchChar, isSetupTurnOf } from "@/game/engine/stateHelpers";
+import { shuffle } from "@/game/engine/rng";
 import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
@@ -38,9 +39,7 @@ export default function GameScreen({
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
   // P1(내) 턴인지: SETUP_INIT이면 initiative===P1, SETUP_OTHER면 initiative!==P1
-  const isMyTurn =
-    (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
-    (state.phase === "SETUP_OTHER" && state.initiative !== "P1");
+  const isMyTurn = isSetupTurnOf(state, "P1");
   const canAct = isSetup && isMyTurn && !state.P1.ready && !isGameOver && !isTagAnimating;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
@@ -101,14 +100,7 @@ export default function GameScreen({
     if (state.draftSelections.AI !== null) return;
 
     const t = setTimeout(() => {
-      const deck = state.AI.deck;
-      const count = Math.min(3, deck.length);
-      const indices = [...Array(deck.length).keys()];
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-      }
-      const cardIds = indices.slice(0, count).map((i) => deck[i]);
+      const cardIds = shuffle([...state.AI.deck]).slice(0, 3);
       dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds });
     }, 10000);
 
@@ -351,10 +343,7 @@ export default function GameScreen({
                 me={state.P1}
                 phase={state.phase}
                 recentlyCancelledPlayer={effectiveCancelledPlayer}
-                isMyTurn={
-                  (state.phase === "SETUP_INIT" && state.initiative === "P1") ||
-                  (state.phase === "SETUP_OTHER" && state.initiative !== "P1")
-                }
+                isMyTurn={isSetupTurnOf(state, "P1")}
                 isInitiative={isP1Initiative}
               />
             </div>
@@ -364,10 +353,7 @@ export default function GameScreen({
                 me={state.AI}
                 phase={state.phase}
                 recentlyCancelledPlayer={effectiveCancelledPlayer}
-                isMyTurn={
-                  (state.phase === "SETUP_INIT" && state.initiative === "AI") ||
-                  (state.phase === "SETUP_OTHER" && state.initiative !== "AI")
-                }
+                isMyTurn={isSetupTurnOf(state, "AI")}
                 isInitiative={isAIInitiative}
               />
             </div>
