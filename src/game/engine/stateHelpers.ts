@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget } from "./types";
+import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget, Status } from "./types";
 import { getCard } from "./cards";
 import { shuffle } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -19,6 +19,21 @@ export function getBenchChar(combatant: Combatant): string {
 
 export function opponentOf(p: PlayerId): PlayerId {
   return p === "P1" ? "AI" : "P1";
+}
+
+/**
+ * 한 플레이어 Combatant의 정적 필드를 패치한 새 GameState를 반환한다.
+ * 동적 키 `[player]` 스프레드로 인한 `as GameState` 캐스트를 이 한 곳에 가둔다.
+ * (patch는 Partial<Combatant>이므로 호출부에서 필드 오타가 타입 검사됨)
+ */
+export function updateCombatant(state: GameState, player: PlayerId, patch: Partial<Combatant>): GameState {
+  return { ...state, [player]: { ...state[player], ...patch } } as GameState;
+}
+
+/** 한 플레이어 status의 정적 필드를 패치한 새 GameState를 반환한다. */
+export function updateStatus(state: GameState, player: PlayerId, patch: Partial<Status>): GameState {
+  const me = state[player];
+  return updateCombatant(state, player, { status: { ...me.status, ...patch } });
 }
 
 /**
@@ -68,13 +83,7 @@ export function syncExhausted(state: GameState, player: PlayerId): GameState {
 
   if (me.status.exhausted === exhausted) return state;
 
-  let s = {
-    ...state,
-    [player]: {
-      ...me,
-      status: { ...me.status, exhausted },
-    },
-  } as GameState;
+  let s = updateStatus(state, player, { exhausted });
 
   s = pushLog(
     s,
@@ -175,15 +184,11 @@ export function dealDamage(
   const hpBefore = t.hp;
   const newHp = hpBefore - dmg;
 
-  const next = {
-    ...state,
-    [target]: {
-      ...t,
-      block: t.block - blocked,
-      hp: newHp,
-      characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
-    },
-  } as GameState;
+  const next = updateCombatant(state, target, {
+    block: t.block - blocked,
+    hp: newHp,
+    characterHp: { ...t.characterHp, [t.activeCharacter]: newHp },
+  });
 
   const blockedStr = blocked > 0 ? `, ${blocked} blocked` : "";
   return pushLog(
@@ -203,14 +208,7 @@ export function draw(state: GameState, player: PlayerId, n: number): GameState {
       break;
     }
     const top = me.deck[0];
-    s = {
-      ...s,
-      [player]: {
-        ...me,
-        deck: me.deck.slice(1),
-        hand: [...me.hand, top],
-      },
-    } as GameState;
+    s = updateCombatant(s, player, { deck: me.deck.slice(1), hand: [...me.hand, top] });
     s = syncExhausted(s, player);
     drawnCount++;
   }
@@ -282,10 +280,7 @@ export function moveCardsBetweenZones(
 }
 
 export function clearAttackBuff(state: GameState, player: PlayerId): GameState {
-  return {
-    ...state,
-    [player]: { ...state[player], status: { ...state[player].status, attackBuff: 0 } },
-  } as GameState;
+  return updateStatus(state, player, { attackBuff: 0 });
 }
 
 /* ── 라운드/턴 전환 헬퍼 ─────────────────────────── */
@@ -297,30 +292,21 @@ export function areBothPlayersExhausted(state: GameState): boolean {
 export function moveHandToTrash(state: GameState, player: PlayerId): GameState {
   const me = state[player];
   if (me.hand.length === 0) return state;
-  return {
-    ...state,
-    [player]: { ...me, hand: [], trash: [...me.trash, ...me.hand] },
-  } as GameState;
+  return updateCombatant(state, player, { hand: [], trash: [...me.trash, ...me.hand] });
 }
 
 export function recycleTrashIntoDeck(state: GameState, player: PlayerId): GameState {
   const me = state[player];
   if (me.trash.length === 0) return syncExhausted(state, player);
 
-  const s = {
-    ...state,
-    [player]: { ...me, deck: shuffle([...me.deck, ...me.trash]), trash: [] },
-  } as GameState;
+  const s = updateCombatant(state, player, { deck: shuffle([...me.deck, ...me.trash]), trash: [] });
   return syncExhausted(s, player);
 }
 
 export function moveCooldownToTrash(state: GameState, player: PlayerId): GameState {
   const me = state[player];
   if (me.cooldown.length === 0) return state;
-  return {
-    ...state,
-    [player]: { ...me, cooldown: [], trash: [...me.trash, ...me.cooldown] },
-  } as GameState;
+  return updateCombatant(state, player, { cooldown: [], trash: [...me.trash, ...me.cooldown] });
 }
 
 export function discardAIExcess(state: GameState): GameState {

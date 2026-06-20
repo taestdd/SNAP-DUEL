@@ -14,6 +14,8 @@ import {
   clearAttackBuff,
   evaluateModifiers,
   getBenchChar,
+  updateCombatant,
+  updateStatus,
 } from "./stateHelpers";
 import { shuffle } from "./rng";
 
@@ -36,38 +38,18 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
   const newDef = CHARACTERS[newChar];
 
   // hp를 characterHp에 반영 (동기화)
-  let s: GameState = {
-    ...state,
-    [player]: {
-      ...me,
-      characterHp: { ...me.characterHp, [currentChar]: me.hp },
-    },
-  } as GameState;
+  let s = updateCombatant(state, player, { characterHp: { ...me.characterHp, [currentChar]: me.hp } });
 
   // 1. 탈출 효과
   if (currentDef.exitEffect) {
     s = applySingleEffect(s, player, currentDef.exitEffect);
     if (s.phase === "GAME_OVER") return s;
-    s = {
-      ...s,
-      [player]: {
-        ...s[player],
-        characterHp: { ...s[player].characterHp, [currentChar]: s[player].hp },
-      },
-    } as GameState;
+    s = updateCombatant(s, player, { characterHp: { ...s[player].characterHp, [currentChar]: s[player].hp } });
   }
 
   // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환, airborne 초기화
   const newHp = s[player].characterHp[newChar];
-  s = {
-    ...s,
-    [player]: {
-      ...s[player],
-      activeCharacter: newChar,
-      hp: newHp,
-      airborneStack: 0,
-    },
-  } as GameState;
+  s = updateCombatant(s, player, { activeCharacter: newChar, hp: newHp, airborneStack: 0 });
 
   s = pushLog(s, `${player} tags out Char ${currentChar} → tags in Char ${newChar} (HP: ${newHp})`);
 
@@ -113,7 +95,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
     case "block": {
       const amount = effect.value ?? 0;
       return pushLog(
-        { ...state, [target]: { ...state[target], block: state[target].block + amount } } as GameState,
+        updateCombatant(state, target, { block: state[target].block + amount }),
         `${target} gains ${amount} Block`,
       );
     }
@@ -126,10 +108,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const t = state[target];
       const newHp = t.hp + amount;
       return pushLog(
-        {
-          ...state,
-          [target]: { ...t, hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } },
-        } as GameState,
+        updateCombatant(state, target, { hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } }),
         `${target} (Char ${t.activeCharacter}) heals ${amount}`,
       );
     }
@@ -137,13 +116,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
     case "buff_attack": {
       const amount = effect.value ?? 0;
       return pushLog(
-        {
-          ...state,
-          [target]: {
-            ...state[target],
-            status: { ...state[target].status, attackBuff: (state[target].status.attackBuff ?? 0) + amount },
-          },
-        } as GameState,
+        updateStatus(state, target, { attackBuff: (state[target].status.attackBuff ?? 0) + amount }),
         `${target} gains ATK +${amount}`,
       );
     }
@@ -155,7 +128,7 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const stack = effect.value ?? 0;
       const prevStack = state[target].airborneStack;
       return pushLog(
-        { ...state, [target]: { ...state[target], airborneStack: stack } } as GameState,
+        updateCombatant(state, target, { airborneStack: stack }),
         `${target} airborne ${prevStack}→${stack}`,
       );
     }
@@ -272,7 +245,7 @@ export function applyCardEffectsWithPause(
           resolveNextIndex,
           unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
         };
-        return { ...s, phase: "WAITING_SELECTION", pendingSelection } as GameState;
+        return { ...s, phase: "WAITING_SELECTION", pendingSelection };
       }
 
       const autoSelected = candidates.slice(0, count);
@@ -310,7 +283,7 @@ export function applyCardEffectsWithPause(
           resolveNextIndex,
           unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
         };
-        return { ...s, phase: "WAITING_SELECTION", pendingSelection } as GameState;
+        return { ...s, phase: "WAITING_SELECTION", pendingSelection };
       }
 
       const autoSelected = candidates.slice(0, count);
