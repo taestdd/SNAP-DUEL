@@ -6,12 +6,30 @@ import { TUTORIAL_CARDS } from "./tutorialCards";
 
 export const TUT_CHAR_ID = "tut_char";
 
-function registerTutorialAssets(maxHp: number): void {
+function registerTutorialAssets(tutCharMaxHp: number): void {
   registerCards(TUTORIAL_CARDS);
   registerCharacter(TUT_CHAR_ID, {
     id: TUT_CHAR_ID,
     name: "훈련병",
-    maxHp,
+    maxHp: tutCharMaxHp,
+    spriteId: "default",
+    entryEffect: null,
+    exitEffect: null,
+    affinities: [],
+  });
+  registerCharacter("tut_char_warrior", {
+    id: "tut_char_warrior",
+    name: "전사",
+    maxHp: 1,
+    spriteId: "default",
+    entryEffect: null,
+    exitEffect: null,
+    affinities: ["power"],
+  });
+  registerCharacter("tut_char_fighter", {
+    id: "tut_char_fighter",
+    name: "격투가",
+    maxHp: 8,
     spriteId: "default",
     entryEffect: null,
     exitEffect: null,
@@ -33,13 +51,17 @@ function makeCombatant(
   hp: number,
   hand: string[],
   deck: string[],
+  activeCharId = TUT_CHAR_ID,
+  benchChar?: { id: string; hp: number },
 ): Combatant {
+  const characterHp: Record<string, number> = { [activeCharId]: hp };
+  if (benchChar) characterHp[benchChar.id] = benchChar.hp;
   return {
     id,
     hp,
     block: 0,
-    activeCharacter: TUT_CHAR_ID,
-    characterHp: { [TUT_CHAR_ID]: hp },
+    activeCharacter: activeCharId,
+    characterHp,
     airborneStack: 0,
     status: emptyStatus(),
     deck: [...deck],
@@ -62,7 +84,7 @@ export function createTutorialState(stage: TutorialStage): GameState {
     phase: "TURN_START",
     winner: null,
     initiative: initialState.initiative,
-    P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck),
+    P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck, initialState.p1ActiveCharId, initialState.p1BenchChar),
     AI: makeCombatant("AI", initialState.aiHp, initialState.aiHand, initialState.aiDeck),
     selected: null,
     pendingCostPayment: null,

@@ -8,6 +8,8 @@ export type TutorialInitialState = {
   aiHand: string[];
   aiDeck: string[];
   initiative: PlayerId;
+  p1ActiveCharId?: string;
+  p1BenchChar?: { id: string; hp: number };
 };
 
 export type TutorialStage = {
@@ -129,24 +131,29 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
   },
   {
     id: "stage5",
-    title: "Stage 5 — 라운드 구조",
+    title: "Stage 5 — 태그",
     description:
-      "게임은 3라운드로 진행됩니다.\n" +
-      "덱이 소진되면 라운드가 종료되고, HP가 높은 쪽이 유리합니다.\n" +
-      "3라운드 후 총 HP 합계가 높은 쪽이 최종 승리합니다.",
-    hint: "덱이 다 소진되면 이번 라운드가 끝납니다.\n남은 HP가 높은 쪽이 유리합니다.",
-    goalText: "라운드가 끝날 때 AI보다 HP를 많이 남기세요",
+      "TAG 버튼으로 벤치 캐릭터와 교체할 수 있습니다.\n" +
+      "캐릭터마다 사용할 수 있는 카드가 다릅니다.\n" +
+      "전사를 TAG로 피신시키고, 다음 턴 돌아와 반격하세요.",
+    hint: "1턴: TAG로 전사를 피신시키고 패스하세요.\n2턴: TAG로 전사를 불러내 파워 스트라이크로 마무리하세요.",
+    goalText: "2턴 안에 AI를 처치하세요",
+    maxTurns: 2,
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
-    failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
+    failCondition: (s, turn) =>
+      (s.phase === "GAME_OVER" && s.winner !== "P1") ||
+      (turn > 2 && s.phase !== "GAME_OVER"),
     initialState: {
-      p1Hp: 8,
-      aiHp: 8,
-      p1Hand: ["tut_jab", "tut_jab", "tut_jab"],
-      p1Deck: fill(9),
-      aiHand: ["tut_jab", "tut_jab", "tut_jab", F, F],
-      aiDeck: fill(9),
+      p1Hp: 1,
+      aiHp: 6,
+      p1ActiveCharId: "tut_char_warrior",
+      p1BenchChar: { id: "tut_char_fighter", hp: 8 },
+      p1Hand: ["tut_power_strike", "tut_power_strike", F],
+      p1Deck: fill(3),
+      aiHand: ["tut_jab", F, F],
+      aiDeck: fill(6),
       initiative: "P1",
     },
-    aiScript: [["tut_jab"], ["tut_jab"], ["tut_jab"]],
+    aiScript: [["tut_jab"], []],
   },
 ];
