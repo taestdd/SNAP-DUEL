@@ -28,7 +28,8 @@ export type TutorialStage = {
   successCondition: (state: GameState) => boolean;
   failCondition: (state: GameState, turn: number) => boolean;
   initialState: TutorialInitialState;
-  aiScript: string[][];
+  /** 턴별 AI 행동 스크립트. 생략 시 실제 대전 AI 룰(selectCard/shouldTag)을 사용한다. */
+  aiScript?: string[][];
 };
 
 const F = TUT_FILLER_ID;
@@ -199,6 +200,6 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       startingRound: 1,
       startingPhase: "ROUND_DRAFT",
     },
-    aiScript: [["tut_straight"], ["tut_jab"], ["tut_straight"], ["tut_jab"], []],
+    // aiScript 생략 → 실제 대전 AI 룰(selectCard/shouldTag/selectDraftCards) 사용
   },
 ];

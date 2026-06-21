@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createTutorialState } from "@/game/tutorial/tutorialState";
 import { TUTORIAL_STAGES } from "@/game/tutorial/tutorialStages";
-import { TUT_FILLER_ID } from "@/game/tutorial/tutorialCards";
+import { selectDraftCards } from "@/game/engine/ai";
 import type { CharacterId } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
@@ -56,18 +56,18 @@ function TutorialGame({
     return () => clearTimeout(t);
   }, [state.phase, state.turn]);
 
-  // ROUND_DRAFT: AI 자동 드래프트
+  // ROUND_DRAFT: AI 자동 드래프트 (실제 대전 AI 룰)
   useEffect(() => {
     if (state.phase !== "ROUND_DRAFT") return;
     if (state.draftSelections.AI !== null) return;
-    const nonFiller = state.AI.deck.filter((id) => id !== TUT_FILLER_ID);
-    const pick = nonFiller.slice(0, 3);
+    const pick = selectDraftCards(state, "AI", 3);
     const t = setTimeout(
       () => dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds: pick }),
       300,
     );
     return () => clearTimeout(t);
-  }, [state.phase, state.draftSelections.AI, state.AI.deck]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.draftSelections.AI]);
 
   // AI auto-play
   useEffect(() => {

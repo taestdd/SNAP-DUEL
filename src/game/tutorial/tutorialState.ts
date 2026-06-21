@@ -75,6 +75,7 @@ export function createTutorialState(stage: TutorialStage): GameState {
     comboCount: 0,
     draftSelections: { P1: null, AI: null },
     turnLog: [],
-    tutorialAiScript: aiScript,
+    // aiScript가 있으면 스크립트 AI, 없으면 실제 대전 AI 룰을 사용
+    ...(aiScript ? { tutorialAiScript: aiScript } : {}),
   };
 }
