@@ -105,6 +105,7 @@ function TutorialGame({
         isAiThinking={isAiThinking}
         isTagAnimating={isTagAnimating}
         onExit={onExit}
+        onRetry={onRetry}
         topInset={TUTORIAL_TOPBAR_HEIGHT}
       />
       <TutorialOverlay

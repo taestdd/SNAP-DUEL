@@ -93,9 +93,9 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       (turn > 5 && s.phase !== "GAME_OVER"),
     initialState: {
       p1Hp: 8,
-      aiHp: 6,
+      aiHp: 5,
       p1Hand: ["tut_rising", "tut_rising"],
-      p1Deck: fill(10),
+      p1Deck: Array(10).fill("tut_rising"),
       aiHand: ["tut_jab", "tut_jab", F, F, F],
       aiDeck: fill(6),
       initiative: "P1",

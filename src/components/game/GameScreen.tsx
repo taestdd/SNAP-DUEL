@@ -28,6 +28,7 @@ export default function GameScreen({
   isTagAnimating = false,
   disableAiDraft = false,
   onExit,
+  onRetry,
   topInset = 0,
 }: {
   state: GameState;
@@ -36,6 +37,8 @@ export default function GameScreen({
   isTagAnimating?: boolean;
   disableAiDraft?: boolean;
   onExit?: () => void;
+  /** 제공되면 햄버거 메뉴에 "다시하기" 항목이 노출됨 (튜토리얼 등) */
+  onRetry?: () => void;
   /** 상단에 고정 오버레이(예: 튜토리얼 목표 바)가 있을 때 그만큼 콘텐츠를 아래로 밀어내는 여백(px) */
   topInset?: number;
 }) {
@@ -267,6 +270,15 @@ export default function GameScreen({
           className={styles.menuPanel}
           style={{ top: menuPos.top, left: menuPos.left }}
         >
+          {onRetry && (
+            <button
+              type="button"
+              className={styles.menuPanelBtn}
+              onClick={() => { setMenuOpen(false); onRetry(); }}
+            >
+              다시하기
+            </button>
+          )}
           <button
             type="button"
             className={`${styles.menuPanelBtn} ${styles.menuPanelBtnDanger}`}
