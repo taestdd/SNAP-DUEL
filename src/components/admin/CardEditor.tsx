@@ -177,10 +177,10 @@ export default function CardEditor({ initial, mode }: Props) {
   }
 
   function addHitTiming() {
-    setHitTimings((prev) => [...prev, { ms: 200, ground: "hit_weak" as const, airborne: "hit_aerial" as const }]);
+    setHitTimings((prev) => [...prev, { frame: 1, ground: "hit_weak" as const, airborne: "hit_aerial" as const }]);
   }
 
-  function updateHitTiming(index: number, patch: Partial<{ ms: number; ground: "hit_weak" | "hit_strong" | "hit_aerial"; airborne: "hit_weak" | "hit_strong" | "hit_aerial" }>) {
+  function updateHitTiming(index: number, patch: Partial<{ frame: number; ground: "hit_weak" | "hit_strong" | "hit_aerial"; airborne: "hit_weak" | "hit_strong" | "hit_aerial"; freeze: number; zoom: number }>) {
     setHitTimings((prev) => prev.map((t, i) => (i === index ? { ...t, ...patch } : t)));
   }
 
@@ -193,6 +193,15 @@ export default function CardEditor({ initial, mode }: Props) {
     setError(null);
     setSuccess(false);
     setSaving(true);
+
+    // freeze 0 / zoom ≤1 은 "프리셋 사용" 의미이므로 저장 시 생략
+    const cleanedHitTimings = hitTimings.map((ht) => ({
+      frame: ht.frame,
+      ground: ht.ground,
+      airborne: ht.airborne,
+      ...(ht.freeze && ht.freeze > 0 ? { freeze: ht.freeze } : {}),
+      ...(ht.zoom && ht.zoom > 1 ? { zoom: ht.zoom } : {}),
+    }));
 
     const payload: CardSchemaType = {
       id,
@@ -207,7 +216,7 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(tags.length > 0 ? { tags: tags as CardSchemaType["tags"] } : {}),
       ...(actionTag ? { actionTag: actionTag as CardSchemaType["actionTag"] } : {}),
       ...(actionTagAirborne ? { actionTagAirborne: actionTagAirborne as CardSchemaType["actionTag"] } : {}),
-      ...(hitTimings.length > 0 ? { hitTimings: hitTimings as CardSchemaType["hitTimings"] } : {}),
+      ...(hitTimings.length > 0 ? { hitTimings: cleanedHitTimings as CardSchemaType["hitTimings"] } : {}),
       ...(superFlash ? { superFlash: true } : {}),
       ...(statModifiers.length > 0 ? { statModifiers } : {}),
       ...(altCost ? { altCost } : {}),
@@ -580,16 +589,23 @@ export default function CardEditor({ initial, mode }: Props) {
               </SelectField>
             </div>
             <div className={styles.sectionTitle} style={{ marginTop: 16 }}>Hit Timings</div>
+            <div className={styles.hintText} style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
+              frame = 공격 포즈 재생 순번(0부터). freeze=0이면 강도별 프리셋, zoom=1이면 프리셋.
+            </div>
             {hitTimings.map((ht, i) => (
               <ItemCard key={i} title={`Hit Timing #${i + 1}`} onRemove={() => removeHitTiming(i)}>
                 <div className={styles.row}>
-                  <NumericField label="ms" min={0} value={ht.ms} onChange={(n) => updateHitTiming(i, { ms: n })} />
+                  <NumericField label="frame" min={0} value={ht.frame} onChange={(n) => updateHitTiming(i, { frame: n })} />
                   <SelectField label="Ground 포즈" value={ht.ground} onChange={(v) => updateHitTiming(i, { ground: v as "hit_weak" | "hit_strong" | "hit_aerial" })}>
                     {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
                   </SelectField>
                   <SelectField label="Airborne 포즈" value={ht.airborne} onChange={(v) => updateHitTiming(i, { airborne: v as "hit_weak" | "hit_strong" | "hit_aerial" })}>
                     {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
                   </SelectField>
+                </div>
+                <div className={styles.row}>
+                  <NumericField label="freeze (ms, 0=프리셋)" min={0} value={ht.freeze ?? 0} onChange={(n) => updateHitTiming(i, { freeze: n })} />
+                  <NumericField label="zoom (배율, 1=프리셋)" min={1} step="0.01" value={ht.zoom ?? 1} onChange={(n) => updateHitTiming(i, { zoom: n })} />
                 </div>
               </ItemCard>
             ))}
