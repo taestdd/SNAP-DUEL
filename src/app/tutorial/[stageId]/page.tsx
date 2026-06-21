@@ -55,6 +55,19 @@ function TutorialGame({
     return () => clearTimeout(t);
   }, [state.phase, state.turn]);
 
+  // ROUND_DRAFT: AI 자동 드래프트
+  useEffect(() => {
+    if (state.phase !== "ROUND_DRAFT") return;
+    if (state.draftSelections.AI !== null) return;
+    const nonFiller = state.AI.deck.filter((id) => id !== "tut_filler");
+    const pick = nonFiller.slice(0, 3);
+    const t = setTimeout(
+      () => dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds: pick }),
+      300,
+    );
+    return () => clearTimeout(t);
+  }, [state.phase, state.draftSelections.AI]);
+
   // AI auto-play
   useEffect(() => {
     const shouldAiAct =

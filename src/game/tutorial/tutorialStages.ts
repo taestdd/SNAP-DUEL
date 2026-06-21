@@ -10,6 +10,10 @@ export type TutorialInitialState = {
   initiative: PlayerId;
   p1ActiveCharId?: string;
   p1BenchChar?: { id: string; hp: number };
+  aiActiveCharId?: string;
+  aiBenchChar?: { id: string; hp: number };
+  startingRound?: number;
+  startingPhase?: GameState["phase"];
 };
 
 export type TutorialStage = {
@@ -155,5 +159,44 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       initiative: "AI",
     },
     aiScript: [["tut_jab"], []],
+  },
+  {
+    id: "stage6",
+    title: "Stage 6 — 2대2 태그 대전",
+    description:
+      "2명의 팀원과 함께 3라운드 대전을 펼칩니다.\n" +
+      "매 라운드 시작 시 덱에서 카드를 드래프트하세요.\n" +
+      "태그로 팀원을 교체해 HP를 나눠 받으면 유리합니다.",
+    hint: "드래프트에서 덱의 카드 3장을 골라 핸드로 가져오세요.\n태그를 활용해 두 팀원의 HP를 고르게 유지하면 3라운드 후 유리합니다.",
+    goalText: "3라운드 후 AI보다 총 HP를 많이 남기세요",
+    successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
+    failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
+    initialState: {
+      p1Hp: 15,
+      aiHp: 15,
+      p1ActiveCharId: "tut_team_a",
+      p1BenchChar: { id: "tut_team_b", hp: 15 },
+      aiActiveCharId: "tut_team_a",
+      aiBenchChar: { id: "tut_team_b", hp: 15 },
+      p1Hand: [],
+      p1Deck: [
+        ...Array(4).fill("tut_jab"),
+        ...Array(3).fill("tut_straight"),
+        ...Array(2).fill("tut_rising"),
+        ...Array(2).fill("tut_jump"),
+        ...Array(2).fill("tut_uppercut"),
+        ...Array(7).fill("tut_filler"),
+      ],
+      aiHand: [],
+      aiDeck: [
+        ...Array(6).fill("tut_straight"),
+        ...Array(3).fill("tut_jab"),
+        ...Array(12).fill("tut_filler"),
+      ],
+      initiative: "P1",
+      startingRound: 1,
+      startingPhase: "ROUND_DRAFT",
+    },
+    aiScript: [["tut_straight"], ["tut_jab"], ["tut_straight"], ["tut_jab"], []],
   },
 ];

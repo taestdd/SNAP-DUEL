@@ -35,6 +35,24 @@ function registerTutorialAssets(tutCharMaxHp: number): void {
     exitEffect: null,
     affinities: [],
   });
+  registerCharacter("tut_team_a", {
+    id: "tut_team_a",
+    name: "팀원 A",
+    maxHp: 15,
+    spriteId: "default",
+    entryEffect: null,
+    exitEffect: null,
+    affinities: [],
+  });
+  registerCharacter("tut_team_b", {
+    id: "tut_team_b",
+    name: "팀원 B",
+    maxHp: 15,
+    spriteId: "default",
+    entryEffect: null,
+    exitEffect: null,
+    affinities: [],
+  });
 }
 
 function emptyStatus(): Status {
@@ -79,13 +97,13 @@ export function createTutorialState(stage: TutorialStage): GameState {
   const { initialState, aiScript } = stage;
 
   return {
-    round: 3,
+    round: initialState.startingRound ?? 3,
     turn: 0,
-    phase: "TURN_START",
+    phase: initialState.startingPhase ?? "TURN_START",
     winner: null,
     initiative: initialState.initiative,
     P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck, initialState.p1ActiveCharId, initialState.p1BenchChar),
-    AI: makeCombatant("AI", initialState.aiHp, initialState.aiHand, initialState.aiDeck),
+    AI: makeCombatant("AI", initialState.aiHp, initialState.aiHand, initialState.aiDeck, initialState.aiActiveCharId, initialState.aiBenchChar),
     selected: null,
     pendingCostPayment: null,
     pendingSelection: null,
