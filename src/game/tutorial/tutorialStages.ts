@@ -59,14 +59,14 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       "스피드가 낮을수록 먼저 발동합니다.\n" +
       "먼저 발동한 공격이 직접 타격하면 상대 카드를 캔슬합니다.\n" +
       "AI는 매 턴 스트레이트(속도 3)를 사용합니다.",
-    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격이 취소됩니다.",
+    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격을 카운터하고, 다음 공격에 스피드 보너스까지 얻습니다.",
     goalText: "AI를 처치하세요 (내 HP를 지키세요!)",
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
     initialState: {
-      p1Hp: 3,
+      p1Hp: 2,
       aiHp: 3,
-      p1Hand: ["tut_jab", "tut_jab", "tut_jab", "tut_straight", "tut_straight"],
+      p1Hand: ["tut_jab", "tut_rising", "tut_straight"],
       p1Deck: fill(15),
       aiHand: ["tut_straight", "tut_straight", "tut_straight", "tut_straight", "tut_straight", F, F],
       aiDeck: fill(15),
