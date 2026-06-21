@@ -117,15 +117,15 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       (s.phase === "GAME_OVER" && s.winner !== "P1") ||
       (turn > 3 && s.phase !== "GAME_OVER"),
     initialState: {
-      p1Hp: 4,
+      p1Hp: 1,
       aiHp: 3,
       p1Hand: ["tut_jump", "tut_uppercut", "tut_uppercut"],
       p1Deck: fill(4),
-      aiHand: ["tut_jab", "tut_jab", "tut_jab", F, F],
+      aiHand: ["tut_jab", F, F],
       aiDeck: fill(9),
       initiative: "AI",
     },
-    aiScript: [["tut_jab"], ["tut_jab"], ["tut_jab"]],
+    aiScript: [["tut_jab"], [], []],
   },
   {
     id: "stage5",
