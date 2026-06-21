@@ -188,13 +188,11 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
         ...Array(2).fill("tut_rising"),
         ...Array(2).fill("tut_jump"),
         ...Array(2).fill("tut_uppercut"),
-        ...Array(7).fill("tut_filler"),
       ],
       aiHand: [],
       aiDeck: [
         ...Array(6).fill("tut_straight"),
         ...Array(3).fill("tut_jab"),
-        ...Array(12).fill("tut_filler"),
       ],
       initiative: "P1",
       startingRound: 1,
