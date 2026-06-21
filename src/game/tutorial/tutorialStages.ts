@@ -1,4 +1,6 @@
 import type { GameState, PlayerId } from "../engine/types";
+import { TUT_CHARS, benchOf } from "./tutorialChars";
+import { TUT_FILLER_ID } from "./tutorialCards";
 
 export type TutorialInitialState = {
   p1Hp: number;
@@ -8,6 +10,12 @@ export type TutorialInitialState = {
   aiHand: string[];
   aiDeck: string[];
   initiative: PlayerId;
+  p1ActiveCharId?: string;
+  p1BenchChar?: { id: string; hp: number };
+  aiActiveCharId?: string;
+  aiBenchChar?: { id: string; hp: number };
+  startingRound?: number;
+  startingPhase?: GameState["phase"];
 };
 
 export type TutorialStage = {
@@ -20,10 +28,11 @@ export type TutorialStage = {
   successCondition: (state: GameState) => boolean;
   failCondition: (state: GameState, turn: number) => boolean;
   initialState: TutorialInitialState;
-  aiScript: string[][];
+  /** 턴별 AI 행동 스크립트. 생략 시 실제 대전 AI 룰(selectCard/shouldTag)을 사용한다. */
+  aiScript?: string[][];
 };
 
-const F = "tut_filler";
+const F = TUT_FILLER_ID;
 const fill = (n: number): string[] => Array(n).fill(F);
 
 export const TUTORIAL_STAGES: TutorialStage[] = [
@@ -59,14 +68,14 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       "스피드가 낮을수록 먼저 발동합니다.\n" +
       "먼저 발동한 공격이 직접 타격하면 상대 카드를 캔슬합니다.\n" +
       "AI는 매 턴 스트레이트(속도 3)를 사용합니다.",
-    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격이 취소됩니다.",
+    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격을 카운터하고, 다음 공격에 스피드 보너스까지 얻습니다.",
     goalText: "AI를 처치하세요 (내 HP를 지키세요!)",
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
     initialState: {
-      p1Hp: 3,
+      p1Hp: 2,
       aiHp: 3,
-      p1Hand: ["tut_jab", "tut_jab", "tut_jab", "tut_straight", "tut_straight"],
+      p1Hand: ["tut_jab", "tut_rising", "tut_straight"],
       p1Deck: fill(15),
       aiHand: ["tut_straight", "tut_straight", "tut_straight", "tut_straight", "tut_straight", F, F],
       aiDeck: fill(15),
@@ -93,9 +102,9 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       (turn > 5 && s.phase !== "GAME_OVER"),
     initialState: {
       p1Hp: 8,
-      aiHp: 6,
+      aiHp: 5,
       p1Hand: ["tut_rising", "tut_rising"],
-      p1Deck: fill(10),
+      p1Deck: Array(10).fill("tut_rising"),
       aiHand: ["tut_jab", "tut_jab", F, F, F],
       aiDeck: fill(6),
       initiative: "P1",
@@ -106,10 +115,35 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
     id: "stage4",
     title: "Stage 4 — 에어본",
     description:
-      "도약하면 공중 상태가 되어 지상 공격을 회피합니다.\n" +
-      "어퍼컷은 공중의 적을 공격하며, 지상에 있을 때만 사용 가능합니다.\n" +
-      "AI는 1턴에 잽, 2턴에 도약합니다.",
-    hint: "도약으로 AI 공격을 피하고\n어퍼컷으로 공중의 AI를 노리세요.",
+      "AI가 주도권을 갖고 매 턴 잽을 씁니다.\n" +
+      "대공기는 상대를 공중으로 띄우고, 공중의 적에게 강한 데미지를 줍니다.\n" +
+      "도약으로 먼저 피한 뒤, 대공기를 두 번 연속으로 사용하세요.",
+    hint: "1턴: 도약으로 잽을 피하세요.\n2턴: 대공기로 상대를 띄우세요.\n3턴: 공중의 AI에게 대공기로 마무리하세요.",
+    goalText: "3턴 안에 AI를 처치하세요",
+    maxTurns: 3,
+    successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
+    failCondition: (s, turn) =>
+      (s.phase === "GAME_OVER" && s.winner !== "P1") ||
+      (turn > 3 && s.phase !== "GAME_OVER"),
+    initialState: {
+      p1Hp: 1,
+      aiHp: 3,
+      p1Hand: ["tut_jump", "tut_uppercut", "tut_uppercut"],
+      p1Deck: fill(4),
+      aiHand: ["tut_jab", F, F],
+      aiDeck: fill(9),
+      initiative: "AI",
+    },
+    aiScript: [["tut_jab"], [], []],
+  },
+  {
+    id: "stage5",
+    title: "Stage 5 — 태그",
+    description:
+      "TAG 버튼으로 벤치 캐릭터와 교체할 수 있습니다.\n" +
+      "캐릭터마다 사용할 수 있는 카드가 다릅니다.\n" +
+      "전사를 TAG로 피신시키고, 다음 턴 돌아와 반격하세요.",
+    hint: "1턴: TAG로 전사를 피신시키고 패스하세요.\n2턴: TAG로 전사를 불러내 파워 스트라이크로 마무리하세요.",
     goalText: "2턴 안에 AI를 처치하세요",
     maxTurns: 2,
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
@@ -117,36 +151,53 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       (s.phase === "GAME_OVER" && s.winner !== "P1") ||
       (turn > 2 && s.phase !== "GAME_OVER"),
     initialState: {
-      p1Hp: 3,
-      aiHp: 2,
-      p1Hand: ["tut_jump", "tut_jab", "tut_jab", "tut_uppercut", "tut_uppercut"],
-      p1Deck: fill(4),
-      aiHand: ["tut_jab", "tut_jump", F, F, F],
-      aiDeck: fill(3),
-      initiative: "P1",
+      p1Hp: TUT_CHARS.warrior.maxHp,
+      aiHp: 6,
+      p1ActiveCharId: TUT_CHARS.warrior.id,
+      p1BenchChar: benchOf(TUT_CHARS.fighter),
+      p1Hand: ["tut_power_strike"],
+      p1Deck: Array(10).fill("tut_power_strike"),
+      aiHand: ["tut_jab", F, F],
+      aiDeck: fill(6),
+      initiative: "AI",
     },
-    aiScript: [["tut_jab"], ["tut_jump"], [], []],
+    aiScript: [["tut_jab"], []],
   },
   {
-    id: "stage5",
-    title: "Stage 5 — 라운드 구조",
+    id: "stage6",
+    title: "Stage 6 — 2대2 태그 대전",
     description:
-      "게임은 3라운드로 진행됩니다.\n" +
-      "덱이 소진되면 라운드가 종료되고, HP가 높은 쪽이 유리합니다.\n" +
-      "3라운드 후 총 HP 합계가 높은 쪽이 최종 승리합니다.",
-    hint: "덱이 다 소진되면 이번 라운드가 끝납니다.\n남은 HP가 높은 쪽이 유리합니다.",
-    goalText: "라운드가 끝날 때 AI보다 HP를 많이 남기세요",
+      "2명의 팀원과 함께 3라운드 대전을 펼칩니다.\n" +
+      "매 라운드 시작 시 덱에서 카드를 드래프트하세요.\n" +
+      "태그로 팀원을 교체해 HP를 나눠 받으면 유리합니다.",
+    hint: "드래프트에서 덱의 카드 3장을 골라 핸드로 가져오세요.\n태그를 활용해 두 팀원의 HP를 고르게 유지하면 3라운드 후 유리합니다.",
+    goalText: "3라운드 후 AI보다 총 HP를 많이 남기세요",
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
     initialState: {
-      p1Hp: 8,
-      aiHp: 8,
-      p1Hand: ["tut_jab", "tut_jab", "tut_jab"],
-      p1Deck: fill(9),
-      aiHand: ["tut_jab", "tut_jab", "tut_jab", F, F],
-      aiDeck: fill(9),
+      p1Hp: TUT_CHARS.teamA.maxHp,
+      aiHp: TUT_CHARS.teamA.maxHp,
+      p1ActiveCharId: TUT_CHARS.teamA.id,
+      p1BenchChar: benchOf(TUT_CHARS.teamB),
+      aiActiveCharId: TUT_CHARS.teamA.id,
+      aiBenchChar: benchOf(TUT_CHARS.teamB),
+      p1Hand: [],
+      p1Deck: [
+        ...Array(4).fill("tut_jab"),
+        ...Array(3).fill("tut_straight"),
+        ...Array(2).fill("tut_rising"),
+        ...Array(2).fill("tut_jump"),
+        ...Array(2).fill("tut_uppercut"),
+      ],
+      aiHand: [],
+      aiDeck: [
+        ...Array(6).fill("tut_straight"),
+        ...Array(3).fill("tut_jab"),
+      ],
       initiative: "P1",
+      startingRound: 1,
+      startingPhase: "ROUND_DRAFT",
     },
-    aiScript: [["tut_jab"], ["tut_jab"], ["tut_jab"]],
+    // aiScript 생략 → 실제 대전 AI 룰(selectCard/shouldTag/selectDraftCards) 사용
   },
 ];

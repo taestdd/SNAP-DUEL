@@ -1,22 +1,14 @@
 import type { Combatant, GameState, Status } from "../engine/types";
 import type { TutorialStage } from "./tutorialStages";
-import { registerCharacter } from "../engine/characters";
 import { registerCards } from "../engine/cards";
 import { TUTORIAL_CARDS } from "./tutorialCards";
+import { TUT_CHARS, registerTutorialChars } from "./tutorialChars";
 
-export const TUT_CHAR_ID = "tut_char";
+export const TUT_CHAR_ID = TUT_CHARS.trainee.id;
 
-function registerTutorialAssets(maxHp: number): void {
+function registerTutorialAssets(traineeMaxHp: number): void {
   registerCards(TUTORIAL_CARDS);
-  registerCharacter(TUT_CHAR_ID, {
-    id: TUT_CHAR_ID,
-    name: "훈련병",
-    maxHp,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: [],
-  });
+  registerTutorialChars(traineeMaxHp);
 }
 
 function emptyStatus(): Status {
@@ -33,13 +25,17 @@ function makeCombatant(
   hp: number,
   hand: string[],
   deck: string[],
+  activeCharId = TUT_CHAR_ID,
+  benchChar?: { id: string; hp: number },
 ): Combatant {
+  const characterHp: Record<string, number> = { [activeCharId]: hp };
+  if (benchChar) characterHp[benchChar.id] = benchChar.hp;
   return {
     id,
     hp,
     block: 0,
-    activeCharacter: TUT_CHAR_ID,
-    characterHp: { [TUT_CHAR_ID]: hp },
+    activeCharacter: activeCharId,
+    characterHp,
     airborneStack: 0,
     status: emptyStatus(),
     deck: [...deck],
@@ -57,13 +53,13 @@ export function createTutorialState(stage: TutorialStage): GameState {
   const { initialState, aiScript } = stage;
 
   return {
-    round: 3,
+    round: initialState.startingRound ?? 3,
     turn: 0,
-    phase: "TURN_START",
+    phase: initialState.startingPhase ?? "TURN_START",
     winner: null,
     initiative: initialState.initiative,
-    P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck),
-    AI: makeCombatant("AI", initialState.aiHp, initialState.aiHand, initialState.aiDeck),
+    P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck, initialState.p1ActiveCharId, initialState.p1BenchChar),
+    AI: makeCombatant("AI", initialState.aiHp, initialState.aiHand, initialState.aiDeck, initialState.aiActiveCharId, initialState.aiBenchChar),
     selected: null,
     pendingCostPayment: null,
     pendingSelection: null,
@@ -79,6 +75,7 @@ export function createTutorialState(stage: TutorialStage): GameState {
     comboCount: 0,
     draftSelections: { P1: null, AI: null },
     turnLog: [],
-    tutorialAiScript: aiScript,
+    // aiScript가 있으면 스크립트 AI, 없으면 실제 대전 AI 룰을 사용
+    ...(aiScript ? { tutorialAiScript: aiScript } : {}),
   };
 }

@@ -132,7 +132,8 @@ export default function FightingHPBar({
         </div>
 
         {renderBar(activeCharacter, true)}
-        {renderBar(benchChar, false)}
+        {/* 벤치가 활성과 다를 때만 렌더 (튜토리얼은 캐릭터 1명 → 중복 바·key 충돌 방지) */}
+        {benchChar !== activeCharacter && renderBar(benchChar, false)}
 
         <div className={[styles.deckRow, isRight ? styles.charRowRight : ""].join(" ")}>
           <div className={styles.barTrackWrap}>

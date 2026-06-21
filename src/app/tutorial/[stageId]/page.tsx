@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createTutorialState } from "@/game/tutorial/tutorialState";
 import { TUTORIAL_STAGES } from "@/game/tutorial/tutorialStages";
+import { selectDraftCards } from "@/game/engine/ai";
 import type { CharacterId } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
+
+// 튜토리얼 상단 목표 바(.topBar) 높이만큼 게임 화면을 아래로 밀어 헤더 가림 방지
+const TUTORIAL_TOPBAR_HEIGHT = 32;
 
 function TutorialGame({
   stageId,
@@ -51,6 +55,19 @@ function TutorialGame({
     const t = setTimeout(() => dispatch({ type: "TURN/BEGIN" }), 100);
     return () => clearTimeout(t);
   }, [state.phase, state.turn]);
+
+  // ROUND_DRAFT: AI 자동 드래프트 (실제 대전 AI 룰)
+  useEffect(() => {
+    if (state.phase !== "ROUND_DRAFT") return;
+    if (state.draftSelections.AI !== null) return;
+    const pick = selectDraftCards(state, "AI", 3);
+    const t = setTimeout(
+      () => dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds: pick }),
+      300,
+    );
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.draftSelections.AI]);
 
   // AI auto-play
   useEffect(() => {
@@ -102,6 +119,8 @@ function TutorialGame({
         isAiThinking={isAiThinking}
         isTagAnimating={isTagAnimating}
         onExit={onExit}
+        onRetry={onRetry}
+        topInset={TUTORIAL_TOPBAR_HEIGHT}
       />
       <TutorialOverlay
         stage={stage}

@@ -1,5 +1,8 @@
 import type { Card } from "../engine/types";
 
+/** 덱 채우기용 더미 카드 ID (코스트 지불 소스). */
+export const TUT_FILLER_ID = "tut_filler";
+
 export const TUTORIAL_CARDS: Record<string, Card> = {
   tut_jab: {
     id: "tut_jab",
@@ -29,12 +32,12 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
   },
   tut_rising: {
     id: "tut_rising",
-    name: "승룡권",
+    name: "강한 공격",
     cardType: "attack",
     cost: 5,
     speed: 4,
     gain: 0,
-    groundAttack: 3,
+    groundAttack: 5,
     effects: [],
     text: "강력한 지상 공격. 느리지만 데미지가 가장 높습니다.",
     actionTag: "rising_punch",
@@ -52,14 +55,15 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
   },
   tut_uppercut: {
     id: "tut_uppercut",
-    name: "어퍼컷",
+    name: "대공기",
     cardType: "attack",
     cost: 2,
     speed: 3,
     gain: 0,
+    groundAttack: 1,
     antiAirAttack: 2,
-    effects: [],
-    text: "공중의 적을 공격합니다. 지상에서만 사용 가능합니다.",
+    effects: [{ type: "airborne", value: 2, target: "enemy" }],
+    text: "지상 공격 후 도약합니다. 공중의 적에게 강한 데미지를 줍니다.",
     useCondition: "ground",
     actionTag: "rising_punch",
     hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_strong" }],
@@ -76,6 +80,20 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     text: "즉시 발동되는 초강력 공격.",
     actionTag: "strong_punch",
     hitTimings: [{ ms: 100, ground: "hit_strong", airborne: "hit_strong" }],
+  },
+  tut_power_strike: {
+    id: "tut_power_strike",
+    name: "파워 스트라이크",
+    cardType: "attack",
+    cost: 3,
+    speed: 3,
+    gain: 0,
+    groundAttack: 6,
+    tags: ["power"],
+    effects: [],
+    text: "전사만 사용할 수 있는 강력한 지상 공격.",
+    actionTag: "strong_punch",
+    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_filler: {
     id: "tut_filler",

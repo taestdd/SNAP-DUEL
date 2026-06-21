@@ -13,8 +13,24 @@ function getMinAttackSpeed(): number {
  * 상대의 현재 airborne 상태를 기반으로 실제로 적중할 데미지만 계산한다.
  * ground 타입은 상대가 체공 중이면 0, anti-air 타입은 상대가 지상이면 0.
  */
+/** 카드가 데미지를 줄 수 있는지 — 공격 스탯 또는 damage 효과 보유 여부. */
+function dealsDamage(card: Card): boolean {
+  return (
+    (card.groundAttack ?? 0) > 0 ||
+    (card.antiAirAttack ?? 0) > 0 ||
+    card.effects.some((e) => e.type === "damage")
+  );
+}
+
 function effectiveDamage(card: Card, oppAirborneStack: number): number {
   let total = 0;
+
+  // 공격 스탯(groundAttack/antiAirAttack)이 실제 데미지 모델 — 엔진(effects.ts)과 일치.
+  // ground는 상대가 지상일 때만, anti-air는 상대가 공중일 때만 적중.
+  if (oppAirborneStack === 0) total += card.groundAttack ?? 0;
+  if (oppAirborneStack >= 1) total += card.antiAirAttack ?? 0;
+
+  // effects 배열의 damage 타입은 보너스 데미지로 추가 집계.
   for (const effect of card.effects) {
     if (effect.type !== "damage") continue;
     const dt = effect.damageType;
@@ -149,7 +165,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
     for (const cardId of opp.queue) {
       const card = getCard(cardId);
       if (!card) continue;
-      if (!card.effects.some((e) => e.type === "damage")) continue;
+      if (!dealsDamage(card)) continue;
       fastest = Math.min(fastest, Math.max(0, card.speed - oppBonus));
     }
     return fastest;
@@ -197,14 +213,14 @@ export function selectCard(
   const best = candidates[0];
   const bestCard = getCard(best.id)!;
   const myEffSpeed = Math.max(0, bestCard.speed - (me.status.speedBonus ?? 0));
-  const isAttack = bestCard.effects.some((e) => e.type === "damage");
+  const isAttack = dealsDamage(bestCard);
 
   // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 캔슬 확정
   if (isAttack && state.initiative !== player && myEffSpeed > oppFastestAttackSpeed(state, player)) {
     // 공격 대신 아이템 카드(캔슬 불가)가 있으면 그것을 사용
     const safeCard = candidates.find(({ id }) => {
       const c = getCard(id);
-      return c && !c.effects.some((e) => e.type === "damage");
+      return c && !dealsDamage(c);
     });
     return safeCard ?? null;
   }
