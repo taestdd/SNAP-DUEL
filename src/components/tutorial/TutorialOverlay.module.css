@@ -4,10 +4,12 @@
   left: 0;
   right: 0;
   z-index: 50;
+  height: 32px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 14px;
+  padding: 0 14px;
   background: rgba(0, 0, 0, 0.82);
   border-bottom: 1px solid #333;
   font-size: 13px;
@@ -36,17 +38,14 @@
 }
 
 .hintToggle {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
+  flex-shrink: 0;
   background: #1a1a1a;
   border: 1px solid #444;
   color: #aaa;
-  font-size: 12px;
-  padding: 5px 14px;
-  border-radius: 20px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 10px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -58,7 +57,7 @@
 
 .hintBox {
   position: fixed;
-  bottom: 110px;
+  top: 38px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;

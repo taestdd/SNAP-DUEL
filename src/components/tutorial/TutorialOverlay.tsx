@@ -36,17 +36,16 @@ export default function TutorialOverlay({
             {Math.min(state.turn, stage.maxTurns)} / {stage.maxTurns} 턴
           </span>
         )}
+        {/* 힌트 토글 버튼 (탑바 내) */}
+        {!isSuccess && !isFail && (
+          <button
+            className={styles.hintToggle}
+            onClick={() => setHintVisible((v) => !v)}
+          >
+            {hintVisible ? "힌트 숨기기" : "힌트 보기"}
+          </button>
+        )}
       </div>
-
-      {/* 힌트 토글 버튼 */}
-      {!isSuccess && !isFail && (
-        <button
-          className={styles.hintToggle}
-          onClick={() => setHintVisible((v) => !v)}
-        >
-          {hintVisible ? "힌트 숨기기" : "힌트 보기"}
-        </button>
-      )}
 
       {/* 힌트 박스 */}
       {hintVisible && !isSuccess && !isFail && (

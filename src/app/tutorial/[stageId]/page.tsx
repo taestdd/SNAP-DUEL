@@ -9,6 +9,9 @@ import type { CharacterId } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
 
+// 튜토리얼 상단 목표 바(.topBar) 높이만큼 게임 화면을 아래로 밀어 헤더 가림 방지
+const TUTORIAL_TOPBAR_HEIGHT = 32;
+
 function TutorialGame({
   stageId,
   onRetry,
@@ -102,6 +105,7 @@ function TutorialGame({
         isAiThinking={isAiThinking}
         isTagAnimating={isTagAnimating}
         onExit={onExit}
+        topInset={TUTORIAL_TOPBAR_HEIGHT}
       />
       <TutorialOverlay
         stage={stage}

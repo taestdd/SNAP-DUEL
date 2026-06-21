@@ -28,6 +28,7 @@ export default function GameScreen({
   isTagAnimating = false,
   disableAiDraft = false,
   onExit,
+  topInset = 0,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
@@ -35,6 +36,8 @@ export default function GameScreen({
   isTagAnimating?: boolean;
   disableAiDraft?: boolean;
   onExit?: () => void;
+  /** 상단에 고정 오버레이(예: 튜토리얼 목표 바)가 있을 때 그만큼 콘텐츠를 아래로 밀어내는 여백(px) */
+  topInset?: number;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -302,7 +305,10 @@ export default function GameScreen({
         </div>
       )}
 
-      <div className={styles.shell}>
+      <div
+        className={styles.shell}
+        style={topInset ? { paddingTop: `calc(6px + ${topInset}px)` } : undefined}
+      >
         {/* AI 패널: 좌측 게임 정보 + 우측 HP 바 */}
         <div className={styles.aiPanel}>
           <div className={styles.gameInfoArea}>
