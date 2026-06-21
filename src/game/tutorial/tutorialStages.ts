@@ -106,26 +106,26 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
     id: "stage4",
     title: "Stage 4 — 에어본",
     description:
-      "도약하면 공중 상태가 되어 지상 공격을 회피합니다.\n" +
-      "어퍼컷은 공중의 적을 공격하며, 지상에 있을 때만 사용 가능합니다.\n" +
-      "AI는 1턴에 잽, 2턴에 도약합니다.",
-    hint: "도약으로 AI 공격을 피하고\n어퍼컷으로 공중의 AI를 노리세요.",
-    goalText: "2턴 안에 AI를 처치하세요",
-    maxTurns: 2,
+      "AI가 주도권을 갖고 매 턴 잽을 씁니다.\n" +
+      "대공기는 상대를 공중으로 띄우고, 공중의 적에게 강한 데미지를 줍니다.\n" +
+      "도약으로 먼저 피한 뒤, 대공기를 두 번 연속으로 사용하세요.",
+    hint: "1턴: 도약으로 잽을 피하세요.\n2턴: 대공기로 상대를 띄우세요.\n3턴: 공중의 AI에게 대공기로 마무리하세요.",
+    goalText: "3턴 안에 AI를 처치하세요",
+    maxTurns: 3,
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s, turn) =>
       (s.phase === "GAME_OVER" && s.winner !== "P1") ||
-      (turn > 2 && s.phase !== "GAME_OVER"),
+      (turn > 3 && s.phase !== "GAME_OVER"),
     initialState: {
-      p1Hp: 3,
-      aiHp: 2,
-      p1Hand: ["tut_jump", "tut_jab", "tut_jab", "tut_uppercut", "tut_uppercut"],
+      p1Hp: 4,
+      aiHp: 3,
+      p1Hand: ["tut_jump", "tut_uppercut", "tut_uppercut"],
       p1Deck: fill(4),
-      aiHand: ["tut_jab", "tut_jump", F, F, F],
-      aiDeck: fill(3),
-      initiative: "P1",
+      aiHand: ["tut_jab", "tut_jab", "tut_jab", F, F],
+      aiDeck: fill(9),
+      initiative: "AI",
     },
-    aiScript: [["tut_jab"], ["tut_jump"], [], []],
+    aiScript: [["tut_jab"], ["tut_jab"], ["tut_jab"]],
   },
   {
     id: "stage5",
