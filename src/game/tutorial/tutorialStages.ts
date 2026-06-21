@@ -1,4 +1,6 @@
 import type { GameState, PlayerId } from "../engine/types";
+import { TUT_CHARS, benchOf } from "./tutorialChars";
+import { TUT_FILLER_ID } from "./tutorialCards";
 
 export type TutorialInitialState = {
   p1Hp: number;
@@ -29,7 +31,7 @@ export type TutorialStage = {
   aiScript: string[][];
 };
 
-const F = "tut_filler";
+const F = TUT_FILLER_ID;
 const fill = (n: number): string[] => Array(n).fill(F);
 
 export const TUTORIAL_STAGES: TutorialStage[] = [
@@ -148,10 +150,10 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
       (s.phase === "GAME_OVER" && s.winner !== "P1") ||
       (turn > 2 && s.phase !== "GAME_OVER"),
     initialState: {
-      p1Hp: 1,
+      p1Hp: TUT_CHARS.warrior.maxHp,
       aiHp: 6,
-      p1ActiveCharId: "tut_char_warrior",
-      p1BenchChar: { id: "tut_char_fighter", hp: 8 },
+      p1ActiveCharId: TUT_CHARS.warrior.id,
+      p1BenchChar: benchOf(TUT_CHARS.fighter),
       p1Hand: ["tut_power_strike"],
       p1Deck: Array(10).fill("tut_power_strike"),
       aiHand: ["tut_jab", F, F],
@@ -172,12 +174,12 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",
     initialState: {
-      p1Hp: 15,
-      aiHp: 15,
-      p1ActiveCharId: "tut_team_a",
-      p1BenchChar: { id: "tut_team_b", hp: 15 },
-      aiActiveCharId: "tut_team_a",
-      aiBenchChar: { id: "tut_team_b", hp: 15 },
+      p1Hp: TUT_CHARS.teamA.maxHp,
+      aiHp: TUT_CHARS.teamA.maxHp,
+      p1ActiveCharId: TUT_CHARS.teamA.id,
+      p1BenchChar: benchOf(TUT_CHARS.teamB),
+      aiActiveCharId: TUT_CHARS.teamA.id,
+      aiBenchChar: benchOf(TUT_CHARS.teamB),
       p1Hand: [],
       p1Deck: [
         ...Array(4).fill("tut_jab"),

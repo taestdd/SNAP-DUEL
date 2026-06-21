@@ -1,5 +1,8 @@
 import type { Card } from "../engine/types";
 
+/** 덱 채우기용 더미 카드 ID (코스트 지불 소스). */
+export const TUT_FILLER_ID = "tut_filler";
+
 export const TUTORIAL_CARDS: Record<string, Card> = {
   tut_jab: {
     id: "tut_jab",

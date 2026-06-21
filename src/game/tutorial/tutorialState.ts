@@ -1,58 +1,14 @@
 import type { Combatant, GameState, Status } from "../engine/types";
 import type { TutorialStage } from "./tutorialStages";
-import { registerCharacter } from "../engine/characters";
 import { registerCards } from "../engine/cards";
 import { TUTORIAL_CARDS } from "./tutorialCards";
+import { TUT_CHARS, registerTutorialChars } from "./tutorialChars";
 
-export const TUT_CHAR_ID = "tut_char";
+export const TUT_CHAR_ID = TUT_CHARS.trainee.id;
 
-function registerTutorialAssets(tutCharMaxHp: number): void {
+function registerTutorialAssets(traineeMaxHp: number): void {
   registerCards(TUTORIAL_CARDS);
-  registerCharacter(TUT_CHAR_ID, {
-    id: TUT_CHAR_ID,
-    name: "훈련병",
-    maxHp: tutCharMaxHp,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: [],
-  });
-  registerCharacter("tut_char_warrior", {
-    id: "tut_char_warrior",
-    name: "전사",
-    maxHp: 1,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: ["power"],
-  });
-  registerCharacter("tut_char_fighter", {
-    id: "tut_char_fighter",
-    name: "격투가",
-    maxHp: 8,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: [],
-  });
-  registerCharacter("tut_team_a", {
-    id: "tut_team_a",
-    name: "팀원 A",
-    maxHp: 15,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: [],
-  });
-  registerCharacter("tut_team_b", {
-    id: "tut_team_b",
-    name: "팀원 B",
-    maxHp: 15,
-    spriteId: "default",
-    entryEffect: null,
-    exitEffect: null,
-    affinities: [],
-  });
+  registerTutorialChars(traineeMaxHp);
 }
 
 function emptyStatus(): Status {

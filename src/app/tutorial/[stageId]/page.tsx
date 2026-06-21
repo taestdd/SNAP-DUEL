@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createTutorialState } from "@/game/tutorial/tutorialState";
 import { TUTORIAL_STAGES } from "@/game/tutorial/tutorialStages";
+import { TUT_FILLER_ID } from "@/game/tutorial/tutorialCards";
 import type { CharacterId } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
@@ -59,14 +60,14 @@ function TutorialGame({
   useEffect(() => {
     if (state.phase !== "ROUND_DRAFT") return;
     if (state.draftSelections.AI !== null) return;
-    const nonFiller = state.AI.deck.filter((id) => id !== "tut_filler");
+    const nonFiller = state.AI.deck.filter((id) => id !== TUT_FILLER_ID);
     const pick = nonFiller.slice(0, 3);
     const t = setTimeout(
       () => dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds: pick }),
       300,
     );
     return () => clearTimeout(t);
-  }, [state.phase, state.draftSelections.AI]);
+  }, [state.phase, state.draftSelections.AI, state.AI.deck]);
 
   // AI auto-play
   useEffect(() => {
