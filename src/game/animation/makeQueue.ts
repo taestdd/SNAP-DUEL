@@ -1,7 +1,56 @@
-import type { AnimScriptEntry, Card, CombatAnimationEvent, HitPose, PlayerId } from "@/game/engine/types";
+import type { AnimScriptEntry, Card, CombatAnimationEvent, FighterPose, HitPose, PlayerId } from "@/game/engine/types";
+import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
+import { CHARACTERS } from "@/game/engine/characters";
+import { CHARACTER_SPRITES } from "./spriteMap";
 
 export const SUPER_FLASH_DUR = 700;
+
+/**
+ * 히트 강도별 기본 히트스탑(ms) — 카드의 freeze 미지정 시 적용.
+ * 이 값과 줌은 visual_hit 이벤트에 실려 양쪽 클라이언트가 동일하게 사용한다.
+ */
+export const HIT_FREEZE_PRESET: Record<HitPose, number> = {
+  hit_strong: 1800,
+  hit_aerial: 1320,
+  hit_weak:    900,
+};
+
+/** 히트 강도별 기본 줌인 배율 — 카드의 zoom 미지정 시 적용 */
+export const HIT_ZOOM_PRESET: Record<HitPose, number> = {
+  hit_strong: 1.16,
+  hit_aerial: 1.10,
+  hit_weak:   1.06,
+};
+
+/** characterId → 스프라이트 ID (fps 조회용) */
+function spriteIdOf(characterId: string): string {
+  return CHARACTERS[characterId]?.spriteId ?? characterId;
+}
+
+/** 카드 + 행동자 체공 상태로 실제 재생 포즈를 결정 (actionTagAirborne 우선) */
+function resolveActorPose(card: Card, actorAirborne: number): FighterPose | null {
+  const tag = (actorAirborne >= 1 && card.actionTagAirborne)
+    ? card.actionTagAirborne
+    : card.actionTag;
+  if (!tag) return null;
+  return ACTION_TAG_TO_POSE[tag] ?? null;
+}
+
+/**
+ * 임팩트 프레임(재생 순번)을 actor 포즈 fps 기준 ms로 환산.
+ * 포즈 frames 범위를 벗어나면 마지막 프레임으로 clamp.
+ */
+function frameToMs(frame: number, pose: FighterPose | null, spriteId: string): number {
+  if (!pose) return 0;
+  const config = CHARACTER_SPRITES[spriteId] ?? Object.values(CHARACTER_SPRITES)[0]!;
+  const entry = config.poses[pose];
+  if (!entry) return 0;
+  const fps = entry.fps || 10;
+  const maxIdx = Math.max(0, entry.frames.length - 1);
+  const clamped = Math.min(Math.max(Math.round(frame), 0), maxIdx);
+  return Math.round(clamped * (1000 / fps));
+}
 
 export type ActorHpData = {
   hpAfter: { P1: number; AI: number };
@@ -65,6 +114,10 @@ export function makeQueue(
   aiActorAirborne: number,
   /** AI 카드가 처리되는 시점의 P1 airborne (AI→P1 히트 판정용) */
   aiTargetAirborne: number,
+  /** P1 활성 캐릭터 스프라이트 ID (frame→ms 환산 fps 조회용) */
+  p1SpriteId: string,
+  /** AI 활성 캐릭터 스프라이트 ID (frame→ms 환산 fps 조회용) */
+  aiSpriteId: string,
   playerHpData?: ActorHpData,
   aiHpData?: ActorHpData,
 ): CombatAnimationEvent[] {
@@ -78,14 +131,14 @@ export function makeQueue(
   if (p1Acts && !aiActs) {
     const fd = flashDur(playerCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
-    pushSequence(events, "P1", "AI", playerCard!, fd, p1TargetAirborne, p1ActorAirborne, playerHpData);
+    pushSequence(events, "P1", "AI", playerCard!, fd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, playerHpData);
     return events;
   }
 
   if (!p1Acts && aiActs) {
     const fd = flashDur(aiCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "AI", "P1", aiCard!, fd, aiTargetAirborne, aiActorAirborne, aiHpData);
+    pushSequence(events, "AI", "P1", aiCard!, fd, aiTargetAirborne, aiActorAirborne, aiSpriteId, aiHpData);
     return events;
   }
 
@@ -95,8 +148,8 @@ export function makeQueue(
     const maxFd = Math.max(p1fd, aifd);
     if (p1fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
     if (aifd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "P1", "AI", playerCard!, maxFd, p1TargetAirborne, p1ActorAirborne, playerHpData);
-    pushSequence(events, "AI", "P1", aiCard!, maxFd, aiTargetAirborne, aiActorAirborne, aiHpData);
+    pushSequence(events, "P1", "AI", playerCard!, maxFd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, playerHpData);
+    pushSequence(events, "AI", "P1", aiCard!, maxFd, aiTargetAirborne, aiActorAirborne, aiSpriteId, aiHpData);
     return events;
   }
 
@@ -109,6 +162,8 @@ export function makeQueue(
   const secondActorAirborne = initiative === "player" ? aiActorAirborne : p1ActorAirborne;
   // 후공의 targetAirborne은 선공 처리 이후 상태 — 선공 카드가 에어본을 바꿨을 수 있음
   const secondTargetAirborne = initiative === "player" ? aiTargetAirborne : p1TargetAirborne;
+  const firstSpriteId = initiative === "player" ? p1SpriteId : aiSpriteId;
+  const secondSpriteId = initiative === "player" ? aiSpriteId : p1SpriteId;
   const firstHpData = initiative === "player" ? playerHpData : aiHpData;
   const secondHpData = initiative === "player" ? aiHpData : playerHpData;
 
@@ -116,11 +171,11 @@ export function makeQueue(
   const sfd = flashDur(secondCard);
 
   if (ffd > 0) events.push({ type: "super_flash", delay: 0, actor: first });
-  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne, firstHpData);
+  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne, firstSpriteId, firstHpData);
 
   const secondFlashAt = 700 + ffd;
   if (sfd > 0) events.push({ type: "super_flash", delay: secondFlashAt, actor: second });
-  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne, secondHpData);
+  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne, secondSpriteId, secondHpData);
 
   return events;
 }
@@ -145,9 +200,10 @@ function pushSequence(
   offset: number,
   targetAirborne: number,
   actorAirborne: number,
+  actorSpriteId: string,
   hpData?: ActorHpData,
 ): void {
-  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne, hpData);
+  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne, actorSpriteId, hpData);
 }
 
 function pushSequenceWithHold(
@@ -159,34 +215,57 @@ function pushSequenceWithHold(
   endDelay: number,
   targetAirborne: number,
   actorAirborne: number,
+  actorSpriteId: string,
   hpData?: ActorHpData,
 ): void {
+  const pose = resolveActorPose(card, actorAirborne);
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
     : card.actionTag;
   events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag });
 
   if (card.hitTimings && card.hitTimings.length > 0) {
-    // visual_hit은 실제로 타격이 성립할 때만 생성
-    // hasConnectingAttack이 false면 데미지도 없고 피격 포즈도 없음
-    if (hasConnectingAttack(card, targetAirborne)) {
-      for (const timing of card.hitTimings) {
-        const hitPose: HitPose = targetAirborne >= 1 ? timing.airborne : timing.ground;
-        events.push({ type: "visual_hit", delay: offset + timing.ms, target, hitPose });
+    const connects = hasConnectingAttack(card, targetAirborne);
+
+    // 히트스탑 인지 타임라인:
+    // 각 히트가 freeze만큼 스프라이트 프레임을 멈추므로, 후속 히트의 발화 시점에
+    // 앞선 freeze 합(acc)을 더해야 스프라이트의 임팩트 프레임과 정확히 맞는다.
+    // (단발 히트는 acc가 0이라 기존과 동일한 결과)
+    let acc = 0;
+    let lastImpactAt = 0;  // offset 기준 마지막 히트 발화 시각
+    let lastFreeze = 0;
+
+    for (const timing of card.hitTimings) {
+      const hitPose: HitPose = targetAirborne >= 1 ? timing.airborne : timing.ground;
+      const freezeMs = timing.freeze ?? HIT_FREEZE_PRESET[hitPose];
+      const zoom = timing.zoom ?? HIT_ZOOM_PRESET[hitPose];
+      const impactAt = frameToMs(timing.frame, pose, actorSpriteId) + acc;
+
+      // visual_hit은 실제로 타격이 성립할 때만 생성
+      // hasConnectingAttack이 false면 데미지도 없고 피격 포즈도 없음
+      if (connects) {
+        events.push({ type: "visual_hit", delay: offset + impactAt, target, hitPose, freezeMs, zoom });
       }
+
+      lastImpactAt = impactAt;
+      lastFreeze = freezeMs;
+      acc += freezeMs;  // 다음 히트는 이 freeze만큼 뒤로 밀림
     }
+
     // damage_resolve는 타격 성사 여부와 무관하게 항상 생성
-    // HP바·콤보·캔슬 UI 갱신 타이밍 마커로 사용됨
-    const lastMs = card.hitTimings[card.hitTimings.length - 1].ms;
+    // HP바·콤보·캔슬 UI 갱신 타이밍 마커로 사용됨 (마지막 임팩트 직후)
     events.push({
       type: "damage_resolve",
-      delay: offset + lastMs + 100,
+      delay: offset + lastImpactAt + 100,
       actor,
       hpAfter: hpData?.hpAfter,
       cancelledPlayer: hpData?.cancelledPlayer,
       comboAfter: hpData?.comboAfter,
       comboHolder: hpData?.comboHolder,
     });
+
+    // 마지막 히트의 freeze가 끝난 뒤 포즈를 마무리하도록 action_end를 늦춤
+    endDelay = Math.max(endDelay, offset + lastImpactAt + lastFreeze + 100);
   }
 
   events.push({ type: "action_end", delay: endDelay, actor });
@@ -210,8 +289,18 @@ function pushSequenceWithHold(
  * 과거 구현: p1Airborne / aiAirborne 단일값 → 후공의 targetAirborne이
  * 선공 처리 이전 값으로 고정되어 에어본 히트 판정이 틀리는 버그 존재.
  */
-export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationEvent[] {
+export function makeQueueFromScript(
+  script: AnimScriptEntry[],
+  /** P1 활성 캐릭터 ID (frame→ms fps 조회용). 게스트는 flip된 state 기준 */
+  p1Character?: string,
+  /** AI 활성 캐릭터 ID (frame→ms fps 조회용). 게스트는 flip된 state 기준 */
+  aiCharacter?: string,
+): CombatAnimationEvent[] {
   if (script.length === 0) return [];
+
+  const fallbackSprite = Object.keys(CHARACTER_SPRITES)[0]!;
+  const p1SpriteId = p1Character ? spriteIdOf(p1Character) : fallbackSprite;
+  const aiSpriteId = aiCharacter ? spriteIdOf(aiCharacter) : fallbackSprite;
 
   const p1Entry = script.find((e) => e.actor === "P1");
   const aiEntry = script.find((e) => e.actor === "AI");
@@ -234,5 +323,5 @@ export function makeQueueFromScript(script: AnimScriptEntry[]): CombatAnimationE
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 
-  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1HpData, aiHpData);
+  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1SpriteId, aiSpriteId, p1HpData, aiHpData);
 }

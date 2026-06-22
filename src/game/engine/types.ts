@@ -84,6 +84,10 @@ export interface CombatAnimationEvent {
   target?: PlayerId;
   /** 피격자가 재생할 포즈 (visual_hit). 미지정 시 "hit" fallback */
   hitPose?: HitPose;
+  /** visual_hit: 히트스탑 = 줌 유지 윈도우 (ms). makeQueue가 카드 freeze/프리셋으로 산출 */
+  freezeMs?: number;
+  /** visual_hit: 줌인 배율. makeQueue가 카드 zoom/프리셋으로 산출 */
+  zoom?: number;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
   /** damage_resolve: 이 카드 효과 적용 후의 HP (UI 표시용) */
@@ -297,8 +301,13 @@ export type Card = {
   /** 공격자가 airborne 상태일 때 사용할 액션 태그. 미지정 시 actionTag 그대로 사용 */
   actionTagAirborne?: ActionTag;
 
-  /** 히트 타이밍 목록. 각 항목은 ms 지연과 ground/airborne별 피격 애니를 정의 */
-  hitTimings?: { ms: number; ground: HitPose; airborne: HitPose }[];
+  /**
+   * 히트 타이밍 목록. 각 항목은 임팩트 프레임과 ground/airborne별 피격 애니를 정의.
+   * - frame: 공격 포즈 재생 시퀀스 내 순번(0-based). actor 포즈 fps로 ms 환산
+   * - freeze: 히트스탑 = 줌 유지 윈도우(ms). 미지정 시 강도별 프리셋
+   * - zoom: 줌인 배율. 미지정 시 강도별 프리셋
+   */
+  hitTimings?: { frame: number; ground: HitPose; airborne: HitPose; freeze?: number; zoom?: number }[];
 
   /** true면 기술 발동 전 슈퍼 플래시 연출 재생 */
   superFlash?: boolean;

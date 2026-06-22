@@ -91,9 +91,11 @@ export const AltCostMoveCardsSchema = z.object({
 export const AltCostSchema = z.union([AltCostHpSchema, AltCostMoveCardsSchema]);
 
 export const HitTimingSchema = z.object({
-  ms: z.number().int().min(0),
+  frame: z.number().int().min(0),
   ground: HitPoseSchema,
   airborne: HitPoseSchema,
+  freeze: z.number().int().min(0).optional(),
+  zoom: z.number().min(1).optional(),
 });
 
 export const CardSchema = z.object({

@@ -24,7 +24,7 @@ interface ArenaStageProps {
   aiFlashKey?: number;
   playerKnockbackKey?: number;
   aiKnockbackKey?: number;
-  zoomKey?: number;
+  zoomScale?: number;
   bgOffset?: number;
   hitEffectKey?: number;
   hitEffectTarget?: "P1" | "AI" | null;
@@ -49,7 +49,7 @@ export default function ArenaStage({
   aiFlashKey = 0,
   playerKnockbackKey = 0,
   aiKnockbackKey = 0,
-  zoomKey = 0,
+  zoomScale = 1,
   bgOffset = 0,
   hitEffectKey = 0,
   hitEffectTarget = null,
@@ -80,14 +80,6 @@ export default function ArenaStage({
     el.classList.add(styles.knockbackRight);
   }, [aiKnockbackKey]);
 
-  useLayoutEffect(() => {
-    if (zoomKey === 0) return;
-    const el = zoomRef.current;
-    if (!el) return;
-    el.classList.remove(styles.zooming);
-    void el.offsetWidth;
-    el.classList.add(styles.zooming);
-  }, [zoomKey]);
   const shakeClass =
     shakeLevel === "light"
       ? styles.shakeLight
@@ -98,7 +90,7 @@ export default function ArenaStage({
   return (
     <div className={styles.zoomWrap}>
       <div className={`${styles.arena} ${shakeClass}`}>
-        <div ref={zoomRef} className={styles.arenaInner}>
+        <div ref={zoomRef} className={styles.arenaInner} style={{ transform: `scale(${zoomScale})` }}>
           <div className={styles.arenaBg} style={{ backgroundPositionX: `${bgOffset}px` }} />
           {superFlashActor && (
             <div key={superFlashActor} className={styles.superFlashOverlay} />

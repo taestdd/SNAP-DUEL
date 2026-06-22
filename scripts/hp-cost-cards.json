@@ -26,7 +26,7 @@
     "altCost": { "type": "hp", "amount": 2 },
     "actionTag": "strong_punch",
     "hitTimings": [
-      { "ms": 200, "ground": "hit_strong", "airborne": "hit_strong" }
+      { "frame": 1, "ground": "hit_strong", "airborne": "hit_strong" }
     ],
     "tags": ["격투", "필살"]
   },
@@ -45,7 +45,7 @@
     "altCost": { "type": "hp", "amount": 4 },
     "actionTag": "aerial_kick",
     "hitTimings": [
-      { "ms": 300, "ground": "hit_aerial", "airborne": "hit_aerial" }
+      { "frame": 2, "ground": "hit_aerial", "airborne": "hit_aerial" }
     ],
     "tags": ["격투", "필살"],
     "superFlash": true
@@ -63,7 +63,7 @@
     "altCost": { "type": "hp", "amount": 5 },
     "actionTag": "strong_kick",
     "hitTimings": [
-      { "ms": 400, "ground": "hit_strong", "airborne": "hit_strong" }
+      { "frame": 2, "ground": "hit_strong", "airborne": "hit_strong" }
     ],
     "tags": ["격투", "필살"],
     "superFlash": true

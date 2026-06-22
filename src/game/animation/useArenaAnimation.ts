@@ -12,7 +12,7 @@ import type {
 } from "@/game/engine/types";
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
-import { makeQueueFromScript, SUPER_FLASH_DUR } from "./makeQueue";
+import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
 
 // ── 타이밍 상수 ────────────────────────────────────────────────────────────────
@@ -20,12 +20,10 @@ import { useAnimQueue } from "./useAnimQueue";
 const TAG_TRANSITION_MS = 350;
 const ANIM_DONE_BUFFER_MS = 150;
 
-/** 히트 포즈별 히트스톱 지속 시간 (ms) */
-const HIT_FREEZE_MS: Record<string, number> = {
-  hit_strong: 1800,
-  hit_aerial: 1320,
-  hit_weak:    900,
-};
+/** event.freezeMs 미지정 시 폴백 (정상 경로에서는 makeQueue가 항상 채움) */
+function freezeOf(event: CombatAnimationEvent): number {
+  return event.freezeMs ?? HIT_FREEZE_PRESET[event.hitPose ?? "hit_weak"] ?? 150;
+}
 
 /** 히트 포즈별 화면 흔들림 지속 시간 (ms) */
 const SHAKE_DURATION_MS: Record<string, number> = {
@@ -57,7 +55,8 @@ export type ArenaAnimState = {
   aiFlashKey: number;
   playerKnockbackKey: number;
   aiKnockbackKey: number;
-  zoomKey: number;
+  /** 줌 배율 (1 = 기본). 히트 임팩트 윈도우 동안 확대 후 복귀 */
+  zoomScale: number;
   bgOffset: number;
   hitEffectKey: number;
   hitEffectTarget: "P1" | "AI" | null;
@@ -95,7 +94,8 @@ export function useArenaAnimation(
   const [aiFlashKey, setAiFlashKey] = useState(0);
   const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
-  const [zoomKey, setZoomKey] = useState(0);
+  const [zoomScale, setZoomScale] = useState(1);
+  const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgOffset, setBgOffset] = useState(0);
   const [hitEffectKey, setHitEffectKey] = useState(0);
   const [hitEffectTarget, setHitEffectTarget] = useState<"P1" | "AI" | null>(null);
@@ -165,6 +165,8 @@ export function useArenaAnimation(
       setDisplayedHp(null);
       setDisplayedCancelledPlayer(null);
       setDisplayedCombo(null);
+      if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+      setZoomScale(1);
       return;
     }
 
@@ -177,13 +179,13 @@ export function useArenaAnimation(
     }
     setDisplayedCancelledPlayer(null);
 
-    const queue = makeQueueFromScript(state.animScript);
+    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
 
     const maxDelay = queue.reduce((m, e) => {
-      const freeze = e.type === "visual_hit" ? (HIT_FREEZE_MS[e.hitPose ?? ""] ?? 150) : 0;
+      const freeze = e.type === "visual_hit" ? freezeOf(e) : 0;
       return Math.max(m, e.delay + freeze);
     }, 0);
     const t = setTimeout(
@@ -236,10 +238,12 @@ export function useArenaAnimation(
       }
       case "visual_hit": {
         const pose = event.hitPose ?? "hit_weak";
-        const freezeMs = HIT_FREEZE_MS[pose] ?? 150;
+        const freezeMs = freezeOf(event);
         const shakeDuration = SHAKE_DURATION_MS[pose] ?? 100;
         const sl: ShakeLevel = pose === "hit_strong" ? "heavy" : "light";
 
+        // 임팩트 윈도우: 줌인·히트스탑·셰이크가 같은 freeze 구간에 묶여 동작.
+        // freeze가 끝나면 줌아웃 + 프레임 재개(frozenUntil 만료)가 동시에 일어난다.
         const freezeUntil = Date.now() + freezeMs;
         setPlayerFrozenUntil(freezeUntil);
         setAiFrozenUntil(freezeUntil);
@@ -248,7 +252,11 @@ export function useArenaAnimation(
         setShakeLevel(sl);
         shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), shakeDuration);
 
-        setZoomKey((k) => k + 1);
+        // 줌인 → freeze 동안 유지 → 줌아웃
+        if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+        setZoomScale(event.zoom ?? 1);
+        zoomTimerRef.current = setTimeout(() => setZoomScale(1), freezeMs);
+
         setHitEffectTarget(event.target ?? null);
         setHitEffectStrength(pose === "hit_strong" ? "strong" : "weak");
         setHitEffectKey((k) => k + 1);
@@ -311,7 +319,7 @@ export function useArenaAnimation(
     aiFlashKey,
     playerKnockbackKey,
     aiKnockbackKey,
-    zoomKey,
+    zoomScale,
     bgOffset,
     hitEffectKey,
     hitEffectTarget,

@@ -15,7 +15,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     effects: [],
     text: "빠른 지상 공격. 상대 공격을 캔슬할 수 있습니다.",
     actionTag: "weak_punch",
-    hitTimings: [{ ms: 300, ground: "hit_weak", airborne: "hit_weak" }],
+    hitTimings: [{ frame: 1, ground: "hit_weak", airborne: "hit_weak" }],
   },
   tut_straight: {
     id: "tut_straight",
@@ -28,7 +28,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     effects: [],
     text: "강한 지상 공격. 잽보다 느리지만 데미지가 높습니다.",
     actionTag: "strong_punch",
-    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_strong" }],
+    hitTimings: [{ frame: 1, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_rising: {
     id: "tut_rising",
@@ -41,7 +41,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     effects: [],
     text: "강력한 지상 공격. 느리지만 데미지가 가장 높습니다.",
     actionTag: "rising_punch",
-    hitTimings: [{ ms: 500, ground: "hit_strong", airborne: "hit_strong" }],
+    hitTimings: [{ frame: 3, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_jump: {
     id: "tut_jump",
@@ -66,7 +66,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     text: "지상 공격 후 도약합니다. 공중의 적에게 강한 데미지를 줍니다.",
     useCondition: "ground",
     actionTag: "rising_punch",
-    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_strong" }],
+    hitTimings: [{ frame: 3, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_bomb: {
     id: "tut_bomb",
@@ -79,7 +79,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     effects: [],
     text: "즉시 발동되는 초강력 공격.",
     actionTag: "strong_punch",
-    hitTimings: [{ ms: 100, ground: "hit_strong", airborne: "hit_strong" }],
+    hitTimings: [{ frame: 1, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_power_strike: {
     id: "tut_power_strike",
@@ -93,7 +93,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     effects: [],
     text: "전사만 사용할 수 있는 강력한 지상 공격.",
     actionTag: "strong_punch",
-    hitTimings: [{ ms: 400, ground: "hit_strong", airborne: "hit_strong" }],
+    hitTimings: [{ frame: 1, ground: "hit_strong", airborne: "hit_strong" }],
   },
   tut_filler: {
     id: "tut_filler",
