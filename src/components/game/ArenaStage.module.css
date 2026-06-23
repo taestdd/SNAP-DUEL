@@ -16,7 +16,7 @@
 
 .arena {
   display: block;
-  height: clamp(120px, 28dvh, 160px);
+  height: clamp(200px, 42dvh, 260px);
   background: linear-gradient(180deg, #0d1428 0%, #111b35 60%, #16243f 100%);
   border: none;
   border-radius: 0;

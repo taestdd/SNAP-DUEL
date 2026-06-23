@@ -9,8 +9,8 @@
 }
 
 .sprite {
-  width: clamp(90px, 23vw, 140px);
-  height: clamp(90px, 23vw, 140px);
+  width: clamp(110px, 28vw, 160px);
+  height: clamp(110px, 28vw, 160px);
   background-repeat: no-repeat;
   image-rendering: pixelated;
 }
