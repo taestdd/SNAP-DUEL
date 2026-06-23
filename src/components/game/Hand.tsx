@@ -12,6 +12,19 @@ const CARD_H = 144;
 const CYCLE_DURATION = 220;
 const RIPPLE_STAGGER = 35;
 
+// 부채꼴 레이아웃
+const FAN_RADIUS = 600;     // 피벗 위치 (카드 바닥 아래 px)
+const ANGLE_PER_CARD = 3.5; // 카드 1장당 각도 (deg)
+const MAX_HALF_ANGLE = 18;  // 중앙에서 최대 각도 (deg)
+const SELECTED_LIFT = 24;   // 선택 시 위로 올리는 거리 (px)
+
+function cardFanAngle(idx: number, n: number): number {
+  if (n <= 1) return 0;
+  const half = Math.min(MAX_HALF_ANGLE, ((n - 1) / 2) * ANGLE_PER_CARD);
+  const t = (idx / (n - 1)) * 2 - 1; // -1 ~ +1
+  return t * half;
+}
+
 export default function Hand({
   me,
   selected,
@@ -61,9 +74,7 @@ export default function Hand({
   }, []);
 
   const n = me.hand.length;
-  const step = n <= 1 ? 0 : Math.min(CARD_W, (containerWidth - CARD_W) / (n - 1));
-  const totalSpread = n === 0 ? 0 : CARD_W + step * (n - 1);
-  const groupLeft = Math.max(0, (containerWidth - totalSpread) / 2);
+  const cardLeft = Math.max(0, containerWidth / 2 - CARD_W / 2);
 
   const handleCycle = useCallback(() => {
     if (n < 2 || cyclingIdx !== null) return;
@@ -115,48 +126,54 @@ export default function Hand({
           const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
           const isCycling = cyclingIdx === idx;
-
-          // 우측 끝 카드가 좌측 끝으로 이동하는 오프셋
-          const cycleOffset = isCycling ? -(n - 1) * step : 0;
-
+          const angle = cardFanAngle(idx, n);
           const rippleDelay = (n - 2 - idx) * RIPPLE_STAGGER;
           const showRipple = isRippling && !isCycling && !isSelected;
 
           return (
+            // 바깥 div: 부채꼴 회전 담당 (피벗 = 카드 바닥 아래 FAN_RADIUS px)
             <div
               key={`${cardId}-${idx}`}
-              className={showRipple ? styles.ripple : undefined}
               style={{
                 position: "absolute",
-                left: groupLeft + idx * step,
+                left: cardLeft,
+                top: 0,
                 width: CARD_W,
                 height: CARD_H,
+                transformOrigin: `50% calc(100% + ${FAN_RADIUS}px)`,
+                transform: `rotate(${angle}deg)`,
                 zIndex: isCycling ? 0 : isSelected ? n + 10 : idx + 1,
-                transform: isCycling
-                  ? `translateX(${cycleOffset}px) translateY(-8px)`
-                  : isSelected
-                  ? "translateY(-10px)"
-                  : "translateY(0)",
-                transition: isCycling
-                  ? `transform ${CYCLE_DURATION}ms ease`
-                  : showRipple
-                  ? "none"
-                  : "transform 150ms ease, left 200ms ease",
-                opacity: isCycling ? 0.85 : 1,
-                animationDelay: showRipple ? `${rippleDelay}ms` : undefined,
+                transition: "transform 150ms ease",
               }}
             >
-              <CardView
-                cardId={cardId}
-                disabled={!canSelect}
-                conditionBlocked={conditionBlocked}
-                selected={isSelected}
-                handMode
-                speedBonus={me.status.speedBonus - (mods.speed ?? 0)}
-                statDeltas={mods}
-                onClick={() => onSelectCard(cardId, idx)}
-                onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
-              />
+              {/* 안쪽 div: 선택 lift / 사이클 fade / 리플 담당 */}
+              <div
+                className={showRipple ? styles.ripple : undefined}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  transform: isSelected
+                    ? `translateY(-${SELECTED_LIFT}px)`
+                    : "translateY(0)",
+                  opacity: isCycling ? 0 : 1,
+                  transition: isCycling
+                    ? `opacity ${CYCLE_DURATION}ms ease, transform ${CYCLE_DURATION}ms ease`
+                    : "transform 150ms ease",
+                  animationDelay: showRipple ? `${rippleDelay}ms` : undefined,
+                }}
+              >
+                <CardView
+                  cardId={cardId}
+                  disabled={!canSelect}
+                  conditionBlocked={conditionBlocked}
+                  selected={isSelected}
+                  handMode
+                  speedBonus={me.status.speedBonus - (mods.speed ?? 0)}
+                  statDeltas={mods}
+                  onClick={() => onSelectCard(cardId, idx)}
+                  onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
+                />
+              </div>
             </div>
           );
         })}
