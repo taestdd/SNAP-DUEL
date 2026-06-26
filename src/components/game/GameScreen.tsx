@@ -474,24 +474,24 @@ export default function GameScreen({
             }
             onCycleHand={() => dispatch({ type: "HAND/CYCLE" })}
             endTurnButton={
-              <>
-                <EndTurnButton
-                  label={readyLabel}
-                  disabled={!canAct}
-                  onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
-                  variant={hasSelection ? "primary" : "default"}
-                />
-                <EndTurnButton
-                  label="Tag"
-                  disabled={
-                    !canAct ||
-                    isTagAnimating ||
-                    state.p1TaggedThisTurn ||
-                    state.P1.characterHp[getBenchChar(state.P1)] <= 0
-                  }
-                  onClick={() => dispatch({ type: "TURN/TAG" })}
-                />
-              </>
+              <EndTurnButton
+                label={readyLabel}
+                disabled={!canAct}
+                onClick={() => dispatch({ type: "PLAYER/READY", player: "P1" })}
+                variant={hasSelection ? "primary" : "default"}
+              />
+            }
+            tagButton={
+              <EndTurnButton
+                label="Tag"
+                disabled={
+                  !canAct ||
+                  isTagAnimating ||
+                  state.p1TaggedThisTurn ||
+                  state.P1.characterHp[getBenchChar(state.P1)] <= 0
+                }
+                onClick={() => dispatch({ type: "TURN/TAG" })}
+              />
             }
           />
         </div>

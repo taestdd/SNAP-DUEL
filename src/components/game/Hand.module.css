@@ -3,9 +3,6 @@
   flex-direction: column;
   gap: 18px;
   padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
   overflow: visible;
 }
 
@@ -23,11 +20,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.title {
-  font-weight: 700;
-  font-size: 13px;
 }
 
 /* 헤더 버튼 그룹 */
@@ -79,10 +71,16 @@
   animation: cardRipple 200ms ease both;
 }
 
+.rowWrap {
+  overflow: hidden;
+  height: 130px;      /* 100px 표시 + 30px lift 헤드룸 */
+  margin-top: -30px;
+}
+
 .row {
   position: relative;
   width: 100%;
-  /* CARD_H(144) + 부채꼴 호 dip(~30) + 선택 lift(24) + 여유 */
-  height: 205px;
+  height: 100px;
+  margin-top: 30px;
   overflow: visible;
 }

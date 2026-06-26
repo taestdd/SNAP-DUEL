@@ -32,6 +32,7 @@ export default function Hand({
   onSelectCard,
   onCycleHand,
   endTurnButton,
+  tagButton,
   gameState,
   playerId,
 }: {
@@ -41,6 +42,7 @@ export default function Hand({
   onSelectCard: (cardId: string, handIndex: number) => void;
   onCycleHand: () => void;
   endTurnButton?: React.ReactNode;
+  tagButton?: React.ReactNode;
   gameState: GameState;
   playerId: PlayerId;
 }) {
@@ -92,9 +94,8 @@ export default function Hand({
     <div className={styles.wrap}>
       <div className={styles.top}>
         <div className={styles.titleRow}>
-          <div className={styles.title}>Hand ({me.hand.length}/10)</div>
           <div className={styles.headerButtons}>
-            {endTurnButton}
+            {tagButton}
             <button
               type="button"
               className={styles.cycleBtn}
@@ -105,9 +106,13 @@ export default function Hand({
               ↺
             </button>
           </div>
+          <div className={styles.headerButtons}>
+            {endTurnButton}
+          </div>
         </div>
       </div>
 
+      <div className={styles.rowWrap}>
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = getCard(cardId);
@@ -177,6 +182,7 @@ export default function Hand({
             </div>
           );
         })}
+      </div>
       </div>
 
       {detailCard && (

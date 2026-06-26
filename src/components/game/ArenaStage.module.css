@@ -1,5 +1,6 @@
 .zoomWrap {
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .arenaInner {
@@ -16,7 +17,7 @@
 
 .arena {
   display: block;
-  height: clamp(200px, 42dvh, 260px);
+  height: 100%;
   background: linear-gradient(180deg, #0d1428 0%, #111b35 60%, #16243f 100%);
   border: none;
   border-radius: 0;
@@ -30,7 +31,8 @@
   inset: 0;
   background-image: url('/sprites/backgrounds/arena_bg3.png');
   background-repeat: repeat-x;
-  background-size: auto 100%;
+  /* 최소 260px 고정 → 공간 부족 시 위(하늘)부터 잘림. 컨테이너가 더 크면 채움 */
+  background-size: auto max(260px, 100%);
   background-position: left bottom;
   opacity: 0.55;
   image-rendering: pixelated;
