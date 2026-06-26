@@ -32,8 +32,8 @@
   inset: 0;
   background-image: url('/sprites/backgrounds/arena_bg3.png');
   background-repeat: repeat-x;
-  /* 고정 높이 → 공간 부족 시 컨테이너에 맞춰 압축되지 않고 위(하늘)부터 잘림 */
-  background-size: auto 260px;
+  /* 최소 260px 고정 → 공간 부족 시 위(하늘)부터 잘림. 컨테이너가 더 크면 채움 */
+  background-size: auto max(260px, 100%);
   background-position: left bottom;
   opacity: 0.55;
   image-rendering: pixelated;
