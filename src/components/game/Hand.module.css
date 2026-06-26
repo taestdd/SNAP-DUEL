@@ -77,4 +77,6 @@
   /* CARD_H(144) + 부채꼴 호 dip(~30) - 클리핑 */
   height: 155px;
   overflow: visible;
+  /* 상단·좌우는 넉넉히 허용, 하단만 클리핑 */
+  clip-path: inset(-50px -9999px 0 -9999px);
 }
