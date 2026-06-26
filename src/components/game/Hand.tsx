@@ -112,6 +112,7 @@ export default function Hand({
         </div>
       </div>
 
+      <div className={styles.rowWrap}>
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
           const card = getCard(cardId);
@@ -181,6 +182,7 @@ export default function Hand({
             </div>
           );
         })}
+      </div>
       </div>
 
       {detailCard && (
