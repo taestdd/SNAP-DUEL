@@ -74,7 +74,7 @@
 .row {
   position: relative;
   width: 100%;
-  /* CARD_H(144) + 부채꼴 호 dip(~30) + 선택 lift(24) + 여유 */
-  height: 205px;
+  /* CARD_H(144) + 부채꼴 호 dip(~30) - 살짝 클리핑 */
+  height: 168px;
   overflow: visible;
 }
