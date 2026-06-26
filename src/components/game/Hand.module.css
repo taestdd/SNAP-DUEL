@@ -22,11 +22,6 @@
   gap: 8px;
 }
 
-.title {
-  font-weight: 700;
-  font-size: 13px;
-}
-
 /* 헤더 버튼 그룹 */
 .headerButtons {
   display: flex;
