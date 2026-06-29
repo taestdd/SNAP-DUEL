@@ -12,6 +12,7 @@ import ActionLog from "./ActionLog";
 import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
+import BattleAnnounce, { type AnnounceStep } from "./BattleAnnounce";
 import ArenaStage, { type HitSide } from "./ArenaStage";
 import QueuePreview from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
@@ -46,7 +47,10 @@ export default function GameScreen({
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
   // P1(내) 턴인지: SETUP_INIT이면 initiative===P1, SETUP_OTHER면 initiative!==P1
   const isMyTurn = isSetupTurnOf(state, "P1");
-  const canAct = isSetup && isMyTurn && !state.P1.ready && !isGameOver && !isTagAnimating;
+  // 중앙 안내 오버레이 (라운드 인트로 / 턴 시작 / 전투 시작). lock=true면 FIGHT!까지 입력 잠금
+  const [announce, setAnnounce] = useState<{ key: number; steps: AnnounceStep[]; lock: boolean } | null>(null);
+  const announceKeyRef = useRef(0);
+  const canAct = isSetup && isMyTurn && !state.P1.ready && !isGameOver && !isTagAnimating && !announce?.lock;
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
@@ -153,20 +157,46 @@ export default function GameScreen({
   }, [logOpen, deckOpen, menuOpen]);
 
   useEffect(() => {
-    const prev = prevPhaseRef.current;
-    const curr = state.phase;
-    prevPhaseRef.current = curr;
+    const prevPhase = prevPhaseRef.current;
+    const currPhase = state.phase;
+    prevPhaseRef.current = currPhase;
 
-    if (prev === curr) return;
+    if (prevPhase === currPhase) return;
 
+    // ── 중앙 안내 오버레이 (격투게임 스타일) ──────────────────────────────
+    const fireAnnounce = (steps: AnnounceStep[], lock: boolean) => {
+      announceKeyRef.current += 1;
+      setAnnounce({ key: announceKeyRef.current, steps, lock });
+    };
+
+    if (currPhase === "SETUP_INIT") {
+      if (state.turn === 1) {
+        // 라운드 첫 셋업(드래프트 완료 직후) → ROUND N → READY? → FIGHT! (FIGHT!까지 입력 잠금)
+        fireAnnounce(
+          [
+            { text: `ROUND ${state.round}`, variant: "round", ms: 900 },
+            { text: "READY?", variant: "ready", ms: 700 },
+            { text: "FIGHT!", variant: "fight", ms: 700 },
+          ],
+          true,
+        );
+      } else {
+        // 일반 턴 시작 → TURN N (잠금 없음)
+        fireAnnounce([{ text: `TURN ${state.turn}`, variant: "turn", ms: 800 }], false);
+      }
+      return;
+    }
+
+    if (currPhase === "RESOLVE") {
+      fireAnnounce([{ text: "전투 시작", variant: "clash", ms: 650 }], false);
+      return;
+    }
+
+    // 나머지는 기존 상단 토스트 유지
     let msg = "";
-    if (curr === "SETUP_INIT") {
-      msg = `Turn ${state.turn} 시작`;
-    } else if (curr === "RESOLVE") {
-      msg = "전투 시작!";
-    } else if (curr === "WAITING_DISCARD") {
+    if (currPhase === "WAITING_DISCARD") {
       msg = "손패 초과 - 카드를 버리세요";
-    } else if (curr === "GAME_OVER") {
+    } else if (currPhase === "GAME_OVER") {
       if (state.winner === "P1") msg = "승리!";
       else if (state.winner === "AI") msg = "패배";
       else msg = "무승부";
@@ -177,11 +207,15 @@ export default function GameScreen({
       setToastKey(toastKeyRef.current);
       setToastText(msg);
     }
-  }, [state.phase, state.turn, state.winner]);
+  }, [state.phase, state.turn, state.winner, state.round]);
 
   return (
     <div className={styles.page}>
       {toastText && <ToastMessage key={toastKey} message={toastText} />}
+
+      {announce && (
+        <BattleAnnounce key={announce.key} steps={announce.steps} onDone={() => setAnnounce(null)} />
+      )}
 
       {state.phase === "ROUND_DRAFT" && (
         <DraftModal state={state} dispatch={dispatch} />
