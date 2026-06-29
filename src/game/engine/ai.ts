@@ -226,11 +226,6 @@ export function selectCard(
 }
 
 /**
- * @deprecated selectCard(state, "AI") 를 사용하세요.
- */
-export const aiSelectCard = (state: GameState) => selectCard(state, "AI");
-
-/**
  * ROUND_DRAFT 페이즈에서 지정한 플레이어가 덱에서 뽑아올 카드 목록을 선택한다.
  *
  * 전략:
@@ -275,9 +270,3 @@ export function selectDraftCards(
   // 점수 순으로 count장 선택 (덱에 같은 카드가 여러 장 있으면 중복 허용)
   return scored.slice(0, count).map(({ id }) => id);
 }
-
-/**
- * @deprecated selectDraftCards(state, "AI", count) 를 사용하세요.
- */
-export const aiSelectDraftCards = (state: GameState, count: number) =>
-  selectDraftCards(state, "AI", count);
