@@ -103,8 +103,9 @@ src/
 │   │   ├── reducer.ts              # gameReducer — Action → GameState
 │   │   ├── rules.ts                # re-export 파사드
 │   │   ├── constants.ts            # LOG_LIMIT=200, HAND_LIMIT=10
-│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, ...)
-│   │   ├── effects.ts              # 카드 효과 적용
+│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, getEffectiveSpeed, ...)
+│   │   ├── effects.ts              # 카드 효과 적용 + 판정/스탯 단일 진실원
+│   │   │                           #   (getCardPlayability, deriveCardStats)
 │   │   ├── turn.ts                 # 턴/라운드 라이프사이클
 │   │   ├── resolve.ts              # 리졸브 루프
 │   │   ├── ai.ts                   # AI 카드 선택 로직
@@ -122,7 +123,16 @@ src/
 │   │   └── spriteMap.ts
 │   │
 │   └── tests/
-│       └── engine.test.ts
+│       ├── fixtures.ts             # makeState / 합성 카드·캐릭터 (테스트 공용)
+│       ├── stateHelpers.test.ts
+│       ├── effects.test.ts
+│       ├── turn.test.ts
+│       ├── resolve.test.ts
+│       ├── reducer.test.ts
+│       ├── makeQueue.test.ts
+│       ├── playability.test.ts     # getCardPlayability / 판정===집행 정합성
+│       ├── cardStats.test.ts       # deriveCardStats / 표시===전투 데미지 정합성
+│       └── smoke.test.ts
 │
 ├── hooks/
 │   └── useGameData.ts              # 카드/덱/캐릭터 병렬 로딩 훅
@@ -146,11 +156,32 @@ types ← constants ← stateHelpers ← effects ← turn ← resolve
 ```
 
 - `stateHelpers`: 순수 조작. rules/engine 모듈 import 없음
-- `effects`: stateHelpers + cards + characters만 import
-- `turn`: effects import (canUseCard 사용), stateHelpers import
+- `effects`: stateHelpers + cards + characters만 import. 카드 효과 적용 + 카드 판정/스탯 단일 진실원
+- `turn`: effects import (canUseCard / getEffectiveCost 사용), stateHelpers import
 - `resolve`: effects + turn import, stateHelpers import
 - `rules.ts`: 위 4개를 re-export하는 파사드 (직접 로직 없음)
 - `reducer.ts`: rules.ts를 통해 모든 기능 사용
+
+---
+
+## 카드 판정·스탯 단일 진실원 (effects.ts)
+
+카드의 "사용 가능 여부"와 "실효 스탯"은 **흩어뜨리지 말고 effects.ts의 단일 함수**에서만 계산한다.
+UI(Hand)·AI(ai.ts)·집행(turn.ts)이 모두 같은 결과를 보도록 보장한다.
+
+**판정 — `getCardPlayability(state, player, cardId): CardPlayability`**
+- 어피니티 / altCost / useCondition / 코스트를 한 번에 검사, 플래그별로 노출
+- 파생 함수: `canUseCard`(코스트 제외 규칙 자격), `canPlayCard`(코스트 포함), `getPlayableCards`(핸드 전체 필터)
+- `getEffectiveCost(state, player, card)`: statModifiers 보정 반영 실효 코스트
+
+**스탯 — `deriveCardStats(state, player, cardId): CardStats`**
+- base + statModifiers + status 버프(speedBonus / attackBuff)를 합산
+- 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
+- CardView는 자체 계산 없이 이 결과(`stats` prop)만 표시
+
+**규칙:** 카드 표시/판정 로직을 컴포넌트나 ai.ts에 새로 인라인하지 말 것.
+새 조건/스탯이 생기면 위 두 함수에만 추가하고, `playability.test.ts`/`cardStats.test.ts`의
+정합성 테스트(판정===집행, 표시===전투 데미지)로 어긋남을 막는다.
 
 ---
 
