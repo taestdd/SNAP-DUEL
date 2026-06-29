@@ -56,6 +56,9 @@ export function createTutorialState(stage: TutorialStage): GameState {
     round: initialState.startingRound ?? 3,
     turn: 0,
     phase: initialState.startingPhase ?? "TURN_START",
+    // 튜토리얼은 항상 동일하게 진행되도록 고정 시드 사용
+    seed: 1,
+    rng: 1,
     winner: null,
     initiative: initialState.initiative,
     P1: makeCombatant("P1", initialState.p1Hp, initialState.p1Hand, initialState.p1Deck, initialState.p1ActiveCharId, initialState.p1BenchChar),

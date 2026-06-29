@@ -98,6 +98,8 @@ export function makeState(o: StateOverrides = {}): GameState {
     round: 1,
     turn: 1,
     phase: "RESOLVE",
+    seed: 1,
+    rng: 1,
     winner: null,
     initiative: "P1",
     P1: makeCombatant("P1", P1),

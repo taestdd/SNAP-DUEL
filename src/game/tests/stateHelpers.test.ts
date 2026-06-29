@@ -124,13 +124,15 @@ describe("존 이동", () => {
     );
     expect(s.P1.deck).toEqual(["a", "c"]);
   });
-  it("toPosition=random은 Math.random으로 위치 결정", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0); // 항상 맨 앞
-    const s = moveCardsBetweenZones(
-      makeState({ P1: { trash: ["a"], deck: ["c", "d"] } }),
-      "P1", "trash", "P1", "deck", ["a"], "random",
-    );
-    expect(s.P1.deck[0]).toBe("a");
+  it("toPosition=random은 시드 rng로 위치 결정 (결정론)", () => {
+    const base = makeState({ rng: 42, P1: { trash: ["a"], deck: ["c", "d"] } });
+    const s1 = moveCardsBetweenZones(base, "P1", "trash", "P1", "deck", ["a"], "random");
+    const s2 = moveCardsBetweenZones(base, "P1", "trash", "P1", "deck", ["a"], "random");
+    // 같은 입력(같은 rng) → 같은 위치 + a가 어딘가 삽입되고 rng는 전진
+    expect(s1.P1.deck).toEqual(s2.P1.deck);
+    expect(s1.P1.deck).toContain("a");
+    expect(s1.P1.deck.length).toBe(3);
+    expect(s1.rng).not.toBe(base.rng);
   });
   it("moveQueuedCard: queue에서 cooldown으로 이동", () => {
     const s = moveQueuedCard(makeState({ P1: { queue: ["jab"] } }), "P1", "jab", "cooldown");

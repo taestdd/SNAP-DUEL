@@ -5,7 +5,7 @@
 
 import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget, Status } from "./types";
 import { getCard } from "./cards";
-import { shuffle } from "./rng";
+import { shuffleSeeded, randomInt } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
 
 export { LOG_LIMIT };
@@ -49,25 +49,29 @@ export function isSetupTurnOf(state: GameState, player: PlayerId): boolean {
 /**
  * 카드들을 대상 영역 배열에 위치 규칙에 맞게 삽입한 새 배열을 반환한다.
  * top/random은 덱에만 적용되며, 그 외에는 하단에 추가한다.
+ * random 위치는 시드 rng를 소비하므로 [결과, 다음 rng]를 반환한다.
  */
 export function insertCards(
   target: string[],
   cards: string[],
   toZone: CardZone,
   toPosition: DeckInsertPosition,
-): string[] {
+  rngState: number,
+): [result: string[], next: number] {
   if (toZone === "deck" && toPosition === "top") {
-    return [...cards, ...target];
+    return [[...cards, ...target], rngState];
   }
   if (toZone === "deck" && toPosition === "random") {
     const result = [...target];
+    let s = rngState;
     for (const id of cards) {
-      const pos = Math.floor(Math.random() * (result.length + 1));
+      let pos: number;
+      [pos, s] = randomInt(s, result.length + 1);
       result.splice(pos, 0, id);
     }
-    return result;
+    return [result, s];
   }
-  return [...target, ...cards];
+  return [[...target, ...cards], rngState];
 }
 
 export function pushLog(state: GameState, msg: string): GameState {
@@ -266,10 +270,11 @@ export function moveCardsBetweenZones(
   } as GameState;
 
   const targetArr = s[toPlayer][toZone] as string[];
-  const newTargetArr = insertCards(targetArr, cardIds, toZone, toPosition);
+  const [newTargetArr, nextRng] = insertCards(targetArr, cardIds, toZone, toPosition, s.rng);
 
   s = {
     ...s,
+    rng: nextRng,
     [toPlayer]: { ...s[toPlayer], [toZone]: newTargetArr },
   } as GameState;
 
@@ -299,7 +304,8 @@ export function recycleTrashIntoDeck(state: GameState, player: PlayerId): GameSt
   const me = state[player];
   if (me.trash.length === 0) return syncExhausted(state, player);
 
-  const s = updateCombatant(state, player, { deck: shuffle([...me.deck, ...me.trash]), trash: [] });
+  const [deck, nextRng] = shuffleSeeded([...me.deck, ...me.trash], state.rng);
+  const s = updateCombatant({ ...state, rng: nextRng }, player, { deck, trash: [] });
   return syncExhausted(s, player);
 }
 
