@@ -184,7 +184,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
 /**
  * 지정한 플레이어가 이번 턴에 사용할 카드를 선택한다.
  *
- * 코스트 가능 + useCondition 충족 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
+ * 사용 가능한(getPlayableCards) 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
  * 아래 조건을 모두 충족하면 패스(null)로 전환한다:
  *   - 주도권이 없을 것
  *   - 선택 카드가 공격 카드(캔슬 대상)일 것
