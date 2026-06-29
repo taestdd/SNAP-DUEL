@@ -1,6 +1,6 @@
 import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
-import { canUseCard, getBenchChar, opponentOf } from "./rules";
+import { getPlayableCards, getBenchChar, opponentOf } from "./rules";
 
 function getMinAttackSpeed(): number {
   const speeds = Object.values(getAllCards())
@@ -184,7 +184,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
 /**
  * 지정한 플레이어가 이번 턴에 사용할 카드를 선택한다.
  *
- * 코스트 가능 + useCondition 충족 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
+ * 사용 가능한(getPlayableCards) 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
  * 아래 조건을 모두 충족하면 패스(null)로 전환한다:
  *   - 주도권이 없을 것
  *   - 선택 카드가 공격 카드(캔슬 대상)일 것
@@ -199,12 +199,9 @@ export function selectCard(
 ): { id: string; idx: number } | null {
   const me = state[player];
 
-  const candidates = me.hand
-    .map((id, idx) => ({ id, idx }))
-    .filter(({ id }) => {
-      const card = getCard(id);
-      return card && card.cost <= me.deck.length && canUseCard(state, player, id);
-    });
+  // 사용 가능 카드 판정은 엔진의 단일 진실원(getPlayableCards)에 위임.
+  // 코스트 보정(statModifiers)이 반영된 실효 코스트로 필터링된다.
+  const candidates = getPlayableCards(state, player);
 
   if (candidates.length === 0) return null;
 
@@ -227,11 +224,6 @@ export function selectCard(
 
   return best;
 }
-
-/**
- * @deprecated selectCard(state, "AI") 를 사용하세요.
- */
-export const aiSelectCard = (state: GameState) => selectCard(state, "AI");
 
 /**
  * ROUND_DRAFT 페이즈에서 지정한 플레이어가 덱에서 뽑아올 카드 목록을 선택한다.
@@ -278,9 +270,3 @@ export function selectDraftCards(
   // 점수 순으로 count장 선택 (덱에 같은 카드가 여러 장 있으면 중복 허용)
   return scored.slice(0, count).map(({ id }) => id);
 }
-
-/**
- * @deprecated selectDraftCards(state, "AI", count) 를 사용하세요.
- */
-export const aiSelectDraftCards = (state: GameState, count: number) =>
-  selectDraftCards(state, "AI", count);

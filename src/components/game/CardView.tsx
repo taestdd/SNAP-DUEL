@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import styles from "./CardView.module.css";
 import { getCard } from "@/game/engine/cards";
-import type { StatTarget } from "@/game/engine/types";
+import type { CardStats } from "@/game/engine/types";
 import { effectLabel } from "./cardLabels";
 import CostBox from "./CostBox";
 import SpeedCircle from "./SpeedCircle";
@@ -29,8 +29,7 @@ export default function CardView({
   conditionBlocked = false,
   selected,
   handMode = false,
-  speedBonus = 0,
-  statDeltas,
+  stats,
   onClick,
   onLongPress,
 }: {
@@ -39,8 +38,8 @@ export default function CardView({
   conditionBlocked?: boolean;
   selected: boolean;
   handMode?: boolean;
-  speedBonus?: number;
-  statDeltas?: Partial<Record<StatTarget, number>>;
+  /** 실효 스탯 (deriveCardStats). 없으면 base 스탯으로 표시 */
+  stats?: CardStats;
   onClick: () => void;
   onLongPress?: () => void;
 }) {
@@ -50,12 +49,12 @@ export default function CardView({
 
   if (!card) return null;
 
-  const costDelta = statDeltas?.cost ?? 0;
-  const gaDelta = statDeltas?.ground_attack ?? 0;
-  const aaDelta = statDeltas?.anti_air_attack ?? 0;
-  const effectiveCost = Math.max(0, card.cost + costDelta);
-  const effectiveGA = Math.max(0, (card.groundAttack ?? 0) + gaDelta);
-  const effectiveAA = Math.max(0, (card.antiAirAttack ?? 0) + aaDelta);
+  const effectiveCost = stats ? stats.cost : card.cost;
+  const effectiveSpeed = stats ? stats.speed : card.speed;
+  const effectiveGA = stats ? stats.groundAttack : (card.groundAttack ?? 0);
+  const effectiveAA = stats ? stats.antiAirAttack : (card.antiAirAttack ?? 0);
+  const costDelta = effectiveCost - card.cost;
+  const speedBonus = card.speed - effectiveSpeed; // 양수 = 더 빠름(속도 감소)
 
   function startPress() {
     longFiredRef.current = false;
@@ -113,7 +112,7 @@ export default function CardView({
           {/* 일러스트 영역: 스피드 원 + 공격 스트립 */}
           <div className={styles.illustArea}>
             <SpeedCircle
-              value={Math.max(0, card.speed - speedBonus)}
+              value={effectiveSpeed}
               bonus={speedBonus}
               disabled={disabled}
             />
@@ -133,9 +132,9 @@ export default function CardView({
         </>
       ) : (
         <div className={styles.top}>
-          <div className={styles.cost}>{card.cost}</div>
+          <div className={styles.cost}>{effectiveCost}</div>
           <div className={styles.name}>{card.name}</div>
-          <div className={styles.speed}>{card.speed}</div>
+          <div className={styles.speed}>{effectiveSpeed}</div>
         </div>
       )}
 

@@ -3,9 +3,7 @@ import type { Combatant, GameState, PlayerId, SelectedCard } from "@/game/engine
 import styles from "./Hand.module.css";
 import CardView from "./CardView";
 import CardDetailModal from "./CardDetailModal";
-import { getCard } from "@/game/engine/cards";
-import { CHARACTERS } from "@/game/engine/characters";
-import { evaluateModifiers } from "@/game/engine/stateHelpers";
+import { getCardPlayability, deriveCardStats } from "@/game/engine/effects";
 
 const CARD_W = 110;
 const CARD_H = 144;
@@ -115,20 +113,13 @@ export default function Hand({
       <div className={styles.rowWrap}>
       <div className={styles.row} ref={rowRef}>
         {me.hand.map((cardId, idx) => {
-          const card = getCard(cardId);
-          const mods = evaluateModifiers(gameState, playerId, card?.statModifiers);
-          const effectiveCost = card ? Math.max(0, card.cost + (mods.cost ?? 0)) : 0;
-          const costOk = !!card && effectiveCost <= me.deck.length;
-          const conditionMet =
-            !card?.useCondition ||
-            (card.useCondition === "ground" && me.airborneStack === 0) ||
-            (card.useCondition === "airborne" && me.airborneStack >= 1);
-          const charAffinities = CHARACTERS[me.activeCharacter].affinities;
-          const affinityMet =
-            !card?.tags?.length ||
-            card.tags.every((t) => charAffinities.includes(t));
-          const canSelect = !disabled && costOk && conditionMet && affinityMet;
-          const conditionBlocked = !disabled && costOk && (!conditionMet || !affinityMet);
+          // 사용 가능 판정·실효 스탯 모두 엔진의 단일 진실원에 위임
+          const play = getCardPlayability(gameState, playerId, cardId);
+          const stats = deriveCardStats(gameState, playerId, cardId);
+          const canSelect = !disabled && play.playable;
+          // 코스트·altCost는 충족하나 조건/어피니티로 막힌 경우만 "차단" 스타일
+          const conditionBlocked =
+            !disabled && play.costOk && play.altCostOk && (!play.conditionMet || !play.affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
           const isCycling = cyclingIdx === idx;
           const angle = cardFanAngle(idx, n);
@@ -173,8 +164,7 @@ export default function Hand({
                   conditionBlocked={conditionBlocked}
                   selected={isSelected}
                   handMode
-                  speedBonus={me.status.speedBonus - (mods.speed ?? 0)}
-                  statDeltas={mods}
+                  stats={stats}
                   onClick={() => onSelectCard(cardId, idx)}
                   onLongPress={() => setDetailCard({ cardId, handIndex: idx })}
                 />
