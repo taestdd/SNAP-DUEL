@@ -51,6 +51,7 @@ export default function GameScreen({
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
   const prevPhaseRef = useRef(state.phase);
+  const prevRoundRef = useRef(state.round);
   const toastKeyRef = useRef(0);
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
@@ -153,23 +154,29 @@ export default function GameScreen({
   }, [logOpen, deckOpen, menuOpen]);
 
   useEffect(() => {
-    const prev = prevPhaseRef.current;
-    const curr = state.phase;
-    prevPhaseRef.current = curr;
+    const prevPhase = prevPhaseRef.current;
+    const currPhase = state.phase;
+    prevPhaseRef.current = currPhase;
 
-    if (prev === curr) return;
+    const prevRound = prevRoundRef.current;
+    prevRoundRef.current = state.round;
 
     let msg = "";
-    if (curr === "SETUP_INIT") {
-      msg = `Turn ${state.turn} 시작`;
-    } else if (curr === "RESOLVE") {
-      msg = "전투 시작!";
-    } else if (curr === "WAITING_DISCARD") {
-      msg = "손패 초과 - 카드를 버리세요";
-    } else if (curr === "GAME_OVER") {
-      if (state.winner === "P1") msg = "승리!";
-      else if (state.winner === "AI") msg = "패배";
-      else msg = "무승부";
+    if (state.round !== prevRound) {
+      // 라운드 변화는 ROUND_DRAFT 진입과 함께 발생 — 라운드 알림을 우선 표시
+      msg = `Round ${state.round} 시작`;
+    } else if (prevPhase !== currPhase) {
+      if (currPhase === "SETUP_INIT") {
+        msg = `Turn ${state.turn} 시작`;
+      } else if (currPhase === "RESOLVE") {
+        msg = "전투 시작!";
+      } else if (currPhase === "WAITING_DISCARD") {
+        msg = "손패 초과 - 카드를 버리세요";
+      } else if (currPhase === "GAME_OVER") {
+        if (state.winner === "P1") msg = "승리!";
+        else if (state.winner === "AI") msg = "패배";
+        else msg = "무승부";
+      }
     }
 
     if (msg) {
@@ -177,7 +184,7 @@ export default function GameScreen({
       setToastKey(toastKeyRef.current);
       setToastText(msg);
     }
-  }, [state.phase, state.turn, state.winner]);
+  }, [state.phase, state.turn, state.winner, state.round]);
 
   return (
     <div className={styles.page}>
