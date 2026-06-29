@@ -325,6 +325,24 @@ export type SelectedCard = {
 };
 
 /**
+ * 카드의 실효 스탯 (표시·미리보기용 단일 진실원).
+ * base 스탯에 statModifiers(조건부 보정)와 status 버프(speedBonus/attackBuff)를 모두 합산한다.
+ * 전투 해결(effects.ts)과 동일한 계산식을 사용해 핸드 표시와 실제 결과가 일치한다.
+ */
+export type CardStats = {
+  /** 실효 코스트 (base + mods.cost) */
+  cost: number;
+  /** 실효 속도 (base - speedBonus + mods.speed, 낮을수록 빠름) */
+  speed: number;
+  /** 실효 지상 공격력 (base + mods + attackBuff) */
+  groundAttack: number;
+  /** 실효 대공 공격력 (base + mods + attackBuff) */
+  antiAirAttack: number;
+  /** 실효 gain (base + mods.gain) */
+  gain: number;
+};
+
+/**
  * 카드 사용 가능 판정 결과 (UI·AI·집행 공용 단일 진실원).
  * 각 플래그는 독립적으로 노출되어 UI가 "코스트 부족"과 "조건 차단"을 구분 표시할 수 있다.
  */

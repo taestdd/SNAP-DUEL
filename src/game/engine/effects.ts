@@ -1,4 +1,4 @@
-import type { Card, CardEffect, CardPlayability, CardZone, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
+import type { Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -13,6 +13,7 @@ import {
   syncExhausted,
   clearAttackBuff,
   evaluateModifiers,
+  getEffectiveSpeed,
   getBenchChar,
   updateCombatant,
   updateStatus,
@@ -310,6 +311,27 @@ export function applyCardEffectsWithPause(
 export function getEffectiveCost(state: GameState, player: PlayerId, card: Card): number {
   const mods = evaluateModifiers(state, player, card.statModifiers);
   return Math.max(0, card.cost + (mods.cost ?? 0));
+}
+
+/**
+ * 카드의 실효 스탯을 한 번에 계산하는 표시·미리보기용 단일 진실원.
+ * statModifiers(조건부 보정) + status 버프(speedBonus/attackBuff)를 모두 합산하며,
+ * 공격력은 전투 해결(applyCardEffectsWithPause)과 동일한 식(base + mods + attackBuff)을 쓴다.
+ */
+export function deriveCardStats(state: GameState, player: PlayerId, cardId: string): CardStats {
+  const card = getCard(cardId);
+  if (!card) return { cost: 0, speed: 0, groundAttack: 0, antiAirAttack: 0, gain: 0 };
+
+  const mods = evaluateModifiers(state, player, card.statModifiers);
+  const attackBuff = state[player].status.attackBuff ?? 0;
+
+  return {
+    cost: getEffectiveCost(state, player, card),
+    speed: getEffectiveSpeed(state, player, cardId),
+    groundAttack: Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + attackBuff),
+    antiAirAttack: Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + attackBuff),
+    gain: Math.max(0, (card.gain ?? 0) + (mods.gain ?? 0)),
+  };
 }
 
 /**

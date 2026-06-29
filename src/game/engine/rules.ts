@@ -8,7 +8,7 @@
  *   constants.ts — 공용 상수 (LOG_LIMIT, HAND_LIMIT)
  */
 
-export { applyTagSwitch, applyCardEffectsWithPause, canUseCard, canPlayCard, getCardPlayability, getPlayableCards, getEffectiveCost } from "./effects";
+export { applyTagSwitch, applyCardEffectsWithPause, canUseCard, canPlayCard, getCardPlayability, getPlayableCards, getEffectiveCost, deriveCardStats } from "./effects";
 export { beginTurn, endTurnCleanup, queueCard, resumeCostPayment, submitDraft } from "./turn";
 export { enterResolving, resumeResolve } from "./resolve";
 export { LOG_LIMIT } from "./constants";
