@@ -324,6 +324,25 @@ export type SelectedCard = {
   handIndex: number;
 };
 
+/**
+ * 카드 사용 가능 판정 결과 (UI·AI·집행 공용 단일 진실원).
+ * 각 플래그는 독립적으로 노출되어 UI가 "코스트 부족"과 "조건 차단"을 구분 표시할 수 있다.
+ */
+export type CardPlayability = {
+  /** 모든 조건 충족 (costOk && affinityMet && altCostOk && conditionMet) */
+  playable: boolean;
+  /** statModifiers 보정이 반영된 실효 코스트 */
+  effectiveCost: number;
+  /** effectiveCost ≤ 덱 장수 */
+  costOk: boolean;
+  /** useCondition(ground/airborne) 충족 */
+  conditionMet: boolean;
+  /** 카드 태그가 캐릭터 어피니티에 포함됨 */
+  affinityMet: boolean;
+  /** altCost(HP/덱 지불) 지불 가능 */
+  altCostOk: boolean;
+};
+
 export type Status = {
   attackBuff: number;
 

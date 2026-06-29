@@ -10,11 +10,10 @@ import {
   moveCooldownToTrash,
   decideWinnerByHp,
   moveCardsBetweenZones,
-  evaluateModifiers,
   updateCombatant,
 } from "./stateHelpers";
 import { HAND_LIMIT } from "./constants";
-import { canUseCard } from "./effects";
+import { canUseCard, getEffectiveCost } from "./effects";
 
 /* -------------------------- */
 /* 라운드 라이프사이클          */
@@ -206,8 +205,7 @@ export function resumeCostPayment(state: GameState, selectedCards: string[]): Ga
   const newHandIndex = me.hand.indexOf(pc.cardId);
   if (newHandIndex < 0) return state;
 
-  const mods = evaluateModifiers(s, pc.player, card.statModifiers);
-  const effectiveCost = Math.max(0, card.cost + (mods.cost ?? 0));
+  const effectiveCost = getEffectiveCost(s, pc.player, card);
   if (me.deck.length < effectiveCost) return state;
 
   const nextHand = [...me.hand];
@@ -245,8 +243,7 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
   if (me.hand[handIndex] !== cardId) return state;
   if (!canUseCard(state, player, cardId)) return state;
 
-  const mods = evaluateModifiers(state, player, card.statModifiers);
-  const effectiveCost = Math.max(0, card.cost + (mods.cost ?? 0));
+  const effectiveCost = getEffectiveCost(state, player, card);
 
   if (me.deck.length < effectiveCost) return state;
 

@@ -1,6 +1,6 @@
 import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
-import { canUseCard, getBenchChar, opponentOf } from "./rules";
+import { getPlayableCards, getBenchChar, opponentOf } from "./rules";
 
 function getMinAttackSpeed(): number {
   const speeds = Object.values(getAllCards())
@@ -199,12 +199,9 @@ export function selectCard(
 ): { id: string; idx: number } | null {
   const me = state[player];
 
-  const candidates = me.hand
-    .map((id, idx) => ({ id, idx }))
-    .filter(({ id }) => {
-      const card = getCard(id);
-      return card && card.cost <= me.deck.length && canUseCard(state, player, id);
-    });
+  // 사용 가능 카드 판정은 엔진의 단일 진실원(getPlayableCards)에 위임.
+  // 코스트 보정(statModifiers)이 반영된 실효 코스트로 필터링된다.
+  const candidates = getPlayableCards(state, player);
 
   if (candidates.length === 0) return null;
 

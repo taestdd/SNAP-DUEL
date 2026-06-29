@@ -1,4 +1,4 @@
-import type { CardEffect, CardZone, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
+import type { Card, CardEffect, CardPlayability, CardZone, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -306,31 +306,76 @@ export function applyCardEffectsWithPause(
 /* 카드 사용 조건 체크          */
 /* -------------------------- */
 
-export function canUseCard(state: GameState, player: PlayerId, cardId: string): boolean {
-  const card = getCard(cardId);
-  if (!card) return false;
+/** statModifiers 보정을 반영한 카드의 실효 코스트. */
+export function getEffectiveCost(state: GameState, player: PlayerId, card: Card): number {
+  const mods = evaluateModifiers(state, player, card.statModifiers);
+  return Math.max(0, card.cost + (mods.cost ?? 0));
+}
 
+/**
+ * 카드 사용 가능 판정의 단일 진실원(Single Source of Truth).
+ * UI(Hand)·AI(selectCard)·집행(queueCard)이 모두 이 함수에서 파생한다.
+ * 개별 플래그를 노출해 UI가 코스트 부족과 조건 차단을 구분 표시할 수 있다.
+ */
+export function getCardPlayability(state: GameState, player: PlayerId, cardId: string): CardPlayability {
+  const card = getCard(cardId);
+  if (!card) {
+    return { playable: false, effectiveCost: 0, costOk: false, conditionMet: false, affinityMet: false, altCostOk: false };
+  }
+  const me = state[player];
+
+  // 코스트 (statModifiers 보정 반영)
+  const effectiveCost = getEffectiveCost(state, player, card);
+  const costOk = effectiveCost <= me.deck.length;
+
+  // 어피니티: 카드 태그가 모두 캐릭터 어피니티에 포함되어야 함
+  let affinityMet = true;
   if (card.tags && card.tags.length > 0) {
-    const charAffinities = CHARACTERS[state[player].activeCharacter].affinities;
-    if (!card.tags.every((t) => charAffinities.includes(t))) return false;
+    const charAffinities = CHARACTERS[me.activeCharacter].affinities;
+    affinityMet = card.tags.every((t) => charAffinities.includes(t));
   }
 
+  // altCost: HP 또는 덱/묘지 카드 지불 가능 여부
+  let altCostOk = true;
   if (card.altCost) {
     const cost = card.altCost;
     if (cost.type === "hp") {
-      if (state[player].hp <= cost.amount) return false;
+      altCostOk = me.hp > cost.amount;
     } else {
       const fromPlayerId: PlayerId = cost.target === "enemy" ? opponentOf(player) : player;
       const pool = (state[fromPlayerId][cost.fromZone] as string[])
         .filter(id => id !== cardId)
         .filter(id => !cost.tag || getCard(id)?.tags?.includes(cost.tag));
-      if (pool.length < cost.count) return false;
+      altCostOk = pool.length >= cost.count;
     }
   }
 
-  if (!card.useCondition) return true;
-  const stack = state[player].airborneStack;
-  if (card.useCondition === "ground") return stack === 0;
-  if (card.useCondition === "airborne") return stack >= 1;
-  return true;
+  // useCondition: ground/airborne 충족 여부
+  let conditionMet = true;
+  if (card.useCondition === "ground") conditionMet = me.airborneStack === 0;
+  else if (card.useCondition === "airborne") conditionMet = me.airborneStack >= 1;
+
+  const playable = costOk && affinityMet && altCostOk && conditionMet;
+  return { playable, effectiveCost, costOk, conditionMet, affinityMet, altCostOk };
+}
+
+/**
+ * 덱 코스트를 제외한 규칙 자격(어피니티·altCost·useCondition)만 검사한다.
+ * 코스트 지불은 queueCard가 별도로 처리하므로 기존 동작을 유지한다.
+ */
+export function canUseCard(state: GameState, player: PlayerId, cardId: string): boolean {
+  const p = getCardPlayability(state, player, cardId);
+  return p.affinityMet && p.altCostOk && p.conditionMet;
+}
+
+/** 코스트까지 포함해 실제로 사용 가능한지. */
+export function canPlayCard(state: GameState, player: PlayerId, cardId: string): boolean {
+  return getCardPlayability(state, player, cardId).playable;
+}
+
+/** 핸드에서 실제 사용 가능한 카드 목록을 인덱스와 함께 반환. */
+export function getPlayableCards(state: GameState, player: PlayerId): { id: string; idx: number }[] {
+  return state[player].hand
+    .map((id, idx) => ({ id, idx }))
+    .filter(({ id }) => canPlayCard(state, player, id));
 }
