@@ -510,6 +510,11 @@ export type GameState = {
   turn: number;
   phase: TurnPhase;
 
+  /** 게임 시작 시드 (재현/리플레이용, 불변) */
+  seed: number;
+  /** 현재 RNG 상태 (난수 소비 시마다 전진) */
+  rng: number;
+
   winner: PlayerId | "DRAW" | null;
 
   /**

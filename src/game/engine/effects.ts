@@ -18,7 +18,7 @@ import {
   updateCombatant,
   updateStatus,
 } from "./stateHelpers";
-import { shuffle } from "./rng";
+import { shuffleSeeded } from "./rng";
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체)          */
@@ -138,8 +138,9 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const zone = effect.zone ?? "deck";
       const arr = state[target][zone] as string[];
       if (arr.length === 0) return pushLog(state, `${target} shuffles ${zone} (empty)`);
+      const [shuffled, nextRng] = shuffleSeeded([...arr], state.rng);
       return pushLog(
-        { ...state, [target]: { ...state[target], [zone]: shuffle([...arr]) } } as GameState,
+        { ...state, rng: nextRng, [target]: { ...state[target], [zone]: shuffled } } as GameState,
         `${target} shuffles ${zone}`,
       );
     }
@@ -156,9 +157,9 @@ function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffec
       const generated = Array.from({ length: count }, () => genCardId);
 
       const targetArr = state[target][toZone] as string[];
-      const newArr = insertCards(targetArr, generated, toZone, toPosition);
+      const [newArr, nextRng] = insertCards(targetArr, generated, toZone, toPosition, state.rng);
 
-      let s = { ...state, [target]: { ...state[target], [toZone]: newArr } } as GameState;
+      let s = { ...state, rng: nextRng, [target]: { ...state[target], [toZone]: newArr } } as GameState;
       if (toZone === "deck") s = syncExhausted(s, target);
       return pushLog(s, `${target} generates ${count}x "${genCard.name}" → ${toZone}`);
     }
