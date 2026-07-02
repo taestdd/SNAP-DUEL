@@ -6,6 +6,7 @@ import { createInitialState } from "@/game/engine/state";
 import { isSetupTurnOf } from "@/game/engine/stateHelpers";
 import type { Action, CharacterId, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
+import { useFlowDriver } from "@/hooks/useFlowDriver";
 import {
   syncState,
   clearGuestAction,
@@ -180,12 +181,8 @@ export function HostGameApp({
     [roomCode],
   );
 
-  // TURN_START → TURN/BEGIN
-  useEffect(() => {
-    if (state.phase === "TURN_START" && state.P1.hand.length > 0 && state.AI.hand.length > 0) {
-      dispatch({ type: "TURN/BEGIN" });
-    }
-  }, [state.phase, state.P1.hand.length, state.AI.hand.length]);
+  // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
+  useFlowDriver(state, dispatch, { paused: isTagAnimating });
 
   // 게스트 액션 대기: AI 차례일 때 Firestore에서 guestAction 수신
   useEffect(() => {
@@ -232,13 +229,6 @@ export function HostGameApp({
     return () => unsubscribe();
   }, [state.phase, state.draftSelections.AI, roomCode]);
 
-  // RESOLVE 진입: 500ms 딜레이 후 모든 카드 즉시 처리
-  useEffect(() => {
-    if (state.phase !== "RESOLVE" || isTagAnimating) return;
-    const t = setTimeout(() => dispatch({ type: "RESOLVE/STEP" }), 500);
-    return () => clearTimeout(t);
-  }, [state.phase, isTagAnimating]);
-
   // WAITING_SELECTION: AI 차례면 게스트 액션 대기
   useEffect(() => {
     if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return;
@@ -271,13 +261,6 @@ export function HostGameApp({
     });
     return () => unsubscribe();
   }, [roomCode]);
-
-  // 턴 종료
-  useEffect(() => {
-    if (state.phase !== "TURN_END" || state.winner) return;
-    const t = setTimeout(() => dispatch({ type: "TURN/BEGIN" }), 600);
-    return () => clearTimeout(t);
-  }, [state.phase, state.winner]);
 
   return (
     <GameScreen
@@ -353,32 +336,8 @@ export function GuestGameApp({
   // onExit은 ref로 관리 — deps에서 제외해 리스너 불필요한 재생성 방지
   }, [roomCode]);
 
-  // ── 자동 페이즈 전환 (HostGameApp과 동일 로직, localState 사용) ──────────────
-
-  // TURN_START → TURN/BEGIN (드래프트 완료 후)
-  useEffect(() => {
-    if (!localState) return;
-    if (localState.phase === "TURN_START" && localState.P1.hand.length > 0 && localState.AI.hand.length > 0) {
-      localDispatch({ type: "TURN/BEGIN" });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localState?.phase, localState?.P1.hand.length, localState?.AI.hand.length]);
-
-  // TURN_END → TURN/BEGIN (600ms 딜레이)
-  useEffect(() => {
-    if (!localState || localState.phase !== "TURN_END" || localState.winner) return;
-    const t = setTimeout(() => localDispatch({ type: "TURN/BEGIN" }), 600);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localState?.phase, localState?.winner]);
-
-  // RESOLVE → RESOLVE/STEP (500ms 딜레이)
-  useEffect(() => {
-    if (!localState || localState.phase !== "RESOLVE") return;
-    const t = setTimeout(() => localDispatch({ type: "RESOLVE/STEP" }), 500);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localState?.phase]);
+  // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅 (HostGameApp과 동일)
+  useFlowDriver(localState, localDispatch);
 
   // ── 게스트 dispatch (GameScreen에 전달) ────────────────────────────────────
   const guestDispatch = useCallback(

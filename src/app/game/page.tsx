@@ -7,6 +7,7 @@ import { createInitialState } from "@/game/engine/state";
 import type { CharacterId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import { useGameData } from "@/hooks/useGameData";
+import { useFlowDriver } from "@/hooks/useFlowDriver";
 import { decodeSetupParams } from "@/lib/setupConfig";
 
 const TAG_ANIM_DURATION = 700;
@@ -34,11 +35,8 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     return () => clearTimeout(t);
   }, [state.P1.activeCharacter, state.AI.activeCharacter]);
 
-  useEffect(() => {
-    if (state.phase === "TURN_START" && state.P1.hand.length > 0 && state.AI.hand.length > 0) {
-      dispatch({ type: "TURN/BEGIN" });
-    }
-  }, [state.phase, state.P1.hand.length, state.AI.hand.length]);
+  // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
+  useFlowDriver(state, dispatch, { paused: isTagAnimating });
 
   useEffect(() => {
     const shouldAiAct =
@@ -54,12 +52,6 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
   }, [state.phase, state.initiative, isTagAnimating]);
 
   useEffect(() => {
-    if (state.phase !== "RESOLVE" || isTagAnimating) return;
-    const t = setTimeout(() => dispatch({ type: "RESOLVE/STEP" }), 500);
-    return () => clearTimeout(t);
-  }, [state.phase, isTagAnimating]);
-
-  useEffect(() => {
     if (state.phase !== "WAITING_SELECTION" || !state.pendingSelection) return;
     if (state.pendingSelection.selectingPlayer !== "AI") return;
     const { candidates, count } = state.pendingSelection;
@@ -67,12 +59,6 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     if (autoSelected.length > 0) dispatch({ type: "SELECTION/CONFIRM", selectedCards: autoSelected });
     else dispatch({ type: "SELECTION/SKIP" });
   }, [state.phase, state.pendingSelection]);
-
-  useEffect(() => {
-    if (state.phase !== "TURN_END" || state.winner) return;
-    const t = setTimeout(() => dispatch({ type: "TURN/BEGIN" }), 600);
-    return () => clearTimeout(t);
-  }, [state.phase, state.winner]);
 
   return <GameScreen state={state} dispatch={dispatch} isAiThinking={isAiThinking} isTagAnimating={isTagAnimating} onExit={onExit} />;
 }
