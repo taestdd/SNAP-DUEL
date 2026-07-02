@@ -50,7 +50,8 @@ export type FighterPose =
   | "tag_exit"
   | "tag_entry"
   | "throw"
-  | "jump";
+  | "jump"
+  | "land";
 
 /** 피격 애니메이션 포즈 — hitTimings 및 visual_hit 이벤트에 사용 */
 export type HitPose = "hit_weak" | "hit_strong" | "hit_aerial";
