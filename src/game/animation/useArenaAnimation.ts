@@ -19,6 +19,8 @@ import { useAnimQueue } from "./useAnimQueue";
 
 const TAG_TRANSITION_MS = 350;
 const ANIM_DONE_BUFFER_MS = 150;
+/** 착지 포즈 유지 시간 (ms) — 이후 idle 복귀 */
+const LAND_MS = 380;
 
 /** event.freezeMs 미지정 시 폴백 (정상 경로에서는 makeQueue가 항상 채움) */
 function freezeOf(event: CombatAnimationEvent): number {
@@ -219,6 +221,35 @@ export function useArenaAnimation(
     setAiPose("idle");
     setAiPoseKey((k) => k + 1);
   }, [state.round]);
+
+  // ── 착지: 턴 시작 시 airborne 1→0 전환 감지 → land 포즈 재생 후 idle ─────────
+  // airborneStack은 매 턴 시작(beginTurn)에 1씩 감소하므로, 공중(≥1)이던 파이터가
+  // 이번 턴 시작으로 0이 되면 착지 동작을 재생한다. (태그는 turn을 올리지 않아 제외됨)
+  const prevP1AirborneRef = useRef(state.P1.airborneStack);
+  const prevAIAirborneRef = useRef(state.AI.airborneStack);
+  const prevTurnForLandRef = useRef(state.turn);
+  useEffect(() => {
+    const turnAdvanced = state.turn > prevTurnForLandRef.current;
+    const p1Prev = prevP1AirborneRef.current;
+    const aiPrev = prevAIAirborneRef.current;
+    prevTurnForLandRef.current = state.turn;
+    prevP1AirborneRef.current = state.P1.airborneStack;
+    prevAIAirborneRef.current = state.AI.airborneStack;
+
+    if (!turnAdvanced) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const playLanding = (setPose: typeof setPlayerPose, setKey: typeof setPlayerPoseKey) => {
+      setPose("land");
+      setKey((k) => k + 1);
+      timers.push(setTimeout(() => { setPose("idle"); setKey((k) => k + 1); }, LAND_MS));
+    };
+
+    if (p1Prev >= 1 && state.P1.airborneStack === 0) playLanding(setPlayerPose, setPlayerPoseKey);
+    if (aiPrev >= 1 && state.AI.airborneStack === 0) playLanding(setAiPose, setAiPoseKey);
+
+    return () => timers.forEach(clearTimeout);
+  }, [state.turn, state.P1.airborneStack, state.AI.airborneStack]);
 
   // ── 애니메이션 이벤트 핸들러 ────────────────────────────────────────────────
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {

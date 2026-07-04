@@ -64,6 +64,7 @@ const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   tag_exit:           { frames: [36, 37],                      fps: 8,  hold: true  },
   jump:               { frames: [36, 37],                      fps: 8,  hold: true  },
   tag_entry:          { frames: [38, 39],                      fps: 8,  hold: true  },
+  land:               { frames: [38, 39],                      fps: 8,  hold: true  }, // 착지 = tag_entry와 동일 스프라이트
 };
 
 /** spriteId → 스프라이트 설정. 새 스프라이트 추가 시 여기에만 등록. */

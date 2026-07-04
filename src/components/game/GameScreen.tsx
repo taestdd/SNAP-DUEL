@@ -522,6 +522,7 @@ export default function GameScreen({
                   !canAct ||
                   isTagAnimating ||
                   state.p1TaggedThisTurn ||
+                  state.P1.airborneStack >= 2 ||
                   state.P1.characterHp[getBenchChar(state.P1)] <= 0
                 }
                 onClick={() => dispatch({ type: "TURN/TAG" })}

@@ -84,6 +84,13 @@ describe("TURN/TAG", () => {
     const before = makeState({ phase: "SETUP_INIT", initiative: "P1", P1: { characterHp: { p1_main: 30, p1_sub: 0 } } });
     expect(gameReducer(before, { type: "TURN/TAG" })).toBe(before);
   });
+  it("airborne이 2 이상이면 태그 무시 (조기 탈출 봉쇄)", () => {
+    const before = makeState({ phase: "SETUP_INIT", initiative: "P1", P1: { airborneStack: 2 } });
+    expect(gameReducer(before, { type: "TURN/TAG" })).toBe(before);
+    // airborne 1이면 태그 가능
+    const s = gameReducer(makeState({ phase: "SETUP_INIT", initiative: "P1", P1: { airborneStack: 1 } }), { type: "TURN/TAG" });
+    expect(s.P1.activeCharacter).toBe("p1_sub");
+  });
 });
 
 /* ── AI/SETUP_AUTO ─────────────────────────────────────────────────── */

@@ -138,9 +138,11 @@ function cancelRiskFactor(state: GameState, player: PlayerId): number {
 /**
  * 벤치 캐릭터 HP가 현재 캐릭터보다 높을 때 태그를 권장한다.
  * reducer(AI/SETUP_AUTO)와 시뮬레이션(P1) 양쪽에서 동일하게 사용.
+ * airborne이 2 이상이면 태그 불가(공중 2턴 이상 = 조기 탈출 봉쇄).
  */
 export function shouldTag(state: GameState, player: PlayerId): boolean {
   const me = state[player];
+  if (me.airborneStack >= 2) return false;
   const benchChar = getBenchChar(me);
   const benchHp = me.characterHp[benchChar];
   return benchHp > me.hp && benchHp > 0;

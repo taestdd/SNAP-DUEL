@@ -137,6 +137,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (!isP1TurnToPick(state)) return state;
       if (state.P1.ready) return state;
       if (state.p1TaggedThisTurn) return state;
+      if (state.P1.airborneStack >= 2) return state;
 
       if (state.P1.characterHp[getBenchChar(state.P1)] <= 0) return state;
 
@@ -170,6 +171,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case "AI/GUEST_TAG": {
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
       if (state.AI.ready) return state;
+      if (state.AI.airborneStack >= 2) return state;
 
       if (state.AI.characterHp[getBenchChar(state.AI)] <= 0) return state;
 
