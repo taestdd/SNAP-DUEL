@@ -114,16 +114,6 @@ export default function ArenaStage({
           {superFlashActor && (
             <div key={superFlashActor} className={styles.superFlashOverlay} />
           )}
-          {hitEffectKey > 0 && hitEffectTarget && (
-            <HitEffect
-              key={hitEffectKey}
-              strength={hitEffectStrength}
-              style={{
-                left: hitEffectTarget === "P1" ? "32%" : "68%",
-                top: "55%",
-              }}
-            />
-          )}
           <div
             ref={playerRef}
             className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
@@ -131,6 +121,10 @@ export default function ArenaStage({
             {/* 전진 레이어: knockback(keyframe)과 transform 충돌 방지를 위해 별도 래퍼 */}
             <div className={styles.advanceWrap} style={{ transform: `translateX(${playerAdvance}px)`, transition: advTransition(playerAdvance) }}>
               <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
+              {/* 히트 이펙트를 스프라이트 기준으로 배치 → 전진·넉백을 자동 추종. P1은 AI(오른쪽)에게 맞으므로 오른쪽 근접면 */}
+              {hitEffectKey > 0 && hitEffectTarget === "P1" && (
+                <HitEffect key={hitEffectKey} strength={hitEffectStrength} style={{ left: "62%", top: "55%" }} />
+              )}
             </div>
           </div>
           <div
@@ -139,6 +133,10 @@ export default function ArenaStage({
           >
             <div className={styles.advanceWrap} style={{ transform: `translateX(${aiAdvance}px)`, transition: advTransition(aiAdvance) }}>
               <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
+              {/* AI는 P1(왼쪽)에게 맞으므로 왼쪽 근접면 */}
+              {hitEffectKey > 0 && hitEffectTarget === "AI" && (
+                <HitEffect key={hitEffectKey} strength={hitEffectStrength} style={{ left: "38%", top: "55%" }} />
+              )}
             </div>
           </div>
         </div>

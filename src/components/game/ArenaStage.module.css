@@ -131,6 +131,8 @@
 .advanceWrap {
   display: flex;
   align-items: flex-end;
+  /* 히트 이펙트를 스프라이트 기준으로 절대 배치하기 위한 위치 컨텍스트 */
+  position: relative;
   transition: transform 130ms cubic-bezier(0.3, 0.7, 0.4, 1);
 }
 
