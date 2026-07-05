@@ -64,7 +64,6 @@ export default function ArenaStage({
 }: ArenaStageProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const aiRef = useRef<HTMLDivElement>(null);
-  const zoomRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (playerKnockbackKey === 0) return;
@@ -108,7 +107,6 @@ export default function ArenaStage({
     <div className={styles.zoomWrap}>
       <div className={`${styles.arena} ${shakeClass}`}>
         <div
-          ref={zoomRef}
           className={styles.arenaInner}
           style={{ transform: `scale(${zoomScale})`, transition: zoomTransition }}
         >
