@@ -103,6 +103,7 @@ function resetTurnFlags(state: GameState): GameState {
     recentlyCancelledId: null,
     recentlyCancelledPlayer: null,
     p1TaggedThisTurn: false,
+    aiTaggedThisTurn: false,
     animScript: [],
     animStartHp: null,
     P1: { ...state.P1, block: 0, queue: [], ready: false },

@@ -72,9 +72,8 @@ export function flipState(state: GameState): GameState {
       : null,
     recentlyCancelledPlayer:
       state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
-    // 엔진은 P1(호스트)의 태그만 턴 단위로 추적한다. 게스트(내부 AI)의 태그 여부는
-    // 대응 필드가 없어 항상 false — 게스트 Tag 버튼의 "이번 턴 이미 태그" 잠금이
-    // 동작하지 않는 알려진 한계 (엔진에 aiTaggedThisTurn 도입 시 여기서 교환할 것)
-    p1TaggedThisTurn: false,
+    // 태그 플래그 교환 → 게스트 화면의 Tag 버튼 잠금(p1TaggedThisTurn 참조)이 올바르게 동작
+    p1TaggedThisTurn: state.aiTaggedThisTurn,
+    aiTaggedThisTurn: state.p1TaggedThisTurn,
   };
 }
