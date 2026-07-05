@@ -8,6 +8,11 @@ import SpeedCircle from "./SpeedCircle";
 
 export { effectLabel };
 
+/** 카드 일러스트 경로 — 카드 ID 기반 컨벤션으로 고정 (/sprites/cards/{ID}.png) */
+export function cardArtSrc(cardId: string): string {
+  return `/sprites/cards/${cardId}.png`;
+}
+
 export function effectBadgeClass(type: string, damageType?: string) {
   if (type === "tag") return styles.tagTag;
   if (damageType === "ground") return styles.tagGround;
@@ -83,6 +88,7 @@ export default function CardView({
         conditionBlocked ? styles.conditionBlocked : "",
         selected ? styles.selected : "",
       ].join(" ")}
+      style={handMode ? { backgroundImage: `url(${cardArtSrc(card.id)})` } : undefined}
       onClick={handleClick}
       onPointerDown={startPress}
       onPointerUp={cancelPress}
@@ -109,7 +115,7 @@ export default function CardView({
             <div className={styles.handCardName}>{card.name}</div>
           </div>
 
-          {/* 일러스트 영역: 스피드 원 + 공격 스트립 */}
+          {/* 일러스트 영역: 스피드 원 + 공격 스트립 (배경 이미지는 카드 전체에 적용됨) */}
           <div className={styles.illustArea}>
             <SpeedCircle
               value={effectiveSpeed}

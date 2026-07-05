@@ -18,9 +18,9 @@
 
 .card:hover {
   transform: translateY(-2px);
-  background: rgba(0, 217, 255, 0.06);
-  border-color: rgba(0, 217, 255, 0.35);
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(200, 206, 216, 0.4);
+  box-shadow: 0 0 12px rgba(200, 206, 216, 0.15);
 }
 
 .disabled {
@@ -138,18 +138,22 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  background: #0e1228;
-  border-color: var(--clr-border);
+  background-color: #17191f;
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+  border-color: #3a3d46;
 }
 
 .handCard:hover {
-  background: #131830;
-  border-color: #1a6080;
+  background-color: #1a1d24;
+  border-color: #6b7180;
 }
 
 .handCard.disabled {
-  background: #090c18;
+  background-color: #101116;
   border-color: rgba(255, 255, 255, 0.05);
+  filter: grayscale(1) brightness(0.5);
   cursor: not-allowed;
 }
 
@@ -157,20 +161,20 @@
   transform: none;
   border-color: rgba(255, 255, 255, 0.05);
   box-shadow: none;
-  background: #090c18;
+  background-color: #101116;
 }
 
 .handCard.disabled .handCardName {
-  background: #0d1020;
+  background: rgba(16, 17, 22, 0.55);
   color: rgba(255, 255, 255, 0.2);
 }
 
 .handCard.disabled .illustArea {
-  background: #0b0e1c;
+  background-color: #0d0e12;
 }
 
 .handCard.disabled .atkStrip {
-  background: #1e2438;
+  background: #2a2d36;
 }
 
 .handCard.disabled .atkValue,
@@ -216,15 +220,28 @@
   padding: 0 6px;
   display: block;
   line-height: 32px;
-  color: #e8ecff;
-  background: #131830;
+  color: #dcdfe5;
+  background: rgba(22, 24, 30, 0.55);
+  backdrop-filter: blur(2px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* 일러스트 영역 */
+/* ── 카드 내부 공용 컴포넌트(CostBox/SpeedCircle) 그레이 톤 override ──
+   QueuePreview/CardListItem 등 다른 사용처는 건드리지 않도록 .handCard로 스코프 */
+.handCard .header > :first-child {
+  background: #2f3440;
+  color: #cfd3db;
+}
+
+.handCard .illustArea > :first-child {
+  background: #cfd3db;
+  color: #14171d;
+}
+
+/* 일러스트 영역: 카드 배경(art)이 비치도록 자체 배경은 투명 */
 .illustArea {
   flex: 1;
   position: relative;
-  background: #0d1124;
 }
 
 /* SpeedCircle 공통 컴포넌트를 일러스트 좌상단에 배치 */
@@ -240,7 +257,7 @@
   bottom: 0;
   left: 0;
   width: 28px;
-  background: var(--clr-cyan);
+  background: #aab0bd;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -268,19 +285,19 @@
 }
 
 .statBoosted {
-  background: var(--clr-green);
-  color: #0a0e27;
+  background: #cfd3db;
+  color: #14171d;
 }
 
 .statNerfed {
-  background: var(--clr-danger);
+  background: #6b7180;
   color: #ffffff;
 }
 
 .selected {
   outline: none;
-  border-color: var(--clr-cyan);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5), inset 0 0 14px rgba(0, 217, 255, 0.08);
+  border-color: #c8ced8;
+  box-shadow: 0 0 20px rgba(200, 206, 216, 0.45), inset 0 0 14px rgba(200, 206, 216, 0.08);
   transform: translateY(-2px);
 }
 

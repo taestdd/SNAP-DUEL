@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { getCard } from "@/game/engine/cards";
-import { effectBadgeClass, effectLabel } from "./CardView";
+import { effectLabel, cardArtSrc } from "./CardView";
 import styles from "./CardDetailModal.module.css";
 import type { GameState, PlayerId, StatModifier } from "@/game/engine/types";
 import { evaluateModifiers } from "@/game/engine/stateHelpers";
@@ -42,6 +43,7 @@ export default function CardDetailModal({
   gameState?: GameState;
   playerId?: PlayerId;
 }) {
+  const [artError, setArtError] = useState(false);
   const card = getCard(cardId);
   if (!card) return null;
 
@@ -60,6 +62,18 @@ export default function CardDetailModal({
           <span className={styles.headerName}>{card.name}</span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
+
+        {/* 일러스트 — 카드 ID 기반 경로. 파일이 없으면 숨김 */}
+        {!artError && (
+          <div className={styles.artWrap}>
+            <img
+              src={cardArtSrc(card.id)}
+              alt=""
+              className={styles.artImg}
+              onError={() => setArtError(true)}
+            />
+          </div>
+        )}
 
         {/* 메타 행: 코스트 · 속도 · 공격 스탯 */}
         <div className={styles.metaRow}>
@@ -135,9 +149,7 @@ export default function CardDetailModal({
         <div className={styles.effectList}>
           {card.effects.map((eff, i) => (
             <div key={i} className={styles.effectRow}>
-              <span
-                className={[styles.effBadge, effectBadgeClass(eff.type, eff.damageType)].join(" ")}
-              >
+              <span className={styles.effBadge}>
                 {effectLabel(eff.type, eff.damageType)}
               </span>
               {eff.value !== undefined && (
