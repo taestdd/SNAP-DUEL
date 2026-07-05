@@ -11,16 +11,16 @@ export const SUPER_FLASH_DUR = 700;
  * 이 값과 줌은 visual_hit 이벤트에 실려 양쪽 클라이언트가 동일하게 사용한다.
  */
 export const HIT_FREEZE_PRESET: Record<HitPose, number> = {
-  hit_strong: 1800,
-  hit_aerial: 1320,
-  hit_weak:    900,
+  hit_strong: 900,
+  hit_aerial: 660,
+  hit_weak:   450,
 };
 
 /** 히트 강도별 기본 줌인 배율 — 카드의 zoom 미지정 시 적용 */
 export const HIT_ZOOM_PRESET: Record<HitPose, number> = {
-  hit_strong: 1.16,
-  hit_aerial: 1.10,
-  hit_weak:   1.06,
+  hit_strong: 1.24,
+  hit_aerial: 1.15,
+  hit_weak:   1.09,
 };
 
 /** characterId → 스프라이트 ID (fps 조회용) */
@@ -222,7 +222,10 @@ function pushSequenceWithHold(
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
     : card.actionTag;
-  events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag });
+  // 타격이 성립하는 공격이면 공격자가 상대쪽으로 전진 후 액션
+  const willConnect = !!(card.hitTimings && card.hitTimings.length > 0
+    && hasConnectingAttack(card, targetAirborne));
+  events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag, advance: willConnect });
 
   if (card.hitTimings && card.hitTimings.length > 0) {
     const connects = hasConnectingAttack(card, targetAirborne);
@@ -268,7 +271,7 @@ function pushSequenceWithHold(
     endDelay = Math.max(endDelay, offset + lastImpactAt + lastFreeze + 100);
   }
 
-  events.push({ type: "action_end", delay: endDelay, actor });
+  events.push({ type: "action_end", delay: endDelay, actor, advance: willConnect });
 }
 
 /**

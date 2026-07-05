@@ -91,6 +91,8 @@ export interface CombatAnimationEvent {
   zoom?: number;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
+  /** action_start: 타격이 성립하는 공격이면 true → 공격자가 상대쪽으로 전진 후 액션 */
+  advance?: boolean;
   /** damage_resolve: 이 카드 효과 적용 후의 HP (UI 표시용) */
   hpAfter?: { P1: number; AI: number };
   /** damage_resolve: 이 카드로 인해 캔슬된 플레이어 (UI 표시용) */

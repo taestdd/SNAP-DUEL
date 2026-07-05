@@ -67,6 +67,7 @@ export default function GameScreen({
     playerFrozenUntil, aiFrozenUntil,
     playerFlashKey, aiFlashKey,
     playerKnockbackKey, aiKnockbackKey,
+    playerAdvance, aiAdvance,
     zoomScale, bgOffset,
     hitEffectKey, hitEffectTarget, hitEffectStrength,
     superFlashActor,
@@ -423,6 +424,8 @@ export default function GameScreen({
             aiFlashKey={aiFlashKey}
             playerKnockbackKey={playerKnockbackKey}
             aiKnockbackKey={aiKnockbackKey}
+            playerAdvance={playerAdvance}
+            aiAdvance={aiAdvance}
             zoomScale={zoomScale}
             bgOffset={bgOffset}
             hitEffectKey={hitEffectKey}

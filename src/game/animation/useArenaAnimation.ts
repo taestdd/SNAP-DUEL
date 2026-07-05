@@ -22,6 +22,11 @@ const TAG_TRANSITION_MS = 350;
 const ANIM_DONE_BUFFER_MS = 150;
 /** 착지 포즈 유지 시간 (ms) — 이후 idle 복귀 */
 const LAND_MS = 380;
+/** 공격 성공 시 공격자가 상대쪽으로 전진하는 거리 (px) */
+const ADVANCE_PX = 60;
+/** 공격자 복귀 시 배경을 같은 방향으로 미는 거리 (px).
+ *  공격자가 배경 대비 제자리에 있는 듯 보이게 해 "적이 밀리는" 착시를 만든다. */
+const RETURN_BG_PX = 60;
 
 /** event.freezeMs 미지정 시 폴백 (정상 경로에서는 makeQueue가 항상 채움) */
 function freezeOf(event: CombatAnimationEvent): number {
@@ -58,6 +63,9 @@ export type ArenaAnimState = {
   aiFlashKey: number;
   playerKnockbackKey: number;
   aiKnockbackKey: number;
+  /** 공격자 전진 오프셋(px). 상대쪽 방향(+P1 오른쪽 / -AI 왼쪽). action_start 시 전진, action_end 시 0 복귀 */
+  playerAdvance: number;
+  aiAdvance: number;
   /** 줌 배율 (1 = 기본). 히트 임팩트 윈도우 동안 확대 후 복귀 */
   zoomScale: number;
   bgOffset: number;
@@ -97,6 +105,8 @@ export function useArenaAnimation(
   const [aiFlashKey, setAiFlashKey] = useState(0);
   const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
+  const [playerAdvance, setPlayerAdvance] = useState(0);
+  const [aiAdvance, setAiAdvance] = useState(0);
   const [zoomScale, setZoomScale] = useState(1);
   const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgOffset, setBgOffset] = useState(0);
@@ -232,10 +242,13 @@ export function useArenaAnimation(
     switch (event.type) {
       case "action_start": {
         const pose = actionTagToPose(event.actionTag);
+        // 타격이 성립하는 공격이면 공격자가 상대쪽으로 전진(P1은 오른쪽 +, AI는 왼쪽 -)
         if (event.actor === "P1") {
           if (pose) { setPlayerPose(pose); setPlayerPoseKey((k) => k + 1); }
+          setPlayerAdvance(event.advance ? ADVANCE_PX : 0);
         } else if (event.actor === "AI") {
           if (pose) { setAiPose(pose); setAiPoseKey((k) => k + 1); }
+          setAiAdvance(event.advance ? -ADVANCE_PX : 0);
         }
         setAnimLog((prev) => [
           ...prev,
@@ -294,6 +307,16 @@ export function useArenaAnimation(
         break;
       }
       case "action_end":
+        // 액션 종료 시 전진했던 공격자를 원위치로 복귀시키면서,
+        // 배경을 복귀와 같은 방향으로 밀어 공격자가 제자리인 듯한(=적이 밀리는) 착시를 만든다.
+        // P1은 왼쪽으로 복귀 → 배경도 왼쪽(bgOffset-), AI는 오른쪽으로 복귀 → 배경 오른쪽(bgOffset+)
+        if (event.actor === "P1") {
+          if (event.advance) setBgOffset((o) => o - RETURN_BG_PX);
+          setPlayerAdvance(0);
+        } else if (event.actor === "AI") {
+          if (event.advance) setBgOffset((o) => o + RETURN_BG_PX);
+          setAiAdvance(0);
+        }
         break;
       case "damage_resolve": {
         if (event.hpAfter) {
@@ -326,6 +349,8 @@ export function useArenaAnimation(
     aiFlashKey,
     playerKnockbackKey,
     aiKnockbackKey,
+    playerAdvance,
+    aiAdvance,
     zoomScale,
     bgOffset,
     hitEffectKey,
