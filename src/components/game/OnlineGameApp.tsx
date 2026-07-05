@@ -4,9 +4,10 @@ import { useEffect, useReducer, useRef, useState, useCallback } from "react";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import { isSetupTurnOf } from "@/game/engine/stateHelpers";
-import type { Action, CharacterId, GameState, SetupConfig } from "@/game/engine/types";
+import type { Action, GameState, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
 import { useFlowDriver } from "@/hooks/useFlowDriver";
+import { useTagAnimating } from "@/hooks/useTagAnimating";
 import { flipState } from "@/lib/flipState";
 import {
   syncState,
@@ -17,8 +18,6 @@ import {
   subscribeRoom,
 } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
-
-const TAG_ANIM_DURATION = 700;
 
 // ── 게스트 로컬 리듀서 ────────────────────────────────────────────────────────
 // SYNC/OVERRIDE: 호스트가 보내온 정규 상태로 강제 교체 (매 턴 SETUP_INIT)
@@ -48,26 +47,12 @@ export function HostGameApp({
   onExit: () => void;
 }) {
   const [state, dispatch] = useReducer(gameReducer, undefined, () => createInitialState(config, guestConfig));
-  const [isTagAnimating, setIsTagAnimating] = useState(false);
+  const isTagAnimating = useTagAnimating(state);
   const [waitingGuest, setWaitingGuest] = useState(false);
 
-  const prevP1CharRef = useRef<CharacterId>(state.P1.activeCharacter);
-  const prevAICharRef = useRef<CharacterId>(state.AI.activeCharacter);
   // PLAYER/READY hostAction에 포함할 selected 카드 정보를 안정적으로 참조
   const selectedRef = useRef(state.selected);
   useEffect(() => { selectedRef.current = state.selected; });
-
-  // 캐릭터 교체 감지
-  useEffect(() => {
-    const p1Changed = state.P1.activeCharacter !== prevP1CharRef.current;
-    const aiChanged = state.AI.activeCharacter !== prevAICharRef.current;
-    prevP1CharRef.current = state.P1.activeCharacter;
-    prevAICharRef.current = state.AI.activeCharacter;
-    if (!p1Changed && !aiChanged) return;
-    setIsTagAnimating(true);
-    const t = setTimeout(() => setIsTagAnimating(false), TAG_ANIM_DURATION);
-    return () => clearTimeout(t);
-  }, [state.P1.activeCharacter, state.AI.activeCharacter]);
 
   // ── 상태 동기화: SETUP_INIT / ROUND_DRAFT / GAME_OVER 진입 시 1회만 전송
   // (round:turn:phase) 키로 추적해 중복 전송 방지

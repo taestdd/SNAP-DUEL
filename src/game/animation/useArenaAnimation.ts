@@ -12,6 +12,7 @@ import type {
 } from "@/game/engine/types";
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
+import { useGameTransitions } from "@/hooks/useGameTransitions";
 import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
 
@@ -113,8 +114,9 @@ export function useArenaAnimation(
   // 태그 애니메이션: exit 재생 후 스프라이트 전환
   const [displayedP1Char, setDisplayedP1Char] = useState<CharacterId>(state.P1.activeCharacter);
   const [displayedAIChar, setDisplayedAIChar] = useState<CharacterId>(state.AI.activeCharacter);
-  const prevP1CharRef = useRef<CharacterId>(state.P1.activeCharacter);
-  const prevAICharRef = useRef<CharacterId>(state.AI.activeCharacter);
+  // 태그/착지 연출 타이머 (플레이어별 1개 — 재발화 시 이전 타이머 교체, 언마운트 시 정리)
+  const tagTimerRef = useRef<Record<PlayerId, ReturnType<typeof setTimeout> | null>>({ P1: null, AI: null });
+  const landTimerRef = useRef<Record<PlayerId, ReturnType<typeof setTimeout> | null>>({ P1: null, AI: null });
 
   // 애니메이션 큐
   const [animQueue, setAnimQueue] = useState<CombatAnimationEvent[]>([]);
@@ -125,40 +127,54 @@ export function useArenaAnimation(
   const dispatchRef = useRef(dispatch);
   useEffect(() => { dispatchRef.current = dispatch; });
 
-  // ── 태그 애니메이션 (P1 + AI 통합) ───────────────────────────────────────────
-  useEffect(() => {
-    const p1Changed = state.P1.activeCharacter !== prevP1CharRef.current;
-    const aiChanged = state.AI.activeCharacter !== prevAICharRef.current;
-    if (!p1Changed && !aiChanged) return;
+  // ── 상태 전환 반응 (태그 연출 / 라운드 idle 리셋 / 착지) ─────────────────────
+  // 전환 감지는 useGameTransitions가 단일 담당 — prevXRef를 직접 두지 않는다.
+  useGameTransitions(state, {
+    onCharacterSwitch: (player, _from, to) => {
+      const isP1 = player === "P1";
+      const setPose = isP1 ? setPlayerPose : setAiPose;
+      const setKey = isP1 ? setPlayerPoseKey : setAiPoseKey;
+      const setChar = isP1 ? setDisplayedP1Char : setDisplayedAIChar;
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
+      setPose("tag_exit");
+      setKey((k) => k + 1);
+      if (tagTimerRef.current[player]) clearTimeout(tagTimerRef.current[player]!);
+      tagTimerRef.current[player] = setTimeout(() => {
+        setChar(to);
+        setPose("tag_entry");
+        setKey((k) => k + 1);
+      }, TAG_TRANSITION_MS);
+    },
 
-    if (p1Changed) {
-      const newChar = state.P1.activeCharacter;
-      prevP1CharRef.current = newChar;
-      setPlayerPose("tag_exit");
+    onRound: () => {
+      setPlayerPose("idle");
       setPlayerPoseKey((k) => k + 1);
-      timers.push(setTimeout(() => {
-        setDisplayedP1Char(newChar);
-        setPlayerPose("tag_entry");
-        setPlayerPoseKey((k) => k + 1);
-      }, TAG_TRANSITION_MS));
-    }
-
-    if (aiChanged) {
-      const newChar = state.AI.activeCharacter;
-      prevAICharRef.current = newChar;
-      setAiPose("tag_exit");
+      setAiPose("idle");
       setAiPoseKey((k) => k + 1);
-      timers.push(setTimeout(() => {
-        setDisplayedAIChar(newChar);
-        setAiPose("tag_entry");
-        setAiPoseKey((k) => k + 1);
-      }, TAG_TRANSITION_MS));
-    }
+    },
 
-    return () => timers.forEach(clearTimeout);
-  }, [state.P1.activeCharacter, state.AI.activeCharacter]);
+    onLanding: (player) => {
+      const isP1 = player === "P1";
+      const setPose = isP1 ? setPlayerPose : setAiPose;
+      const setKey = isP1 ? setPlayerPoseKey : setAiPoseKey;
+
+      setPose("land");
+      setKey((k) => k + 1);
+      if (landTimerRef.current[player]) clearTimeout(landTimerRef.current[player]!);
+      landTimerRef.current[player] = setTimeout(() => {
+        setPose("idle");
+        setKey((k) => k + 1);
+      }, LAND_MS);
+    },
+  });
+
+  // 언마운트 시 태그/착지 타이머 정리
+  useEffect(() => () => {
+    for (const p of ["P1", "AI"] as const) {
+      if (tagTimerRef.current[p]) clearTimeout(tagTimerRef.current[p]!);
+      if (landTimerRef.current[p]) clearTimeout(landTimerRef.current[p]!);
+    }
+  }, []);
 
   // ── ANIMATING 진입: animScript → 이벤트 큐 생성 + 완료 타이머 ────────────────
   useEffect(() => {
@@ -210,46 +226,6 @@ export function useArenaAnimation(
       setAiPoseKey((k) => k + 1);
     }
   }, [state.phase, state.winner]);
-
-  // ── 라운드 전환: idle 리셋 ──────────────────────────────────────────────────
-  const prevRoundRef = useRef(state.round);
-  useEffect(() => {
-    if (state.round === prevRoundRef.current) return;
-    prevRoundRef.current = state.round;
-    setPlayerPose("idle");
-    setPlayerPoseKey((k) => k + 1);
-    setAiPose("idle");
-    setAiPoseKey((k) => k + 1);
-  }, [state.round]);
-
-  // ── 착지: 턴 시작 시 airborne 1→0 전환 감지 → land 포즈 재생 후 idle ─────────
-  // airborneStack은 매 턴 시작(beginTurn)에 1씩 감소하므로, 공중(≥1)이던 파이터가
-  // 이번 턴 시작으로 0이 되면 착지 동작을 재생한다. (태그는 turn을 올리지 않아 제외됨)
-  const prevP1AirborneRef = useRef(state.P1.airborneStack);
-  const prevAIAirborneRef = useRef(state.AI.airborneStack);
-  const prevTurnForLandRef = useRef(state.turn);
-  useEffect(() => {
-    const turnAdvanced = state.turn > prevTurnForLandRef.current;
-    const p1Prev = prevP1AirborneRef.current;
-    const aiPrev = prevAIAirborneRef.current;
-    prevTurnForLandRef.current = state.turn;
-    prevP1AirborneRef.current = state.P1.airborneStack;
-    prevAIAirborneRef.current = state.AI.airborneStack;
-
-    if (!turnAdvanced) return;
-
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const playLanding = (setPose: typeof setPlayerPose, setKey: typeof setPlayerPoseKey) => {
-      setPose("land");
-      setKey((k) => k + 1);
-      timers.push(setTimeout(() => { setPose("idle"); setKey((k) => k + 1); }, LAND_MS));
-    };
-
-    if (p1Prev >= 1 && state.P1.airborneStack === 0) playLanding(setPlayerPose, setPlayerPoseKey);
-    if (aiPrev >= 1 && state.AI.airborneStack === 0) playLanding(setAiPose, setAiPoseKey);
-
-    return () => timers.forEach(clearTimeout);
-  }, [state.turn, state.P1.airborneStack, state.AI.airborneStack]);
 
   // ── 애니메이션 이벤트 핸들러 ────────────────────────────────────────────────
   const handleAnimEvent = useCallback((event: CombatAnimationEvent) => {
