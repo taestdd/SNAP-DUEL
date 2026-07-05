@@ -3,8 +3,11 @@ import type { GameState, PlayerId } from "@/game/engine/types";
 /**
  * 게스트용 상태 뒤집기.
  * 게스트는 내부적으로 AI 역할 → P1/AI를 교환해 게스트가 항상 P1처럼 보이도록 함.
- * 플레이어를 가리키는 모든 필드(actor/holder/...)와 P1/AI 키를 가진 절대값
- * 스냅샷(animStartHp, animScript[].hpAfter)을 함께 교환해야 한다.
+ *
+ * ⚠️ 유지보수: GameState에 플레이어를 가리키는 필드(actor/holder/... 참조)나
+ * P1/AI 키를 가진 절대값 스냅샷(animStartHp, animScript[].hpAfter 같은)을
+ * 새로 추가하면 이 함수에도 교환 로직을 추가해야 한다. 누락하면 게스트
+ * 화면에서만 값이 서로 바뀌어 보이는 버그가 된다 (flipState.test.ts로 방어).
  */
 export function flipId(id: PlayerId): PlayerId {
   return id === "P1" ? "AI" : "P1";
@@ -69,6 +72,9 @@ export function flipState(state: GameState): GameState {
       : null,
     recentlyCancelledPlayer:
       state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
+    // 엔진은 P1(호스트)의 태그만 턴 단위로 추적한다. 게스트(내부 AI)의 태그 여부는
+    // 대응 필드가 없어 항상 false — 게스트 Tag 버튼의 "이번 턴 이미 태그" 잠금이
+    // 동작하지 않는 알려진 한계 (엔진에 aiTaggedThisTurn 도입 시 여기서 교환할 것)
     p1TaggedThisTurn: false,
   };
 }
