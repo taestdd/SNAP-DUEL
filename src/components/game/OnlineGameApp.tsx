@@ -4,10 +4,11 @@ import { useEffect, useReducer, useRef, useState, useCallback } from "react";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import { isSetupTurnOf } from "@/game/engine/stateHelpers";
-import type { Action, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
+import type { Action, GameState, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
 import { useFlowDriver } from "@/hooks/useFlowDriver";
 import { useTagAnimating } from "@/hooks/useTagAnimating";
+import { flipState } from "@/lib/flipState";
 import {
   syncState,
   clearGuestAction,
@@ -17,69 +18,6 @@ import {
   subscribeRoom,
 } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
-
-// ── 게스트용 상태 뒤집기 ────────────────────────────────────────────────────
-// 게스트는 AI 역할 → P1/AI를 교환해 게스트가 항상 P1처럼 보이도록 함
-
-function flipId(id: PlayerId): PlayerId {
-  return id === "P1" ? "AI" : "P1";
-}
-
-function flipState(state: GameState): GameState {
-  return {
-    ...state,
-    P1: { ...state.AI, id: "P1" },
-    AI: { ...state.P1, id: "AI" },
-    initiative: flipId(state.initiative),
-    winner:
-      state.winner === "P1" ? "AI"
-      : state.winner === "AI" ? "P1"
-      : state.winner,
-    draftSelections: {
-      P1: state.draftSelections.AI,
-      AI: state.draftSelections.P1,
-    },
-    pendingCostPayment: state.pendingCostPayment
-      ? {
-          ...state.pendingCostPayment,
-          player: flipId(state.pendingCostPayment.player),
-          fromPlayerId: flipId(state.pendingCostPayment.fromPlayerId),
-          toPlayerId: flipId(state.pendingCostPayment.toPlayerId),
-        }
-      : null,
-    pendingSelection: state.pendingSelection
-      ? {
-          ...state.pendingSelection,
-          selectingPlayer: flipId(state.pendingSelection.selectingPlayer),
-          fromPlayerId: flipId(state.pendingSelection.fromPlayerId),
-          toPlayerId: flipId(state.pendingSelection.toPlayerId),
-          sourcePlayer: flipId(state.pendingSelection.sourcePlayer),
-          resolveItems: state.pendingSelection.resolveItems.map((item) => ({
-            ...item,
-            player: flipId(item.player),
-          })),
-          unresolvedPlayers: state.pendingSelection.unresolvedPlayers.map(flipId),
-        }
-      : null,
-    resolveContext: {
-      queue: state.resolveContext.queue.map((item) => ({ ...item, player: flipId(item.player) })),
-      index: state.resolveContext.index,
-      unresolved: state.resolveContext.unresolved.map(flipId),
-    },
-    animScript: state.animScript.map((entry) => ({
-      ...entry,
-      actor: flipId(entry.actor),
-      cancelledPlayer: entry.cancelledPlayer ? flipId(entry.cancelledPlayer) : undefined,
-      comboHolder: entry.comboHolder ? flipId(entry.comboHolder) : undefined,
-    })),
-    animStartCombo: state.animStartCombo
-      ? { ...state.animStartCombo, holder: flipId(state.animStartCombo.holder) }
-      : null,
-    recentlyCancelledPlayer:
-      state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
-    p1TaggedThisTurn: false,
-  };
-}
 
 // ── 게스트 로컬 리듀서 ────────────────────────────────────────────────────────
 // SYNC/OVERRIDE: 호스트가 보내온 정규 상태로 강제 교체 (매 턴 SETUP_INIT)

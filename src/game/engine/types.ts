@@ -548,6 +548,13 @@ export type GameState = {
   /** P1이 이번 턴에 태그를 사용했는지 (턴당 1회 제한) */
   p1TaggedThisTurn: boolean;
 
+  /**
+   * AI(온라인에서는 게스트)가 이번 턴에 태그를 사용했는지 (턴당 1회 제한).
+   * 싱글플레이 AI는 구조상 턴당 1회만 태그하지만, 온라인 게스트는 사람이
+   * AI/GUEST_TAG를 반복 전송할 수 있어 리듀서 가드에 이 플래그가 필요하다.
+   */
+  aiTaggedThisTurn: boolean;
+
   /** RESOLVING 페이즈: 리졸브 루프 컨텍스트 (큐·인덱스·미처리 플레이어를 하나로 묶음) */
   resolveContext: {
     queue: { player: PlayerId; cardId: string }[];

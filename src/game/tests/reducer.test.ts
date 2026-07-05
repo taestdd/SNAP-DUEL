@@ -93,6 +93,25 @@ describe("TURN/TAG", () => {
   });
 });
 
+/* ── AI/GUEST_TAG ──────────────────────────────────────────────────── */
+describe("AI/GUEST_TAG", () => {
+  it("게스트 태그 시 캐릭터 교체 + aiTaggedThisTurn 설정", () => {
+    const s = gameReducer(makeState({ phase: "SETUP_INIT" }), { type: "AI/GUEST_TAG" });
+    expect(s.AI.activeCharacter).toBe("ai_sub");
+    expect(s.aiTaggedThisTurn).toBe(true);
+  });
+  it("한 턴에 두 번째 태그는 무시 (중복 태그 봉쇄)", () => {
+    const once = gameReducer(makeState({ phase: "SETUP_INIT" }), { type: "AI/GUEST_TAG" });
+    const twice = gameReducer(once, { type: "AI/GUEST_TAG" });
+    expect(twice).toBe(once); // 상태 불변 — 두 번째 태그 거부
+    expect(twice.AI.activeCharacter).toBe("ai_sub");
+  });
+  it("airborne이 2 이상이면 무시", () => {
+    const before = makeState({ phase: "SETUP_INIT", AI: { airborneStack: 2 } });
+    expect(gameReducer(before, { type: "AI/GUEST_TAG" })).toBe(before);
+  });
+});
+
 /* ── AI/SETUP_AUTO ─────────────────────────────────────────────────── */
 describe("AI/SETUP_AUTO", () => {
   it("AI가 카드를 선택하고 ready + 페이즈 진행", () => {

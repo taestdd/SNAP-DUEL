@@ -171,13 +171,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case "AI/GUEST_TAG": {
       if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
       if (state.AI.ready) return state;
+      // 턴당 1회 제한 — 게스트는 사람이므로 반복 전송을 리듀서에서 막아야 함 (TURN/TAG와 대칭)
+      if (state.aiTaggedThisTurn) return state;
       if (state.AI.airborneStack >= 2) return state;
 
       if (state.AI.characterHp[getBenchChar(state.AI)] <= 0) return state;
 
       const s = applyTagSwitch(state, "AI");
       if (s.phase === "GAME_OVER") return s;
-      return { ...s, log: [`P2 tags`, ...s.log].slice(0, LOG_LIMIT) };
+      return { ...s, aiTaggedThisTurn: true, log: [`P2 tags`, ...s.log].slice(0, LOG_LIMIT) };
     }
 
     case "AI/GUEST_READY": {
@@ -225,6 +227,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (shouldTag(s, "AI")) {
         s = applyTagSwitch(s, "AI");
         if (s.phase === "GAME_OVER") return s;
+        s = { ...s, aiTaggedThisTurn: true };
       }
 
       // 태그 여부와 무관하게 카드 선택 또는 패스

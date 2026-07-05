@@ -71,6 +71,7 @@ export function createTutorialState(stage: TutorialStage): GameState {
     recentlyCancelledPlayer: null,
     log: [],
     p1TaggedThisTurn: false,
+    aiTaggedThisTurn: false,
     resolveContext: { queue: [], index: 0, unresolved: [] },
     animScript: [],
     animStartHp: null,
