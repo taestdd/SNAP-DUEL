@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useReducer, useRef, useState, Suspense } from "react";
+import { useEffect, useReducer, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
-import type { CharacterId, SetupConfig } from "@/game/engine/types";
+import type { SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import { useGameData } from "@/hooks/useGameData";
 import { useFlowDriver } from "@/hooks/useFlowDriver";
+import { useTagAnimating } from "@/hooks/useTagAnimating";
 import { decodeSetupParams } from "@/lib/setupConfig";
-
-const TAG_ANIM_DURATION = 700;
 
 function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?: SetupConfig; onExit: () => void }) {
   const [state, dispatch] = useReducer(
@@ -19,21 +18,7 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     () => createInitialState(config, aiConfig)
   );
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [isTagAnimating, setIsTagAnimating] = useState(false);
-
-  const prevP1CharRef = useRef<CharacterId>(state.P1.activeCharacter);
-  const prevAICharRef = useRef<CharacterId>(state.AI.activeCharacter);
-
-  useEffect(() => {
-    const p1Changed = state.P1.activeCharacter !== prevP1CharRef.current;
-    const aiChanged = state.AI.activeCharacter !== prevAICharRef.current;
-    prevP1CharRef.current = state.P1.activeCharacter;
-    prevAICharRef.current = state.AI.activeCharacter;
-    if (!p1Changed && !aiChanged) return;
-    setIsTagAnimating(true);
-    const t = setTimeout(() => setIsTagAnimating(false), TAG_ANIM_DURATION);
-    return () => clearTimeout(t);
-  }, [state.P1.activeCharacter, state.AI.activeCharacter]);
+  const isTagAnimating = useTagAnimating(state);
 
   // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
   useFlowDriver(state, dispatch, { paused: isTagAnimating });

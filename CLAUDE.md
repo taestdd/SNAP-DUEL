@@ -135,7 +135,10 @@ src/
 │       └── smoke.test.ts
 │
 ├── hooks/
-│   └── useGameData.ts              # 카드/덱/캐릭터 병렬 로딩 훅
+│   ├── useGameData.ts              # 카드/덱/캐릭터 병렬 로딩 훅
+│   ├── useFlowDriver.ts            # 페이즈 자동전환 (TURN_START/RESOLVE/TURN_END)
+│   ├── useGameTransitions.ts       # 상태 전환 감지 단일 진실원 (detectTransitions + 핸들러 훅)
+│   └── useTagAnimating.ts          # 태그 연출 재생 중 여부 (useGameTransitions 소비자)
 │
 └── lib/
     ├── firebase.ts                 # 클라이언트 SDK (온라인 대전)
@@ -204,6 +207,11 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE
 - `ANIMATING`: animScript 재생. `ANIM/DONE` 액션으로 종료
 - `WAITING_SELECTION`: move_cards + userSelects 효과 처리 중 대기
 - `WAITING_DISCARD`: 턴 종료 시 핸드 10장 초과 버리기
+
+**전환 감지 규칙:** "방금 무엇이 바뀌었나"(페이즈/라운드/캐릭터 교체/착지)에 반응하는 UI는
+컴포넌트에 `prevXRef`를 새로 만들지 말고 `hooks/useGameTransitions`의 핸들러로 소비한다.
+새 전환 종류가 필요하면 `detectTransitions`에 추가하고 `transitions.test.ts`로 검증한다.
+("현재 페이즈에 있는 동안" 반응하는 effect — ANIMATING 재생, GAME_OVER KO 포즈 등 — 는 해당 없음.)
 
 ---
 

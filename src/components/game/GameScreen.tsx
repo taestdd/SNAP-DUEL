@@ -5,6 +5,7 @@ import type { Action, GameState } from "@/game/engine/types";
 import { getBenchChar, isSetupTurnOf } from "@/game/engine/stateHelpers";
 import { shuffle } from "@/game/engine/rng";
 import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
+import { useGameTransitions } from "@/hooks/useGameTransitions";
 import styles from "./GameScreen.module.css";
 import FightingHPBar from "./FightingHPBar";
 import Hand from "./Hand";
@@ -54,7 +55,6 @@ export default function GameScreen({
   const hasSelection = !!state.selected;
   const readyLabel = hasSelection ? "Ready" : "Pass";
 
-  const prevPhaseRef = useRef(state.phase);
   const toastKeyRef = useRef(0);
   const [toastKey, setToastKey] = useState(0);
   const [toastText, setToastText] = useState("");
@@ -156,58 +156,54 @@ export default function GameScreen({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [logOpen, deckOpen, menuOpen]);
 
-  useEffect(() => {
-    const prevPhase = prevPhaseRef.current;
-    const currPhase = state.phase;
-    prevPhaseRef.current = currPhase;
+  // ── 페이즈 전환 → 중앙 안내 오버레이 / 상단 토스트 ─────────────────────────
+  useGameTransitions(state, {
+    onPhase: (_from, to, s) => {
+      const fireAnnounce = (steps: AnnounceStep[], lock: boolean) => {
+        announceKeyRef.current += 1;
+        setAnnounce({ key: announceKeyRef.current, steps, lock });
+      };
 
-    if (prevPhase === currPhase) return;
-
-    // ── 중앙 안내 오버레이 (격투게임 스타일) ──────────────────────────────
-    const fireAnnounce = (steps: AnnounceStep[], lock: boolean) => {
-      announceKeyRef.current += 1;
-      setAnnounce({ key: announceKeyRef.current, steps, lock });
-    };
-
-    if (currPhase === "SETUP_INIT") {
-      if (state.turn === 1) {
-        // 라운드 첫 셋업(드래프트 완료 직후) → ROUND N → READY? → FIGHT! (FIGHT!까지 입력 잠금)
-        fireAnnounce(
-          [
-            { text: `ROUND ${state.round}`, variant: "round", ms: 900 },
-            { text: "READY?", variant: "ready", ms: 700 },
-            { text: "FIGHT!", variant: "fight", ms: 700 },
-          ],
-          true,
-        );
-      } else {
-        // 일반 턴 시작 → TURN N (잠금 없음)
-        fireAnnounce([{ text: `TURN ${state.turn}`, variant: "turn", ms: 800 }], false);
+      if (to === "SETUP_INIT") {
+        if (s.turn === 1) {
+          // 라운드 첫 셋업(드래프트 완료 직후) → ROUND N → READY? → FIGHT! (FIGHT!까지 입력 잠금)
+          fireAnnounce(
+            [
+              { text: `ROUND ${s.round}`, variant: "round", ms: 900 },
+              { text: "READY?", variant: "ready", ms: 700 },
+              { text: "FIGHT!", variant: "fight", ms: 700 },
+            ],
+            true,
+          );
+        } else {
+          // 일반 턴 시작 → TURN N (잠금 없음)
+          fireAnnounce([{ text: `TURN ${s.turn}`, variant: "turn", ms: 800 }], false);
+        }
+        return;
       }
-      return;
-    }
 
-    if (currPhase === "RESOLVE") {
-      fireAnnounce([{ text: "전투 시작", variant: "clash", ms: 650 }], false);
-      return;
-    }
+      if (to === "RESOLVE") {
+        fireAnnounce([{ text: "전투 시작", variant: "clash", ms: 650 }], false);
+        return;
+      }
 
-    // 나머지는 기존 상단 토스트 유지
-    let msg = "";
-    if (currPhase === "WAITING_DISCARD") {
-      msg = "손패 초과 - 카드를 버리세요";
-    } else if (currPhase === "GAME_OVER") {
-      if (state.winner === "P1") msg = "승리!";
-      else if (state.winner === "AI") msg = "패배";
-      else msg = "무승부";
-    }
+      // 나머지는 기존 상단 토스트 유지
+      let msg = "";
+      if (to === "WAITING_DISCARD") {
+        msg = "손패 초과 - 카드를 버리세요";
+      } else if (to === "GAME_OVER") {
+        if (s.winner === "P1") msg = "승리!";
+        else if (s.winner === "AI") msg = "패배";
+        else msg = "무승부";
+      }
 
-    if (msg) {
-      toastKeyRef.current += 1;
-      setToastKey(toastKeyRef.current);
-      setToastText(msg);
-    }
-  }, [state.phase, state.turn, state.winner, state.round]);
+      if (msg) {
+        toastKeyRef.current += 1;
+        setToastKey(toastKeyRef.current);
+        setToastText(msg);
+      }
+    },
+  });
 
   return (
     <div className={styles.page}>
