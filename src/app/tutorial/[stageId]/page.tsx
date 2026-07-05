@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useReducer, useRef, useState, use } from "react";
+import { useEffect, useReducer, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createTutorialState } from "@/game/tutorial/tutorialState";
 import { TUTORIAL_STAGES } from "@/game/tutorial/tutorialStages";
 import { selectDraftCards } from "@/game/engine/ai";
-import type { CharacterId } from "@/game/engine/types";
+import { useTagAnimating } from "@/hooks/useTagAnimating";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
 
@@ -33,21 +33,7 @@ function TutorialGame({
     () => createTutorialState(stage),
   );
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [isTagAnimating, setIsTagAnimating] = useState(false);
-
-  const prevP1CharRef = useRef<CharacterId>(state.P1.activeCharacter);
-  const prevAICharRef = useRef<CharacterId>(state.AI.activeCharacter);
-
-  useEffect(() => {
-    const p1Changed = state.P1.activeCharacter !== prevP1CharRef.current;
-    const aiChanged = state.AI.activeCharacter !== prevAICharRef.current;
-    prevP1CharRef.current = state.P1.activeCharacter;
-    prevAICharRef.current = state.AI.activeCharacter;
-    if (!p1Changed && !aiChanged) return;
-    setIsTagAnimating(true);
-    const t = setTimeout(() => setIsTagAnimating(false), 700);
-    return () => clearTimeout(t);
-  }, [state.P1.activeCharacter, state.AI.activeCharacter]);
+  const isTagAnimating = useTagAnimating(state);
 
   // TURN_START: always advance (tutorial skips hand-length check)
   useEffect(() => {
