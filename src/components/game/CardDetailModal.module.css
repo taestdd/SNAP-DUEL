@@ -4,23 +4,38 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.60);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 200;
-  padding: 0 0 12px;
+  padding: 12px;
 }
 
 /* 슬라이드-업 패널 */
 .panel {
   width: min(360px, 100vw - 24px);
-  background: #1c1c2e;
+  background: #1b1c20;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 4px;
   padding: 18px 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  color: #e8e8f0;
+  color: #e6e7ea;
+}
+
+/* 일러스트 배너 — 가로 폭에 맞추고 전체 높이가 보이도록 (잘림 없음) */
+.artWrap {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #131418;
+}
+
+.artImg {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* 헤더 */
@@ -138,9 +153,9 @@
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 3px;
-  background: rgba(180, 140, 255, 0.12);
-  border: 1px solid rgba(180, 140, 255, 0.30);
-  color: #c8aaff;
+  background: rgba(200, 206, 216, 0.10);
+  border: 1px solid rgba(200, 206, 216, 0.28);
+  color: #c8ced8;
 }
 
 /* 사용 조건 */
@@ -148,9 +163,9 @@
   font-size: 12px;
   padding: 7px 12px;
   border-radius: 2px;
-  background: rgba(110, 180, 255, 0.08);
-  border: 1px solid rgba(110, 180, 255, 0.25);
-  color: #88c8ff;
+  background: rgba(200, 206, 216, 0.07);
+  border: 1px solid rgba(200, 206, 216, 0.22);
+  color: #b6bcc7;
 }
 
 /* StatModifier 목록 */
@@ -168,9 +183,9 @@
 }
 
 .modifierActive {
-  background: rgba(80, 200, 120, 0.12);
-  border: 1px solid rgba(80, 200, 120, 0.35);
-  color: #7ee8a2;
+  background: rgba(200, 206, 216, 0.12);
+  border: 1px solid rgba(200, 206, 216, 0.35);
+  color: #d4d8e0;
 }
 
 .modifierInactive {
@@ -183,13 +198,13 @@
 .modActive {
   margin-left: 3px;
   font-size: 10px;
-  color: #7ee8a2;
+  color: #e2e5ea;
   font-weight: 700;
 }
 
 .modMalus {
   margin-left: 3px;
   font-size: 10px;
-  color: #ff8080;
+  color: #9aa0ab;
   font-weight: 700;
 }

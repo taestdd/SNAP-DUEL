@@ -309,6 +309,46 @@ export default function CardEditor({ initial, mode }: Props) {
                 placeholder="카드 효과를 설명하는 텍스트"
               />
             </div>
+            <div className={styles.fieldFull}>
+              <label className={styles.label}>일러스트 (카드 ID로 자동 지정)</label>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ flex: 1 }}>
+                  <code
+                    style={{
+                      display: "block",
+                      padding: "8px 10px",
+                      borderRadius: 4,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.04)",
+                      fontSize: 13,
+                      color: id ? "#c8ced8" : "rgba(255,255,255,0.35)",
+                    }}
+                  >
+                    {id ? `/sprites/cards/${id}.png` : "먼저 ID를 입력하세요"}
+                  </code>
+                  <div style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
+                    이 경로에 맞춰 <b>public/sprites/cards/{id || "{ID}"}.png</b> 파일을 넣으면 자동 적용됩니다.
+                  </div>
+                </div>
+                {id && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/sprites/cards/${id}.png`}
+                    alt="일러스트 미리보기"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      objectFit: "cover",
+                      borderRadius: 4,
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "#131418",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
             <div className={styles.field}>
               <label className={styles.label}>카드 태그</label>
               <div className={styles.tagGroup}>

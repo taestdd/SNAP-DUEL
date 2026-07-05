@@ -16,9 +16,31 @@ const ANGLE_PER_CARD = 3.5; // 카드 1장당 각도 (deg)
 const MAX_HALF_ANGLE = 18;  // 중앙에서 최대 각도 (deg)
 const SELECTED_LIFT = 24;   // 선택 시 위로 올리는 거리 (px)
 
-function cardFanAngle(idx: number, n: number): number {
+// 컨테이너 폭을 넘어서지 않도록, 가장 바깥 카드가 벗어날 수 있는 최대 각도를 계산
+// (회전하면 카드 자체의 바운딩박스도 넓어지므로 중심 이동량 + 회전된 반폭을 함께 고려)
+function maxHalfAngleForWidth(containerWidth: number): number {
+  const maxAllowed = containerWidth / 2;
+  const pivotDistance = FAN_RADIUS + CARD_H / 2;
+  const fits = (deg: number) => {
+    const rad = (deg * Math.PI) / 180;
+    const centerShift = pivotDistance * Math.sin(rad);
+    const halfBox = (CARD_W * Math.cos(rad) + CARD_H * Math.sin(rad)) / 2;
+    return centerShift + halfBox <= maxAllowed;
+  };
+  if (fits(MAX_HALF_ANGLE)) return MAX_HALF_ANGLE;
+  let lo = 0;
+  let hi = MAX_HALF_ANGLE;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (fits(mid)) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+function cardFanAngle(idx: number, n: number, maxHalfAngle: number): number {
   if (n <= 1) return 0;
-  const half = Math.min(MAX_HALF_ANGLE, ((n - 1) / 2) * ANGLE_PER_CARD);
+  const half = Math.min(maxHalfAngle, ((n - 1) / 2) * ANGLE_PER_CARD);
   const t = (idx / (n - 1)) * 2 - 1; // -1 ~ +1
   return t * half;
 }
@@ -75,6 +97,7 @@ export default function Hand({
 
   const n = me.hand.length;
   const cardLeft = Math.max(0, containerWidth / 2 - CARD_W / 2);
+  const maxHalfAngle = Math.min(MAX_HALF_ANGLE, maxHalfAngleForWidth(containerWidth));
 
   const handleCycle = useCallback(() => {
     if (n < 2 || cyclingIdx !== null) return;
@@ -122,7 +145,7 @@ export default function Hand({
             !disabled && play.costOk && play.altCostOk && (!play.conditionMet || !play.affinityMet);
           const isSelected = selected?.cardId === cardId && selected?.handIndex === idx;
           const isCycling = cyclingIdx === idx;
-          const angle = cardFanAngle(idx, n);
+          const angle = cardFanAngle(idx, n, maxHalfAngle);
           const rippleDelay = (n - 2 - idx) * RIPPLE_STAGGER;
           const showRipple = isRippling && !isCycling && !isSelected;
 
