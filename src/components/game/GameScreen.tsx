@@ -14,7 +14,7 @@ import EndTurnButton from "./EndTurnButton";
 import CardSelectionModal from "./CardSelectionModal";
 import ToastMessage from "./ToastMessage";
 import BattleAnnounce, { type AnnounceStep } from "./BattleAnnounce";
-import ArenaStage, { type HitSide } from "./ArenaStage";
+import ArenaStage from "./ArenaStage";
 import QueuePreview from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
 import DraftModal from "./DraftModal";
