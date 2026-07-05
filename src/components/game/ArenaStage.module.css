@@ -125,8 +125,9 @@
   margin-bottom: -22px;
 }
 
-/* 공격 성공 시 상대쪽으로 전진(translateX). 전진은 빠르게(대시-인),
-   복귀는 조금 부드럽게. knockback keyframe과 분리된 래퍼라 서로 간섭 없음. */
+/* 공격 성공 시 상대쪽으로 전진(translateX). knockback keyframe과 분리된 래퍼라 서로 간섭 없음.
+   transform·transition 모두 ArenaStage에서 인라인 제어(전진 빠르게 / 복귀 부드럽게).
+   아래 transition은 인라인이 없을 때의 폴백 기본값. */
 .advanceWrap {
   display: flex;
   align-items: flex-end;
