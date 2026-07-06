@@ -137,7 +137,8 @@ export default function CardEditor({ initial, mode }: Props) {
   const [effects, setEffects] = useState<CardEffect[]>(initial?.effects ?? [emptyEffect()]);
   const [hitTimings, setHitTimings] = useState(initial?.hitTimings ?? []);
   const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
-  const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? false);
+  // meleeAttack은 미지정 = true가 기본 (원거리 카드만 false 저장)
+  const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? true);
   const [knockback, setKnockback] = useState(initial?.knockback ?? false);
   const [statModifiers, setStatModifiers] = useState<StatModifier[]>(initial?.statModifiers ?? []);
   const [altCost, setAltCost] = useState<AltCost | null>(initial?.altCost ?? null);
@@ -220,7 +221,8 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(actionTagAirborne ? { actionTagAirborne: actionTagAirborne as CardSchemaType["actionTag"] } : {}),
       ...(hitTimings.length > 0 ? { hitTimings: cleanedHitTimings as CardSchemaType["hitTimings"] } : {}),
       ...(superFlash ? { superFlash: true } : {}),
-      ...(meleeAttack ? { meleeAttack: true } : {}),
+      // 기본값 true — 체크 해제(원거리)일 때만 명시적으로 false 저장
+      ...(meleeAttack ? {} : { meleeAttack: false }),
       ...(knockback ? { knockback: true } : {}),
       ...(statModifiers.length > 0 ? { statModifiers } : {}),
       ...(altCost ? { altCost } : {}),

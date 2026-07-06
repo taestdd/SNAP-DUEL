@@ -322,8 +322,9 @@ export type Card = {
   superFlash?: boolean;
 
   /**
-   * 연출 전용 — 근접 공격. true면 비근접 상태에서 타격 성립 시
+   * 연출 전용 — 근접 공격. 비근접 상태에서 타격 성립 시
    * 공격자가 상대 앞까지 돌진한 뒤 공격 연출을 재생한다 (게임 로직 무관).
+   * **미지정 시 true** — 원거리 카드만 명시적으로 false를 저장한다.
    */
   meleeAttack?: boolean;
   /**

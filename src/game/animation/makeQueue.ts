@@ -254,8 +254,9 @@ function pushSequenceWithHold(
 
   // ── 대시-인: 근접공격 + 비근접(오프셋 불일치)이면 상대 위치까지 돌진 후 공격 ──
   // 대시 시간만큼 시퀀스 전체(포즈·히트·종료)를 뒤로 민다.
+  // meleeAttack 미지정 = true (근접이 기본, 원거리 카드만 명시적 false)
   let shift = 0;
-  if (willConnect && card.meleeAttack && sim[actor] !== sim[target]) {
+  if (willConnect && card.meleeAttack !== false && sim[actor] !== sim[target]) {
     events.push({ type: "fighter_move", delay: offset, subject: actor, toOffset: sim[target], motion: "dash" });
     sim[actor] = sim[target];
     shift = DASH_MS;

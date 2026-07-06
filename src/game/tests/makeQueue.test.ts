@@ -13,6 +13,7 @@ import type { Card, CombatAnimationEvent } from "@/game/engine/types";
  */
 
 // attack_weak_punch 포즈: frames 2개, fps 10 → 프레임당 100ms (스프라이트 'a' 기준)
+// meleeAttack: false — 타이밍 검증이 대시 지연과 섞이지 않도록 원거리로 고정
 function attackCard(hitTimings: Card["hitTimings"]): Card {
   return {
     id: "test_atk",
@@ -26,6 +27,7 @@ function attackCard(hitTimings: Card["hitTimings"]): Card {
     text: "",
     actionTag: "weak_punch",
     hitTimings,
+    meleeAttack: false,
   };
 }
 
@@ -145,6 +147,15 @@ describe("대시-인 (근접공격)", () => {
   it("근접공격 off(원거리)면 비근접이어도 대시하지 않는다", () => {
     const events = makeQueue(attackCard(HT), null, "player", 0, 0, 0, 0, "a", "a");
     expect(moves(events)).toHaveLength(0);
+  });
+
+  it("meleeAttack 미지정 카드는 기본 근접(true)으로 대시한다", () => {
+    const legacy: Card = { ...attackCard(HT) };
+    delete legacy.meleeAttack; // 기존 Firestore 카드 = 필드 없음
+    const events = makeQueue(legacy, null, "player", 0, 0, 0, 0, "a", "a");
+    const mv = moves(events);
+    expect(mv).toHaveLength(1);
+    expect(mv[0].motion).toBe("dash");
   });
 
   it("빗나간 근접공격은 대시하지 않는다", () => {
