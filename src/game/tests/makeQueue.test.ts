@@ -185,6 +185,54 @@ describe("넉백", () => {
   });
 });
 
+describe("온라인 미러 정합성 (호스트 ↔ 게스트 flip)", () => {
+  // 게스트는 P1/AI가 뒤집힌 스크립트로 자기 좌표계에서 시뮬레이션한다.
+  // 호스트의 fighter_move와 게스트의 fighter_move는 정확한 거울상이어야 한다:
+  // subject 반전, toOffset·bgPush 부호 반전, delay·motion 동일.
+  it("호스트와 게스트의 fighter_move는 거울상이다 (선공 대시+넉백, 후공 대시)", () => {
+    const first = meleeCard({ knockback: true });
+    const second = meleeCard();
+
+    // 호스트 시점: P1(호스트)이 선공
+    const host = makeQueue(first, second, "player", 0, 0, 0, 0, "a", "a");
+    // 게스트 시점: 같은 턴이 flip되어 AI(호스트)가 선공
+    const guest = makeQueue(second, first, "ai", 0, 0, 0, 0, "a", "a");
+
+    const hostMoves = moves(host);
+    const guestMoves = moves(guest);
+    expect(guestMoves).toHaveLength(hostMoves.length);
+    for (let i = 0; i < hostMoves.length; i++) {
+      expect(guestMoves[i].subject).toBe(hostMoves[i].subject === "P1" ? "AI" : "P1");
+      expect(guestMoves[i].toOffset).toBe(-hostMoves[i].toOffset!);
+      expect(guestMoves[i].delay).toBe(hostMoves[i].delay);
+      expect(guestMoves[i].motion).toBe(hostMoves[i].motion);
+      if (hostMoves[i].bgPush !== undefined) {
+        expect(guestMoves[i].bgPush).toBe(-hostMoves[i].bgPush!);
+      }
+    }
+  });
+
+  it("턴 사이 보존된 근접 상태에서 시작해도 거울상이 유지된다", () => {
+    // 이전 턴에 호스트(P1)가 대시해 온 근접 상태 (둘 다 AI 홈 쪽)
+    const hostStart = { P1: HOME_OFFSET.AI, AI: HOME_OFFSET.AI };
+    // 게스트 좌표계의 같은 상태: 키 교환 + 부호 반전
+    const guestStart = { P1: -hostStart.AI, AI: -hostStart.P1 };
+
+    const card = meleeCard({ knockback: true });
+    const host = makeQueue(card, null, "player", 0, 0, 0, 0, "a", "a", undefined, undefined, hostStart);
+    const guest = makeQueue(null, card, "ai", 0, 0, 0, 0, "a", "a", undefined, undefined, guestStart);
+
+    const hostMoves = moves(host);
+    const guestMoves = moves(guest);
+    // 근접이라 대시 없음 + 공격자 복귀만 (수비자는 이미 홈)
+    expect(hostMoves).toHaveLength(1);
+    expect(hostMoves[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.P1, motion: "recover" });
+    expect(guestMoves).toHaveLength(1);
+    expect(guestMoves[0]).toMatchObject({ subject: "AI", toOffset: HOME_OFFSET.AI, motion: "recover" });
+    expect(guestMoves[0].bgPush).toBe(-hostMoves[0].bgPush!);
+  });
+});
+
 describe("거리 시뮬레이션 스레딩 (양측 시퀀스)", () => {
   it("선공이 대시해 근접이 되면 후공 근접공격은 대시하지 않는다", () => {
     const events = makeQueue(meleeCard(), meleeCard(), "player", 0, 0, 0, 0, "a", "a");
