@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET } from "@/game/animation/makeQueue";
+import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS } from "@/game/animation/makeQueue";
 import type { Card, CombatAnimationEvent } from "@/game/engine/types";
 
 /**
@@ -109,5 +109,94 @@ describe("미적중 시 visual_hit 없음", () => {
     const events = makeQueue(card, null, "player", 0, 1, 0, 0, "a", "a");
     expect(visualHits(events)).toHaveLength(0);
     expect(events.some((e) => e.type === "damage_resolve")).toBe(true);
+  });
+});
+
+/* ── 거리(근접/비근접) 연출: 대시-인 / 넉백 ─────────────────────────────── */
+
+const HT = [{ frame: 1, ground: "hit_weak" as const, airborne: "hit_weak" as const, freeze: 100, zoom: 1.1 }];
+
+function meleeCard(opts?: Partial<Card>): Card {
+  return { ...attackCard(HT), meleeAttack: true, ...opts };
+}
+
+function moves(events: CombatAnimationEvent[]): CombatAnimationEvent[] {
+  return events.filter((e) => e.type === "fighter_move");
+}
+
+describe("대시-인 (근접공격)", () => {
+  it("비근접 + 근접공격 + 적중: 상대 오프셋까지 대시 후 시퀀스가 DASH_MS만큼 밀린다", () => {
+    const events = makeQueue(meleeCard(), null, "player", 0, 0, 0, 0, "a", "a");
+    const dash = moves(events);
+    expect(dash).toHaveLength(1);
+    expect(dash[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI, motion: "dash", delay: 0 });
+    // 포즈·히트가 대시 시간만큼 뒤로 밀림
+    expect(events.find((e) => e.type === "action_start")!.delay).toBe(DASH_MS);
+    expect(visualHits(events)[0].delay).toBe(DASH_MS + 100);
+  });
+
+  it("근접 상태(오프셋 동일)면 대시하지 않는다", () => {
+    const close = { P1: HOME_OFFSET.AI, AI: HOME_OFFSET.AI };
+    const events = makeQueue(meleeCard(), null, "player", 0, 0, 0, 0, "a", "a", undefined, undefined, close);
+    expect(moves(events)).toHaveLength(0);
+    expect(events.find((e) => e.type === "action_start")!.delay).toBe(0);
+  });
+
+  it("근접공격 off(원거리)면 비근접이어도 대시하지 않는다", () => {
+    const events = makeQueue(attackCard(HT), null, "player", 0, 0, 0, 0, "a", "a");
+    expect(moves(events)).toHaveLength(0);
+  });
+
+  it("빗나간 근접공격은 대시하지 않는다", () => {
+    // targetAirborne=1 → groundAttack 미적중
+    const events = makeQueue(meleeCard(), null, "player", 0, 1, 0, 0, "a", "a");
+    expect(moves(events)).toHaveLength(0);
+  });
+});
+
+describe("넉백", () => {
+  it("대시 후 넉백: 공격자가 홈으로 복귀(recover)하며 배경 착시(bgPush)를 만든다", () => {
+    const events = makeQueue(meleeCard({ knockback: true }), null, "player", 0, 0, 0, 0, "a", "a");
+    const mv = moves(events);
+    // 대시(P1→상대) + 복귀(P1→홈). 수비자(AI)는 이미 홈이라 이동 이벤트 없음
+    expect(mv).toHaveLength(2);
+    expect(mv[0]).toMatchObject({ subject: "P1", motion: "dash" });
+    expect(mv[1]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.P1, motion: "recover" });
+    expect(mv[1].bgPush).toBeLessThan(0); // P1 왼쪽 복귀 → 배경 -
+    // 복귀는 action_end 시점
+    expect(mv[1].delay).toBe(events.find((e) => e.type === "action_end")!.delay);
+  });
+
+  it("근접 상태에서 넉백: 홈이 아닌 수비자가 밀려난다(knockback 모션)", () => {
+    // 둘 다 P1 홈 쪽에 붙어 있는 근접 상태 (AI가 이전에 대시해 온 상황)
+    const close = { P1: HOME_OFFSET.P1, AI: HOME_OFFSET.P1 };
+    const events = makeQueue(meleeCard({ knockback: true }), null, "player", 0, 0, 0, 0, "a", "a", undefined, undefined, close);
+    const mv = moves(events);
+    // 근접이라 대시 없음. 수비자(AI)만 홈으로 밀려남 (공격자는 이미 홈 → 복귀 없음)
+    expect(mv).toHaveLength(1);
+    expect(mv[0]).toMatchObject({ subject: "AI", toOffset: HOME_OFFSET.AI, motion: "knockback" });
+  });
+
+  it("넉백 off면 대시 후 위치를 유지한다 (근접 상태 지속)", () => {
+    const events = makeQueue(meleeCard(), null, "player", 0, 0, 0, 0, "a", "a");
+    const mv = moves(events);
+    expect(mv).toHaveLength(1); // 대시만, 복귀 없음
+    expect(mv[0].motion).toBe("dash");
+  });
+});
+
+describe("거리 시뮬레이션 스레딩 (양측 시퀀스)", () => {
+  it("선공이 대시해 근접이 되면 후공 근접공격은 대시하지 않는다", () => {
+    const events = makeQueue(meleeCard(), meleeCard(), "player", 0, 0, 0, 0, "a", "a");
+    const mv = moves(events);
+    expect(mv).toHaveLength(1); // P1의 대시만
+    expect(mv[0].subject).toBe("P1");
+  });
+
+  it("선공이 넉백까지 하면 후공 근접공격은 다시 대시한다", () => {
+    const events = makeQueue(meleeCard({ knockback: true }), meleeCard(), "player", 0, 0, 0, 0, "a", "a");
+    const dashes = moves(events).filter((e) => e.motion === "dash");
+    expect(dashes).toHaveLength(2);
+    expect(dashes.map((e) => e.subject)).toEqual(["P1", "AI"]);
   });
 });

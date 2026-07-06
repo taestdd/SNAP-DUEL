@@ -115,6 +115,9 @@ export const CardSchema = z.object({
   actionTagAirborne: ActionTagSchema.optional(),
   hitTimings: z.array(HitTimingSchema).optional(),
   superFlash: z.boolean().optional(),
+  // 연출 전용 필드 (게임 로직 무관)
+  meleeAttack: z.boolean().optional(),
+  knockback: z.boolean().optional(),
   statModifiers: z.array(StatModifierSchema).optional(),
   altCost: AltCostSchema.optional(),
 });

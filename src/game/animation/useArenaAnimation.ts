@@ -13,7 +13,7 @@ import type {
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
 import { useGameTransitions } from "@/hooks/useGameTransitions";
-import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET } from "./makeQueue";
+import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET, HOME_OFFSET } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
 
 // ── 타이밍 상수 ────────────────────────────────────────────────────────────────
@@ -22,11 +22,14 @@ const TAG_TRANSITION_MS = 350;
 const ANIM_DONE_BUFFER_MS = 150;
 /** 착지 포즈 유지 시간 (ms) — 이후 idle 복귀 */
 const LAND_MS = 380;
-/** 공격 성공 시 공격자가 상대쪽으로 전진하는 거리 (px) */
-const ADVANCE_PX = 60;
-/** 공격자 복귀 시 배경을 같은 방향으로 미는 거리 (px).
- *  공격자가 배경 대비 제자리에 있는 듯 보이게 해 "적이 밀리는" 착시를 만든다. */
-const RETURN_BG_PX = 60;
+
+/** 파이터 위치 연출 상태 — x: 오프셋(px), motion: 트랜지션 선택용 이동 성격 */
+export type FighterMove = { x: number; motion: "dash" | "recover" | "knockback" };
+
+const HOME_MOVE: Record<PlayerId, FighterMove> = {
+  P1: { x: HOME_OFFSET.P1, motion: "recover" },
+  AI: { x: HOME_OFFSET.AI, motion: "recover" },
+};
 
 /** event.freezeMs 미지정 시 폴백 (정상 경로에서는 makeQueue가 항상 채움) */
 function freezeOf(event: CombatAnimationEvent): number {
@@ -63,9 +66,9 @@ export type ArenaAnimState = {
   aiFlashKey: number;
   playerKnockbackKey: number;
   aiKnockbackKey: number;
-  /** 공격자 전진 오프셋(px). 상대쪽 방향(+P1 오른쪽 / -AI 왼쪽). action_start 시 전진, action_end 시 0 복귀 */
-  playerAdvance: number;
-  aiAdvance: number;
+  /** 파이터 위치 연출 (근접/비근접 오프셋 + 대시/넉백/복귀 모션). 턴 사이 보존됨 */
+  playerMove: FighterMove;
+  aiMove: FighterMove;
   /** 줌 배율 (1 = 기본). 히트 임팩트 윈도우 동안 확대 후 복귀 */
   zoomScale: number;
   bgOffset: number;
@@ -105,8 +108,12 @@ export function useArenaAnimation(
   const [aiFlashKey, setAiFlashKey] = useState(0);
   const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
-  const [playerAdvance, setPlayerAdvance] = useState(0);
-  const [aiAdvance, setAiAdvance] = useState(0);
+  // 파이터 위치 연출 — 대시/넉백이 갱신하고 턴 사이 보존된다 (라운드·태그 시 홈 리셋)
+  const [playerMove, setPlayerMove] = useState<FighterMove>(HOME_MOVE.P1);
+  const [aiMove, setAiMove] = useState<FighterMove>(HOME_MOVE.AI);
+  // ANIMATING 진입 시 makeQueue에 현재 오프셋을 전달하기 위한 최신값 참조
+  const moveRef = useRef({ P1: HOME_OFFSET.P1, AI: HOME_OFFSET.AI });
+  useEffect(() => { moveRef.current = { P1: playerMove.x, AI: aiMove.x }; }, [playerMove, aiMove]);
   const [zoomScale, setZoomScale] = useState(1);
   const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgOffset, setBgOffset] = useState(0);
@@ -154,6 +161,10 @@ export function useArenaAnimation(
         setPose("tag_entry");
         setKey((k) => k + 1);
       }, TAG_TRANSITION_MS);
+
+      // 태그(캐릭터 교체) 시 거리 상태를 비근접(홈)으로 리셋 — 새 캐릭터는 홈에서 등장
+      setPlayerMove(HOME_MOVE.P1);
+      setAiMove(HOME_MOVE.AI);
     },
 
     onRound: () => {
@@ -161,6 +172,9 @@ export function useArenaAnimation(
       setPlayerPoseKey((k) => k + 1);
       setAiPose("idle");
       setAiPoseKey((k) => k + 1);
+      // 라운드 전환 시 거리 상태를 비근접(홈)으로 리셋
+      setPlayerMove(HOME_MOVE.P1);
+      setAiMove(HOME_MOVE.AI);
     },
 
     onLanding: (player) => {
@@ -207,7 +221,8 @@ export function useArenaAnimation(
     }
     setDisplayedCancelledPlayer(null);
 
-    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter);
+    // 현재 파이터 오프셋을 시작점으로 대시/넉백 거리 시뮬레이션 (턴 사이 보존값)
+    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter, moveRef.current);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
@@ -242,13 +257,10 @@ export function useArenaAnimation(
     switch (event.type) {
       case "action_start": {
         const pose = actionTagToPose(event.actionTag);
-        // 타격이 성립하는 공격이면 공격자가 상대쪽으로 전진(P1은 오른쪽 +, AI는 왼쪽 -)
         if (event.actor === "P1") {
           if (pose) { setPlayerPose(pose); setPlayerPoseKey((k) => k + 1); }
-          setPlayerAdvance(event.advance ? ADVANCE_PX : 0);
         } else if (event.actor === "AI") {
           if (pose) { setAiPose(pose); setAiPoseKey((k) => k + 1); }
-          setAiAdvance(event.advance ? -ADVANCE_PX : 0);
         }
         setAnimLog((prev) => [
           ...prev,
@@ -307,17 +319,18 @@ export function useArenaAnimation(
         break;
       }
       case "action_end":
-        // 액션 종료 시 전진했던 공격자를 원위치로 복귀시키면서,
-        // 배경을 복귀와 같은 방향으로 밀어 공격자가 제자리인 듯한(=적이 밀리는) 착시를 만든다.
-        // P1은 왼쪽으로 복귀 → 배경도 왼쪽(bgOffset-), AI는 오른쪽으로 복귀 → 배경 오른쪽(bgOffset+)
-        if (event.actor === "P1") {
-          if (event.advance) setBgOffset((o) => o - RETURN_BG_PX);
-          setPlayerAdvance(0);
-        } else if (event.actor === "AI") {
-          if (event.advance) setBgOffset((o) => o + RETURN_BG_PX);
-          setAiAdvance(0);
-        }
         break;
+      case "fighter_move": {
+        // 대시/넉백/복귀 — makeQueue가 시뮬레이션한 목표 오프셋을 그대로 적용.
+        // bgPush(공격자 복귀 시)는 배경을 같은 방향으로 밀어 "적이 밀리는" 착시를 만든다.
+        if (event.subject === undefined || event.toOffset === undefined) break;
+        const move: FighterMove = { x: event.toOffset, motion: event.motion ?? "recover" };
+        if (event.subject === "P1") setPlayerMove(move);
+        else setAiMove(move);
+        if (event.bgPush) setBgOffset((o) => o + event.bgPush!);
+        setAnimLog((prev) => [...prev, `fighter_move: ${event.subject} → ${event.toOffset}px [${event.motion}]`]);
+        break;
+      }
       case "damage_resolve": {
         if (event.hpAfter) {
           setDisplayedHp({ ...event.hpAfter });
@@ -349,8 +362,8 @@ export function useArenaAnimation(
     aiFlashKey,
     playerKnockbackKey,
     aiKnockbackKey,
-    playerAdvance,
-    aiAdvance,
+    playerMove,
+    aiMove,
     zoomScale,
     bgOffset,
     hitEffectKey,

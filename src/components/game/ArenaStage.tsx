@@ -8,6 +8,8 @@ import styles from "./ArenaStage.module.css";
 
 export type ShakeLevel = "none" | "light" | "heavy";
 export type HitSide = "player" | "ai" | null;
+/** 파이터 위치 이동의 성격 — 트랜지션 속도/커브 선택 */
+export type MoveMotion = "dash" | "recover" | "knockback";
 
 interface ArenaStageProps {
   playerPose?: FighterPose;
@@ -24,8 +26,12 @@ interface ArenaStageProps {
   aiFlashKey?: number;
   playerKnockbackKey?: number;
   aiKnockbackKey?: number;
-  playerAdvance?: number;
-  aiAdvance?: number;
+  /** 파이터 X 오프셋 (px, 기본 인접 배치 기준). 비근접=홈(±SPREAD), 근접=동일 오프셋 */
+  playerOffset?: number;
+  aiOffset?: number;
+  /** 오프셋 이동의 성격 — dash 빠르게 / recover·knockback 부드럽게 */
+  playerMotion?: MoveMotion;
+  aiMotion?: MoveMotion;
   zoomScale?: number;
   bgOffset?: number;
   hitEffectKey?: number;
@@ -51,8 +57,10 @@ export default function ArenaStage({
   aiFlashKey = 0,
   playerKnockbackKey = 0,
   aiKnockbackKey = 0,
-  playerAdvance = 0,
-  aiAdvance = 0,
+  playerOffset = 0,
+  aiOffset = 0,
+  playerMotion = "recover",
+  aiMotion = "recover",
   zoomScale = 1,
   bgOffset = 0,
   hitEffectKey = 0,
@@ -97,11 +105,14 @@ export default function ArenaStage({
       ? "transform 120ms cubic-bezier(0.22, 1, 0.36, 1)"
       : "transform 420ms cubic-bezier(0.33, 1, 0.68, 1)";
 
-  // 전진(offset≠0)은 빠르게(대시-인), 복귀(offset=0)는 배경 이동과 동기화되도록 느리게.
-  const advTransition = (offset: number) =>
-    offset !== 0
-      ? "transform 130ms cubic-bezier(0.3, 0.7, 0.4, 1)"
-      : "transform 360ms cubic-bezier(0.33, 1, 0.68, 1)";
+  // 이동 성격별 트랜지션 — 대시는 빠르게, 넉백은 튕기듯, 복귀는 배경 이동과 동기화되도록 느리게
+  const moveTransition = (motion: MoveMotion) => {
+    switch (motion) {
+      case "dash":      return "transform 130ms cubic-bezier(0.3, 0.7, 0.4, 1)";
+      case "knockback": return "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+      case "recover":   return "transform 360ms cubic-bezier(0.33, 1, 0.68, 1)";
+    }
+  };
 
   return (
     <div className={styles.zoomWrap}>
@@ -118,8 +129,8 @@ export default function ArenaStage({
             ref={playerRef}
             className={`${styles.fighterLeft} ${superFlashActor === "P1" ? styles.superFlashActor : ""}`}
           >
-            {/* 전진 레이어: knockback(keyframe)과 transform 충돌 방지를 위해 별도 래퍼 */}
-            <div className={styles.advanceWrap} style={{ transform: `translateX(${playerAdvance}px)`, transition: advTransition(playerAdvance) }}>
+            {/* 위치 레이어: knockback 셰이크(keyframe)와 transform 충돌 방지를 위해 별도 래퍼 */}
+            <div className={styles.advanceWrap} style={{ transform: `translateX(${playerOffset}px)`, transition: moveTransition(playerMotion) }}>
               <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
               {/* 히트 이펙트를 스프라이트 기준으로 배치 → 전진·넉백을 자동 추종. P1은 AI(오른쪽)에게 맞으므로 오른쪽 근접면 */}
               {hitEffectKey > 0 && hitEffectTarget === "P1" && (
@@ -131,7 +142,7 @@ export default function ArenaStage({
             ref={aiRef}
             className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
           >
-            <div className={styles.advanceWrap} style={{ transform: `translateX(${aiAdvance}px)`, transition: advTransition(aiAdvance) }}>
+            <div className={styles.advanceWrap} style={{ transform: `translateX(${aiOffset}px)`, transition: moveTransition(aiMotion) }}>
               <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
               {/* AI는 P1(왼쪽)에게 맞으므로 왼쪽 근접면 */}
               {hitEffectKey > 0 && hitEffectTarget === "AI" && (

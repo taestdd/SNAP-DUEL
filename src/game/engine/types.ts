@@ -76,7 +76,7 @@ export interface FighterViewState {
  * delay: 큐 시작 시점으로부터의 절대 지연 (ms)
  */
 export interface CombatAnimationEvent {
-  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash";
+  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash" | "fighter_move";
   /** 큐 시작 시점으로부터의 절대 지연 (ms) */
   delay: number;
   /** 행동하는 플레이어 (action_start, action_end, damage_resolve) */
@@ -91,8 +91,14 @@ export interface CombatAnimationEvent {
   zoom?: number;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
-  /** action_start: 타격이 성립하는 공격이면 true → 공격자가 상대쪽으로 전진 후 액션 */
-  advance?: boolean;
+  /** fighter_move: 이동하는 파이터 */
+  subject?: PlayerId;
+  /** fighter_move: 목표 X 오프셋 (px, 아레나 기본 배치 기준) */
+  toOffset?: number;
+  /** fighter_move: 이동 성격 — 트랜지션 속도/커브 선택에 사용 */
+  motion?: "dash" | "recover" | "knockback";
+  /** fighter_move: 배경 밀림 착시량 (공격자 복귀 시 배경을 같은 방향으로 이동) */
+  bgPush?: number;
   /** damage_resolve: 이 카드 효과 적용 후의 HP (UI 표시용) */
   hpAfter?: { P1: number; AI: number };
   /** damage_resolve: 이 카드로 인해 캔슬된 플레이어 (UI 표시용) */
@@ -314,6 +320,17 @@ export type Card = {
 
   /** true면 기술 발동 전 슈퍼 플래시 연출 재생 */
   superFlash?: boolean;
+
+  /**
+   * 연출 전용 — 근접 공격. true면 비근접 상태에서 타격 성립 시
+   * 공격자가 상대 앞까지 돌진한 뒤 공격 연출을 재생한다 (게임 로직 무관).
+   */
+  meleeAttack?: boolean;
+  /**
+   * 연출 전용 — 넉백. true면 타격 성립 시 공격 연출이 끝난 후
+   * 양측이 홈 위치로 밀려나 비근접 상태가 된다 (게임 로직 무관).
+   */
+  knockback?: boolean;
 
   /** 조건부 스탯 보정 목록. 조건 충족 시 해당 스탯에 delta 누적 */
   statModifiers?: StatModifier[];
