@@ -161,10 +161,7 @@ export function useArenaAnimation(
         setPose("tag_entry");
         setKey((k) => k + 1);
       }, TAG_TRANSITION_MS);
-
-      // 태그(캐릭터 교체) 시 거리 상태를 비근접(홈)으로 리셋 — 새 캐릭터는 홈에서 등장
-      setPlayerMove(HOME_MOVE.P1);
-      setAiMove(HOME_MOVE.AI);
+      // 거리 상태는 태그에도 유지 — 새 캐릭터가 이전 캐릭터 위치에서 등장 (리셋은 라운드 전환만)
     },
 
     onRound: () => {
