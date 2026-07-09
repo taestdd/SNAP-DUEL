@@ -66,6 +66,9 @@ export type ArenaAnimState = {
   aiFlashKey: number;
   playerKnockbackKey: number;
   aiKnockbackKey: number;
+  /** 피격 잔떨림 — key: visual_hit마다 증가, ms: 히트스탑 freeze 윈도우 길이 */
+  playerHitShake: { key: number; ms: number };
+  aiHitShake: { key: number; ms: number };
   /** 파이터 위치 연출 (근접/비근접 오프셋 + 대시/넉백/복귀 모션). 턴 사이 보존됨 */
   playerMove: FighterMove;
   aiMove: FighterMove;
@@ -108,6 +111,9 @@ export function useArenaAnimation(
   const [aiFlashKey, setAiFlashKey] = useState(0);
   const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
+  // 피격 잔떨림 (히트스탑 freeze 윈도우 동안 피격자 진동)
+  const [playerHitShake, setPlayerHitShake] = useState({ key: 0, ms: 0 });
+  const [aiHitShake, setAiHitShake] = useState({ key: 0, ms: 0 });
   // 파이터 위치 연출 — 대시/넉백이 갱신하고 턴 사이 보존된다 (라운드·태그 시 홈 리셋)
   const [playerMove, setPlayerMove] = useState<FighterMove>(HOME_MOVE.P1);
   const [aiMove, setAiMove] = useState<FighterMove>(HOME_MOVE.AI);
@@ -297,11 +303,14 @@ export function useArenaAnimation(
           const setPoseKey   = isP1 ? setPlayerPoseKey   : setAiPoseKey;
           const setFlashKey  = isP1 ? setPlayerFlashKey  : setAiFlashKey;
           const setKnockback = isP1 ? setPlayerKnockbackKey : setAiKnockbackKey;
+          const setHitShake  = isP1 ? setPlayerHitShake  : setAiHitShake;
           setBgOffset((o) => o + (isP1 ? 40 : -40));
           setPose(pose);
           setPoseKey((k) => k + 1);
           setFlashKey((k) => k + 1);
           setKnockback((k) => k + 1);
+          // 히트스탑 동안 피격자 잔떨림 — freeze 윈도우와 같은 길이로 재생
+          setHitShake((prev) => ({ key: prev.key + 1, ms: freezeMs }));
         }
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
@@ -359,6 +368,8 @@ export function useArenaAnimation(
     aiFlashKey,
     playerKnockbackKey,
     aiKnockbackKey,
+    playerHitShake,
+    aiHitShake,
     playerMove,
     aiMove,
     zoomScale,

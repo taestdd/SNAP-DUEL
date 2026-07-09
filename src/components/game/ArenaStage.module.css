@@ -136,6 +136,25 @@
   transition: transform 130ms cubic-bezier(0.3, 0.7, 0.4, 1);
 }
 
+/* ─── 피격 잔떨림 (히트스탑 동안) ─── */
+
+/* 스프라이트만 감싸는 진동 레이어 — advanceWrap(위치)·knockback(범프)과 분리돼 간섭 없음 */
+.hitShakeWrap {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* 히트스탑 freeze 윈도우 동안만 부여 (제거 타이밍은 ArenaStage가 freezeMs 타이머로 제어) */
+.victimShaking {
+  animation: victimShake 70ms linear infinite;
+}
+
+@keyframes victimShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px); }
+  75%      { transform: translateX(3px); }
+}
+
 /* ─── Knockback ─── */
 
 .knockbackLeft {

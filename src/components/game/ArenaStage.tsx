@@ -24,6 +24,12 @@ interface ArenaStageProps {
   aiFlashKey?: number;
   playerKnockbackKey?: number;
   aiKnockbackKey?: number;
+  /** 피격 잔떨림 재생 트리거 (visual_hit마다 증가) */
+  playerHitShakeKey?: number;
+  aiHitShakeKey?: number;
+  /** 피격 잔떨림 지속 시간 (ms) — 히트스탑 freeze 윈도우와 동일 */
+  playerHitShakeMs?: number;
+  aiHitShakeMs?: number;
   /** 파이터 X 오프셋 (px, 기본 인접 배치 기준). 비근접=홈(±SPREAD_PX), 근접=상대 박스에 겹침 */
   playerOffset?: number;
   aiOffset?: number;
@@ -54,6 +60,10 @@ export default function ArenaStage({
   aiFlashKey = 0,
   playerKnockbackKey = 0,
   aiKnockbackKey = 0,
+  playerHitShakeKey = 0,
+  aiHitShakeKey = 0,
+  playerHitShakeMs = 0,
+  aiHitShakeMs = 0,
   playerOffset = 0,
   aiOffset = 0,
   playerMotion = "recover",
@@ -69,6 +79,8 @@ export default function ArenaStage({
 }: ArenaStageProps) {
   const playerRef = useRef<HTMLDivElement>(null);
   const aiRef = useRef<HTMLDivElement>(null);
+  const playerShakeRef = useRef<HTMLDivElement>(null);
+  const aiShakeRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (playerKnockbackKey === 0) return;
@@ -87,6 +99,25 @@ export default function ArenaStage({
     void el.offsetWidth;
     el.classList.add(styles.knockbackRight);
   }, [aiKnockbackKey]);
+
+  // 피격 잔떨림: 히트스탑 freeze 윈도우 동안 무한 진동 클래스를 붙였다가 타이머로 제거
+  useLayoutEffect(() => {
+    if (playerHitShakeKey === 0) return;
+    const el = playerShakeRef.current;
+    if (!el) return;
+    el.classList.add(styles.victimShaking);
+    const t = setTimeout(() => el.classList.remove(styles.victimShaking), playerHitShakeMs);
+    return () => { clearTimeout(t); el.classList.remove(styles.victimShaking); };
+  }, [playerHitShakeKey, playerHitShakeMs]);
+
+  useLayoutEffect(() => {
+    if (aiHitShakeKey === 0) return;
+    const el = aiShakeRef.current;
+    if (!el) return;
+    el.classList.add(styles.victimShaking);
+    const t = setTimeout(() => el.classList.remove(styles.victimShaking), aiHitShakeMs);
+    return () => { clearTimeout(t); el.classList.remove(styles.victimShaking); };
+  }, [aiHitShakeKey, aiHitShakeMs]);
 
   const shakeClass =
     shakeLevel === "light"
@@ -128,7 +159,10 @@ export default function ArenaStage({
           >
             {/* 위치 레이어: knockback 셰이크(keyframe)와 transform 충돌 방지를 위해 별도 래퍼 */}
             <div className={styles.advanceWrap} style={{ transform: `translateX(${playerOffset}px)`, transition: moveTransition(playerMotion) }}>
-              <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
+              {/* 잔떨림 레이어: 히트스탑 동안 스프라이트만 진동 (히트 이펙트는 제외) */}
+              <div ref={playerShakeRef} className={styles.hitShakeWrap}>
+                <FighterSprite pose={playerPose} poseKey={playerPoseKey} characterId={playerCharacter} flip={false} frozenUntil={playerFrozenUntil} flashKey={playerFlashKey} showTrail={playerShowTrail} />
+              </div>
               {/* 히트 이펙트를 스프라이트 기준으로 배치 → 전진·넉백을 자동 추종. P1은 AI(오른쪽)에게 맞으므로 오른쪽 근접면 */}
               {hitEffectKey > 0 && hitEffectTarget === "P1" && (
                 <HitEffect key={hitEffectKey} strength={hitEffectStrength} style={{ left: "62%", top: "55%" }} />
@@ -140,7 +174,9 @@ export default function ArenaStage({
             className={`${styles.fighterRight} ${superFlashActor === "AI" ? styles.superFlashActor : ""}`}
           >
             <div className={styles.advanceWrap} style={{ transform: `translateX(${aiOffset}px)`, transition: moveTransition(aiMotion) }}>
-              <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
+              <div ref={aiShakeRef} className={styles.hitShakeWrap}>
+                <FighterSprite pose={aiPose} poseKey={aiPoseKey} characterId={aiCharacter} flip={true} frozenUntil={aiFrozenUntil} flashKey={aiFlashKey} showTrail={aiShowTrail} />
+              </div>
               {/* AI는 P1(왼쪽)에게 맞으므로 왼쪽 근접면 */}
               {hitEffectKey > 0 && hitEffectTarget === "AI" && (
                 <HitEffect key={hitEffectKey} strength={hitEffectStrength} style={{ left: "38%", top: "55%" }} />
