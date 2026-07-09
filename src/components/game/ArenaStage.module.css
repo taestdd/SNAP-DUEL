@@ -146,13 +146,13 @@
 
 /* 히트스탑 freeze 윈도우 동안만 부여 (제거 타이밍은 ArenaStage가 freezeMs 타이머로 제어) */
 .victimShaking {
-  animation: victimShake 70ms linear infinite;
+  animation: victimShake 150ms linear infinite;
 }
 
 @keyframes victimShake {
   0%, 100% { transform: translateX(0); }
-  25%      { transform: translateX(-3px); }
-  75%      { transform: translateX(3px); }
+  25%      { transform: translateX(-2px); }
+  75%      { transform: translateX(2px); }
 }
 
 /* ─── Knockback ─── */
