@@ -16,7 +16,7 @@ export const SUPER_FLASH_DUR = 700;
  */
 
 /** 비근접 시 홈 오프셋 크기 (px) — 박스 간격 ≈ SPREAD_PX×2 (+flex gap 0~4px) */
-export const SPREAD_PX = 30;
+export const SPREAD_PX = 15;
 /** 파이터별 홈(비근접) 오프셋 */
 export const HOME_OFFSET: Record<PlayerId, number> = { P1: -SPREAD_PX, AI: SPREAD_PX };
 /** 근접 시 상대 박스에 겹치는 깊이 (px) — 클수록 몸통이 더 붙음 */
