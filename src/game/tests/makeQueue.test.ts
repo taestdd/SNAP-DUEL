@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS } from "@/game/animation/makeQueue";
+import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX } from "@/game/animation/makeQueue";
 import type { Card, CombatAnimationEvent } from "@/game/engine/types";
 
 /**
@@ -127,18 +127,19 @@ function moves(events: CombatAnimationEvent[]): CombatAnimationEvent[] {
 }
 
 describe("대시-인 (근접공격)", () => {
-  it("비근접 + 근접공격 + 적중: 상대 오프셋까지 대시 후 시퀀스가 DASH_MS만큼 밀린다", () => {
+  it("비근접 + 근접공격 + 적중: 상대에 겹치는 위치까지 대시 후 시퀀스가 DASH_MS만큼 밀린다", () => {
     const events = makeQueue(meleeCard(), null, "player", 0, 0, 0, 0, "a", "a");
     const dash = moves(events);
     expect(dash).toHaveLength(1);
-    expect(dash[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI, motion: "dash", delay: 0 });
+    // 근접 = 상대 오프셋 + 겹침량 (스프라이트 여백을 파고들어 몸통이 거의 붙음)
+    expect(dash[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, motion: "dash", delay: 0 });
     // 포즈·히트가 대시 시간만큼 뒤로 밀림
     expect(events.find((e) => e.type === "action_start")!.delay).toBe(DASH_MS);
     expect(visualHits(events)[0].delay).toBe(DASH_MS + 100);
   });
 
-  it("근접 상태(오프셋 동일)면 대시하지 않는다", () => {
-    const close = { P1: HOME_OFFSET.AI, AI: HOME_OFFSET.AI };
+  it("근접 상태(이전 턴 대시 상태 보존)면 대시하지 않는다", () => {
+    const close = { P1: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, AI: HOME_OFFSET.AI };
     const events = makeQueue(meleeCard(), null, "player", 0, 0, 0, 0, "a", "a", undefined, undefined, close);
     expect(moves(events)).toHaveLength(0);
     expect(events.find((e) => e.type === "action_start")!.delay).toBe(0);
@@ -179,8 +180,8 @@ describe("넉백", () => {
   });
 
   it("근접 상태에서 넉백: 홈이 아닌 수비자가 밀려난다(knockback 모션)", () => {
-    // 둘 다 P1 홈 쪽에 붙어 있는 근접 상태 (AI가 이전에 대시해 온 상황)
-    const close = { P1: HOME_OFFSET.P1, AI: HOME_OFFSET.P1 };
+    // AI가 이전에 P1 쪽으로 대시해 온 근접 상태
+    const close = { P1: HOME_OFFSET.P1, AI: HOME_OFFSET.P1 - CLOSE_OVERLAP_PX };
     const events = makeQueue(meleeCard({ knockback: true }), null, "player", 0, 0, 0, 0, "a", "a", undefined, undefined, close);
     const mv = moves(events);
     // 근접이라 대시 없음. 수비자(AI)만 홈으로 밀려남 (공격자는 이미 홈 → 복귀 없음)
@@ -224,8 +225,8 @@ describe("온라인 미러 정합성 (호스트 ↔ 게스트 flip)", () => {
   });
 
   it("턴 사이 보존된 근접 상태에서 시작해도 거울상이 유지된다", () => {
-    // 이전 턴에 호스트(P1)가 대시해 온 근접 상태 (둘 다 AI 홈 쪽)
-    const hostStart = { P1: HOME_OFFSET.AI, AI: HOME_OFFSET.AI };
+    // 이전 턴에 호스트(P1)가 대시해 온 근접 상태 (AI 홈 쪽에 겹쳐 붙음)
+    const hostStart = { P1: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, AI: HOME_OFFSET.AI };
     // 게스트 좌표계의 같은 상태: 키 교환 + 부호 반전
     const guestStart = { P1: -hostStart.AI, AI: -hostStart.P1 };
 

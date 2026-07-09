@@ -9,7 +9,8 @@ export const SUPER_FLASH_DUR = 700;
 /* ── 거리(근접/비근접) 연출 상수 ─────────────────────────────────────────
  * 거리 상태는 연출 전용이다. 파이터별 X 오프셋(px, 기본 인접 배치 기준)으로 표현:
  *   - 비근접(홈): P1 = -SPREAD_PX, AI = +SPREAD_PX (양쪽으로 벌어짐)
- *   - 근접: 두 파이터의 오프셋이 같음 (대시한 쪽이 상대 홈 앞까지 이동)
+ *   - 근접: 대시한 쪽이 상대 스프라이트에 겹치도록 붙음
+ *     (스프라이트 프레임에 투명 여백이 있어 박스 겹침 = 몸통이 거의 맞닿는 위치)
  * makeQueue가 animScript를 따라 오프셋을 시뮬레이션하며 fighter_move 이벤트를
  * 생성하고, useArenaAnimation이 이벤트를 소비해 턴 사이 오프셋을 보존한다.
  */
@@ -18,12 +19,24 @@ export const SUPER_FLASH_DUR = 700;
 export const SPREAD_PX = 56;
 /** 파이터별 홈(비근접) 오프셋 */
 export const HOME_OFFSET: Record<PlayerId, number> = { P1: -SPREAD_PX, AI: SPREAD_PX };
+/** 근접 시 상대 박스에 겹치는 깊이 (px) — 클수록 몸통이 더 붙음 */
+export const CLOSE_OVERLAP_PX = 60;
 /** 대시-인에 걸리는 시간 (ms) — 돌진 후 공격 포즈가 시작되도록 시퀀스를 뒤로 민다 */
 export const DASH_MS = 160;
 /** 공격자 복귀(넉백) 시 배경 밀림 착시량 (px) */
 export const RETURN_BG_PX = 60;
 
 type FighterOffsets = { P1: number; AI: number };
+
+/** 비근접(양쪽 다 홈) 여부 — 대시 도달 지점이 겹침 오프셋이라 동등 비교 대신 홈 기준으로 판정 */
+function isFar(sim: FighterOffsets): boolean {
+  return sim.P1 === HOME_OFFSET.P1 && sim.AI === HOME_OFFSET.AI;
+}
+
+/** 대시 도달 오프셋 — 상대의 현재 위치에서 상대 쪽으로 CLOSE_OVERLAP_PX 만큼 파고듦 */
+function engagedOffset(actor: PlayerId, targetOffset: number): number {
+  return targetOffset + (actor === "P1" ? CLOSE_OVERLAP_PX : -CLOSE_OVERLAP_PX);
+}
 
 /**
  * 히트 강도별 기본 히트스탑(ms) — 카드의 freeze 미지정 시 적용.
@@ -252,13 +265,14 @@ function pushSequenceWithHold(
   const willConnect = !!(card.hitTimings && card.hitTimings.length > 0
     && hasConnectingAttack(card, targetAirborne));
 
-  // ── 대시-인: 근접공격 + 비근접(오프셋 불일치)이면 상대 위치까지 돌진 후 공격 ──
+  // ── 대시-인: 근접공격 + 비근접이면 상대에게 겹치도록 돌진 후 공격 ──
   // 대시 시간만큼 시퀀스 전체(포즈·히트·종료)를 뒤로 민다.
   // meleeAttack 미지정 = true (근접이 기본, 원거리 카드만 명시적 false)
   let shift = 0;
-  if (willConnect && card.meleeAttack !== false && sim[actor] !== sim[target]) {
-    events.push({ type: "fighter_move", delay: offset, subject: actor, toOffset: sim[target], motion: "dash" });
-    sim[actor] = sim[target];
+  if (willConnect && card.meleeAttack !== false && isFar(sim)) {
+    const to = engagedOffset(actor, sim[target]);
+    events.push({ type: "fighter_move", delay: offset, subject: actor, toOffset: to, motion: "dash" });
+    sim[actor] = to;
     shift = DASH_MS;
   }
 
