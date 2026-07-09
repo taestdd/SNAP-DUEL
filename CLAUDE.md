@@ -269,7 +269,8 @@ resolveContext: {
 - `action_end`: 포즈 유지
 
 **거리(근접/비근접) 연출** — 게임 로직과 무관한 연출 전용 상태:
-- 카드 필드 `meleeAttack`(미지정=true: 비근접이면 돌진 후 공격) / `knockback`(기본 false: 타격 후 양측 홈 복귀)
+- 카드 필드 `meleeAttack`(미지정=true: 비근접이면 돌진 후 공격, 빗나가면 헛스윙 후 복귀=휘핑) / `knockback`(기본 false: 타격 후 양측 홈 복귀)
+- 거리 상태는 **성립한 타격만** 바꾼다 — 휘핑·스킬·캔슬은 상태 무변화
 - makeQueue가 animScript를 따라 파이터 오프셋을 시뮬레이션해 `fighter_move`를 생성,
   `useArenaAnimation`이 턴 사이 오프셋을 보존 (리셋은 라운드 전환만, 태그는 유지)
 - 온라인은 양측이 flip된 스크립트로 결정론적 시뮬레이션 → 동기화 불필요 (미러 정합성 테스트로 방어)

@@ -25,6 +25,8 @@ export const CLOSE_OVERLAP_PX = 60;
 export const DASH_MS = 160;
 /** 공격자 복귀(넉백) 시 배경 밀림 착시량 (px) */
 export const RETURN_BG_PX = 60;
+/** 헛스윙(휘핑) 후 복귀까지의 여백 (ms) — 임팩트 프레임 직후 한 박자 쉬고 돌아온다 */
+export const WHIFF_RETURN_MS = 180;
 
 type FighterOffsets = { P1: number; AI: number };
 
@@ -264,24 +266,36 @@ function pushSequenceWithHold(
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
     : card.actionTag;
-  // 대시·넉백은 "히트 타이밍이 있고 타격이 성립하는 공격"에만 적용
-  // (스킬/빗나간 공격은 이동 없음 — 캔슬된 카드는 애초에 스크립트에 없음)
-  const willConnect = !!(card.hitTimings && card.hitTimings.length > 0
-    && hasConnectingAttack(card, targetAirborne));
+  const hasTimings = !!(card.hitTimings && card.hitTimings.length > 0);
+  // 넉백·거리 상태 전이는 "타격이 성립하는 공격"에만 적용
+  // (캔슬된 카드는 애초에 스크립트에 없음)
+  const willConnect = hasTimings && hasConnectingAttack(card, targetAirborne);
+  // 근접 스윙: 공격 스탯이 있는 근접 카드의 휘두름 — 적중 여부와 무관 (빗나가면 휘핑)
+  const meleeSwing = hasTimings
+    && card.cardType === "attack"
+    && ((card.groundAttack ?? 0) > 0 || (card.antiAirAttack ?? 0) > 0)
+    && card.meleeAttack !== false;
 
-  // ── 대시-인: 근접공격 + 비근접이면 상대에게 겹치도록 돌진 후 공격 ──
+  // ── 대시-인: 근접 스윙 + 비근접이면 상대에게 겹치도록 돌진 후 공격 ──
   // 대시 시간만큼 시퀀스 전체(포즈·히트·종료)를 뒤로 민다.
   // meleeAttack 미지정 = true (근접이 기본, 원거리 카드만 명시적 false)
+  // 적중 시에만 근접 상태로 전이하고, 빗나가면(휘핑) 스윙 후 홈으로 복귀한다.
   let shift = 0;
-  if (willConnect && card.meleeAttack !== false && isFar(sim)) {
+  let isWhiff = false;
+  if (meleeSwing && isFar(sim)) {
     const to = engagedOffset(actor, sim[target]);
     events.push({ type: "fighter_move", delay: offset, subject: actor, toOffset: to, motion: "dash" });
-    sim[actor] = to;
     shift = DASH_MS;
+    if (willConnect) {
+      sim[actor] = to;
+    } else {
+      isWhiff = true; // sim 무변화 — 거리 상태는 성립한 타격만 바꾼다
+    }
   }
 
   events.push({ type: "action_start", delay: offset + shift, actor, actionTag: resolvedTag });
 
+  let lastImpactAt = 0;  // offset+shift 기준 마지막 히트(임팩트 프레임) 발화 시각
   if (card.hitTimings && card.hitTimings.length > 0) {
     const connects = hasConnectingAttack(card, targetAirborne);
 
@@ -290,7 +304,6 @@ function pushSequenceWithHold(
     // 앞선 freeze 합(acc)을 더해야 스프라이트의 임팩트 프레임과 정확히 맞는다.
     // (단발 히트는 acc가 0이라 기존과 동일한 결과)
     let acc = 0;
-    let lastImpactAt = 0;  // offset+shift 기준 마지막 히트 발화 시각
     let lastFreeze = 0;
 
     for (const timing of card.hitTimings) {
@@ -329,6 +342,20 @@ function pushSequenceWithHold(
   }
 
   events.push({ type: "action_end", delay: endDelay, actor });
+
+  // ── 휘핑 복귀: 헛친 근접 스윙은 임팩트 프레임 직후 원위치로 돌아온다 ─────────
+  // 배경 착시(bgPush)는 없음 — 아무것도 맞지 않았으므로 "적이 밀리는" 느낌을 주면 안 됨.
+  // action_end(freeze 연장 포함)보다 일찍 복귀시켜, 후공의 대시 목표(sim 기준 홈)와
+  // 화면 위치가 어긋나는 구간을 최소화한다.
+  if (isWhiff) {
+    events.push({
+      type: "fighter_move",
+      delay: offset + shift + lastImpactAt + WHIFF_RETURN_MS,
+      subject: actor,
+      toOffset: sim[actor],
+      motion: "recover",
+    });
+  }
 
   // ── 넉백: 연출 종료 후 양측을 홈으로 → 비근접 복귀 ──────────────────────────
   // 수비자는 밀려나는 이동(knockback), 공격자는 복귀(recover) + 배경 밀림 착시.

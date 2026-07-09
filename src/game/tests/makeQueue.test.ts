@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX } from "@/game/animation/makeQueue";
+import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX, WHIFF_RETURN_MS } from "@/game/animation/makeQueue";
 import type { Card, CombatAnimationEvent } from "@/game/engine/types";
 
 /**
@@ -159,9 +159,34 @@ describe("대시-인 (근접공격)", () => {
     expect(mv[0].motion).toBe("dash");
   });
 
-  it("빗나간 근접공격은 대시하지 않는다", () => {
+  it("빗나간 근접공격은 휘핑 — 돌진 후 헛스윙하고 원위치로 복귀한다", () => {
     // targetAirborne=1 → groundAttack 미적중
     const events = makeQueue(meleeCard(), null, "player", 0, 1, 0, 0, "a", "a");
+    const mv = moves(events);
+    expect(mv).toHaveLength(2);
+    // 돌진은 동일하게 발생
+    expect(mv[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, motion: "dash", delay: 0 });
+    // 임팩트 프레임(100ms) 직후 복귀 — bgPush 없음 (아무것도 맞지 않았으므로)
+    expect(mv[1]).toMatchObject({
+      subject: "P1",
+      toOffset: HOME_OFFSET.P1,
+      motion: "recover",
+      delay: DASH_MS + 100 + WHIFF_RETURN_MS,
+    });
+    expect(mv[1].bgPush).toBeUndefined();
+    // 헛침이므로 피격 연출은 없음
+    expect(visualHits(events)).toHaveLength(0);
+  });
+
+  it("휘핑은 거리 상태를 바꾸지 않는다 — 후공 근접공격은 여전히 대시한다", () => {
+    // 선공 P1은 공중 상대에 헛침(휘핑), 후공 AI는 지상 P1에 적중
+    const events = makeQueue(meleeCard(), meleeCard(), "player", 0, 1, 0, 0, "a", "a");
+    const dashes = moves(events).filter((e) => e.motion === "dash");
+    expect(dashes.map((e) => e.subject)).toEqual(["P1", "AI"]); // 비근접 유지 → AI도 대시
+  });
+
+  it("빗나간 원거리 공격은 이동이 전혀 없다", () => {
+    const events = makeQueue(attackCard(HT), null, "player", 0, 1, 0, 0, "a", "a");
     expect(moves(events)).toHaveLength(0);
   });
 });
