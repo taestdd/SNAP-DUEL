@@ -68,6 +68,8 @@ export interface FighterViewState {
  * 전투 애니메이션 이벤트 (이벤트 큐 파이프라인용)
  *
  * type:
+ *   super_flash    — 기술 발동 전 플래시 연출
+ *   fighter_move   — 파이터 위치 이동 (대시-인 / 넉백 / 복귀). 거리(근접/비근접) 연출 전용
  *   action_start   — 공격자 포즈 전환
  *   visual_hit     — 피격자 hit 포즈
  *   damage_resolve — 실제 HP 반영 타이밍 마커

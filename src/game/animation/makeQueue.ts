@@ -122,6 +122,10 @@ export type ActorHpData = {
  *   t=N    visual_hit
  *   t=800  action_end
  *
+ * 대시-인(근접공격 + 비근접)이 있으면 t=0에 fighter_move(dash)가 먼저 발화하고
+ * 해당 액터의 시퀀스 전체(포즈·히트·종료)가 DASH_MS만큼 뒤로 밀린다.
+ * 넉백은 action_end 시점에 fighter_move(knockback/recover)로 발화한다.
+ *
  * 단일 공격자 (슈퍼 플래시 있음):
  *   t=  0  super_flash
  *   t=700  action_start

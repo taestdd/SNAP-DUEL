@@ -7,7 +7,6 @@ import HitEffect from "./HitEffect";
 import styles from "./ArenaStage.module.css";
 
 export type ShakeLevel = "none" | "light" | "heavy";
-export type HitSide = "player" | "ai" | null;
 /** 파이터 위치 이동의 성격 — 트랜지션 속도/커브 선택 */
 export type MoveMotion = "dash" | "recover" | "knockback";
 
@@ -19,14 +18,13 @@ interface ArenaStageProps {
   aiPoseKey?: string | number;
   aiCharacter?: string;
   shakeLevel?: ShakeLevel;
-  hitSide?: HitSide;
   playerFrozenUntil?: number;
   aiFrozenUntil?: number;
   playerFlashKey?: number;
   aiFlashKey?: number;
   playerKnockbackKey?: number;
   aiKnockbackKey?: number;
-  /** 파이터 X 오프셋 (px, 기본 인접 배치 기준). 비근접=홈(±SPREAD), 근접=동일 오프셋 */
+  /** 파이터 X 오프셋 (px, 기본 인접 배치 기준). 비근접=홈(±SPREAD_PX), 근접=상대 박스에 겹침 */
   playerOffset?: number;
   aiOffset?: number;
   /** 오프셋 이동의 성격 — dash 빠르게 / recover·knockback 부드럽게 */
@@ -50,7 +48,6 @@ export default function ArenaStage({
   aiPoseKey = "ai-idle",
   aiCharacter = "fighter",
   shakeLevel = "none",
-  hitSide = null,
   playerFrozenUntil = 0,
   aiFrozenUntil = 0,
   playerFlashKey = 0,
