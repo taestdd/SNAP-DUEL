@@ -13,7 +13,7 @@ import type {
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import type { ShakeLevel } from "@/components/game/ArenaStage";
 import { useGameTransitions } from "@/hooks/useGameTransitions";
-import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET } from "./makeQueue";
+import { makeQueueFromScript, SUPER_FLASH_DUR, HIT_FREEZE_PRESET, HOME_OFFSET } from "./makeQueue";
 import { useAnimQueue } from "./useAnimQueue";
 
 // ── 타이밍 상수 ────────────────────────────────────────────────────────────────
@@ -22,6 +22,14 @@ const TAG_TRANSITION_MS = 350;
 const ANIM_DONE_BUFFER_MS = 150;
 /** 착지 포즈 유지 시간 (ms) — 이후 idle 복귀 */
 const LAND_MS = 380;
+
+/** 파이터 위치 연출 상태 — x: 오프셋(px), motion: 트랜지션 선택용 이동 성격 */
+export type FighterMove = { x: number; motion: "dash" | "recover" | "knockback" };
+
+const HOME_MOVE: Record<PlayerId, FighterMove> = {
+  P1: { x: HOME_OFFSET.P1, motion: "recover" },
+  AI: { x: HOME_OFFSET.AI, motion: "recover" },
+};
 
 /** event.freezeMs 미지정 시 폴백 (정상 경로에서는 makeQueue가 항상 채움) */
 function freezeOf(event: CombatAnimationEvent): number {
@@ -58,6 +66,12 @@ export type ArenaAnimState = {
   aiFlashKey: number;
   playerKnockbackKey: number;
   aiKnockbackKey: number;
+  /** 피격 잔떨림 — key: visual_hit마다 증가, ms: 히트스탑 freeze 윈도우 길이 */
+  playerHitShake: { key: number; ms: number };
+  aiHitShake: { key: number; ms: number };
+  /** 파이터 위치 연출 (근접/비근접 오프셋 + 대시/넉백/복귀 모션). 턴 사이 보존됨 */
+  playerMove: FighterMove;
+  aiMove: FighterMove;
   /** 줌 배율 (1 = 기본). 히트 임팩트 윈도우 동안 확대 후 복귀 */
   zoomScale: number;
   bgOffset: number;
@@ -97,6 +111,15 @@ export function useArenaAnimation(
   const [aiFlashKey, setAiFlashKey] = useState(0);
   const [playerKnockbackKey, setPlayerKnockbackKey] = useState(0);
   const [aiKnockbackKey, setAiKnockbackKey] = useState(0);
+  // 피격 잔떨림 (히트스탑 freeze 윈도우 동안 피격자 진동)
+  const [playerHitShake, setPlayerHitShake] = useState({ key: 0, ms: 0 });
+  const [aiHitShake, setAiHitShake] = useState({ key: 0, ms: 0 });
+  // 파이터 위치 연출 — 대시/넉백이 갱신하고 턴 사이 보존된다 (라운드·태그 시 홈 리셋)
+  const [playerMove, setPlayerMove] = useState<FighterMove>(HOME_MOVE.P1);
+  const [aiMove, setAiMove] = useState<FighterMove>(HOME_MOVE.AI);
+  // ANIMATING 진입 시 makeQueue에 현재 오프셋을 전달하기 위한 최신값 참조
+  const moveRef = useRef({ P1: HOME_OFFSET.P1, AI: HOME_OFFSET.AI });
+  useEffect(() => { moveRef.current = { P1: playerMove.x, AI: aiMove.x }; }, [playerMove, aiMove]);
   const [zoomScale, setZoomScale] = useState(1);
   const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgOffset, setBgOffset] = useState(0);
@@ -144,6 +167,7 @@ export function useArenaAnimation(
         setPose("tag_entry");
         setKey((k) => k + 1);
       }, TAG_TRANSITION_MS);
+      // 거리 상태는 태그에도 유지 — 새 캐릭터가 이전 캐릭터 위치에서 등장 (리셋은 라운드 전환만)
     },
 
     onRound: () => {
@@ -151,6 +175,9 @@ export function useArenaAnimation(
       setPlayerPoseKey((k) => k + 1);
       setAiPose("idle");
       setAiPoseKey((k) => k + 1);
+      // 라운드 전환 시 거리 상태를 비근접(홈)으로 리셋
+      setPlayerMove(HOME_MOVE.P1);
+      setAiMove(HOME_MOVE.AI);
     },
 
     onLanding: (player) => {
@@ -197,7 +224,8 @@ export function useArenaAnimation(
     }
     setDisplayedCancelledPlayer(null);
 
-    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter);
+    // 현재 파이터 오프셋을 시작점으로 대시/넉백 거리 시뮬레이션 (턴 사이 보존값)
+    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter, moveRef.current);
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
@@ -275,11 +303,14 @@ export function useArenaAnimation(
           const setPoseKey   = isP1 ? setPlayerPoseKey   : setAiPoseKey;
           const setFlashKey  = isP1 ? setPlayerFlashKey  : setAiFlashKey;
           const setKnockback = isP1 ? setPlayerKnockbackKey : setAiKnockbackKey;
+          const setHitShake  = isP1 ? setPlayerHitShake  : setAiHitShake;
           setBgOffset((o) => o + (isP1 ? 40 : -40));
           setPose(pose);
           setPoseKey((k) => k + 1);
           setFlashKey((k) => k + 1);
           setKnockback((k) => k + 1);
+          // 히트스탑 동안 피격자 잔떨림 — freeze 윈도우와 같은 길이로 재생
+          setHitShake((prev) => ({ key: prev.key + 1, ms: freezeMs }));
         }
         setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
         break;
@@ -295,6 +326,17 @@ export function useArenaAnimation(
       }
       case "action_end":
         break;
+      case "fighter_move": {
+        // 대시/넉백/복귀 — makeQueue가 시뮬레이션한 목표 오프셋을 그대로 적용.
+        // bgPush(공격자 복귀 시)는 배경을 같은 방향으로 밀어 "적이 밀리는" 착시를 만든다.
+        if (event.subject === undefined || event.toOffset === undefined) break;
+        const move: FighterMove = { x: event.toOffset, motion: event.motion ?? "recover" };
+        if (event.subject === "P1") setPlayerMove(move);
+        else setAiMove(move);
+        if (event.bgPush) setBgOffset((o) => o + event.bgPush!);
+        setAnimLog((prev) => [...prev, `fighter_move: ${event.subject} → ${event.toOffset}px [${event.motion}]`]);
+        break;
+      }
       case "damage_resolve": {
         if (event.hpAfter) {
           setDisplayedHp({ ...event.hpAfter });
@@ -326,6 +368,10 @@ export function useArenaAnimation(
     aiFlashKey,
     playerKnockbackKey,
     aiKnockbackKey,
+    playerHitShake,
+    aiHitShake,
+    playerMove,
+    aiMove,
     zoomScale,
     bgOffset,
     hitEffectKey,

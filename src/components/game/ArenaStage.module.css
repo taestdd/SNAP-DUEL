@@ -11,7 +11,8 @@
   justify-content: center;
   gap: clamp(0px, 1vw, 4px);
   transform-origin: center bottom;
-  /* 줌인은 빠르게, 줌아웃은 부드럽게 — scale은 zoomScale prop으로 인라인 제어 */
+  /* scale + transition 모두 ArenaStage에서 인라인 제어(줌인 빠르게 / 줌아웃 부드럽게).
+     아래는 인라인이 없을 때의 폴백 기본값. */
   transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -36,7 +37,8 @@
   background-position: left bottom;
   opacity: 0.55;
   image-rendering: pixelated;
-  transition: background-position-x 400ms ease-out;
+  /* 공격자 복귀(360ms)와 배경 이동을 맞춰 "적이 밀리는" 착시를 동기화 */
+  transition: background-position-x 360ms cubic-bezier(0.33, 1, 0.68, 1);
   z-index: 0;
 }
 
@@ -121,6 +123,36 @@
   position: relative;
   z-index: 1;
   margin-bottom: -22px;
+}
+
+/* 공격 성공 시 상대쪽으로 전진(translateX). knockback keyframe과 분리된 래퍼라 서로 간섭 없음.
+   transform·transition 모두 ArenaStage에서 인라인 제어(전진 빠르게 / 복귀 부드럽게).
+   아래 transition은 인라인이 없을 때의 폴백 기본값. */
+.advanceWrap {
+  display: flex;
+  align-items: flex-end;
+  /* 히트 이펙트를 스프라이트 기준으로 절대 배치하기 위한 위치 컨텍스트 */
+  position: relative;
+  transition: transform 130ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+/* ─── 피격 잔떨림 (히트스탑 동안) ─── */
+
+/* 스프라이트만 감싸는 진동 레이어 — advanceWrap(위치)·knockback(범프)과 분리돼 간섭 없음 */
+.hitShakeWrap {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* 히트스탑 freeze 윈도우 동안만 부여 (제거 타이밍은 ArenaStage가 freezeMs 타이머로 제어) */
+.victimShaking {
+  animation: victimShake 150ms linear infinite;
+}
+
+@keyframes victimShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-2px); }
+  75%      { transform: translateX(2px); }
 }
 
 /* ─── Knockback ─── */

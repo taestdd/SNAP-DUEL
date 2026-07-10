@@ -6,21 +6,55 @@ import { CHARACTER_SPRITES } from "./spriteMap";
 
 export const SUPER_FLASH_DUR = 700;
 
+/* ── 거리(근접/비근접) 연출 상수 ─────────────────────────────────────────
+ * 거리 상태는 연출 전용이다. 파이터별 X 오프셋(px, 기본 인접 배치 기준)으로 표현:
+ *   - 비근접(홈): P1 = -SPREAD_PX, AI = +SPREAD_PX (양쪽으로 벌어짐)
+ *   - 근접: 대시한 쪽이 상대 스프라이트에 겹치도록 붙음
+ *     (스프라이트 프레임에 투명 여백이 있어 박스 겹침 = 몸통이 거의 맞닿는 위치)
+ * makeQueue가 animScript를 따라 오프셋을 시뮬레이션하며 fighter_move 이벤트를
+ * 생성하고, useArenaAnimation이 이벤트를 소비해 턴 사이 오프셋을 보존한다.
+ */
+
+/** 비근접 시 홈 오프셋 크기 (px) — 박스 간격 ≈ SPREAD_PX×2 (+flex gap 0~4px) */
+export const SPREAD_PX = 7;
+/** 파이터별 홈(비근접) 오프셋 */
+export const HOME_OFFSET: Record<PlayerId, number> = { P1: -SPREAD_PX, AI: SPREAD_PX };
+/** 근접 시 상대 박스에 겹치는 깊이 (px) — 클수록 몸통이 더 붙음 */
+export const CLOSE_OVERLAP_PX = 60;
+/** 대시-인에 걸리는 시간 (ms) — 돌진 후 공격 포즈가 시작되도록 시퀀스를 뒤로 민다 */
+export const DASH_MS = 160;
+/** 공격자 복귀(넉백) 시 배경 밀림 착시량 (px) */
+export const RETURN_BG_PX = 60;
+/** 헛스윙(휘핑) 후 복귀까지의 여백 (ms) — 임팩트 프레임 직후 한 박자 쉬고 돌아온다 */
+export const WHIFF_RETURN_MS = 180;
+
+type FighterOffsets = { P1: number; AI: number };
+
+/** 비근접(양쪽 다 홈) 여부 — 대시 도달 지점이 겹침 오프셋이라 동등 비교 대신 홈 기준으로 판정 */
+function isFar(sim: FighterOffsets): boolean {
+  return sim.P1 === HOME_OFFSET.P1 && sim.AI === HOME_OFFSET.AI;
+}
+
+/** 대시 도달 오프셋 — 상대의 현재 위치에서 상대 쪽으로 CLOSE_OVERLAP_PX 만큼 파고듦 */
+function engagedOffset(actor: PlayerId, targetOffset: number): number {
+  return targetOffset + (actor === "P1" ? CLOSE_OVERLAP_PX : -CLOSE_OVERLAP_PX);
+}
+
 /**
  * 히트 강도별 기본 히트스탑(ms) — 카드의 freeze 미지정 시 적용.
  * 이 값과 줌은 visual_hit 이벤트에 실려 양쪽 클라이언트가 동일하게 사용한다.
  */
 export const HIT_FREEZE_PRESET: Record<HitPose, number> = {
-  hit_strong: 1800,
-  hit_aerial: 1320,
-  hit_weak:    900,
+  hit_strong: 900,
+  hit_aerial: 660,
+  hit_weak:   450,
 };
 
 /** 히트 강도별 기본 줌인 배율 — 카드의 zoom 미지정 시 적용 */
 export const HIT_ZOOM_PRESET: Record<HitPose, number> = {
-  hit_strong: 1.16,
-  hit_aerial: 1.10,
-  hit_weak:   1.06,
+  hit_strong: 1.24,
+  hit_aerial: 1.15,
+  hit_weak:   1.09,
 };
 
 /** characterId → 스프라이트 ID (fps 조회용) */
@@ -90,6 +124,10 @@ export type ActorHpData = {
  *   t=N    visual_hit
  *   t=800  action_end
  *
+ * 대시-인(근접공격 + 비근접)이 있으면 t=0에 fighter_move(dash)가 먼저 발화하고
+ * 해당 액터의 시퀀스 전체(포즈·히트·종료)가 DASH_MS만큼 뒤로 밀린다.
+ * 넉백은 action_end 시점에 fighter_move(knockback/recover)로 발화한다.
+ *
  * 단일 공격자 (슈퍼 플래시 있음):
  *   t=  0  super_flash
  *   t=700  action_start
@@ -120,8 +158,12 @@ export function makeQueue(
   aiSpriteId: string,
   playerHpData?: ActorHpData,
   aiHpData?: ActorHpData,
+  /** 턴 시작 시점의 파이터 오프셋 (미지정 시 홈=비근접). useArenaAnimation이 턴 사이 보존값을 전달 */
+  startOffsets?: FighterOffsets,
 ): CombatAnimationEvent[] {
   const events: CombatAnimationEvent[] = [];
+  // 거리 시뮬레이션 상태 — 시퀀스 처리 순서대로 대시/넉백이 갱신한다
+  const sim: FighterOffsets = { ...(startOffsets ?? HOME_OFFSET) };
 
   const p1Acts = playerCard !== null;
   const aiActs = aiCard !== null;
@@ -131,14 +173,14 @@ export function makeQueue(
   if (p1Acts && !aiActs) {
     const fd = flashDur(playerCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
-    pushSequence(events, "P1", "AI", playerCard!, fd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, playerHpData);
+    pushSequence(events, "P1", "AI", playerCard!, fd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, sim, playerHpData);
     return events;
   }
 
   if (!p1Acts && aiActs) {
     const fd = flashDur(aiCard!);
     if (fd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "AI", "P1", aiCard!, fd, aiTargetAirborne, aiActorAirborne, aiSpriteId, aiHpData);
+    pushSequence(events, "AI", "P1", aiCard!, fd, aiTargetAirborne, aiActorAirborne, aiSpriteId, sim, aiHpData);
     return events;
   }
 
@@ -148,8 +190,8 @@ export function makeQueue(
     const maxFd = Math.max(p1fd, aifd);
     if (p1fd > 0) events.push({ type: "super_flash", delay: 0, actor: "P1" });
     if (aifd > 0) events.push({ type: "super_flash", delay: 0, actor: "AI" });
-    pushSequence(events, "P1", "AI", playerCard!, maxFd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, playerHpData);
-    pushSequence(events, "AI", "P1", aiCard!, maxFd, aiTargetAirborne, aiActorAirborne, aiSpriteId, aiHpData);
+    pushSequence(events, "P1", "AI", playerCard!, maxFd, p1TargetAirborne, p1ActorAirborne, p1SpriteId, sim, playerHpData);
+    pushSequence(events, "AI", "P1", aiCard!, maxFd, aiTargetAirborne, aiActorAirborne, aiSpriteId, sim, aiHpData);
     return events;
   }
 
@@ -171,11 +213,11 @@ export function makeQueue(
   const sfd = flashDur(secondCard);
 
   if (ffd > 0) events.push({ type: "super_flash", delay: 0, actor: first });
-  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne, firstSpriteId, firstHpData);
+  pushSequenceWithHold(events, first, second, firstCard, ffd, 1200 + ffd, firstTargetAirborne, firstActorAirborne, firstSpriteId, sim, firstHpData);
 
   const secondFlashAt = 700 + ffd;
   if (sfd > 0) events.push({ type: "super_flash", delay: secondFlashAt, actor: second });
-  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne, secondSpriteId, secondHpData);
+  pushSequence(events, second, first, secondCard, secondFlashAt + sfd, secondTargetAirborne, secondActorAirborne, secondSpriteId, sim, secondHpData);
 
   return events;
 }
@@ -201,9 +243,10 @@ function pushSequence(
   targetAirborne: number,
   actorAirborne: number,
   actorSpriteId: string,
+  sim: FighterOffsets,
   hpData?: ActorHpData,
 ): void {
-  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne, actorSpriteId, hpData);
+  pushSequenceWithHold(events, actor, target, card, offset, offset + 800, targetAirborne, actorAirborne, actorSpriteId, sim, hpData);
 }
 
 function pushSequenceWithHold(
@@ -216,14 +259,43 @@ function pushSequenceWithHold(
   targetAirborne: number,
   actorAirborne: number,
   actorSpriteId: string,
+  sim: FighterOffsets,
   hpData?: ActorHpData,
 ): void {
   const pose = resolveActorPose(card, actorAirborne);
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
     : card.actionTag;
-  events.push({ type: "action_start", delay: offset, actor, actionTag: resolvedTag });
+  const hasTimings = !!(card.hitTimings && card.hitTimings.length > 0);
+  // 넉백·거리 상태 전이는 "타격이 성립하는 공격"에만 적용
+  // (캔슬된 카드는 애초에 스크립트에 없음)
+  const willConnect = hasTimings && hasConnectingAttack(card, targetAirborne);
+  // 근접 스윙: 공격 스탯이 있는 근접 카드의 휘두름 — 적중 여부와 무관 (빗나가면 휘핑)
+  const meleeSwing = hasTimings
+    && card.cardType === "attack"
+    && ((card.groundAttack ?? 0) > 0 || (card.antiAirAttack ?? 0) > 0)
+    && card.meleeAttack !== false;
 
+  // ── 대시-인: 근접 스윙 + 비근접이면 상대에게 겹치도록 돌진 후 공격 ──
+  // 대시 시간만큼 시퀀스 전체(포즈·히트·종료)를 뒤로 민다.
+  // meleeAttack 미지정 = true (근접이 기본, 원거리 카드만 명시적 false)
+  // 적중 시에만 근접 상태로 전이하고, 빗나가면(휘핑) 스윙 후 홈으로 복귀한다.
+  let shift = 0;
+  let isWhiff = false;
+  if (meleeSwing && isFar(sim)) {
+    const to = engagedOffset(actor, sim[target]);
+    events.push({ type: "fighter_move", delay: offset, subject: actor, toOffset: to, motion: "dash" });
+    shift = DASH_MS;
+    if (willConnect) {
+      sim[actor] = to;
+    } else {
+      isWhiff = true; // sim 무변화 — 거리 상태는 성립한 타격만 바꾼다
+    }
+  }
+
+  events.push({ type: "action_start", delay: offset + shift, actor, actionTag: resolvedTag });
+
+  let lastImpactAt = 0;  // offset+shift 기준 마지막 히트(임팩트 프레임) 발화 시각
   if (card.hitTimings && card.hitTimings.length > 0) {
     const connects = hasConnectingAttack(card, targetAirborne);
 
@@ -232,7 +304,6 @@ function pushSequenceWithHold(
     // 앞선 freeze 합(acc)을 더해야 스프라이트의 임팩트 프레임과 정확히 맞는다.
     // (단발 히트는 acc가 0이라 기존과 동일한 결과)
     let acc = 0;
-    let lastImpactAt = 0;  // offset 기준 마지막 히트 발화 시각
     let lastFreeze = 0;
 
     for (const timing of card.hitTimings) {
@@ -244,7 +315,7 @@ function pushSequenceWithHold(
       // visual_hit은 실제로 타격이 성립할 때만 생성
       // hasConnectingAttack이 false면 데미지도 없고 피격 포즈도 없음
       if (connects) {
-        events.push({ type: "visual_hit", delay: offset + impactAt, target, hitPose, freezeMs, zoom });
+        events.push({ type: "visual_hit", delay: offset + shift + impactAt, target, hitPose, freezeMs, zoom });
       }
 
       lastImpactAt = impactAt;
@@ -256,7 +327,7 @@ function pushSequenceWithHold(
     // HP바·콤보·캔슬 UI 갱신 타이밍 마커로 사용됨 (마지막 임팩트 직후)
     events.push({
       type: "damage_resolve",
-      delay: offset + lastImpactAt + 100,
+      delay: offset + shift + lastImpactAt + 100,
       actor,
       hpAfter: hpData?.hpAfter,
       cancelledPlayer: hpData?.cancelledPlayer,
@@ -265,10 +336,48 @@ function pushSequenceWithHold(
     });
 
     // 마지막 히트의 freeze가 끝난 뒤 포즈를 마무리하도록 action_end를 늦춤
-    endDelay = Math.max(endDelay, offset + lastImpactAt + lastFreeze + 100);
+    endDelay = Math.max(endDelay + shift, offset + shift + lastImpactAt + lastFreeze + 100);
+  } else {
+    endDelay += shift;
   }
 
   events.push({ type: "action_end", delay: endDelay, actor });
+
+  // ── 휘핑 복귀: 헛친 근접 스윙은 임팩트 프레임 직후 원위치로 돌아온다 ─────────
+  // 배경 착시(bgPush)는 없음 — 아무것도 맞지 않았으므로 "적이 밀리는" 느낌을 주면 안 됨.
+  // action_end(freeze 연장 포함)보다 일찍 복귀시켜, 후공의 대시 목표(sim 기준 홈)와
+  // 화면 위치가 어긋나는 구간을 최소화한다.
+  if (isWhiff) {
+    events.push({
+      type: "fighter_move",
+      delay: offset + shift + lastImpactAt + WHIFF_RETURN_MS,
+      subject: actor,
+      toOffset: sim[actor],
+      motion: "recover",
+    });
+  }
+
+  // ── 넉백: 연출 종료 후 양측을 홈으로 → 비근접 복귀 ──────────────────────────
+  // 수비자는 밀려나는 이동(knockback), 공격자는 복귀(recover) + 배경 밀림 착시.
+  // 이미 홈이면 이동 이벤트를 생략한다 (배경 착시는 공격자가 실제 복귀할 때만).
+  if (willConnect && card.knockback) {
+    if (sim[target] !== HOME_OFFSET[target]) {
+      events.push({ type: "fighter_move", delay: endDelay, subject: target, toOffset: HOME_OFFSET[target], motion: "knockback" });
+      sim[target] = HOME_OFFSET[target];
+    }
+    if (sim[actor] !== HOME_OFFSET[actor]) {
+      events.push({
+        type: "fighter_move",
+        delay: endDelay,
+        subject: actor,
+        toOffset: HOME_OFFSET[actor],
+        motion: "recover",
+        // 복귀와 같은 방향으로 배경을 밀어 "적이 밀려나는" 착시 생성 (P1 왼쪽 복귀 → 배경 -)
+        bgPush: actor === "P1" ? -RETURN_BG_PX : RETURN_BG_PX,
+      });
+      sim[actor] = HOME_OFFSET[actor];
+    }
+  }
 }
 
 /**
@@ -295,6 +404,8 @@ export function makeQueueFromScript(
   p1Character?: string,
   /** AI 활성 캐릭터 ID (frame→ms fps 조회용). 게스트는 flip된 state 기준 */
   aiCharacter?: string,
+  /** 턴 시작 시점의 파이터 오프셋 (미지정 시 홈=비근접) */
+  startOffsets?: FighterOffsets,
 ): CombatAnimationEvent[] {
   if (script.length === 0) return [];
 
@@ -323,5 +434,5 @@ export function makeQueueFromScript(
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 
-  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1SpriteId, aiSpriteId, p1HpData, aiHpData);
+  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1SpriteId, aiSpriteId, p1HpData, aiHpData, startOffsets);
 }

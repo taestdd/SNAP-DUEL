@@ -137,6 +137,9 @@ export default function CardEditor({ initial, mode }: Props) {
   const [effects, setEffects] = useState<CardEffect[]>(initial?.effects ?? [emptyEffect()]);
   const [hitTimings, setHitTimings] = useState(initial?.hitTimings ?? []);
   const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
+  // meleeAttack은 미지정 = true가 기본 (원거리 카드만 false 저장)
+  const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? true);
+  const [knockback, setKnockback] = useState(initial?.knockback ?? false);
   const [statModifiers, setStatModifiers] = useState<StatModifier[]>(initial?.statModifiers ?? []);
   const [altCost, setAltCost] = useState<AltCost | null>(initial?.altCost ?? null);
   const [saving, setSaving] = useState(false);
@@ -218,6 +221,9 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(actionTagAirborne ? { actionTagAirborne: actionTagAirborne as CardSchemaType["actionTag"] } : {}),
       ...(hitTimings.length > 0 ? { hitTimings: cleanedHitTimings as CardSchemaType["hitTimings"] } : {}),
       ...(superFlash ? { superFlash: true } : {}),
+      // 기본값 true — 체크 해제(원거리)일 때만 명시적으로 false 저장
+      ...(meleeAttack ? {} : { meleeAttack: false }),
+      ...(knockback ? { knockback: true } : {}),
       ...(statModifiers.length > 0 ? { statModifiers } : {}),
       ...(altCost ? { altCost } : {}),
     };
@@ -616,6 +622,26 @@ export default function CardEditor({ initial, mode }: Props) {
                   onChange={(e) => setSuperFlash(e.target.checked)}
                 />
                 슈퍼 플래시 연출
+              </label>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={meleeAttack}
+                  onChange={(e) => setMeleeAttack(e.target.checked)}
+                />
+                근접 공격 — 비근접 상태면 상대에게 돌진 후 공격
+              </label>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={knockback}
+                  onChange={(e) => setKnockback(e.target.checked)}
+                />
+                넉백 — 타격 후 상대를 밀어내 비근접 상태로
               </label>
             </div>
             <div className={styles.row} style={{ marginTop: 12 }}>
