@@ -33,8 +33,8 @@ function prepareNextRound(state: GameState): GameState {
     turn: 0,
     phase: "ROUND_DRAFT",
     selected: null,
-    recentlyCancelledId: null,
-    recentlyCancelledPlayer: null,
+    recentlyCounteredId: null,
+    recentlyCounteredPlayer: null,
     comboCount: 0,
     animStartCombo: null,
     draftSelections: { P1: null, AI: null },
@@ -100,8 +100,8 @@ function resetTurnFlags(state: GameState): GameState {
     ...state,
     phase: "SETUP_INIT",
     selected: null,
-    recentlyCancelledId: null,
-    recentlyCancelledPlayer: null,
+    recentlyCounteredId: null,
+    recentlyCounteredPlayer: null,
     p1TaggedThisTurn: false,
     aiTaggedThisTurn: false,
     animScript: [],
@@ -142,17 +142,17 @@ export function beginTurn(state: GameState): GameState {
 
 export function endTurnCleanup(state: GameState): GameState {
   const p1Card = state.animScript.find((e) => e.actor === "P1")?.cardId
-    ?? (state.recentlyCancelledPlayer === "P1" ? state.recentlyCancelledId : null)
+    ?? (state.recentlyCounteredPlayer === "P1" ? state.recentlyCounteredId : null)
     ?? null;
   const aiCard = state.animScript.find((e) => e.actor === "AI")?.cardId
-    ?? (state.recentlyCancelledPlayer === "AI" ? state.recentlyCancelledId : null)
+    ?? (state.recentlyCounteredPlayer === "AI" ? state.recentlyCounteredId : null)
     ?? null;
 
   const entry = {
     turn: state.turn,
     initiative: state.initiative,
-    P1: { card: p1Card, cancelled: state.recentlyCancelledPlayer === "P1" },
-    AI: { card: aiCard, cancelled: state.recentlyCancelledPlayer === "AI" },
+    P1: { card: p1Card, countered: state.recentlyCounteredPlayer === "P1" },
+    AI: { card: aiCard, countered: state.recentlyCounteredPlayer === "AI" },
     hp: { P1: state.P1.hp, AI: state.AI.hp },
     airborne: { P1: state.P1.airborneStack, AI: state.AI.airborneStack },
   };

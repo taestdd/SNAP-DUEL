@@ -35,7 +35,7 @@ function pickCardsToDiscard(state: GameState, hand: string[], count: number): st
 interface CardPlay {
   player: PlayerId;
   cardId: string;
-  cancelled: boolean;
+  countered: boolean;
 }
 
 interface GameResult {
@@ -118,14 +118,14 @@ function simulateGame(): GameResult {
       case "ANIMATING": {
         // animScript = 이번 턴 성공적으로 해결된 카드 목록
         for (const entry of state.animScript) {
-          plays.push({ player: entry.actor, cardId: entry.cardId, cancelled: false });
+          plays.push({ player: entry.actor, cardId: entry.cardId, countered: false });
         }
-        // 캔슬된 카드
-        if (state.recentlyCancelledId && state.recentlyCancelledPlayer) {
+        // 카운터된 카드
+        if (state.recentlyCounteredId && state.recentlyCounteredPlayer) {
           plays.push({
-            player: state.recentlyCancelledPlayer,
-            cardId: state.recentlyCancelledId,
-            cancelled: true,
+            player: state.recentlyCounteredPlayer,
+            cardId: state.recentlyCounteredId,
+            countered: true,
           });
         }
         state = gameReducer(state, { type: "ANIM/DONE" });
@@ -163,7 +163,7 @@ function simulateGame(): GameResult {
 interface CardStat {
   played: number;       // 플레이 횟수 (양쪽 합산)
   playedAndWon: number; // 플레이한 쪽이 게임을 이긴 횟수
-  cancelled: number;    // 캔슬된 횟수
+  countered: number;    // 카운터된 횟수
 }
 
 const stats: Record<string, CardStat> = {};
@@ -185,11 +185,11 @@ for (let i = 0; i < GAMES; i++) {
   else if (winner === "AI") aiWins++;
   else draws++;
 
-  for (const { player, cardId, cancelled } of plays) {
-    if (!stats[cardId]) stats[cardId] = { played: 0, playedAndWon: 0, cancelled: 0 };
+  for (const { player, cardId, countered } of plays) {
+    if (!stats[cardId]) stats[cardId] = { played: 0, playedAndWon: 0, countered: 0 };
     stats[cardId].played++;
-    if (cancelled) {
-      stats[cardId].cancelled++;
+    if (countered) {
+      stats[cardId].countered++;
     } else if (winner === player) {
       stats[cardId].playedAndWon++;
     }
@@ -211,7 +211,7 @@ console.log();
 console.log(` 카드별 통계  (승기여율 내림차순)`);
 console.log(`─────────────────────────────────────────────────────────`);
 console.log(
-  ` ${"카드".padEnd(16)} ${"사용수".padStart(6)} ${"승기여율".padStart(8)} ${"캔슬률".padStart(7)} ${"사용/게임".padStart(9)}`
+  ` ${"카드".padEnd(16)} ${"사용수".padStart(6)} ${"승기여율".padStart(8)} ${"카운터률".padStart(7)} ${"사용/게임".padStart(9)}`
 );
 console.log(`─────────────────────────────────────────────────────────`);
 
@@ -223,10 +223,10 @@ const sortedCards = Object.entries(stats).sort((a, b) => {
 
 for (const [cardId, s] of sortedCards) {
   const winRate = s.played > 0 ? ((s.playedAndWon / s.played) * 100).toFixed(1) + "%" : "-";
-  const cancelRate = s.played > 0 ? ((s.cancelled / s.played) * 100).toFixed(1) + "%" : "-";
+  const counterRate = s.played > 0 ? ((s.countered / s.played) * 100).toFixed(1) + "%" : "-";
   const perGame = (s.played / GAMES).toFixed(2);
   console.log(
-    ` ${cardId.padEnd(16)} ${String(s.played).padStart(6)} ${winRate.padStart(8)} ${cancelRate.padStart(7)} ${perGame.padStart(9)}`
+    ` ${cardId.padEnd(16)} ${String(s.played).padStart(6)} ${winRate.padStart(8)} ${counterRate.padStart(7)} ${perGame.padStart(9)}`
   );
 }
 

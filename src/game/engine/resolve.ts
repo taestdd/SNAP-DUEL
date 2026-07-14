@@ -36,7 +36,7 @@ function buildResolveOrder(state: GameState): { player: PlayerId; cardId: string
 }
 
 /* -------------------------- */
-/* 적중 / 주도권 / 이득 / 캔슬 */
+/* 적중 / 주도권 / 이득 / 카운터 */
 /* -------------------------- */
 
 function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
@@ -58,19 +58,19 @@ function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): Gam
   return pushLog(s, `${player} gains SPEED -${gain} next turn`);
 }
 
-function applyCancelOnHit(state: GameState, attacker: PlayerId, unresolved: Set<PlayerId>): GameState {
+function applyCounterOnHit(state: GameState, attacker: PlayerId, unresolved: Set<PlayerId>): GameState {
   const other = opponentOf(attacker);
   if (!unresolved.has(other)) return state;
 
-  const cancelledCard = state[other].queue[0];
-  if (!cancelledCard) return state;
+  const counteredCard = state[other].queue[0];
+  if (!counteredCard) return state;
 
-  const cancelledCardDef = getCard(cancelledCard);
+  const counteredCardDef = getCard(counteredCard);
 
-  let s = moveQueuedCard(state, other, cancelledCard, "trash");
+  let s = moveQueuedCard(state, other, counteredCard, "trash");
   s = updateCombatant(s, other, { ready: false });
-  s = { ...s, recentlyCancelledId: cancelledCard, recentlyCancelledPlayer: other };
-  s = pushLog(s, `${other} cancelled — "${cancelledCardDef?.name ?? cancelledCard}" sent to trash`);
+  s = { ...s, recentlyCounteredId: counteredCard, recentlyCounteredPlayer: other };
+  s = pushLog(s, `${other} countered — "${counteredCardDef?.name ?? counteredCard}" sent to trash`);
 
   unresolved.delete(other);
   return s;
@@ -123,7 +123,7 @@ function resolveAll(state: GameState): GameState {
     s = moveQueuedCard(s, it.player, it.cardId, "cooldown");
     unresolved.delete(it.player);
 
-    let cancelledPlayerByThisCard: PlayerId | undefined;
+    let counteredPlayerByThisCard: PlayerId | undefined;
     let comboAfterThisCard: number | undefined;
     let comboHolderAfterThisCard: PlayerId | undefined;
     const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
@@ -136,10 +136,10 @@ function resolveAll(state: GameState): GameState {
       s = { ...s, comboCount: newCombo };
       comboAfterThisCard = newCombo;
       comboHolderAfterThisCard = it.player;
-      const prevCancelled = s.recentlyCancelledPlayer;
-      s = applyCancelOnHit(s, it.player, unresolved);
-      if (s.recentlyCancelledPlayer !== prevCancelled) {
-        cancelledPlayerByThisCard = s.recentlyCancelledPlayer ?? undefined;
+      const prevCountered = s.recentlyCounteredPlayer;
+      s = applyCounterOnHit(s, it.player, unresolved);
+      if (s.recentlyCounteredPlayer !== prevCountered) {
+        counteredPlayerByThisCard = s.recentlyCounteredPlayer ?? undefined;
       }
     }
 
@@ -149,7 +149,7 @@ function resolveAll(state: GameState): GameState {
       actorAirborne,
       targetAirborne,
       hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
-      cancelledPlayer: cancelledPlayerByThisCard,
+      counteredPlayer: counteredPlayerByThisCard,
       comboAfter: comboAfterThisCard,
       comboHolder: comboHolderAfterThisCard,
     });

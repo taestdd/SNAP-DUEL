@@ -13,7 +13,7 @@ export const TUTORIAL_CARDS: Record<string, Card> = {
     gain: 1,
     groundAttack: 1,
     effects: [],
-    text: "빠른 지상 공격. 상대 공격을 캔슬할 수 있습니다.",
+    text: "빠른 지상 공격. 상대 공격을 카운터할 수 있습니다.",
     actionTag: "weak_punch",
     hitTimings: [{ frame: 1, ground: "hit_weak", airborne: "hit_weak" }],
   },

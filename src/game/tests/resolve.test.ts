@@ -39,7 +39,7 @@ describe("데미지 적용", () => {
     );
     expect(s.AI.hp).toBe(30); // ground blocked
     expect(s.initiative).toBe("P1"); // 적중 안 함 → 주도권 이동 없음
-    expect(s.recentlyCancelledPlayer).toBeNull();
+    expect(s.recentlyCounteredPlayer).toBeNull();
   });
 
   it("대공 공격은 체공 중인 상대에게 적중한다", () => {
@@ -61,16 +61,16 @@ describe("데미지 적용", () => {
   });
 });
 
-describe("캔슬", () => {
-  it("먼저 적중한 직접 타격이 상대 큐의 카드를 캔슬한다", () => {
-    // P1 quick_jab(spd1) 먼저 적중 → AI jab(spd2) 캔슬
+describe("카운터", () => {
+  it("먼저 적중한 직접 타격이 상대 큐의 카드를 카운터한다", () => {
+    // P1 quick_jab(spd1) 먼저 적중 → AI jab(spd2) 카운터
     const s = enterResolving(
       makeState({ initiative: "P1", P1: { queue: ["quick_jab"] }, AI: { queue: ["jab"] } }),
     );
-    expect(s.recentlyCancelledPlayer).toBe("AI");
+    expect(s.recentlyCounteredPlayer).toBe("AI");
     expect(s.AI.hp).toBe(25); // P1 타격은 적중
-    expect(s.P1.hp).toBe(30); // AI 카드는 캔슬되어 미적중
-    expect(s.animScript).toHaveLength(1); // 캔슬된 카드는 animScript 제외
+    expect(s.P1.hp).toBe(30); // AI 카드는 카운터되어 미적중
+    expect(s.animScript).toHaveLength(1); // 카운터된 카드는 animScript 제외
   });
 });
 
@@ -108,23 +108,23 @@ describe("콤보", () => {
   });
 });
 
-describe("스킬 카드는 주도권/캔슬을 발동하지 않는다", () => {
-  it("양쪽 스킬은 주도권 이동·캔슬·콤보가 없다", () => {
+describe("스킬 카드는 주도권/카운터을 발동하지 않는다", () => {
+  it("양쪽 스킬은 주도권 이동·카운터·콤보가 없다", () => {
     const s = enterResolving(
       makeState({ initiative: "P1", P1: { queue: ["guard"] }, AI: { queue: ["guard"] } }),
     );
     expect(s.initiative).toBe("P1");
-    expect(s.recentlyCancelledPlayer).toBeNull();
+    expect(s.recentlyCounteredPlayer).toBeNull();
     expect(s.comboCount).toBe(0);
   });
 
-  it("먼저 해결된 스킬은 상대 공격을 캔슬하지 않는다", () => {
-    // P1 guard(spd0) 먼저 해결 → AI jab(spd2)은 캔슬되지 않고 그대로 해결된다.
+  it("먼저 해결된 스킬은 상대 공격을 카운터하지 않는다", () => {
+    // P1 guard(spd0) 먼저 해결 → AI jab(spd2)은 카운터되지 않고 그대로 해결된다.
     // (guard의 block 5가 jab 5를 흡수하므로 HP가 아닌 animScript로 "해결됨"을 검증)
     const s = enterResolving(
       makeState({ initiative: "P1", P1: { queue: ["guard"] }, AI: { queue: ["jab"] } }),
     );
-    expect(s.recentlyCancelledPlayer).toBeNull();
-    expect(resolveOrder(s)).toEqual(["P1", "AI"]); // 양쪽 모두 해결 (캔슬 시 length 1)
+    expect(s.recentlyCounteredPlayer).toBeNull();
+    expect(resolveOrder(s)).toEqual(["P1", "AI"]); // 양쪽 모두 해결 (카운터 시 length 1)
   });
 });

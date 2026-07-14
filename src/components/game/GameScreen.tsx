@@ -73,7 +73,7 @@ export default function GameScreen({
     hitEffectKey, hitEffectTarget, hitEffectStrength,
     superFlashActor,
     displayedHp,
-    displayedCancelledPlayer,
+    displayedCounteredPlayer,
     displayedCombo,
     animLog,
   } = useArenaAnimation(state, dispatch);
@@ -93,10 +93,10 @@ export default function GameScreen({
       ? { ...state.AI.characterHp, [state.AI.activeCharacter]: displayedHp.AI }
       : undefined;
 
-  // ANIMATING 중에는 displayedCancelledPlayer로 캔슬 표시 타이밍 제어
-  const effectiveCancelledPlayer = isAnimating
-    ? displayedCancelledPlayer
-    : state.recentlyCancelledPlayer;
+  // ANIMATING 중에는 displayedCounteredPlayer로 카운터 표시 타이밍 제어
+  const effectiveCounteredPlayer = isAnimating
+    ? displayedCounteredPlayer
+    : state.recentlyCounteredPlayer;
 
   // 콤보: ANIMATING 중에는 displayedCombo, 그 외에는 gameState에서 직접
   const effectiveCombo = isAnimating && displayedCombo !== null
@@ -392,7 +392,7 @@ export default function GameScreen({
                 title="P1 Queue"
                 me={state.P1}
                 phase={state.phase}
-                recentlyCancelledPlayer={effectiveCancelledPlayer}
+                recentlyCounteredPlayer={effectiveCounteredPlayer}
                 isMyTurn={isSetupTurnOf(state, "P1")}
                 isInitiative={isP1Initiative}
               />
@@ -402,7 +402,7 @@ export default function GameScreen({
                 title="AI Queue"
                 me={state.AI}
                 phase={state.phase}
-                recentlyCancelledPlayer={effectiveCancelledPlayer}
+                recentlyCounteredPlayer={effectiveCounteredPlayer}
                 isMyTurn={isSetupTurnOf(state, "AI")}
                 isInitiative={isAIInitiative}
               />

@@ -28,13 +28,13 @@ describe("flipState (게스트 뷰 P1↔AI 교환)", () => {
         actorAirborne: 0,
         targetAirborne: 0,
         hpAfter: { P1: 30, AI: 25 },
-        cancelledPlayer: "AI",
+        counteredPlayer: "AI",
         comboHolder: "P1",
       }],
     }));
     expect(s.animScript[0].actor).toBe("AI");
     expect(s.animScript[0].hpAfter).toEqual({ P1: 25, AI: 30 });
-    expect(s.animScript[0].cancelledPlayer).toBe("P1");
+    expect(s.animScript[0].counteredPlayer).toBe("P1");
     expect(s.animScript[0].comboHolder).toBe("AI");
   });
 

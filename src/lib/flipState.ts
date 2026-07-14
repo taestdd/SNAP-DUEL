@@ -57,7 +57,7 @@ export function flipState(state: GameState): GameState {
     animScript: state.animScript.map((entry) => ({
       ...entry,
       actor: flipId(entry.actor),
-      cancelledPlayer: entry.cancelledPlayer ? flipId(entry.cancelledPlayer) : undefined,
+      counteredPlayer: entry.counteredPlayer ? flipId(entry.counteredPlayer) : undefined,
       comboHolder: entry.comboHolder ? flipId(entry.comboHolder) : undefined,
       // hpAfter는 절대 P1/AI 키 — 값도 교환해야 HP 지연 표시가 올바름
       hpAfter: { P1: entry.hpAfter.AI, AI: entry.hpAfter.P1 },
@@ -70,8 +70,8 @@ export function flipState(state: GameState): GameState {
     animStartCombo: state.animStartCombo
       ? { ...state.animStartCombo, holder: flipId(state.animStartCombo.holder) }
       : null,
-    recentlyCancelledPlayer:
-      state.recentlyCancelledPlayer ? flipId(state.recentlyCancelledPlayer) : null,
+    recentlyCounteredPlayer:
+      state.recentlyCounteredPlayer ? flipId(state.recentlyCounteredPlayer) : null,
     // 태그 플래그 교환 → 게스트 화면의 Tag 버튼 잠금(p1TaggedThisTurn 참조)이 올바르게 동작
     p1TaggedThisTurn: state.aiTaggedThisTurn,
     aiTaggedThisTurn: state.p1TaggedThisTurn,

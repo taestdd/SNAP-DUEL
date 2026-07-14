@@ -88,7 +88,7 @@ function frameToMs(frame: number, pose: FighterPose | null, spriteId: string): n
 
 export type ActorHpData = {
   hpAfter: { P1: number; AI: number };
-  cancelledPlayer?: PlayerId;
+  counteredPlayer?: PlayerId;
   comboAfter?: number;
   comboHolder?: PlayerId;
 };
@@ -268,7 +268,7 @@ function pushSequenceWithHold(
     : card.actionTag;
   const hasTimings = !!(card.hitTimings && card.hitTimings.length > 0);
   // 넉백·거리 상태 전이는 "타격이 성립하는 공격"에만 적용
-  // (캔슬된 카드는 애초에 스크립트에 없음)
+  // (카운터된 카드는 애초에 스크립트에 없음)
   const willConnect = hasTimings && hasConnectingAttack(card, targetAirborne);
   // 근접 스윙: 공격 스탯이 있는 근접 카드의 휘두름 — 적중 여부와 무관 (빗나가면 휘핑)
   const meleeSwing = hasTimings
@@ -324,13 +324,13 @@ function pushSequenceWithHold(
     }
 
     // damage_resolve는 타격 성사 여부와 무관하게 항상 생성
-    // HP바·콤보·캔슬 UI 갱신 타이밍 마커로 사용됨 (마지막 임팩트 직후)
+    // HP바·콤보·카운터 UI 갱신 타이밍 마커로 사용됨 (마지막 임팩트 직후)
     events.push({
       type: "damage_resolve",
       delay: offset + shift + lastImpactAt + 100,
       actor,
       hpAfter: hpData?.hpAfter,
-      cancelledPlayer: hpData?.cancelledPlayer,
+      counteredPlayer: hpData?.counteredPlayer,
       comboAfter: hpData?.comboAfter,
       comboHolder: hpData?.comboHolder,
     });
@@ -425,10 +425,10 @@ export function makeQueueFromScript(
   const aiTargetAirborne = aiEntry?.targetAirborne ?? 0;
 
   const p1HpData: ActorHpData | undefined = p1Entry
-    ? { hpAfter: p1Entry.hpAfter, cancelledPlayer: p1Entry.cancelledPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
+    ? { hpAfter: p1Entry.hpAfter, counteredPlayer: p1Entry.counteredPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
     : undefined;
   const aiHpData: ActorHpData | undefined = aiEntry
-    ? { hpAfter: aiEntry.hpAfter, cancelledPlayer: aiEntry.cancelledPlayer, comboAfter: aiEntry.comboAfter, comboHolder: aiEntry.comboHolder }
+    ? { hpAfter: aiEntry.hpAfter, counteredPlayer: aiEntry.counteredPlayer, comboAfter: aiEntry.comboAfter, comboHolder: aiEntry.comboHolder }
     : undefined;
 
   const initiative: "player" | "ai" =
