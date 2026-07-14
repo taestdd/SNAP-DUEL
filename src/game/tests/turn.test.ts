@@ -5,9 +5,9 @@ import type { PendingCostPayment } from "@/game/engine/types";
 import { makeState } from "./fixtures";
 
 registerCards({
-  costly:  { id: "costly",  name: "Costly",  cardType: "attack", cost: 2, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "" },
-  hp_card: { id: "hp_card", name: "HP Card", cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
-  ac_card: { id: "ac_card", name: "AC Card", cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "" },
+  costly:  { id: "costly",  name: "Costly",  cardType: "attack", cost: 2, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "" },
+  hp_card: { id: "hp_card", name: "HP Card", cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
+  ac_card: { id: "ac_card", name: "AC Card", cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "" },
 });
 
 /* ── queueCard ─────────────────────────────────────────────────────── */
@@ -49,10 +49,10 @@ describe("beginTurn", () => {
     expect(s.P1.block).toBe(0);
     expect(s.P1.ready).toBe(false);
   });
-  it("speedBonusNext가 speedBonus로 롤오버되고 다음 값은 0", () => {
-    const s = beginTurn(makeState({ phase: "TURN_START", P1: { status: { speedBonusNext: 2 } } }));
-    expect(s.P1.status.speedBonus).toBe(2);
-    expect(s.P1.status.speedBonusNext).toBe(0);
+  it("delayAdvantageNext가 delayAdvantage로 롤오버되고 다음 값은 0", () => {
+    const s = beginTurn(makeState({ phase: "TURN_START", P1: { status: { delayAdvantageNext: 2 } } }));
+    expect(s.P1.status.delayAdvantage).toBe(2);
+    expect(s.P1.status.delayAdvantageNext).toBe(0);
   });
   it("airborneStack가 1 감소한다 (0 클램프)", () => {
     const s = beginTurn(makeState({ phase: "TURN_START", P1: { airborneStack: 2 }, AI: { airborneStack: 0 } }));

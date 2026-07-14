@@ -66,8 +66,9 @@ export default function BulkImportModal({
         id: row.id,
         name: row.name,
         cost: Number(row.cost || 0),
-        speed: Number(row.speed || 0),
-        gain: Number(row.gain || 0),
+        // 구 CSV 헤더(speed/gain)도 수용 — 저장은 항상 새 키(delay/advantage)
+        delay: Number(row.delay ?? row.speed ?? 0),
+        advantage: Number(row.advantage ?? row.gain ?? 0),
         text: row.text || "",
       };
 
@@ -226,7 +227,7 @@ export default function BulkImportModal({
                     <span className={styles.previewIcon}>✓</span>
                     <span className={styles.previewId}>{item.card.id}</span>
                     <span className={styles.previewName}>{item.card.name}</span>
-                    <span className={styles.previewMeta}>cost {item.card.cost} · spd {item.card.speed}</span>
+                    <span className={styles.previewMeta}>cost {item.card.cost} · dly {item.card.delay}</span>
                   </div>
                 ) : (
                   <div key={i} className={`${styles.previewItem} ${styles.previewErr}`}>

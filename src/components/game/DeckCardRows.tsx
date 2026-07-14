@@ -12,7 +12,7 @@ export default function DeckCardRows({ cards }: { cards: string[] }) {
       const ca = getCard(a);
       const cb = getCard(b);
       return (ca?.cost ?? 0) - (cb?.cost ?? 0)
-        || (ca?.speed ?? 0) - (cb?.speed ?? 0)
+        || (ca?.delay ?? 0) - (cb?.delay ?? 0)
         || (ca?.name ?? a).localeCompare(cb?.name ?? b);
     });
 
@@ -24,7 +24,7 @@ export default function DeckCardRows({ cards }: { cards: string[] }) {
         return (
           <div key={`${cardId}-${idx}`} className={pickStyles.cardItem}>
             <div className={pickStyles.cardName}>{card.name}</div>
-            <div className={pickStyles.cardMeta}>C{card.cost} · S{card.speed}</div>
+            <div className={pickStyles.cardMeta}>C{card.cost} · S{card.delay}</div>
             <div className={pickStyles.cardText}>{card.text}</div>
           </div>
         );

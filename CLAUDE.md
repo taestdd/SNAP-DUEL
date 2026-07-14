@@ -2,7 +2,7 @@
 
 ## 프로젝트 개요
 
-2D 격투 카드게임. P1(플레이어)과 AI가 카드를 동시에 선택하고 스피드 순서로 해결.
+2D 격투 카드게임. P1(플레이어)과 AI가 카드를 동시에 선택하고 딜레이 순서로 해결.
 Firebase를 통한 온라인 대전도 지원.
 
 **기술 스택:** Next.js 16 / React 19 / TypeScript / Firebase / CSS Modules
@@ -103,7 +103,7 @@ src/
 │   │   ├── reducer.ts              # gameReducer — Action → GameState
 │   │   ├── rules.ts                # re-export 파사드
 │   │   ├── constants.ts            # LOG_LIMIT=200, HAND_LIMIT=10
-│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, getEffectiveSpeed, ...)
+│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, getEffectiveDelay, ...)
 │   │   ├── effects.ts              # 카드 효과 적용 + 판정/스탯 단일 진실원
 │   │   │                           #   (getCardPlayability, deriveCardStats)
 │   │   ├── turn.ts                 # 턴/라운드 라이프사이클
@@ -178,7 +178,7 @@ UI(Hand)·AI(ai.ts)·집행(turn.ts)이 모두 같은 결과를 보도록 보장
 - `getEffectiveCost(state, player, card)`: statModifiers 보정 반영 실효 코스트
 
 **스탯 — `deriveCardStats(state, player, cardId): CardStats`**
-- base + statModifiers + status 버프(speedBonus / attackBuff)를 합산
+- base + statModifiers + status 버프(delayAdvantage / attackBuff)를 합산
 - 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
 - CardView는 자체 계산 없이 이 결과(`stats` prop)만 표시
 
@@ -285,7 +285,8 @@ resolveContext: {
 
 ## 게임 규칙 핵심
 
-- **스피드**: 낮을수록 빠름 (0이 최속). 동률 시 initiative 플레이어 우선
+- **딜레이(delay)**: 낮을수록 먼저 발동 (0이 최속, 구 명칭 speed). 동률 시 initiative 플레이어 우선
+- **어드밴티지(advantage)**: 직접 타격 성공 시 획득(구 명칭 gain). 다음 턴 카드의 딜레이를 그만큼 감소(`delayAdvantageNext` → `delayAdvantage`)
 - **주도권(initiative)**: 라운드 시작 시 랜덤 결정. 이후 직접 타격 성공 시 공격자가 주도권을 획득(`applyInitiativeOnHit`). 주도권은 턴마다 타격 결과에 따라 이동한다. 라운드 종료 시 재추첨.
 - **카운터**: 먼저 처리된 카드가 직접 타격 시 상대 큐의 damage 카드를 카운터
 - **airborne**: airborneStack ≥ 1이면 ground 공격 무효, 0이면 anti-air 무효

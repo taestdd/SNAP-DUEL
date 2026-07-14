@@ -3,7 +3,7 @@ import { getCard } from "./cards";
 import {
   opponentOf,
   pushLog,
-  getEffectiveSpeed,
+  getEffectiveDelay,
   moveQueuedCard,
   moveCardsBetweenZones,
   evaluateModifiers,
@@ -24,8 +24,8 @@ function buildResolveOrder(state: GameState): { player: PlayerId; cardId: string
   if (state.AI.queue[0]) items.push({ player: "AI", cardId: state.AI.queue[0] });
 
   items.sort((a, b) => {
-    const sa = getEffectiveSpeed(state, a.player, a.cardId);
-    const sb = getEffectiveSpeed(state, b.player, b.cardId);
+    const sa = getEffectiveDelay(state, a.player, a.cardId);
+    const sb = getEffectiveDelay(state, b.player, b.cardId);
     if (sa !== sb) return sa - sb;
     if (a.player === state.initiative) return -1;
     if (b.player === state.initiative) return 1;
@@ -45,17 +45,17 @@ function applyInitiativeOnHit(state: GameState, player: PlayerId): GameState {
   return pushLog({ ...state, initiative: player }, `${player} takes initiative (from ${prev})`);
 }
 
-function applyGainOnHit(state: GameState, player: PlayerId, cardId: string): GameState {
+function applyAdvantageOnHit(state: GameState, player: PlayerId, cardId: string): GameState {
   const card = getCard(cardId);
   if (!card) return state;
   const mods = evaluateModifiers(state, player, card.statModifiers);
-  const gain = Math.max(0, (card.gain ?? 0) + (mods.gain ?? 0));
-  if (gain <= 0) return state;
+  const advantage = Math.max(0, (card.advantage ?? 0) + (mods.advantage ?? 0));
+  if (advantage <= 0) return state;
 
   const s = updateStatus(state, player, {
-    speedBonusNext: (state[player].status.speedBonusNext ?? 0) + gain,
+    delayAdvantageNext: (state[player].status.delayAdvantageNext ?? 0) + advantage,
   });
-  return pushLog(s, `${player} gains SPEED -${gain} next turn`);
+  return pushLog(s, `${player} gains +${advantage} advantage next turn`);
 }
 
 function applyCounterOnHit(state: GameState, attacker: PlayerId, unresolved: Set<PlayerId>): GameState {
@@ -130,7 +130,7 @@ function resolveAll(state: GameState): GameState {
     if (hit) {
       const hadInitiative = s.initiative === it.player;
       s = applyInitiativeOnHit(s, it.player);
-      s = applyGainOnHit(s, it.player, it.cardId);
+      s = applyAdvantageOnHit(s, it.player, it.cardId);
       // 주도권 유지 시 콤보 ++, 주도권 획득 시 콤보 1로 시작
       const newCombo = hadInitiative ? s.comboCount + 1 : 1;
       s = { ...s, comboCount: newCombo };

@@ -27,19 +27,19 @@ const TEST_CHARACTERS: Record<string, CharacterDef> = {
  */
 const TEST_CARDS: Record<string, Card> = {
   // 기본 지상 공격
-  jab:       { id: "jab",       name: "Jab",       cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "" },
+  jab:       { id: "jab",       name: "Jab",       cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "" },
   // 빠른 지상 공격 (카운터용)
-  quick_jab: { id: "quick_jab", name: "Quick Jab", cardType: "attack", cost: 0, speed: 1, groundAttack: 5, gain: 0, effects: [], text: "" },
+  quick_jab: { id: "quick_jab", name: "Quick Jab", cardType: "attack", cost: 0, delay: 1, groundAttack: 5, advantage: 0, effects: [], text: "" },
   // 느린 강공격
-  heavy:     { id: "heavy",     name: "Heavy",     cardType: "attack", cost: 0, speed: 4, groundAttack: 8, gain: 0, effects: [], text: "" },
-  // 적중 시 다음 턴 스피드 보너스(gain)
-  swift:     { id: "swift",     name: "Swift",     cardType: "attack", cost: 0, speed: 1, groundAttack: 4, gain: 2, effects: [], text: "" },
+  heavy:     { id: "heavy",     name: "Heavy",     cardType: "attack", cost: 0, delay: 4, groundAttack: 8, advantage: 0, effects: [], text: "" },
+  // 적중 시 다음 턴 딜레이 보너스(advantage)
+  swift:     { id: "swift",     name: "Swift",     cardType: "attack", cost: 0, delay: 1, groundAttack: 4, advantage: 2, effects: [], text: "" },
   // 대공 전용
-  uppercut:  { id: "uppercut",  name: "Uppercut",  cardType: "attack", cost: 0, speed: 3, groundAttack: 0, antiAirAttack: 6, gain: 0, effects: [], text: "" },
+  uppercut:  { id: "uppercut",  name: "Uppercut",  cardType: "attack", cost: 0, delay: 3, groundAttack: 0, antiAirAttack: 6, advantage: 0, effects: [], text: "" },
   // 지상 타격 + 상대를 띄움
-  launcher:  { id: "launcher",  name: "Launcher",  cardType: "attack", cost: 0, speed: 2, groundAttack: 3, gain: 0, effects: [{ type: "airborne", target: "enemy", value: 1 }], text: "" },
+  launcher:  { id: "launcher",  name: "Launcher",  cardType: "attack", cost: 0, delay: 2, groundAttack: 3, advantage: 0, effects: [{ type: "airborne", target: "enemy", value: 1 }], text: "" },
   // 스킬: 방어 (주도권/카운터 미발동)
-  guard:     { id: "guard",     name: "Guard",     cardType: "skill",  cost: 0, speed: 0, gain: 0, effects: [{ type: "block", target: "self", value: 5 }], text: "" },
+  guard:     { id: "guard",     name: "Guard",     cardType: "skill",  cost: 0, delay: 0, advantage: 0, effects: [{ type: "block", target: "self", value: 5 }], text: "" },
 };
 
 let installed = false;
@@ -73,7 +73,7 @@ function makeCombatant(id: PlayerId, o: CombatantOverrides = {}): Combatant {
     activeCharacter: active,
     characterHp: o.characterHp ?? { [active]: hp, [bench]: 30 },
     airborneStack: o.airborneStack ?? 0,
-    status: { attackBuff: 0, speedBonus: 0, speedBonusNext: 0, exhausted: false, ...o.status },
+    status: { attackBuff: 0, delayAdvantage: 0, delayAdvantageNext: 0, exhausted: false, ...o.status },
     deck: o.deck ?? [],
     hand: o.hand ?? [],
     trash: o.trash ?? [],

@@ -116,12 +116,12 @@ function applyTurnStartStatuses(state: GameState): GameState {
     ...state,
     P1: {
       ...state.P1,
-      status: { ...state.P1.status, speedBonus: state.P1.status.speedBonusNext ?? 0, speedBonusNext: 0 },
+      status: { ...state.P1.status, delayAdvantage: state.P1.status.delayAdvantageNext ?? 0, delayAdvantageNext: 0 },
       airborneStack: Math.max(0, state.P1.airborneStack - 1),
     },
     AI: {
       ...state.AI,
-      status: { ...state.AI.status, speedBonus: state.AI.status.speedBonusNext ?? 0, speedBonusNext: 0 },
+      status: { ...state.AI.status, delayAdvantage: state.AI.status.delayAdvantageNext ?? 0, delayAdvantageNext: 0 },
       airborneStack: Math.max(0, state.AI.airborneStack - 1),
     },
   };

@@ -18,10 +18,10 @@ const CHECK_LABEL: Record<string, string> = {
 
 const STAT_LABEL: Record<string, string> = {
   cost: "Cost",
-  speed: "Speed",
+  delay: "Delay",
   ground_attack: "⬇ Atk",
   anti_air_attack: "⬆ Atk",
-  gain: "Gain",
+  advantage: "Advantage",
 };
 
 function modifierText(mod: StatModifier): string {
@@ -90,12 +90,12 @@ export default function CardDetailModal({
           </div>
           <div className={styles.metaDivider} />
           <div className={styles.metaItem}>
-            <span className={styles.metaLabel}>Speed</span>
+            <span className={styles.metaLabel}>Delay</span>
             <span className={styles.metaValue}>
-              {card.speed}
-              {activeMods?.speed ? (
-                <span className={activeMods.speed < 0 ? styles.modActive : styles.modMalus}>
-                  {activeMods.speed > 0 ? `+${activeMods.speed}` : activeMods.speed}
+              {card.delay}
+              {activeMods?.delay ? (
+                <span className={activeMods.delay < 0 ? styles.modActive : styles.modMalus}>
+                  {activeMods.delay > 0 ? `+${activeMods.delay}` : activeMods.delay}
                 </span>
               ) : null}
             </span>
@@ -128,12 +128,12 @@ export default function CardDetailModal({
               </div>
               <div className={styles.metaDivider} />
               <div className={styles.metaItem}>
-                <span className={styles.metaLabel}>Gain</span>
+                <span className={styles.metaLabel}>Advantage</span>
                 <span className={styles.metaValue}>
-                  {card.gain}
-                  {activeMods?.gain ? (
-                    <span className={activeMods.gain > 0 ? styles.modActive : styles.modMalus}>
-                      {activeMods.gain > 0 ? `+${activeMods.gain}` : activeMods.gain}
+                  {card.advantage}
+                  {activeMods?.advantage ? (
+                    <span className={activeMods.advantage > 0 ? styles.modActive : styles.modMalus}>
+                      {activeMods.advantage > 0 ? `+${activeMods.advantage}` : activeMods.advantage}
                     </span>
                   ) : null}
                 </span>

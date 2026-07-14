@@ -6,7 +6,7 @@ import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import CardDetailModal from "./CardDetailModal";
 import CostBox from "./CostBox";
-import SpeedCircle from "./SpeedCircle";
+import DelayCircle from "./DelayCircle";
 export { effectLabel } from "./cardLabels";
 
 
@@ -36,8 +36,8 @@ export default function QueuePreview({
   const isSelecting = isSetup && !me.ready && !queuedId && isMyTurn;
   const isWaiting   = isSetup && !me.ready && !queuedId && !isMyTurn;
 
-  const effectiveSpeed = card ? Math.max(0, card.speed - me.status.speedBonus) : 0;
-  const speedBonusApplied = card ? me.status.speedBonus : 0;
+  const effectiveDelay = card ? Math.max(0, card.delay - me.status.delayAdvantage) : 0;
+  const delayAdvantageApplied = card ? me.status.delayAdvantage : 0;
 
   return (
     <div className={styles.queueBox}>
@@ -72,7 +72,7 @@ export default function QueuePreview({
         <div key={queuedId} className={`${styles.queueCard} ${styles.queueCardAnim}`}>
           <div className={styles.queueCardRow}>
             <CostBox value={card.cost} />
-            <SpeedCircle value={effectiveSpeed} bonus={speedBonusApplied} />
+            <DelayCircle value={effectiveDelay} bonus={delayAdvantageApplied} />
             <div className={styles.queueCardName}>{card.name}</div>
           </div>
         </div>

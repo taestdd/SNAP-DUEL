@@ -7,17 +7,17 @@ import { makeState } from "./fixtures";
 
 /* ── 추가 합성 데이터 ─────────────────────────────────────────────── */
 registerCards({
-  fireball:   { id: "fireball",   name: "Fireball",   cardType: "attack", cost: 0, speed: 2, groundAttack: 4, gain: 0, effects: [], text: "", tags: ["마법"] },
-  hp_cost:    { id: "hp_cost",    name: "HP Cost",    cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
-  card_cost:  { id: "card_cost",  name: "Card Cost",  cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "", altCost: { type: "move_cards", fromZone: "deck", toZone: "trash", count: 2 } },
-  aerial_only:{ id: "aerial_only",name: "Aerial Only",cardType: "attack", cost: 0, speed: 2, groundAttack: 0, antiAirAttack: 5, gain: 0, effects: [], text: "", useCondition: "airborne" },
-  gut_draw:   { id: "gut_draw",   name: "Gut Draw",   cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [{ type: "draw", target: "self", value: 1 }], text: "" },
-  zap:        { id: "zap",        name: "Zap",        cardType: "skill",  cost: 0, speed: 1, gain: 0, effects: [{ type: "damage", target: "enemy", value: 4 }], text: "" },
-  make_jab:   { id: "make_jab",   name: "Make Jab",   cardType: "skill",  cost: 0, speed: 1, gain: 0, effects: [{ type: "generate", target: "self", cardId: "jab", count: 2, toZone: "hand" }], text: "" },
-  recall:     { id: "recall",     name: "Recall",     cardType: "skill",  cost: 0, speed: 1, gain: 0, effects: [{ type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 1 }], text: "" },
-  recall_pick:{ id: "recall_pick",name: "Recall Pick",cardType: "skill",  cost: 0, speed: 1, gain: 0, effects: [{ type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 1, userSelects: true }], text: "" },
-  study:      { id: "study",      name: "Study",      cardType: "skill",  cost: 0, speed: 1, gain: 0, effects: [{ type: "draw_tagged", target: "self", tag: "마법", value: 1, zone: "deck" }], text: "" },
-  scaling:    { id: "scaling",    name: "Scaling",    cardType: "attack", cost: 0, speed: 2, groundAttack: 2, gain: 0, effects: [], text: "", statModifiers: [{ condition: { check: "hand_count", target: "self", op: "<", value: 99 }, stat: "ground_attack", delta: 3 }] },
+  fireball:   { id: "fireball",   name: "Fireball",   cardType: "attack", cost: 0, delay: 2, groundAttack: 4, advantage: 0, effects: [], text: "", tags: ["마법"] },
+  hp_cost:    { id: "hp_cost",    name: "HP Cost",    cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
+  card_cost:  { id: "card_cost",  name: "Card Cost",  cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "", altCost: { type: "move_cards", fromZone: "deck", toZone: "trash", count: 2 } },
+  aerial_only:{ id: "aerial_only",name: "Aerial Only",cardType: "attack", cost: 0, delay: 2, groundAttack: 0, antiAirAttack: 5, advantage: 0, effects: [], text: "", useCondition: "airborne" },
+  gut_draw:   { id: "gut_draw",   name: "Gut Draw",   cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [{ type: "draw", target: "self", value: 1 }], text: "" },
+  zap:        { id: "zap",        name: "Zap",        cardType: "skill",  cost: 0, delay: 1, advantage: 0, effects: [{ type: "damage", target: "enemy", value: 4 }], text: "" },
+  make_jab:   { id: "make_jab",   name: "Make Jab",   cardType: "skill",  cost: 0, delay: 1, advantage: 0, effects: [{ type: "generate", target: "self", cardId: "jab", count: 2, toZone: "hand" }], text: "" },
+  recall:     { id: "recall",     name: "Recall",     cardType: "skill",  cost: 0, delay: 1, advantage: 0, effects: [{ type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 1 }], text: "" },
+  recall_pick:{ id: "recall_pick",name: "Recall Pick",cardType: "skill",  cost: 0, delay: 1, advantage: 0, effects: [{ type: "move_cards", target: "self", fromZone: "trash", toZone: "hand", count: 1, userSelects: true }], text: "" },
+  study:      { id: "study",      name: "Study",      cardType: "skill",  cost: 0, delay: 1, advantage: 0, effects: [{ type: "draw_tagged", target: "self", tag: "마법", value: 1, zone: "deck" }], text: "" },
+  scaling:    { id: "scaling",    name: "Scaling",    cardType: "attack", cost: 0, delay: 2, groundAttack: 2, advantage: 0, effects: [], text: "", statModifiers: [{ condition: { check: "hand_count", target: "self", op: "<", value: 99 }, stat: "ground_attack", delta: 3 }] },
 });
 
 registerCharacter("mage", { id: "mage", name: "Mage", maxHp: 30, spriteId: "test", entryEffect: null, exitEffect: null, affinities: ["마법"] });

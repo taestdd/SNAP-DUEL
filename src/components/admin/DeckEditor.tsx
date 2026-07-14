@@ -228,7 +228,7 @@ export default function DeckEditor({ initial, mode }: Props) {
                   <div className={styles.cardRowInfo}>
                     <div className={styles.cardRowName}>{card.name}</div>
                     <div className={styles.cardRowMeta}>
-                      코스트 {card.cost} · 스피드 {card.speed} · {card.effects.map(e => e.type).join(", ")}
+                      코스트 {card.cost} · 딜레이 {card.delay} · {card.effects.map(e => e.type).join(", ")}
                     </div>
                   </div>
                   <button type="button" className={styles.addBtn} onClick={(ev) => { ev.stopPropagation(); addCard(card.id); }}>

@@ -125,10 +125,10 @@ export default function CardEditor({ initial, mode }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [cardType, setCardType] = useState<CardType>(initial?.cardType ?? "skill");
   const [cost, setCost] = useState(initial?.cost ?? 0);
-  const [speed, setSpeed] = useState(initial?.speed ?? 1);
+  const [delay, setDelay] = useState(initial?.delay ?? 1);
   const [groundAttack, setGroundAttack] = useState(initial?.groundAttack ?? 0);
   const [antiAirAttack, setAntiAirAttack] = useState(initial?.antiAirAttack ?? 0);
-  const [gain, setGain] = useState(initial?.gain ?? 0);
+  const [advantage, setAdvantage] = useState(initial?.advantage ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
   const [useCondition, setUseCondition] = useState<string>(initial?.useCondition ?? "");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
@@ -149,7 +149,7 @@ export default function CardEditor({ initial, mode }: Props) {
   function addModifier() {
     setStatModifiers((prev) => [
       ...prev,
-      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "speed", delta: -1 },
+      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "delay", delta: -1 },
     ]);
   }
 
@@ -211,8 +211,8 @@ export default function CardEditor({ initial, mode }: Props) {
       name,
       cardType,
       cost,
-      speed,
-      ...(cardType === "attack" ? { groundAttack, antiAirAttack, gain } : { gain: 0 }),
+      delay,
+      ...(cardType === "attack" ? { groundAttack, antiAirAttack, advantage } : { advantage: 0 }),
       text,
       effects,
       ...(useCondition ? { useCondition: useCondition as "ground" | "airborne" } : {}),
@@ -377,13 +377,13 @@ export default function CardEditor({ initial, mode }: Props) {
             <div className={styles.sectionTitle}>수치 & 스탯 보정</div>
             <div className={styles.row}>
               <NumericField label="코스트" min={0} value={cost} onChange={setCost} />
-              <NumericField label="스피드" min={0} value={speed} onChange={setSpeed} />
+              <NumericField label="딜레이" min={0} value={delay} onChange={setDelay} />
             </div>
             {cardType === "attack" && (
               <div className={styles.row}>
                 <NumericField label="지상 공격력" min={0} value={groundAttack} onChange={setGroundAttack} />
                 <NumericField label="대공 공격력" min={0} value={antiAirAttack} onChange={setAntiAirAttack} />
-                <NumericField label="게인" min={0} value={gain} onChange={setGain} />
+                <NumericField label="어드밴티지" min={0} value={advantage} onChange={setAdvantage} />
               </div>
             )}
             {statModifiers.map((mod, i) => (

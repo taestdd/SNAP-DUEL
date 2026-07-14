@@ -101,7 +101,7 @@ export type ActorHpData = {
  * 직관적으로는 "P1의 airborne"과 "AI의 airborne" 두 값이면 충분해 보이지만,
  * 순차 리졸브에서 선공 카드가 에어본 상태를 바꿀 수 있기 때문에 그렇지 않다.
  *
- * 예시: P1 점프(speed 1) vs AI 잽(speed 3)
+ * 예시: P1 점프(delay 1) vs AI 잽(delay 3)
  *   - 점프가 먼저 처리 → P1.airborneStack 0 → 1
  *   - 잽이 처리되는 시점에 P1은 이미 에어본
  *
@@ -385,7 +385,7 @@ function pushSequenceWithHold(
  *
  * ## actorAirborne / targetAirborne을 entry에서 직접 읽는 이유
  *
- * resolve.ts의 resolveAll()은 카드를 스피드 순으로 순차 처리하면서
+ * resolve.ts의 resolveAll()은 카드를 딜레이 순으로 순차 처리하면서
  * 각 카드가 처리되는 시점의 스냅샷을 AnimScriptEntry에 기록한다.
  *
  *   actorAirborne  = 이 카드가 처리될 때의 액터 airborne 스택

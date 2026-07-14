@@ -63,12 +63,12 @@ export const TUTORIAL_STAGES: TutorialStage[] = [
   },
   {
     id: "stage2",
-    title: "Stage 2 — 스피드 · 카운터",
+    title: "Stage 2 — 딜레이 · 카운터",
     description:
-      "스피드가 낮을수록 먼저 발동합니다.\n" +
+      "딜레이가 낮을수록 먼저 발동합니다.\n" +
       "먼저 발동한 공격이 직접 타격하면 상대 카드를 카운터합니다.\n" +
       "AI는 매 턴 스트레이트(속도 3)를 사용합니다.",
-    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격을 카운터하고, 다음 공격에 스피드 보너스까지 얻습니다.",
+    hint: "속도 2인 잽이 속도 3인 스트레이트보다 빠릅니다.\n먼저 맞히면 상대 공격을 카운터하고, 다음 공격에 딜레이 보너스까지 얻습니다.",
     goalText: "AI를 처치하세요 (내 HP를 지키세요!)",
     successCondition: (s) => s.phase === "GAME_OVER" && s.winner === "P1",
     failCondition: (s) => s.phase === "GAME_OVER" && s.winner !== "P1",

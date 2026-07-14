@@ -1,6 +1,6 @@
-import styles from "./SpeedCircle.module.css";
+import styles from "./DelayCircle.module.css";
 
-export default function SpeedCircle({
+export default function DelayCircle({
   value,
   bonus = 0,
   disabled = false,

@@ -4,7 +4,7 @@ import { getCard } from "@/game/engine/cards";
 import type { CardStats } from "@/game/engine/types";
 import { effectLabel } from "./cardLabels";
 import CostBox from "./CostBox";
-import SpeedCircle from "./SpeedCircle";
+import DelayCircle from "./DelayCircle";
 
 export { effectLabel };
 
@@ -55,11 +55,11 @@ export default function CardView({
   if (!card) return null;
 
   const effectiveCost = stats ? stats.cost : card.cost;
-  const effectiveSpeed = stats ? stats.speed : card.speed;
+  const effectiveDelay = stats ? stats.delay : card.delay;
   const effectiveGA = stats ? stats.groundAttack : (card.groundAttack ?? 0);
   const effectiveAA = stats ? stats.antiAirAttack : (card.antiAirAttack ?? 0);
   const costDelta = effectiveCost - card.cost;
-  const speedBonus = card.speed - effectiveSpeed; // 양수 = 더 빠름(속도 감소)
+  const delayAdvantage = card.delay - effectiveDelay; // 양수 = 더 빠름(속도 감소)
 
   function startPress() {
     longFiredRef.current = false;
@@ -115,11 +115,11 @@ export default function CardView({
             <div className={styles.handCardName}>{card.name}</div>
           </div>
 
-          {/* 일러스트 영역: 스피드 원 + 공격 스트립 (배경 이미지는 카드 전체에 적용됨) */}
+          {/* 일러스트 영역: 딜레이 원 + 공격 스트립 (배경 이미지는 카드 전체에 적용됨) */}
           <div className={styles.illustArea}>
-            <SpeedCircle
-              value={effectiveSpeed}
-              bonus={speedBonus}
+            <DelayCircle
+              value={effectiveDelay}
+              bonus={delayAdvantage}
               disabled={disabled}
             />
 
@@ -140,7 +140,7 @@ export default function CardView({
         <div className={styles.top}>
           <div className={styles.cost}>{effectiveCost}</div>
           <div className={styles.name}>{card.name}</div>
-          <div className={styles.speed}>{effectiveSpeed}</div>
+          <div className={styles.delay}>{effectiveDelay}</div>
         </div>
       )}
 

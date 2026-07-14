@@ -14,8 +14,8 @@ function registerTutorialAssets(traineeMaxHp: number): void {
 function emptyStatus(): Status {
   return {
     attackBuff: 0,
-    speedBonus: 0,
-    speedBonusNext: 0,
+    delayAdvantage: 0,
+    delayAdvantageNext: 0,
     exhausted: false,
   };
 }
