@@ -2,7 +2,7 @@
 
 ## 프로젝트 개요
 
-2D 격투 카드게임. P1(플레이어)과 AI가 카드를 동시에 선택하고 스피드 순서로 해결.
+2D 격투 카드게임. P1(플레이어)과 AI가 카드를 동시에 선택하고 딜레이 순서로 해결.
 Firebase를 통한 온라인 대전도 지원.
 
 **기술 스택:** Next.js 16 / React 19 / TypeScript / Firebase / CSS Modules
@@ -18,8 +18,8 @@ Firebase를 통한 온라인 대전도 지원.
 3. `makeQueueFromScript()`: animScript → `CombatAnimationEvent[]` 이벤트 큐 생성
 4. `useArenaAnimation`: 이벤트 큐를 타임라인대로 소비하며 UI 업데이트
 
-UI에서 HP 바 변경, 캔슬 연출은 `damage_resolve` 이벤트 타이밍에 맞춰 지연 표시.
-(`displayedHp`, `displayedCancelledPlayer` 상태 사용)
+UI에서 HP 바 변경, 카운터 연출은 `damage_resolve` 이벤트 타이밍에 맞춰 지연 표시.
+(`displayedHp`, `displayedCounteredPlayer` 상태 사용)
 
 ---
 
@@ -103,7 +103,7 @@ src/
 │   │   ├── reducer.ts              # gameReducer — Action → GameState
 │   │   ├── rules.ts                # re-export 파사드
 │   │   ├── constants.ts            # LOG_LIMIT=200, HAND_LIMIT=10
-│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, getEffectiveSpeed, ...)
+│   │   ├── stateHelpers.ts         # 저수준 상태 조작 (dealDamage, draw, getEffectiveDelay, ...)
 │   │   ├── effects.ts              # 카드 효과 적용 + 판정/스탯 단일 진실원
 │   │   │                           #   (getCardPlayability, deriveCardStats)
 │   │   ├── turn.ts                 # 턴/라운드 라이프사이클
@@ -178,7 +178,7 @@ UI(Hand)·AI(ai.ts)·집행(turn.ts)이 모두 같은 결과를 보도록 보장
 - `getEffectiveCost(state, player, card)`: statModifiers 보정 반영 실효 코스트
 
 **스탯 — `deriveCardStats(state, player, cardId): CardStats`**
-- base + statModifiers + status 버프(speedBonus / attackBuff)를 합산
+- base + statModifiers + status 버프(delayAdvantage / attackBuff)를 합산
 - 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
 - CardView는 자체 계산 없이 이 결과(`stats` prop)만 표시
 
@@ -236,7 +236,7 @@ resolveContext: {
 **Combatant 카드 영역**
 - `hand`: 현재 사용 가능한 카드
 - `deck`: 코스트 지불 소스
-- `trash`: 코스트 지불된 카드 / 캔슬된 카드
+- `trash`: 코스트 지불된 카드 / 카운터된 카드
 - `cooldown`: 정상 사용된 카드 (라운드 말에 trash로)
 - `queue`: 이번 턴 예약된 카드 (1장)
 
@@ -254,7 +254,7 @@ resolveContext: {
 - `cardId`: 사용한 카드
 - `actorAirborne / targetAirborne`: 해결 시점 체공 스택
 - `hpAfter`: 이 카드 효과 적용 후 HP
-- `cancelledPlayer`: 이 카드로 캔슬된 상대 (있을 때만)
+- `counteredPlayer`: 이 카드로 카운터된 상대 (있을 때만)
 
 ---
 
@@ -265,12 +265,12 @@ resolveContext: {
 - `fighter_move`: 파이터 위치 이동 (대시-인/넉백/복귀) — 거리 연출 전용
 - `action_start`: 공격자 포즈 전환
 - `visual_hit`: 피격자 hit 포즈
-- `damage_resolve`: HP 바 업데이트 타이밍 (hpAfter, cancelledPlayer 포함)
+- `damage_resolve`: HP 바 업데이트 타이밍 (hpAfter, counteredPlayer 포함)
 - `action_end`: 포즈 유지
 
 **거리(근접/비근접) 연출** — 게임 로직과 무관한 연출 전용 상태:
 - 카드 필드 `meleeAttack`(미지정=true: 비근접이면 돌진 후 공격, 빗나가면 헛스윙 후 복귀=휘핑) / `knockback`(기본 false: 타격 후 양측 홈 복귀)
-- 거리 상태는 **성립한 타격만** 바꾼다 — 휘핑·스킬·캔슬은 상태 무변화
+- 거리 상태는 **성립한 타격만** 바꾼다 — 휘핑·스킬·카운터은 상태 무변화
 - makeQueue가 animScript를 따라 파이터 오프셋을 시뮬레이션해 `fighter_move`를 생성,
   `useArenaAnimation`이 턴 사이 오프셋을 보존 (리셋은 라운드 전환만, 태그는 유지)
 - 온라인은 양측이 flip된 스크립트로 결정론적 시뮬레이션 → 동기화 불필요 (미러 정합성 테스트로 방어)
@@ -285,9 +285,10 @@ resolveContext: {
 
 ## 게임 규칙 핵심
 
-- **스피드**: 낮을수록 빠름 (0이 최속). 동률 시 initiative 플레이어 우선
+- **딜레이(delay)**: 낮을수록 먼저 발동 (0이 최속, 구 명칭 speed). 동률 시 initiative 플레이어 우선
+- **어드밴티지(advantage)**: 직접 타격 성공 시 획득(구 명칭 gain). 다음 턴 카드의 딜레이를 그만큼 감소(`delayAdvantageNext` → `delayAdvantage`)
 - **주도권(initiative)**: 라운드 시작 시 랜덤 결정. 이후 직접 타격 성공 시 공격자가 주도권을 획득(`applyInitiativeOnHit`). 주도권은 턴마다 타격 결과에 따라 이동한다. 라운드 종료 시 재추첨.
-- **캔슬**: 먼저 처리된 카드가 직접 타격 시 상대 큐의 damage 카드를 캔슬
+- **카운터**: 먼저 처리된 카드가 직접 타격 시 상대 큐의 damage 카드를 카운터
 - **airborne**: airborneStack ≥ 1이면 ground 공격 무효, 0이면 anti-air 무효
 - **코스트**: 카드 사용 시 deck 상단에서 cost장 소비 → trash
 - **exhausted**: deck이 0장이면 exhausted. 양쪽 모두 exhausted면 라운드 종료

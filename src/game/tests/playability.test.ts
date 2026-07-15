@@ -13,18 +13,18 @@ import { makeState } from "./fixtures";
 /* ── 합성 데이터 ──────────────────────────────────────────────────────── */
 registerCards({
   // 코스트 3, 보정/조건/altCost 없음 — 순수 코스트 판정용
-  costly3:  { id: "costly3",  name: "Costly 3",  cardType: "attack", cost: 3, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "" },
+  costly3:  { id: "costly3",  name: "Costly 3",  cardType: "attack", cost: 3, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "" },
   // 코스트 1 + 항상 발동하는 +2 코스트 보정 → 실효 코스트 3
-  cost_up:  { id: "cost_up",  name: "Cost Up",   cardType: "attack", cost: 1, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "",
+  cost_up:  { id: "cost_up",  name: "Cost Up",   cardType: "attack", cost: 1, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "",
               statModifiers: [{ condition: { check: "hand_count", target: "self", op: "<", value: 99 }, stat: "cost", delta: 2 }] },
   // 어피니티 "마법" 필요
-  pl_magic: { id: "pl_magic", name: "Magic",     cardType: "attack", cost: 0, speed: 2, groundAttack: 4, gain: 0, effects: [], text: "", tags: ["마법"] },
+  pl_magic: { id: "pl_magic", name: "Magic",     cardType: "attack", cost: 0, delay: 2, groundAttack: 4, advantage: 0, effects: [], text: "", tags: ["마법"] },
   // altCost hp 5
-  pl_hp:    { id: "pl_hp",    name: "HP Cost",   cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
+  pl_hp:    { id: "pl_hp",    name: "HP Cost",   cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "", altCost: { type: "hp", amount: 5 } },
   // altCost 덱 2장 지불
-  pl_cards: { id: "pl_cards", name: "Card Cost", cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [], text: "", altCost: { type: "move_cards", fromZone: "deck", toZone: "trash", count: 2 } },
+  pl_cards: { id: "pl_cards", name: "Card Cost", cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [], text: "", altCost: { type: "move_cards", fromZone: "deck", toZone: "trash", count: 2 } },
   // 체공 전용
-  pl_air:   { id: "pl_air",   name: "Aerial",    cardType: "attack", cost: 0, speed: 2, groundAttack: 0, antiAirAttack: 5, gain: 0, effects: [], text: "", useCondition: "airborne" },
+  pl_air:   { id: "pl_air",   name: "Aerial",    cardType: "attack", cost: 0, delay: 2, groundAttack: 0, antiAirAttack: 5, advantage: 0, effects: [], text: "", useCondition: "airborne" },
 });
 
 registerCharacter("pl_mage", { id: "pl_mage", name: "PL Mage", maxHp: 30, spriteId: "test", entryEffect: null, exitEffect: null, affinities: ["마법"] });

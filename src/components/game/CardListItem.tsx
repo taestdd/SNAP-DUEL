@@ -4,7 +4,7 @@ import { useState } from "react";
 import { getCard } from "@/game/engine/cards";
 import CardDetailModal from "./CardDetailModal";
 import CostBox from "./CostBox";
-import SpeedCircle from "./SpeedCircle";
+import DelayCircle from "./DelayCircle";
 import styles from "./CardListItem.module.css";
 
 export default function CardListItem({
@@ -33,7 +33,7 @@ export default function CardListItem({
         ].join(" ")}
       >
         <CostBox value={card?.cost ?? "?"} />
-        <SpeedCircle value={card?.speed ?? 0} />
+        <DelayCircle value={card?.delay ?? 0} />
         <div className={styles.name}>{card?.name ?? cardId}</div>
 
         {renderExtra && (

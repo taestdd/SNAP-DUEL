@@ -9,7 +9,7 @@ function getLogStyle(line: string): LogStyle {
     return { icon: "⚔️", colorClass: styles.red };
   if (/\ddmg|Damage|blocked —|missed —/i.test(line))
     return { icon: "⚔️", colorClass: styles.red };
-  if (/cancelled —/i.test(line))
+  if (/countered —/i.test(line))
     return { icon: "❌", colorClass: styles.gray };
   if (/heals|gains \d+ Block|recover/i.test(line))
     return { icon: "💚", colorClass: styles.green };
@@ -21,7 +21,7 @@ function getLogStyle(line: string): LogStyle {
     return { icon: "🔄", colorClass: styles.yellow };
   if (/exhausted|discards|hand limit/i.test(line))
     return { icon: "❌", colorClass: styles.gray };
-  if (/SPEED|ATK \+|gains SPEED/i.test(line))
+  if (/advantage|ATK \+/i.test(line))
     return { icon: "⚡", colorClass: styles.orange };
   if (/airborne/i.test(line))
     return { icon: "🌀", colorClass: styles.sky };

@@ -7,7 +7,7 @@ import {
   decideWinnerByHp,
   moveCardsBetweenZones,
   moveQueuedCard,
-  getEffectiveSpeed,
+  getEffectiveDelay,
   evaluateModifiers,
   getBenchChar,
   opponentOf,
@@ -25,7 +25,7 @@ import { makeState } from "./fixtures";
 
 // 태그 효과를 가진 공격 카드 (didDirectAttackHit 제외 케이스용)
 registerCards({
-  tag_strike: { id: "tag_strike", name: "Tag Strike", cardType: "attack", cost: 0, speed: 2, groundAttack: 5, gain: 0, effects: [{ type: "tag" }], text: "" },
+  tag_strike: { id: "tag_strike", name: "Tag Strike", cardType: "attack", cost: 0, delay: 2, groundAttack: 5, advantage: 0, effects: [{ type: "tag" }], text: "" },
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -154,20 +154,20 @@ describe("존 이동", () => {
   });
 });
 
-describe("스피드 / 스탯 보정", () => {
-  it("getEffectiveSpeed: speedBonus만큼 감소, 0 미만 클램프", () => {
-    expect(getEffectiveSpeed(makeState(), "P1", "jab")).toBe(2);
-    expect(getEffectiveSpeed(makeState({ P1: { status: { speedBonus: 1 } } }), "P1", "jab")).toBe(1);
-    expect(getEffectiveSpeed(makeState({ P1: { status: { speedBonus: 5 } } }), "P1", "jab")).toBe(0);
+describe("딜레이 / 스탯 보정", () => {
+  it("getEffectiveDelay: delayAdvantage만큼 감소, 0 미만 클램프", () => {
+    expect(getEffectiveDelay(makeState(), "P1", "jab")).toBe(2);
+    expect(getEffectiveDelay(makeState({ P1: { status: { delayAdvantage: 1 } } }), "P1", "jab")).toBe(1);
+    expect(getEffectiveDelay(makeState({ P1: { status: { delayAdvantage: 5 } } }), "P1", "jab")).toBe(0);
   });
   it("evaluateModifiers: 조건 충족 시 delta 적용", () => {
     const mods: StatModifier[] = [
-      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "speed", delta: -1 },
+      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "delay", delta: -1 },
     ];
     const met = evaluateModifiers(makeState({ P1: { hand: ["a"] } }), "P1", mods);
-    expect(met.speed).toBe(-1);
+    expect(met.delay).toBe(-1);
     const notMet = evaluateModifiers(makeState({ P1: { hand: ["a", "b", "c", "d"] } }), "P1", mods);
-    expect(notMet.speed).toBeUndefined();
+    expect(notMet.delay).toBeUndefined();
   });
   it("evaluateModifiers: 같은 stat 누적", () => {
     const mods: StatModifier[] = [

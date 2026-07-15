@@ -21,7 +21,7 @@ interface FighterSpriteProps {
   frozenUntil?: number;
   /** 값이 바뀔 때마다 흰색 플래시 재생 (피격 시) */
   flashKey?: number;
-  /** speedBonus/speedBonusNext 활성 시 청록 잔상 표시 */
+  /** delayAdvantage/delayAdvantageNext 활성 시 청록 잔상 표시 */
   showTrail?: boolean;
 }
 

@@ -15,8 +15,8 @@ export function getDeckRegistry(): Record<string, DeckDef> {
 
 const emptyStatus = (): Status => ({
   attackBuff: 0,
-  speedBonus: 0,
-  speedBonusNext: 0,
+  delayAdvantage: 0,
+  delayAdvantageNext: 0,
   exhausted: false,
 });
 
@@ -78,8 +78,8 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig, 
     pendingCostPayment: null,
     pendingSelection: null,
     pendingDiscard: null,
-    recentlyCancelledId: null,
-    recentlyCancelledPlayer: null,
+    recentlyCounteredId: null,
+    recentlyCounteredPlayer: null,
     log: [],
     p1TaggedThisTurn: false,
     aiTaggedThisTurn: false,

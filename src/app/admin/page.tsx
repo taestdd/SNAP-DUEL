@@ -10,7 +10,7 @@ import { CardTagSchema } from "@/game/engine/cardSchema";
 import BulkImportModal from "@/components/admin/BulkImportModal";
 
 type Tab = "cards" | "decks" | "characters";
-type SortField = "id" | "name" | "cost" | "speed" | "gain";
+type SortField = "id" | "name" | "cost" | "delay" | "advantage";
 type SortDir = "asc" | "desc";
 
 const CARD_TAGS = CardTagSchema.options;
@@ -209,8 +209,8 @@ export default function AdminPage() {
                 <option value="id">ID</option>
                 <option value="name">이름</option>
                 <option value="cost">코스트</option>
-                <option value="speed">스피드</option>
-                <option value="gain">게인</option>
+                <option value="delay">딜레이</option>
+                <option value="advantage">어드밴티지</option>
               </select>
               <button className={styles.sortDirBtn} onClick={toggleSortDir} title="정렬 방향 전환">
                 {sortDir === "asc" ? "↑" : "↓"}
@@ -234,8 +234,8 @@ export default function AdminPage() {
                 </div>
                 <div className={styles.stats}>
                   <span className={styles.stat}>코스트 <span className={styles.statVal}>{card.cost}</span></span>
-                  <span className={styles.stat}>스피드 <span className={styles.statVal}>{card.speed}</span></span>
-                  <span className={styles.stat}>게인 <span className={styles.statVal}>{card.gain}</span></span>
+                  <span className={styles.stat}>딜레이 <span className={styles.statVal}>{card.delay}</span></span>
+                  <span className={styles.stat}>어드밴티지 <span className={styles.statVal}>{card.advantage}</span></span>
                   {card.useCondition && (
                     <span className={styles.stat}>조건 <span className={styles.statVal}>{card.useCondition}</span></span>
                   )}

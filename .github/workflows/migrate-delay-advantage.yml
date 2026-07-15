@@ -1,0 +1,38 @@
+name: Migrate speed/gain → delay/advantage
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "실제 반영 (체크 해제 시 미리보기만)"
+        type: boolean
+        default: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write service account key
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > scripts/serviceAccountKey.json
+
+      - name: Run migration (preview)
+        if: ${{ !inputs.apply }}
+        run: npx tsx scripts/migrate-delay-advantage.ts
+
+      - name: Run migration (apply)
+        if: ${{ inputs.apply }}
+        run: npx tsx scripts/migrate-delay-advantage.ts --apply
+
+      - name: Remove service account key
+        if: always()
+        run: rm -f scripts/serviceAccountKey.json

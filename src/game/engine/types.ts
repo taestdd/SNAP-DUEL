@@ -103,8 +103,8 @@ export interface CombatAnimationEvent {
   bgPush?: number;
   /** damage_resolve: 이 카드 효과 적용 후의 HP (UI 표시용) */
   hpAfter?: { P1: number; AI: number };
-  /** damage_resolve: 이 카드로 인해 캔슬된 플레이어 (UI 표시용) */
-  cancelledPlayer?: PlayerId;
+  /** damage_resolve: 이 카드로 인해 카운터된 플레이어 (UI 표시용) */
+  counteredPlayer?: PlayerId;
   /** damage_resolve: 이 카드 효과 적용 후의 콤보 카운트 (UI 표시용) */
   comboAfter?: number;
   /** damage_resolve: 이 카드 효과 적용 후의 콤보 보유 플레이어 (UI 표시용) */
@@ -250,7 +250,7 @@ export type ConditionCheck =
 export type CompareOp = "<" | ">" | "=";
 
 /** StatModifier가 보정할 카드 스탯 */
-export type StatTarget = "cost" | "speed" | "ground_attack" | "anti_air_attack" | "gain";
+export type StatTarget = "cost" | "delay" | "ground_attack" | "anti_air_attack" | "advantage";
 
 export type ModifierCondition = {
   check: ConditionCheck;
@@ -273,8 +273,8 @@ export type UseCondition =
 
 /**
  * 카드 타입
- * - attack: 공격 스탯(groundAttack, antiAirAttack, gain)을 가지며, 적중 시 이니셔티브·캔슬 발동
- * - skill:  공격 스탯 없음. 효과만 처리. 적중해도 이니셔티브·캔슬 발동 안 함
+ * - attack: 공격 스탯(groundAttack, antiAirAttack, advantage)을 가지며, 적중 시 이니셔티브·카운터 발동
+ * - skill:  공격 스탯 없음. 효과만 처리. 적중해도 이니셔티브·카운터 발동 안 함
  */
 export type CardType = "attack" | "skill";
 
@@ -288,15 +288,15 @@ export type Card = {
   // 코스트 = 덱에서 소모할 카드 수
   cost: number;
 
-  // 스피드 = 이상 정수, 0이 가장 빠름
-  speed: number;
+  // 딜레이 = 이상 정수, 0이 가장 빠름
+  delay: number;
 
   /** 공격 타입 전용 — 지상 공격력 (target.airborneStack === 0 일 때 적용) */
   groundAttack?: number;
   /** 공격 타입 전용 — 대공 공격력 (target.airborneStack >= 1 일 때 적용) */
   antiAirAttack?: number;
-  /** 공격 타입 전용 — 적중 시 다음 턴 스피드 보너스 */
-  gain: number;
+  /** 공격 타입 전용 — 적중 시 다음 턴 딜레이 보너스 */
+  advantage: number;
 
   effects: CardEffect[];
   text: string;
@@ -350,20 +350,20 @@ export type SelectedCard = {
 
 /**
  * 카드의 실효 스탯 (표시·미리보기용 단일 진실원).
- * base 스탯에 statModifiers(조건부 보정)와 status 버프(speedBonus/attackBuff)를 모두 합산한다.
+ * base 스탯에 statModifiers(조건부 보정)와 status 버프(delayAdvantage/attackBuff)를 모두 합산한다.
  * 전투 해결(effects.ts)과 동일한 계산식을 사용해 핸드 표시와 실제 결과가 일치한다.
  */
 export type CardStats = {
   /** 실효 코스트 (base + mods.cost) */
   cost: number;
-  /** 실효 속도 (base - speedBonus + mods.speed, 낮을수록 빠름) */
-  speed: number;
+  /** 실효 속도 (base - delayAdvantage + mods.delay, 낮을수록 빠름) */
+  delay: number;
   /** 실효 지상 공격력 (base + mods + attackBuff) */
   groundAttack: number;
   /** 실효 대공 공격력 (base + mods + attackBuff) */
   antiAirAttack: number;
-  /** 실효 gain (base + mods.gain) */
-  gain: number;
+  /** 실효 advantage (base + mods.advantage) */
+  advantage: number;
 };
 
 /**
@@ -388,8 +388,8 @@ export type CardPlayability = {
 export type Status = {
   attackBuff: number;
 
-  speedBonus: number;
-  speedBonusNext: number;
+  delayAdvantage: number;
+  delayAdvantageNext: number;
 
   exhausted: boolean;
 };
@@ -416,7 +416,7 @@ export type Combatant = {
   hand: string[];
 
   /**
-   * 코스트 지불 / 캔슬된 카드
+   * 코스트 지불 / 카운터된 카드
    */
   trash: string[];
 
@@ -449,7 +449,7 @@ export type TurnPhase =
 
 /**
  * ANIMATING 페이즈에서 재생할 애니메이션 항목.
- * 캔슬된 카드는 포함되지 않음.
+ * 카운터된 카드는 포함되지 않음.
  */
 export type AnimScriptEntry = {
   actor: PlayerId;
@@ -460,8 +460,8 @@ export type AnimScriptEntry = {
   targetAirborne: number;
   /** 이 카드 효과 완전 적용 후의 HP 스냅샷 (UI 지연 표시용) */
   hpAfter: { P1: number; AI: number };
-  /** 이 카드 공격으로 인해 캔슬된 플레이어 (UI 지연 표시용) */
-  cancelledPlayer?: PlayerId;
+  /** 이 카드 공격으로 인해 카운터된 플레이어 (UI 지연 표시용) */
+  counteredPlayer?: PlayerId;
   /** 이 카드 효과 적용 후의 콤보 카운트 (UI 지연 표시용) */
   comboAfter?: number;
   /** 이 카드 효과 적용 후의 콤보 보유 플레이어 (UI 지연 표시용) */
@@ -560,11 +560,11 @@ export type GameState = {
   /** WAITING_DISCARD 페이즈일 때 설정됨 (턴 종료 핸드 사이즈 초과 버리기) */
   pendingDiscard: PendingDiscard | null;
 
-  /** 캔슬된 카드 id (애니메이션 트리거용). 다음 턴 시작 시 null로 클리어. */
-  recentlyCancelledId: string | null;
+  /** 카운터된 카드 id (애니메이션 트리거용). 다음 턴 시작 시 null로 클리어. */
+  recentlyCounteredId: string | null;
 
-  /** 캔슬된 카드의 소유 플레이어. 다음 턴 시작 시 null로 클리어. */
-  recentlyCancelledPlayer: PlayerId | null;
+  /** 카운터된 카드의 소유 플레이어. 다음 턴 시작 시 null로 클리어. */
+  recentlyCounteredPlayer: PlayerId | null;
 
   log: string[];
 
@@ -585,7 +585,7 @@ export type GameState = {
     unresolved: PlayerId[];
   };
 
-  /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (캔슬된 카드 제외) */
+  /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (카운터된 카드 제외) */
   animScript: AnimScriptEntry[];
 
   /** ANIMATING 페이즈: 카드 효과 적용 직전 HP 스냅샷 (UI 지연 표시 초기값) */
@@ -611,8 +611,8 @@ export type GameState = {
 export type TurnLogEntry = {
   turn: number;
   initiative: PlayerId;
-  P1: { card: string | null; cancelled: boolean };
-  AI: { card: string | null; cancelled: boolean };
+  P1: { card: string | null; countered: boolean };
+  AI: { card: string | null; countered: boolean };
   hp: { P1: number; AI: number };
   airborne: { P1: number; AI: number };
 };

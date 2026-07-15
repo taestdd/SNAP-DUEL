@@ -81,8 +81,8 @@ export type ArenaAnimState = {
   superFlashActor: "P1" | "AI" | null;
   /** ANIMATING 중 UI에 표시할 HP (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState HP 그대로. */
   displayedHp: { P1: number; AI: number } | null;
-  /** ANIMATING 중 UI에 표시할 캔슬 플레이어 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
-  displayedCancelledPlayer: "P1" | "AI" | null;
+  /** ANIMATING 중 UI에 표시할 카운터 플레이어 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
+  displayedCounteredPlayer: "P1" | "AI" | null;
   /** ANIMATING 중 UI에 표시할 콤보 (damage_resolve 이벤트 타이밍에 갱신). null이면 gameState 값 그대로. */
   displayedCombo: { count: number; holder: PlayerId } | null;
   animLog: string[];
@@ -129,9 +129,9 @@ export function useArenaAnimation(
   const [superFlashActor, setSuperFlashActor] = useState<"P1" | "AI" | null>(null);
   const superFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 애니메이션 중 표시용 HP / 캔슬 플레이어 / 콤보 (damage_resolve 이벤트 타이밍에 갱신)
+  // 애니메이션 중 표시용 HP / 카운터 플레이어 / 콤보 (damage_resolve 이벤트 타이밍에 갱신)
   const [displayedHp, setDisplayedHp] = useState<{ P1: number; AI: number } | null>(null);
-  const [displayedCancelledPlayer, setDisplayedCancelledPlayer] = useState<"P1" | "AI" | null>(null);
+  const [displayedCounteredPlayer, setDisplayedCounteredPlayer] = useState<"P1" | "AI" | null>(null);
   const [displayedCombo, setDisplayedCombo] = useState<{ count: number; holder: PlayerId } | null>(null);
 
   // 태그 애니메이션: exit 재생 후 스프라이트 전환
@@ -208,7 +208,7 @@ export function useArenaAnimation(
     if (state.phase !== "ANIMATING") {
       setAnimRunning(false);
       setDisplayedHp(null);
-      setDisplayedCancelledPlayer(null);
+      setDisplayedCounteredPlayer(null);
       setDisplayedCombo(null);
       if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
       setZoomScale(1);
@@ -222,7 +222,7 @@ export function useArenaAnimation(
     if (state.animStartCombo) {
       setDisplayedCombo({ ...state.animStartCombo });
     }
-    setDisplayedCancelledPlayer(null);
+    setDisplayedCounteredPlayer(null);
 
     // 현재 파이터 오프셋을 시작점으로 대시/넉백 거리 시뮬레이션 (턴 사이 보존값)
     const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter, moveRef.current);
@@ -341,8 +341,8 @@ export function useArenaAnimation(
         if (event.hpAfter) {
           setDisplayedHp({ ...event.hpAfter });
         }
-        if (event.cancelledPlayer) {
-          setDisplayedCancelledPlayer(event.cancelledPlayer);
+        if (event.counteredPlayer) {
+          setDisplayedCounteredPlayer(event.counteredPlayer);
         }
         if (event.comboAfter !== undefined && event.comboHolder) {
           setDisplayedCombo({ count: event.comboAfter, holder: event.comboHolder });
@@ -379,7 +379,7 @@ export function useArenaAnimation(
     hitEffectStrength,
     superFlashActor,
     displayedHp,
-    displayedCancelledPlayer,
+    displayedCounteredPlayer,
     displayedCombo,
     animLog,
   };

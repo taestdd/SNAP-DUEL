@@ -24,7 +24,7 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 1. **ROUND_DRAFT**: 라운드 시작 시 덱에서 최대 3장을 핸드로 드래프트
 2. **SETUP_INIT**: 이니셔티브 플레이어가 먼저 카드 선택 (또는 패스)
 3. **SETUP_OTHER**: 나머지 플레이어 선택
-4. **RESOLVE**: 스피드 낮은 카드부터 순서대로 처리
+4. **RESOLVE**: 딜레이 낮은 카드부터 순서대로 처리
 
 ---
 
@@ -34,7 +34,7 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 |------|------|
 | **hand** | 사용 가능한 카드. 최대 10장 |
 | **deck** | 카드 코스트 지불 소스. 0장이면 exhausted |
-| **trash** | 코스트로 소모된 카드 / 캔슬된 카드 |
+| **trash** | 코스트로 소모된 카드 / 카운터된 카드 |
 | **cooldown** | 정상 사용된 카드. 라운드 말에 trash로 이동 |
 
 - **코스트**: 카드 사용 시 deck 상단에서 cost만큼 trash로 소모
@@ -43,12 +43,12 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 
 ---
 
-## 4. 스피드 & 캔슬
+## 4. 딜레이 & 카운터
 
-- **스피드**: 숫자가 낮을수록 빠름 (0 = 최속)
-- **캔슬**: 먼저 처리된 카드가 상대에게 직접 타격을 줄 경우, 상대 큐의 damage 카드를 캔슬
-  - 캔슬된 카드는 trash로 이동 (코스트만 날아감)
-- **이니셔티브**: 스피드 동률 시 이니셔티브 보유자의 카드가 먼저 처리
+- **딜레이**: 숫자가 낮을수록 빠름 (0 = 최속)
+- **카운터**: 먼저 처리된 카드가 상대에게 직접 타격을 줄 경우, 상대 큐의 damage 카드를 카운터
+  - 카운터된 카드는 trash로 이동 (코스트만 날아감)
+- **이니셔티브**: 딜레이 동률 시 이니셔티브 보유자의 카드가 먼저 처리
 
 ---
 
@@ -66,8 +66,8 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 - `airborneStack = 0` = 지상 상태 → anti-air 공격 무효
 - 매 턴 시작 시 airborneStack -1 감소
 
-### gain
-- 공격이 적중했을 때 다음 턴 스피드 보너스로 전환
+### advantage
+- 공격이 적중했을 때 다음 턴 딜레이 보너스로 전환
 
 ---
 
@@ -79,10 +79,10 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
   "name": "카드명",
   "cardType": "attack" | "skill",
   "cost": 0,          // 덱에서 소모할 카드 수
-  "speed": 0,         // 낮을수록 빠름
+  "delay": 0,         // 낮을수록 빠름
   "groundAttack": 0,  // 지상 공격력 (attack 타입만)
   "antiAirAttack": 0, // 대공 공격력 (attack 타입만)
-  "gain": 0,          // 적중 시 다음 턴 스피드 보너스 (attack 타입만)
+  "advantage": 0,          // 적중 시 다음 턴 딜레이 보너스 (attack 타입만)
   "effects": [],
   "text": "카드 설명",
   "useCondition": "ground" | "airborne",  // 선택: 사용 조건
@@ -91,8 +91,8 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 }
 ```
 
-- **attack 타입**: groundAttack/antiAirAttack/gain을 가짐. 적중 시 이니셔티브·캔슬 발동
-- **skill 타입**: 공격 스탯 없음. 효과만 처리. 캔슬 대상 안 됨
+- **attack 타입**: groundAttack/antiAirAttack/gain을 가짐. 적중 시 이니셔티브·카운터 발동
+- **skill 타입**: 공격 스탯 없음. 효과만 처리. 카운터 대상 안 됨
 
 ---
 
@@ -129,7 +129,7 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
         "op": "<" | ">" | "=",
         "value": 숫자
       },
-      "stat": "cost" | "speed" | "ground_attack" | "anti_air_attack" | "gain",
+      "stat": "cost" | "delay" | "ground_attack" | "anti_air_attack" | "advantage",
       "delta": 변화량  // 음수 = 감소, 양수 = 증가
     }
   ]
@@ -139,13 +139,13 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 **예시 카드:**
 - `배수진`: 덱 2장 이하 시 Cost -2
 - `사투`: 자신 HP 5 이하 시 ground_attack +3
-- `압박 잽`: 상대 핸드 5장 초과 시 Speed -1
+- `압박 잽`: 상대 핸드 5장 초과 시 Delay -1
 
 ---
 
 ## 9. 현재 카드 목록 (13종)
 
-| 이름 | Cost | Speed | 효과 요약 |
+| 이름 | Cost | Delay | 효과 요약 |
 |------|------|-------|-----------|
 | 잽 | 3 | 2 | 1 지상 데미지 |
 | 스트레이트 | 3 | 3 | 2 지상 데미지 |
@@ -158,7 +158,7 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 | 전략 수립 | 0 | 1 | 트래시에서 1장 → 핸드 |
 | 도시락 먹기 | 1 | 0 | 트래시 3장 → 덱, 덱 셔플 |
 | 사투 | 3 | 4 | 2 지상 데미지. HP 5 이하 시 +3 (StatModifier) |
-| 압박 잽 | 2 | 3 | 1 지상 데미지. 상대 핸드 5초과 시 Speed -1 (StatModifier) |
+| 압박 잽 | 2 | 3 | 1 지상 데미지. 상대 핸드 5초과 시 Delay -1 (StatModifier) |
 | 배수진 | 4 | 3 | 4 지상 데미지. 덱 2이하 시 Cost -2 (StatModifier) |
 
 ---
@@ -181,14 +181,14 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 - Cost 3: 기본 공격 (2-3 데미지)
 - Cost 4-5: 강한 공격 (4-5 데미지) or 복합 효과
 
-### 스피드 감각
-- Speed 0-1: 매우 빠름. 스킬/서포트 카드에 어울림
-- Speed 2-3: 중속. 범용 공격
-- Speed 4+: 느림. 고화력이어야 의미 있음
+### 딜레이 감각
+- Delay 0-1: 매우 빠름. 스킬/서포트 카드에 어울림
+- Delay 2-3: 중속. 범용 공격
+- Delay 4+: 느림. 고화력이어야 의미 있음
 
-### 캔슬 상호작용
-- 빠른 카드(저 Speed)가 먼저 처리되어 상대의 느린 공격 카드를 캔슬 가능
-- 캔슬당하면 코스트만 낭비 → 느린 고화력 카드는 리스크 있음
+### 카운터 상호작용
+- 빠른 카드(저 Delay)가 먼저 처리되어 상대의 느린 공격 카드를 카운터 가능
+- 카운터당하면 코스트만 낭비 → 느린 고화력 카드는 리스크 있음
 
 ### airborne 상호작용
 - 체공 부여 카드 + 대공 카드의 콤보 가능
@@ -200,8 +200,8 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 - cost 감소는 리소스 경제를 크게 흔들 수 있으니 조건을 빡빡하게
 
 ### CardType 주의
-- `skill` 카드는 캔슬되지 않음 → 안정적으로 효과 발동 보장
-- `attack` 카드만 캔슬 대상이며 이니셔티브 이전도 attack만 해당
+- `skill` 카드는 카운터되지 않음 → 안정적으로 효과 발동 보장
+- `attack` 카드만 카운터 대상이며 이니셔티브 이전도 attack만 해당
 
 ---
 

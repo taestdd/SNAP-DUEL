@@ -2,11 +2,11 @@ import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
 import { getPlayableCards, getBenchChar, opponentOf } from "./rules";
 
-function getMinAttackSpeed(): number {
-  const speeds = Object.values(getAllCards())
+function getMinAttackDelay(): number {
+  const delays = Object.values(getAllCards())
     .filter((c) => c.effects.some((e) => e.type === "damage"))
-    .map((c) => c.speed);
-  return speeds.length > 0 ? Math.min(...speeds) : 0;
+    .map((c) => c.delay);
+  return delays.length > 0 ? Math.min(...delays) : 0;
 }
 
 /**
@@ -47,8 +47,8 @@ function effectiveDamage(card: Card, oppAirborneStack: number): number {
  *
  * 고려 요소:
  * - 실효 데미지: 상대 airborne 상태에 맞는 데미지 타입만 집계
- * - 속도: 빠를수록 캔슬 위험 감소 (낮은 speed 값 선호)
- * - Gain: 적중 시 다음 턴 속도 보너스
+ * - 속도: 빠를수록 카운터 위험 감소 (낮은 delay 값 선호)
+ * - Advantage: 적중 시 다음 턴 속도 보너스
  * - 발사 콤보: 지상 상대를 띄우면 다음 턴 anti-air 기회 생성
  * - 유틸리티: 손패/덱/묘지 상태에 따른 아이템 카드 가치
  * - HP 상황: 지고 있으면 공격 우선, 이기고 있으면 빠른 플레이 우선
@@ -69,22 +69,22 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   const effDmg = effectiveDamage(card, oppAirborne);
   score += effDmg * Math.max(1, 10 - card.cost);
 
-  // 속도: 낮을수록 먼저 행동 → 캔슬 위험 감소
-  // 상대 손패가 적을수록 캔슬 위험이 낮아지므로 느린 카드의 페널티를 줄임
-  const speedBonus = me.status.speedBonus ?? 0;
-  const effSpeed = Math.max(0, card.speed - speedBonus);
-  score -= effSpeed * 1.5 * cancelRiskFactor(state, player);
+  // 속도: 낮을수록 먼저 행동 → 카운터 위험 감소
+  // 상대 손패가 적을수록 카운터 위험이 낮아지므로 느린 카드의 페널티를 줄임
+  const delayAdvantage = me.status.delayAdvantage ?? 0;
+  const effDelay = Math.max(0, card.delay - delayAdvantage);
+  score -= effDelay * 1.5 * counterRiskFactor(state, player);
 
-  // 콤보 없이(speedBonus=0) 느린 카드(base speed>=4) 선택 억제
-  // gain 기대가치보다 캔슬 위험이 더 크므로 추가 패널티 부여
-  if (speedBonus === 0 && card.speed >= 4) score -= 12;
+  // 콤보 없이(delayAdvantage=0) 느린 카드(base delay>=4) 선택 억제
+  // advantage 기대가치보다 카운터 위험이 더 크므로 추가 패널티 부여
+  if (delayAdvantage === 0 && card.delay >= 4) score -= 12;
 
-  // Gain: 적중 시 다음 턴 속도 보너스 가치
-  // 이미 콤보 중(speedBonus>0)이면 콤보 유지 가치가 더 높음
-  score += (card.gain ?? 0) * (speedBonus > 0 ? 7 : 5);
+  // Advantage: 적중 시 다음 턴 속도 보너스 가치
+  // 이미 콤보 중(delayAdvantage>0)이면 콤보 유지 가치가 더 높음
+  score += (card.advantage ?? 0) * (delayAdvantage > 0 ? 7 : 5);
 
-  // 빠른 카드 안전 보너스: base speed ≤ 2는 getMinAttackSpeed() 이하라 캔슬당하지 않음
-  if (card.speed <= 2) score += 6;
+  // 빠른 카드 안전 보너스: base delay ≤ 2는 getMinAttackDelay() 이하라 카운터당하지 않음
+  if (card.delay <= 2) score += 6;
 
   // 발사 콤보: 지상 상대를 공중으로 띄우면 다음 턴 anti-air 기회 생성
   const launchesOpponent = card.effects.some(
@@ -112,22 +112,22 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   if (hpDiff < -5 && effDmg > 0) {
     score += 5; // 뒤처질 때 데미지 카드에 보너스
   } else if (hpDiff > 5) {
-    score += Math.max(0, 3 - effSpeed); // 앞설 때 빠른 카드에 보너스
+    score += Math.max(0, 3 - effDelay); // 앞설 때 빠른 카드에 보너스
   }
 
   return score;
 }
 
 /**
- * 상대가 이번 턴에 카드를 낼 가능성을 기반으로 캔슬 위험 계수를 반환한다.
- * 0에 가까울수록 캔슬 위험이 낮아 느린 고데미지 카드를 써도 안전하다.
+ * 상대가 이번 턴에 카드를 낼 가능성을 기반으로 카운터 위험 계수를 반환한다.
+ * 0에 가까울수록 카운터 위험이 낮아 느린 고데미지 카드를 써도 안전하다.
  *
  * - 상대 손패 0장: 패스만 가능 → 위험 없음
  * - 상대 손패 1장: 낼 수도 있으나 선택지 좁음 → 낮은 위험
  * - 상대 덱 고갈(exhausted): 코스트 지불 불가 → 낮은 위험
  * - 그 외: 일반 위험
  */
-function cancelRiskFactor(state: GameState, player: PlayerId): number {
+function counterRiskFactor(state: GameState, player: PlayerId): number {
   const opp = state[opponentOf(player)];
   if (opp.hand.length === 0) return 0.1;
   if (opp.status.exhausted || opp.hand.length === 1) return 0.35;
@@ -149,7 +149,7 @@ export function shouldTag(state: GameState, player: PlayerId): boolean {
 }
 
 /**
- * 상대가 이번 턴에 낼 공격 카드의 유효 속도(speedBonus 적용)를 반환한다.
+ * 상대가 이번 턴에 낼 공격 카드의 유효 속도(delayAdvantage 적용)를 반환한다.
  * 상대에게 위협이 없으면 Infinity를 반환한다.
  *
  * - SETUP_OTHER(내가 나중에 선택): 상대 queue를 확인한다.
@@ -157,9 +157,9 @@ export function shouldTag(state: GameState, player: PlayerId): boolean {
  *   · queue가 비어있음 → 상대가 패스했다는 뜻 → 위협 없음(Infinity)
  * - SETUP_INIT(내가 먼저 선택): 상대 아직 미결정 → hand 기준 최속 추정
  */
-function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
+function oppFastestAttackDelay(state: GameState, player: PlayerId): number {
   const opp = state[opponentOf(player)];
-  const oppBonus = opp.status.speedBonus ?? 0;
+  const oppBonus = opp.status.delayAdvantage ?? 0;
 
   // 상대가 이미 카드를 큐에 올린 경우(SETUP_OTHER) → queue가 실제 위협
   if (opp.queue.length > 0) {
@@ -168,7 +168,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
       const card = getCard(cardId);
       if (!card) continue;
       if (!dealsDamage(card)) continue;
-      fastest = Math.min(fastest, Math.max(0, card.speed - oppBonus));
+      fastest = Math.min(fastest, Math.max(0, card.delay - oppBonus));
     }
     return fastest;
   }
@@ -180,7 +180,7 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
   if (opp.ready) return Infinity;
   if (opp.hand.length === 0 || opp.status.exhausted) return Infinity;
 
-  return Math.max(0, getMinAttackSpeed() - oppBonus);
+  return Math.max(0, getMinAttackDelay() - oppBonus);
 }
 
 /**
@@ -189,9 +189,9 @@ function oppFastestAttackSpeed(state: GameState, player: PlayerId): number {
  * 사용 가능한(getPlayableCards) 카드 중 scoreCard 점수가 가장 높은 카드를 선택한 뒤,
  * 아래 조건을 모두 충족하면 패스(null)로 전환한다:
  *   - 주도권이 없을 것
- *   - 선택 카드가 공격 카드(캔슬 대상)일 것
+ *   - 선택 카드가 공격 카드(카운터 대상)일 것
  *   - 내 유효 속도 >= 상대 최속 공격 카드의 유효 속도
- *     (즉, 상대가 먼저 행동하거나 동속 타이를 initiative로 이겨 내 카드를 캔슬할 수 있음)
+ *     (즉, 상대가 먼저 행동하거나 동속 타이를 initiative로 이겨 내 카드를 카운터할 수 있음)
  *
  * 사용 가능한 카드가 없거나 패스가 유리하면 null (pass → 1드로우).
  */
@@ -211,12 +211,12 @@ export function selectCard(
 
   const best = candidates[0];
   const bestCard = getCard(best.id)!;
-  const myEffSpeed = Math.max(0, bestCard.speed - (me.status.speedBonus ?? 0));
+  const myEffDelay = Math.max(0, bestCard.delay - (me.status.delayAdvantage ?? 0));
   const isAttack = dealsDamage(bestCard);
 
-  // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 캔슬 확정
-  if (isAttack && state.initiative !== player && myEffSpeed > oppFastestAttackSpeed(state, player)) {
-    // 공격 대신 아이템 카드(캔슬 불가)가 있으면 그것을 사용
+  // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 카운터 확정
+  if (isAttack && state.initiative !== player && myEffDelay > oppFastestAttackDelay(state, player)) {
+    // 공격 대신 아이템 카드(카운터 불가)가 있으면 그것을 사용
     const safeCard = candidates.find(({ id }) => {
       const c = getCard(id);
       return c && !dealsDamage(c);
@@ -232,7 +232,7 @@ export function selectCard(
  *
  * 전략:
  * - 실효 데미지가 높은 카드 우선
- * - 빠른 카드(낮은 speed) 포함
+ * - 빠른 카드(낮은 delay) 포함
  * - 아이템 카드 포함 (덱/묘지 관리)
  * - count 장만큼 선택
  */
@@ -252,9 +252,9 @@ export function selectDraftCards(
     let score = 0;
     const effDmg = effectiveDamage(card, oppAirborne);
     score += effDmg * Math.max(1, 10 - card.cost);
-    score -= card.speed * 1.5;
-    score += (card.gain ?? 0) * 5;
-    if (card.speed <= 2) score += 6;
+    score -= card.delay * 1.5;
+    score += (card.advantage ?? 0) * 5;
+    if (card.delay <= 2) score += 6;
 
     const hasLaunch = card.effects.some(
       (e) => e.type === "airborne" && e.target === "enemy"

@@ -6,7 +6,7 @@ import { getCard } from "@/game/engine/cards";
 import styles from "./GameScreen.module.css";
 import CardDetailModal from "./CardDetailModal";
 import CostBox from "./CostBox";
-import SpeedCircle from "./SpeedCircle";
+import DelayCircle from "./DelayCircle";
 export { effectLabel } from "./cardLabels";
 
 
@@ -14,14 +14,14 @@ export default function QueuePreview({
   title,
   me,
   phase,
-  recentlyCancelledPlayer,
+  recentlyCounteredPlayer,
   isMyTurn = false,
   isInitiative = false,
 }: {
   title: string;
   me: Combatant;
   phase: string;
-  recentlyCancelledPlayer: "P1" | "AI" | null;
+  recentlyCounteredPlayer: "P1" | "AI" | null;
   isMyTurn?: boolean;
   isInitiative?: boolean;
 }) {
@@ -29,15 +29,15 @@ export default function QueuePreview({
 
   const queuedId = me.queue[0];
   const card = queuedId ? getCard(queuedId) : null;
-  const showCancel = recentlyCancelledPlayer === me.id;
+  const showCounter = recentlyCounteredPlayer === me.id;
 
   const isSetup = phase === "SETUP_INIT" || phase === "SETUP_OTHER";
   const isPassed    = isSetup && me.ready && !queuedId;
   const isSelecting = isSetup && !me.ready && !queuedId && isMyTurn;
   const isWaiting   = isSetup && !me.ready && !queuedId && !isMyTurn;
 
-  const effectiveSpeed = card ? Math.max(0, card.speed - me.status.speedBonus) : 0;
-  const speedBonusApplied = card ? me.status.speedBonus : 0;
+  const effectiveDelay = card ? Math.max(0, card.delay - me.status.delayAdvantage) : 0;
+  const delayAdvantageApplied = card ? me.status.delayAdvantage : 0;
 
   return (
     <div className={styles.queueBox}>
@@ -57,9 +57,9 @@ export default function QueuePreview({
       </div>
 
       {!card ? (
-        <div className={`${styles.queueEmpty} ${showCancel ? styles.queueCancelAnim : ""}`}>
-          {showCancel ? (
-            <div className={styles.cancelOverlay} style={{ position: "relative", width: "100%", height: "40px" }} />
+        <div className={`${styles.queueEmpty} ${showCounter ? styles.queueCounterAnim : ""}`}>
+          {showCounter ? (
+            <div className={styles.counterOverlay} style={{ position: "relative", width: "100%", height: "40px" }} />
           ) : isPassed ? (
             <span className={styles.queuePass}>PASS</span>
           ) : isSelecting ? (
@@ -72,7 +72,7 @@ export default function QueuePreview({
         <div key={queuedId} className={`${styles.queueCard} ${styles.queueCardAnim}`}>
           <div className={styles.queueCardRow}>
             <CostBox value={card.cost} />
-            <SpeedCircle value={effectiveSpeed} bonus={speedBonusApplied} />
+            <DelayCircle value={effectiveDelay} bonus={delayAdvantageApplied} />
             <div className={styles.queueCardName}>{card.name}</div>
           </div>
         </div>

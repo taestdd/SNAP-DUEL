@@ -49,7 +49,7 @@
   flex: 0 0 auto;
 }
 
-.speed {
+.delay {
   font-size: 11px;
   opacity: 0.65;
   margin-left: auto;
@@ -129,7 +129,7 @@
 }
 
 /* ── 핸드 카드 (110×144, 상단 헤더 + 일러스트 구조) ──
-   CostBox(lg) + SpeedCircle은 공통 컴포넌트에서 스타일링됨 */
+   CostBox(lg) + DelayCircle은 공통 컴포넌트에서 스타일링됨 */
 .handCard {
   width: 110px;
   height: 144px;
@@ -226,7 +226,7 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* ── 카드 내부 공용 컴포넌트(CostBox/SpeedCircle) 그레이 톤 override ──
+/* ── 카드 내부 공용 컴포넌트(CostBox/DelayCircle) 그레이 톤 override ──
    QueuePreview/CardListItem 등 다른 사용처는 건드리지 않도록 .handCard로 스코프 */
 .handCard .header > :first-child {
   background: #2f3440;
@@ -244,7 +244,7 @@
   position: relative;
 }
 
-/* SpeedCircle 공통 컴포넌트를 일러스트 좌상단에 배치 */
+/* DelayCircle 공통 컴포넌트를 일러스트 좌상단에 배치 */
 .illustArea > :first-child {
   position: absolute;
   top: 10px;

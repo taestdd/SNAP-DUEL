@@ -438,7 +438,7 @@
 }
 
 
-@keyframes cancelShake {
+@keyframes counterShake {
   0%, 100% { transform: translateX(0); }
   20%      { transform: translateX(-5px); }
   40%      { transform: translateX(5px); }
@@ -446,7 +446,7 @@
   80%      { transform: translateX(4px); }
 }
 
-@keyframes cancelFade {
+@keyframes counterFade {
   0%   { opacity: 1; }
   60%  { opacity: 1; }
   100% { opacity: 0; }
@@ -577,16 +577,16 @@
 }
 
 
-.queueCancelAnim {
-  animation: cancelShake 0.35s ease;
+.queueCounterAnim {
+  animation: counterShake 0.35s ease;
 }
 
-.cancelOverlay {
+.counterOverlay {
   position: relative;
 }
 
-.cancelOverlay::after {
-  content: "✕ CANCELLED";
+.counterOverlay::after {
+  content: "✕ COUNTER!";
   position: absolute;
   inset: 0;
   display: flex;
@@ -598,6 +598,6 @@
   color: rgba(255, 80, 80, 0.95);
   background: rgba(0, 0, 0, 0.62);
   border-radius: 2px;
-  animation: cancelFade 0.85s ease forwards;
+  animation: counterFade 0.85s ease forwards;
   pointer-events: none;
 }

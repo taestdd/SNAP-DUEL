@@ -20,8 +20,8 @@ export default function StatusBadges({
     block > 0 ||
     status.attackBuff > 0 ||
     status.exhausted ||
-    status.speedBonus > 0 ||
-    status.speedBonusNext > 0;
+    status.delayAdvantage > 0 ||
+    status.delayAdvantageNext > 0;
 
   if (!hasAny) return null;
 
@@ -38,9 +38,9 @@ export default function StatusBadges({
       {status.exhausted && (
         <span className={[styles.badge, styles.badgeWarn].join(" ")}>EXHAUSTED</span>
       )}
-      {status.speedBonus > 0 && <span className={styles.badge}>SPD-{status.speedBonus}</span>}
-      {status.speedBonusNext > 0 && (
-        <span className={styles.badge}>SPD-{status.speedBonusNext} next</span>
+      {status.delayAdvantage > 0 && <span className={styles.badge}>ADV+{status.delayAdvantage}</span>}
+      {status.delayAdvantageNext > 0 && (
+        <span className={styles.badge}>ADV+{status.delayAdvantageNext} next</span>
       )}
     </div>
   );

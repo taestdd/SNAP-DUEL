@@ -43,7 +43,7 @@ export default function CardPickList({
       const ca = getCard(a.cardId);
       const cb = getCard(b.cardId);
       return (ca?.cost ?? 0) - (cb?.cost ?? 0)
-        || (ca?.speed ?? 0) - (cb?.speed ?? 0)
+        || (ca?.delay ?? 0) - (cb?.delay ?? 0)
         || (ca?.name ?? a.cardId).localeCompare(cb?.name ?? b.cardId);
     });
 
