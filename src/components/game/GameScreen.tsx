@@ -220,7 +220,11 @@ export default function GameScreen({
       )}
 
       {state.phase === "ROUND_DRAFT" && (
-        <DraftModal state={state} dispatch={dispatch} />
+        <DraftModal
+          state={state}
+          dispatch={dispatch}
+          remainingSec={turnTimer ? Math.ceil(turnTimer.remainingMs / 1000) : null}
+        />
       )}
 
       {state.phase === "WAITING_COST_PAYMENT" && state.pendingCostPayment && (

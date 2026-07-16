@@ -29,7 +29,9 @@ export type TurnTimerRole = "single" | "host" | "guest";
 
 /**
  * 현재 시간제약이 걸리는 대기 액터 (순수 함수).
- * 시간제약 대상: SETUP 선택 차례 + WAITING_* 결정 대기.
+ * 시간제약 대상: SETUP 선택 차례 + WAITING_* 결정 대기 + ROUND_DRAFT.
+ * 드래프트는 양쪽 동시 선택이므로 미제출자 중 P1을 먼저 반환한다
+ * (창 자체는 getWindowKey에서 액터 없이 공유 — 만료 시 순차 강제).
  */
 export function getTimedActor(state: GameState): PlayerId | null {
   switch (state.phase) {
@@ -37,6 +39,11 @@ export function getTimedActor(state: GameState): PlayerId | null {
     case "SETUP_OTHER": {
       const actor: PlayerId = isSetupTurnOf(state, "P1") ? "P1" : "AI";
       return state[actor].ready ? null : actor;
+    }
+    case "ROUND_DRAFT": {
+      if (state.draftSelections.P1 === null) return "P1";
+      if (state.draftSelections.AI === null) return "AI";
+      return null;
     }
     case "WAITING_COST_PAYMENT":
       return state.pendingCostPayment?.player ?? null;
@@ -52,10 +59,13 @@ export function getTimedActor(state: GameState): PlayerId | null {
 /**
  * 결정 창(window) 식별 키 — 키가 바뀌면 새 20초가 시작된다 (순수 함수).
  * 같은 턴 안에서도 페이즈/액터가 바뀌면 새 창으로 취급.
+ * 예외: ROUND_DRAFT는 양쪽이 같은 20초를 공유하므로 키에 액터를 넣지 않는다
+ * (한쪽 제출로 액터가 바뀌어도 남은 시간이 리셋되지 않음).
  */
 export function getWindowKey(state: GameState): string | null {
   const actor = getTimedActor(state);
   if (!actor) return null;
+  if (state.phase === "ROUND_DRAFT") return `${state.round}:${state.turn}:ROUND_DRAFT`;
   return `${state.round}:${state.turn}:${state.phase}:${actor}`;
 }
 
@@ -104,12 +114,19 @@ export function useTurnTimer(
   const pausedRef = useRef(paused);
   useEffect(() => { pausedRef.current = paused; });
 
-  // 카운트다운 + 만료 강제 (창 진입 시 마감 설정 → 100ms 틱)
+  // 창 진입 시 마감 설정 — 키에만 종속 (드래프트: 액터가 바뀌어도 창을 공유)
+  useEffect(() => {
+    if (!windowKey) return;
+    deadlineRef.current = Date.now() + TURN_TIME_MS;
+  }, [windowKey]);
+
+  // 카운트다운 + 만료 강제 (100ms 틱)
   useEffect(() => {
     if (!windowKey || !timedActor) return;
 
-    deadlineRef.current = Date.now() + TURN_TIME_MS;
     const grace = role === "host" && timedActor === "AI" ? GUEST_GRACE_MS : 0;
+    // 드래프트 공유 창에서 양쪽을 각각 1회씩 강제할 수 있도록 액터 단위로 발화 추적
+    const fireKey = `${windowKey}:${timedActor}`;
     let lastTick = Date.now();
 
     const id = setInterval(() => {
@@ -127,9 +144,9 @@ export function useTurnTimer(
       if (
         now >= deadlineRef.current + grace &&
         shouldEnforce(role, timedActor) &&
-        firedRef.current !== windowKey
+        firedRef.current !== fireKey
       ) {
-        firedRef.current = windowKey; // 창당 1회만 발화
+        firedRef.current = fireKey; // 창×액터당 1회만 발화
         onTimeoutRef.current(timedActor);
       }
     }, TICK_MS);

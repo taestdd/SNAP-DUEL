@@ -57,6 +57,32 @@ describe("TURN/TIMEOUT — SETUP 자동 패스", () => {
   });
 });
 
+describe("TURN/TIMEOUT — ROUND_DRAFT", () => {
+  it("드래프트 만료 → 0장 제출", () => {
+    const s = gameReducer(
+      makeState({ phase: "ROUND_DRAFT", P1: { deck: ["a", "b"] } }),
+      { type: "TURN/TIMEOUT", player: "P1" },
+    );
+    expect(s.draftSelections.P1).toEqual([]);
+    expect(s.P1.deck).toEqual(["a", "b"]); // 덱 변화 없음
+    expect(s.log[0]).toContain("times out");
+    expect(s.phase).toBe("ROUND_DRAFT"); // 상대 미제출 → 대기 유지
+  });
+
+  it("양쪽 모두 만료 처리되면 TURN_START로 진행", () => {
+    let s = makeState({ phase: "ROUND_DRAFT", P1: { deck: ["a"] }, AI: { deck: ["b"] } });
+    s = gameReducer(s, { type: "TURN/TIMEOUT", player: "P1" });
+    s = gameReducer(s, { type: "TURN/TIMEOUT", player: "AI" });
+    expect(s.draftSelections).toEqual({ P1: [], AI: [] });
+    expect(s.phase).toBe("TURN_START");
+  });
+
+  it("이미 제출했으면 무시", () => {
+    const base = makeState({ phase: "ROUND_DRAFT", draftSelections: { P1: ["a"], AI: null } });
+    expect(gameReducer(base, { type: "TURN/TIMEOUT", player: "P1" })).toBe(base);
+  });
+});
+
 describe("TURN/TIMEOUT — WAITING_* 페이즈", () => {
   it("WAITING_COST_PAYMENT 만료 → 취소 후 자동 패스", () => {
     const s = gameReducer(
@@ -149,6 +175,19 @@ describe("useTurnTimer 순수 헬퍼", () => {
     expect(init).not.toBeNull();
     expect(other).not.toBeNull();
     expect(init).not.toBe(other);
+  });
+
+  it("getTimedActor: 드래프트는 미제출자 (P1 우선), 모두 제출 시 null", () => {
+    expect(getTimedActor(makeState({ phase: "ROUND_DRAFT" }))).toBe("P1");
+    expect(getTimedActor(makeState({ phase: "ROUND_DRAFT", draftSelections: { P1: [], AI: null } }))).toBe("AI");
+    expect(getTimedActor(makeState({ phase: "ROUND_DRAFT", draftSelections: { P1: [], AI: [] } }))).toBeNull();
+  });
+
+  it("getWindowKey: 드래프트는 액터가 바뀌어도 같은 창 (공유 20초)", () => {
+    const bothPending = getWindowKey(makeState({ phase: "ROUND_DRAFT" }));
+    const p1Done = getWindowKey(makeState({ phase: "ROUND_DRAFT", draftSelections: { P1: [], AI: null } }));
+    expect(bothPending).not.toBeNull();
+    expect(bothPending).toBe(p1Done);
   });
 
   it("shouldEnforce: single은 P1만, host는 양쪽, guest는 없음", () => {

@@ -386,8 +386,15 @@ export function GuestGameApp({
       onExit={onExit}
       turnTimer={
         timedActor && remainingMs !== null
-          // 게스트 로컬 상태에서 AI = 나 자신
-          ? { remainingMs, isMyTimer: timedActor === "AI" }
+          ? {
+              remainingMs,
+              // 게스트 로컬 상태에서 AI = 나 자신.
+              // 드래프트는 양쪽 동시 창이라 내가 미제출이면 내 타이머로 표시
+              isMyTimer:
+                localState?.phase === "ROUND_DRAFT"
+                  ? localState.draftSelections.AI === null
+                  : timedActor === "AI",
+            }
           : null
       }
     />

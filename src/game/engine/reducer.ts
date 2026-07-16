@@ -371,6 +371,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
           return timeoutPass(state);
         }
 
+        // 드래프트 만료 → 0장 제출 (자동 패스 정책과 동일)
+        case "ROUND_DRAFT": {
+          if (state.draftSelections[player] !== null) return state;
+          const s = submitDraft(state, player, []);
+          return { ...s, log: [`${label} times out — drafts nothing`, ...s.log].slice(0, LOG_LIMIT) };
+        }
+
         // 코스트 지불 중 만료 → 취소 후 그 자리에서 자동 패스
         case "WAITING_COST_PAYMENT": {
           if (state.pendingCostPayment?.player !== player) return state;
