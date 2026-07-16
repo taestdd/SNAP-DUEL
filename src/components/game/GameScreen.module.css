@@ -208,6 +208,7 @@
 
 /* ── Middle row: P1 Queue | AI Queue ── */
 .middleRow {
+  position: relative; /* TurnTimer 오버레이 기준 */
   flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;

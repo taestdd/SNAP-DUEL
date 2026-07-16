@@ -1,4 +1,4 @@
-import type { Action, GameState } from "./types";
+import type { Action, GameState, PlayerId } from "./types";
 import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
@@ -344,6 +344,62 @@ export function gameReducer(state: GameState, action: Action): GameState {
         pendingDiscard: null,
         resolveContext: { queue: [], index: 0, unresolved: [] },
       };
+    }
+
+    case "TURN/TIMEOUT": {
+      const { player } = action;
+      const label = player === "P1" ? "P1" : "P2";
+
+      // SETUP 선택 만료 → 자동 패스 (선택 중이던 카드는 무시)
+      const timeoutPass = (base: GameState): GameState => {
+        let s = draw(base, player, 1);
+        if (s.phase === "GAME_OVER") return s;
+        s = {
+          ...s,
+          selected: player === "P1" ? null : s.selected,
+          log: [`${label} times out — passes and draws 1`, ...s.log].slice(0, LOG_LIMIT),
+          [player]: { ...s[player], ready: true },
+        } as GameState;
+        return advanceSetupPhase(s);
+      };
+
+      switch (state.phase) {
+        case "SETUP_INIT":
+        case "SETUP_OTHER": {
+          if (!isSetupTurnOf(state, player)) return state;
+          if (state[player].ready) return state;
+          return timeoutPass(state);
+        }
+
+        // 코스트 지불 중 만료 → 취소 후 그 자리에서 자동 패스
+        case "WAITING_COST_PAYMENT": {
+          if (state.pendingCostPayment?.player !== player) return state;
+          return timeoutPass({
+            ...state,
+            phase: state.pendingCostPayment.originalPhase,
+            pendingCostPayment: null,
+            selected: null,
+          });
+        }
+
+        // 카드 선택 효과 만료 → SELECTION/SKIP과 동일
+        case "WAITING_SELECTION": {
+          if (state.pendingSelection?.selectingPlayer !== player) return state;
+          return resumeResolve(state, []);
+        }
+
+        // 버리기 만료 → 핸드 앞에서부터 자동 버리기 (DISCARD/CONFIRM 경로 재사용)
+        case "WAITING_DISCARD": {
+          if (player !== ("P1" as PlayerId) || !state.pendingDiscard) return state;
+          const keys = state.P1.hand
+            .slice(0, state.pendingDiscard.count)
+            .map((id, idx) => `${id}::${idx}`);
+          return gameReducer(state, { type: "DISCARD/CONFIRM", discardCards: keys });
+        }
+
+        default:
+          return state;
+      }
     }
 
     case "DEBUG/RESET": {

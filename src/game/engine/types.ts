@@ -654,4 +654,6 @@ export type Action =
   | { type: "HAND/CYCLE" }
   | { type: "SUBMIT_DRAFT"; player: PlayerId; cardIds: string[] }
   | { type: "ANIM/DONE" }
-  | { type: "SURRENDER"; player: PlayerId };
+  | { type: "SURRENDER"; player: PlayerId }
+  /** 턴 시간제약 만료 — 해당 플레이어의 대기 중 결정을 자동 처리 (패스/스킵/자동 버리기) */
+  | { type: "TURN/TIMEOUT"; player: PlayerId };

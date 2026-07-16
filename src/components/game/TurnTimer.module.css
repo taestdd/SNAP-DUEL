@@ -1,0 +1,52 @@
+.pill {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+
+.icon {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.seconds {
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 1.4em;
+  text-align: center;
+  color: #eee;
+}
+
+.theirs {
+  opacity: 0.55;
+}
+
+.mine .seconds {
+  color: #ffd866;
+}
+
+.urgent {
+  border-color: rgba(255, 90, 90, 0.6);
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+.urgent .seconds {
+  color: #ff5a5a;
+}
+
+@keyframes timerPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.12); }
+}

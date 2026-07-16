@@ -19,6 +19,7 @@ import QueuePreview from "./QueuePreview";
 import DiscardModal from "./DiscardModal";
 import DraftModal from "./DraftModal";
 import DeckCardRows from "./DeckCardRows";
+import TurnTimer from "./TurnTimer";
 
 
 
@@ -32,6 +33,7 @@ export default function GameScreen({
   onExit,
   onRetry,
   topInset = 0,
+  turnTimer = null,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
@@ -43,6 +45,8 @@ export default function GameScreen({
   onRetry?: () => void;
   /** 상단에 고정 오버레이(예: 튜토리얼 목표 바)가 있을 때 그만큼 콘텐츠를 아래로 밀어내는 여백(px) */
   topInset?: number;
+  /** 턴 시간제약 표시 (null이면 비표시). isMyTimer: 내 결정 창인지 */
+  turnTimer?: { remainingMs: number; isMyTimer: boolean } | null;
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -387,6 +391,9 @@ export default function GameScreen({
         {/* 큐 + 아레나 묶음 */}
         <div className={styles.arenaBlock}>
           <div className={styles.middleRow}>
+            {turnTimer && !isGameOver && (
+              <TurnTimer remainingMs={turnTimer.remainingMs} isMyTimer={turnTimer.isMyTimer} />
+            )}
             <div className={styles.queuePanel}>
               <QueuePreview
                 title="P1 Queue"
