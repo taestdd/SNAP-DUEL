@@ -4,10 +4,11 @@ import { useEffect, useReducer, useRef, useState, useCallback } from "react";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
 import { isSetupTurnOf } from "@/game/engine/stateHelpers";
-import type { Action, GameState, SetupConfig } from "@/game/engine/types";
+import type { Action, GameState, PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "./GameScreen";
 import { useFlowDriver } from "@/hooks/useFlowDriver";
 import { useTagAnimating } from "@/hooks/useTagAnimating";
+import { useTurnTimer } from "@/hooks/useTurnTimer";
 import { flipState } from "@/lib/flipState";
 import {
   syncState,
@@ -96,6 +97,7 @@ export function HostGameApp({
         "SUBMIT_DRAFT",
         "DISCARD/CONFIRM",
         "SURRENDER",
+        "TURN/TIMEOUT",
       ];
       if (hostActionTypes.includes(action.type)) {
         sendHostAction(roomCode, hostAction).catch(console.error);
@@ -106,6 +108,20 @@ export function HostGameApp({
 
   // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
   useFlowDriver(state, dispatch, { paused: isTagAnimating });
+
+  // 턴 시간제약: 호스트가 양쪽 창을 모두 강제 (게스트 창은 +grace 후 강제).
+  // TURN/TIMEOUT은 hostAction으로 게스트에도 전파되어 로컬 상태가 함께 진행된다.
+  // 알려진 한계: 게스트 제출과 호스트 강제가 grace 경계에서 교차하면 이번 턴 연출이
+  // 어긋날 수 있으나, 다음 SETUP_INIT의 SYNC/OVERRIDE(정규 상태)로 복구된다.
+  const onTurnTimeout = useCallback(
+    (player: PlayerId) => wrappedDispatch({ type: "TURN/TIMEOUT", player }),
+    [wrappedDispatch],
+  );
+  const { timedActor, remainingMs } = useTurnTimer(state, {
+    role: "host",
+    onTimeout: onTurnTimeout,
+    paused: isTagAnimating,
+  });
 
   // 게스트 액션 대기: AI 차례일 때 Firestore에서 guestAction 수신
   useEffect(() => {
@@ -193,6 +209,11 @@ export function HostGameApp({
       isTagAnimating={isTagAnimating}
       disableAiDraft
       onExit={onExit}
+      turnTimer={
+        timedActor && remainingMs !== null
+          ? { remainingMs, isMyTimer: timedActor === "P1" }
+          : null
+      }
     />
   );
 }
@@ -261,6 +282,14 @@ export function GuestGameApp({
 
   // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅 (HostGameApp과 동일)
   useFlowDriver(localState, localDispatch);
+
+  // 턴 시간제약: 게스트는 표시 전용 — 강제는 호스트가 하고 TURN/TIMEOUT이
+  // hostAction으로 도착한다 (이중 디스패치 방지). 로컬 카운트다운은 호스트보다
+  // 전파 지연만큼 늦게 시작하므로 항상 호스트 강제보다 여유 있게 보인다.
+  const { timedActor, remainingMs } = useTurnTimer(localState, {
+    role: "guest",
+    onTimeout: () => {},
+  });
 
   // ── 게스트 dispatch (GameScreen에 전달) ────────────────────────────────────
   const guestDispatch = useCallback(
@@ -355,6 +384,19 @@ export function GuestGameApp({
       isAiThinking={!isGuestTurn && (localState?.phase === "SETUP_INIT" || localState?.phase === "SETUP_OTHER")}
       disableAiDraft
       onExit={onExit}
+      turnTimer={
+        timedActor && remainingMs !== null
+          ? {
+              remainingMs,
+              // 게스트 로컬 상태에서 AI = 나 자신.
+              // 드래프트는 양쪽 동시 창이라 내가 미제출이면 내 타이머로 표시
+              isMyTimer:
+                localState?.phase === "ROUND_DRAFT"
+                  ? localState.draftSelections.AI === null
+                  : timedActor === "AI",
+            }
+          : null
+      }
     />
   );
 }

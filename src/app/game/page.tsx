@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useReducer, useState, Suspense } from "react";
+import { useCallback, useEffect, useReducer, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
-import type { SetupConfig } from "@/game/engine/types";
+import type { PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import { useGameData } from "@/hooks/useGameData";
 import { useFlowDriver } from "@/hooks/useFlowDriver";
 import { useTagAnimating } from "@/hooks/useTagAnimating";
+import { useTurnTimer } from "@/hooks/useTurnTimer";
 import { decodeSetupParams } from "@/lib/setupConfig";
 
 function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?: SetupConfig; onExit: () => void }) {
@@ -22,6 +23,16 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
 
   // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
   useFlowDriver(state, dispatch, { paused: isTagAnimating });
+
+  // 턴 시간제약: P1의 결정 창만 강제 (AI는 즉시 행동)
+  const onTimeout = useCallback((player: PlayerId) => {
+    dispatch({ type: "TURN/TIMEOUT", player });
+  }, []);
+  const { timedActor, remainingMs } = useTurnTimer(state, {
+    role: "single",
+    onTimeout,
+    paused: isTagAnimating,
+  });
 
   useEffect(() => {
     const shouldAiAct =
@@ -45,7 +56,13 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     else dispatch({ type: "SELECTION/SKIP" });
   }, [state.phase, state.pendingSelection]);
 
-  return <GameScreen state={state} dispatch={dispatch} isAiThinking={isAiThinking} isTagAnimating={isTagAnimating} onExit={onExit} />;
+  // 싱글플레이는 P1 창만 표시 (AI는 즉시 행동하므로 타이머 무의미)
+  const turnTimer =
+    timedActor === "P1" && remainingMs !== null
+      ? { remainingMs, isMyTimer: true }
+      : null;
+
+  return <GameScreen state={state} dispatch={dispatch} isAiThinking={isAiThinking} isTagAnimating={isTagAnimating} onExit={onExit} turnTimer={turnTimer} />;
 }
 
 function GamePageInner() {

@@ -9,9 +9,12 @@ import styles from "./DraftModal.module.css";
 export default function DraftModal({
   state,
   dispatch,
+  remainingSec = null,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
+  /** 턴 시간제약 남은 초 (없으면 기존 코스메틱 카운트다운 사용) */
+  remainingSec?: number | null;
 }) {
   const maxPick = Math.min(3, state.P1.deck.length);
   const p1Submitted = state.draftSelections.P1 !== null;
@@ -37,6 +40,7 @@ export default function DraftModal({
           <h2 className={modalStyles.title}>라운드 {state.round} — 드래프트</h2>
           <div className={modalStyles.subtitle}>
             ⚡ 이번 라운드 선공: {initiativeLabel} &nbsp;|&nbsp; 덱에서 최대 {maxPick}장 선택
+            {remainingSec !== null && <>&nbsp;|&nbsp; ⏱ {remainingSec}s</>}
           </div>
         </div>
 
@@ -52,12 +56,12 @@ export default function DraftModal({
             <div className={styles.waitingText}>
               {aiSubmitted ? "양쪽 모두 확정 완료!" : "AI 대기 중..."}
             </div>
-            {!aiSubmitted && <div className={styles.countdown}>{countdown}s</div>}
+            {!aiSubmitted && <div className={styles.countdown}>{remainingSec ?? countdown}s</div>}
           </div>
         )}
 
         <div className={styles.aiStatus}>
-          AI: {aiSubmitted ? "✅ 확정" : `선택 중... (${countdown}s)`}
+          AI: {aiSubmitted ? "✅ 확정" : `선택 중... (${remainingSec ?? countdown}s)`}
         </div>
       </div>
     </div>

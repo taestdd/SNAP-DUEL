@@ -138,7 +138,8 @@ src/
 │   ├── useGameData.ts              # 카드/덱/캐릭터 병렬 로딩 훅
 │   ├── useFlowDriver.ts            # 페이즈 자동전환 (TURN_START/RESOLVE/TURN_END)
 │   ├── useGameTransitions.ts       # 상태 전환 감지 단일 진실원 (detectTransitions + 핸들러 훅)
-│   └── useTagAnimating.ts          # 태그 연출 재생 중 여부 (useGameTransitions 소비자)
+│   ├── useTagAnimating.ts          # 태그 연출 재생 중 여부 (useGameTransitions 소비자)
+│   └── useTurnTimer.ts             # 턴 시간제약 (20s) — 만료 시 TURN/TIMEOUT 디스패치
 │
 └── lib/
     ├── firebase.ts                 # 클라이언트 SDK (온라인 대전)
@@ -294,6 +295,11 @@ resolveContext: {
 - **exhausted**: deck이 0장이면 exhausted. 양쪽 모두 exhausted면 라운드 종료
 - **라운드**: 3라운드 후 총 HP 합계로 승부
 - **어피니티**: 캐릭터의 `affinities` 태그에 해당하는 카드만 사용 가능
+- **턴 시간제약**: 선택 차례·WAITING_* 결정·드래프트마다 20초(`useTurnTimer`). 만료 시 `TURN/TIMEOUT` 액션으로
+  자동 처리(SETUP·코스트 지불=패스+1드로우, 선택 효과=스킵, 버리기=앞에서부터 자동, 드래프트=0장 제출).
+  드래프트는 양쪽 동시 선택이므로 창을 공유(액터 없는 windowKey) — 한쪽 제출로 남은 시간이 리셋되지 않는다.
+  GameState에 wall-clock을 넣지 않는다 — 타이머는 훅이 마감 시각만 기억하고 정식 액션으로 강제.
+  강제 주체: 싱글=P1만, 온라인=호스트가 양쪽(게스트 창은 +1.5s 유예), 게스트=표시 전용.
 
 ---
 
