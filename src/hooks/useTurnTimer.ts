@@ -76,6 +76,63 @@ export function shouldEnforce(role: TurnTimerRole, actor: PlayerId): boolean {
   return true; // host: 양쪽 모두
 }
 
+/** 타이머의 가변 상태 (interval 클로저가 아니라 순수 함수로 다루기 위해 분리). */
+export type TimerState = {
+  /** 만료 기준 시각 (epoch ms) */
+  deadline: number;
+  /** 마지막 틱 시각 — 일시정지 구간을 마감에서 제외하기 위해 기억 */
+  lastTick: number;
+  /** 이미 만료 발화한 fireKey (창×액터당 1회 보장) */
+  firedKey: string | null;
+};
+
+export type TimerTickInput = {
+  now: number;
+  paused: boolean;
+  /** 강제 시각에 더할 유예 (host→게스트 전송 지연 보정) */
+  grace: number;
+  /** shouldEnforce(role, actor) 결과 */
+  enforce: boolean;
+  /** 이 창×액터의 발화 식별 키 */
+  fireKey: string;
+};
+
+export type TimerTickResult = {
+  next: TimerState;
+  /** 표시 갱신값 (일시정지 중이면 null — 남은 시간 동결) */
+  remainingMs: number | null;
+  /** 이 틱에서 onTimeout을 발화해야 하는가 */
+  fire: boolean;
+};
+
+/**
+ * 타이머 한 틱을 전진시키는 순수 함수 (React·wall-clock 무관).
+ * - 일시정지 중: 마감을 경과분만큼 뒤로 밀어 남은 시간을 동결, 발화 없음.
+ * - 그 외: 남은 시간을 계산하고, `now >= deadline + grace`이며 강제 대상이고
+ *   아직 이 fireKey로 발화 안 했으면 fire=true (그리고 firedKey를 잠금).
+ */
+export function advanceTimer(prev: TimerState, input: TimerTickInput): TimerTickResult {
+  if (input.paused) {
+    return {
+      next: { ...prev, deadline: prev.deadline + (input.now - prev.lastTick), lastTick: input.now },
+      remainingMs: null,
+      fire: false,
+    };
+  }
+
+  const remainingMs = Math.max(0, prev.deadline - input.now);
+  const fire =
+    input.now >= prev.deadline + input.grace &&
+    input.enforce &&
+    prev.firedKey !== input.fireKey;
+
+  return {
+    next: { deadline: prev.deadline, lastTick: input.now, firedKey: fire ? input.fireKey : prev.firedKey },
+    remainingMs,
+    fire,
+  };
+}
+
 export type TurnTimerView = {
   /** 시간제약이 걸린 액터 (없으면 null — 타이머 비표시) */
   timedActor: PlayerId | null;
@@ -108,16 +165,17 @@ export function useTurnTimer(
   const onTimeoutRef = useRef(onTimeout);
   useEffect(() => { onTimeoutRef.current = onTimeout; });
 
-  // 표시용 마감(양쪽 모두 20초로 보임)과 강제 시점(호스트→게스트는 +grace)을 분리
-  const deadlineRef = useRef<number>(0);
-  const firedRef = useRef<string | null>(null);
+  // 가변 타이머 상태 — 틱 판정은 순수 함수 advanceTimer가 담당 (useTurnTimer.test.ts)
+  const timerRef = useRef<TimerState>({ deadline: 0, lastTick: 0, firedKey: null });
   const pausedRef = useRef(paused);
   useEffect(() => { pausedRef.current = paused; });
 
-  // 창 진입 시 마감 설정 — 키에만 종속 (드래프트: 액터가 바뀌어도 창을 공유)
+  // 창 진입 시 마감 설정 — 키에만 종속 (드래프트: 액터가 바뀌어도 창을 공유).
+  // firedKey는 유지 (fireKey에 창 키가 포함돼 새 창에서 자연히 재무장된다).
   useEffect(() => {
     if (!windowKey) return;
-    deadlineRef.current = Date.now() + TURN_TIME_MS;
+    const now = Date.now();
+    timerRef.current = { ...timerRef.current, deadline: now + TURN_TIME_MS, lastTick: now };
   }, [windowKey]);
 
   // 카운트다운 + 만료 강제 (100ms 틱)
@@ -127,28 +185,19 @@ export function useTurnTimer(
     const grace = role === "host" && timedActor === "AI" ? GUEST_GRACE_MS : 0;
     // 드래프트 공유 창에서 양쪽을 각각 1회씩 강제할 수 있도록 액터 단위로 발화 추적
     const fireKey = `${windowKey}:${timedActor}`;
-    let lastTick = Date.now();
+    const enforce = shouldEnforce(role, timedActor);
 
     const id = setInterval(() => {
-      const now = Date.now();
-      // 일시정지 중에는 마감을 그만큼 뒤로 밀어 남은 시간을 동결
-      if (pausedRef.current) {
-        deadlineRef.current += now - lastTick;
-        lastTick = now;
-        return;
-      }
-      lastTick = now;
-
-      setTick({ key: windowKey, ms: Math.max(0, deadlineRef.current - now) });
-
-      if (
-        now >= deadlineRef.current + grace &&
-        shouldEnforce(role, timedActor) &&
-        firedRef.current !== fireKey
-      ) {
-        firedRef.current = fireKey; // 창×액터당 1회만 발화
-        onTimeoutRef.current(timedActor);
-      }
+      const res = advanceTimer(timerRef.current, {
+        now: Date.now(),
+        paused: pausedRef.current,
+        grace,
+        enforce,
+        fireKey,
+      });
+      timerRef.current = res.next;
+      if (res.remainingMs !== null) setTick({ key: windowKey, ms: res.remainingMs });
+      if (res.fire) onTimeoutRef.current(timedActor);
     }, TICK_MS);
 
     return () => clearInterval(id);
