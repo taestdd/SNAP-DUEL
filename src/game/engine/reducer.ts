@@ -1,4 +1,4 @@
-import type { Action, GameState, PlayerId } from "./types";
+import type { Action, GameState } from "./types";
 import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
@@ -397,7 +397,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
         // 버리기 만료 → 핸드 앞에서부터 자동 버리기 (DISCARD/CONFIRM 경로 재사용)
         case "WAITING_DISCARD": {
-          if (player !== ("P1" as PlayerId) || !state.pendingDiscard) return state;
+          if (player !== "P1" || !state.pendingDiscard) return state;
           const keys = state.P1.hand
             .slice(0, state.pendingDiscard.count)
             .map((id, idx) => `${id}::${idx}`);

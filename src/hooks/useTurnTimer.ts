@@ -146,16 +146,14 @@ export function useTurnTimer(
     role: TurnTimerRole;
     /** 만료 시 TURN/TIMEOUT을 디스패치하는 콜백 (guest에서는 호출되지 않음) */
     onTimeout: (player: PlayerId) => void;
-    /** false면 타이머 완전 비활성 (튜토리얼 등) */
-    enabled?: boolean;
     /** 태그 연출 등으로 카운트다운을 잠시 멈춰야 할 때 true */
     paused?: boolean;
   },
 ): TurnTimerView {
-  const { role, onTimeout, enabled = true, paused = false } = opts;
+  const { role, onTimeout, paused = false } = opts;
 
-  const timedActor = state && enabled ? getTimedActor(state) : null;
-  const windowKey = state && enabled ? getWindowKey(state) : null;
+  const timedActor = state ? getTimedActor(state) : null;
+  const windowKey = state ? getWindowKey(state) : null;
 
   // 카운트다운 표시값 — interval 틱에서만 갱신 (effect 내 동기 setState 회피).
   // 창 키를 함께 저장해 이전 창의 잔여값이 새 창에서 표시되지 않게 한다.
@@ -169,6 +167,8 @@ export function useTurnTimer(
   const timerRef = useRef<TimerState>({ deadline: 0, lastTick: 0, firedKey: null });
   const pausedRef = useRef(paused);
   useEffect(() => { pausedRef.current = paused; });
+  // 마지막으로 표시에 반영한 초 — 초가 바뀔 때만 setState해 리렌더를 줄인다
+  const lastSecRef = useRef(-1);
 
   // 창 진입 시 마감 설정 — 키에만 종속 (드래프트: 액터가 바뀌어도 창을 공유).
   // firedKey는 유지 (fireKey에 창 키가 포함돼 새 창에서 자연히 재무장된다).
@@ -176,9 +176,10 @@ export function useTurnTimer(
     if (!windowKey) return;
     const now = Date.now();
     timerRef.current = { ...timerRef.current, deadline: now + TURN_TIME_MS, lastTick: now };
+    lastSecRef.current = -1; // 새 창 → 첫 틱에서 강제 표시 갱신
   }, [windowKey]);
 
-  // 카운트다운 + 만료 강제 (100ms 틱)
+  // 카운트다운 + 만료 강제 (100ms 틱). 발화 판정은 매 틱, 표시 갱신은 초 단위.
   useEffect(() => {
     if (!windowKey || !timedActor) return;
 
@@ -196,7 +197,13 @@ export function useTurnTimer(
         fireKey,
       });
       timerRef.current = res.next;
-      if (res.remainingMs !== null) setTick({ key: windowKey, ms: res.remainingMs });
+      if (res.remainingMs !== null) {
+        const sec = Math.ceil(res.remainingMs / 1000);
+        if (sec !== lastSecRef.current) {
+          lastSecRef.current = sec;
+          setTick({ key: windowKey, ms: res.remainingMs });
+        }
+      }
       if (res.fire) onTimeoutRef.current(timedActor);
     }, TICK_MS);
 
