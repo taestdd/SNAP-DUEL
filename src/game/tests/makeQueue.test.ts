@@ -12,7 +12,7 @@ import type { Card, CombatAnimationEvent } from "@/game/engine/types";
  *  - 동일 입력 → 동일 출력 (온라인 양측 결정론)
  */
 
-// attack_weak_punch 포즈: frames 2개, fps 10 → 프레임당 100ms (스프라이트 'a' 기준)
+// attack_weak_punch 포즈: frames 3개, fps 10 → 프레임당 100ms (스프라이트 'a' 기준)
 // meleeAttack: false — 타이밍 검증이 대시 지연과 섞이지 않도록 원거리로 고정
 function attackCard(hitTimings: Card["hitTimings"]): Card {
   return {
@@ -47,10 +47,10 @@ describe("frame → ms 환산", () => {
   });
 
   it("포즈 프레임 수를 넘는 frame은 마지막 프레임으로 clamp된다", () => {
-    // attack_weak_punch는 2프레임(idx 0,1) → frame 9는 idx 1 = 100ms
+    // attack_weak_punch는 3프레임(idx 0~2) → frame 9는 idx 2 = 200ms
     const card = attackCard([{ frame: 9, ground: "hit_weak", airborne: "hit_weak", freeze: 100 }]);
     const events = makeQueue(card, null, "player", 0, 0, 0, 0, "a", "a");
-    expect(visualHits(events)[0].delay).toBe(100);
+    expect(visualHits(events)[0].delay).toBe(200);
   });
 });
 
