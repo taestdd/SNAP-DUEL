@@ -34,37 +34,42 @@ export function backgroundSize(sheet: SheetSpec): string {
   return `${sheet.cols * 100}% ${sheet.rows * 100}%`;
 }
 
+/**
+ * 새 스프라이트 시트: 낱장 1.png~35.png(560×560)를 5열×7행으로 합친 시트.
+ * scripts/build-spritesheets.py로 생성 (셀 280×280, 시트 1400×1960).
+ * 프레임 인덱스 = 낱장 파일 번호 - 1 (행 우선: idx 0~4 = 1행, 5~9 = 2행, ...)
+ */
 const DEFAULT_SHEET: SheetSpec = {
-  frameW: 80,
-  frameH: 80,
-  cols: 4,
-  rows: 10,
+  frameW: 280,
+  frameH: 280,
+  cols: 5,
+  rows: 7,
   displayW: 180,
   displayH: 180,
 };
 
 const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
-  idle:               { frames: [0, 1],                        fps: 6,  hold: false },
-  attack_weak_punch:  { frames: [2, 3],                        fps: 10, hold: true  },
-  attack_strong_punch:{ frames: [4, 5],                        fps: 10, hold: true  },
-  attack_aerial_punch:{ frames: [2, 3],                        fps: 10, hold: true  },
-  attack_weak_kick:   { frames: [6, 7, 8],                     fps: 8,  hold: true  },
-  attack_strong_kick: { frames: [9, 10, 11],                   fps: 8,  hold: true  },
-  attack_aerial_kick: { frames: [6, 7, 8],                     fps: 8,  hold: true  },
-  attack_hadouken:    { frames: [12, 13, 14],                  fps: 8,  hold: true  },
-  attack_dragon_kick: { frames: [15, 16, 17, 18, 15, 16, 17], fps: 6,  hold: true  },
-  attack_rising_punch:{ frames: [19, 20, 21, 22],              fps: 6,  hold: true  },
-  use_item:           { frames: [23, 24],                      fps: 8,  hold: true  },
-  ko:                 { frames: [24, 25, 26, 27, 28, 29],      fps: 5,  hold: true  },
-  hit_weak:           { frames: [25, 26],                      fps: 10, hold: true  },
-  hit_strong:         { frames: [27, 28],                      fps: 10, hold: true  },
-  hit_aerial:         { frames: [29, 30],                      fps: 10, hold: true  },
-  block:              { frames: [31, 32],                      fps: 6,  hold: true  },
-  throw:              { frames: [33, 34, 35],                  fps: 6,  hold: true  },
-  tag_exit:           { frames: [36, 37],                      fps: 8,  hold: true  },
-  jump:               { frames: [36, 37],                      fps: 8,  hold: true  },
-  tag_entry:          { frames: [38, 39],                      fps: 8,  hold: true  },
-  land:               { frames: [38, 39],                      fps: 8,  hold: true  }, // 착지 = tag_entry와 동일 스프라이트
+  idle:               { frames: [0],                                  fps: 6,  hold: false },
+  attack_weak_punch:  { frames: [1, 2, 3],                            fps: 10, hold: true  },
+  attack_strong_punch:{ frames: [8, 9, 10],                           fps: 10, hold: true  },
+  attack_aerial_punch:{ frames: [1, 2],                               fps: 10, hold: true  },
+  attack_weak_kick:   { frames: [1, 4, 5, 7],                         fps: 8,  hold: true  },
+  attack_strong_kick: { frames: [1, 4, 5, 7],                         fps: 8,  hold: true  },
+  attack_aerial_kick: { frames: [1, 4, 5, 7],                         fps: 8,  hold: true  },
+  attack_hadouken:    { frames: [8, 11, 12, 7],                       fps: 8,  hold: true  },
+  attack_dragon_kick: { frames: [14, 15, 16, 13, 14, 15, 16, 7],      fps: 6,  hold: true  },
+  attack_rising_punch:{ frames: [1, 4, 6, 7],                         fps: 6,  hold: true  },
+  use_item:           { frames: [34],                                 fps: 8,  hold: true  },
+  ko:                 { frames: [33],                                 fps: 5,  hold: true  },
+  hit_weak:           { frames: [20, 21, 19],                         fps: 10, hold: true  },
+  hit_strong:         { frames: [20, 21, 19],                         fps: 10, hold: true  },
+  hit_aerial:         { frames: [22, 23, 24],                         fps: 10, hold: true  },
+  block:              { frames: [31],                                 fps: 6,  hold: true  },
+  throw:              { frames: [13, 17, 18, 19],                     fps: 6,  hold: true  },
+  tag_exit:           { frames: [25, 26],                             fps: 8,  hold: true  },
+  jump:               { frames: [25, 26],                             fps: 8,  hold: true  }, // 점프 = tag_exit와 동일 스프라이트
+  tag_entry:          { frames: [27, 28, 29],                         fps: 8,  hold: true  },
+  land:               { frames: [28, 29],                             fps: 8,  hold: true  }, // 착지 = tag_entry 후반과 동일 스프라이트
 };
 
 /** spriteId → 스프라이트 설정. 새 스프라이트 추가 시 여기에만 등록. */
