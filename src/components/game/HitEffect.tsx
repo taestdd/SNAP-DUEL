@@ -29,6 +29,8 @@ export default function HitEffect({
   style?: React.CSSProperties;
 }) {
   const [frameIdx, setFrameIdx] = useState(0);
+  // 에셋 미배포 상태에서 깨진 이미지 아이콘이 노출되지 않도록 로드 실패 시 숨김
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,6 +45,8 @@ export default function HitEffect({
     return () => clearInterval(interval);
   }, []);
 
+  if (failed) return null;
+
   return (
     <div className={styles.wrap} style={style}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -51,6 +55,7 @@ export default function HitEffect({
         alt=""
         className={`${styles.burst} ${strength === "strong" ? styles.burstStrong : ""}`}
         draggable={false}
+        onError={() => setFailed(true)}
       />
     </div>
   );
