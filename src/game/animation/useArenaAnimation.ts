@@ -333,6 +333,11 @@ export function useArenaAnimation(
         const move: FighterMove = { x: event.toOffset, motion: event.motion ?? "recover" };
         if (event.subject === "P1") setPlayerMove(move);
         else setAiMove(move);
+        // 대시 슬라이드 구간에는 전용 대시 프레임을 표시 (공격 포즈는 이후 action_start가 덮어씀)
+        if (move.motion === "dash") {
+          if (event.subject === "P1") { setPlayerPose("dash"); setPlayerPoseKey((k) => k + 1); }
+          else { setAiPose("dash"); setAiPoseKey((k) => k + 1); }
+        }
         if (event.bgPush) setBgOffset((o) => o + event.bgPush!);
         setAnimLog((prev) => [...prev, `fighter_move: ${event.subject} → ${event.toOffset}px [${event.motion}]`]);
         break;

@@ -32,6 +32,7 @@ export type ActionTag = keyof typeof ACTION_TAG_TO_POSE;
  */
 export type FighterPose =
   | "idle"
+  | "dash"
   | "block"
   | "hit_weak"
   | "hit_strong"
