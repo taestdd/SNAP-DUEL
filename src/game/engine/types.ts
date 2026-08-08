@@ -92,6 +92,12 @@ export interface CombatAnimationEvent {
   freezeMs?: number;
   /** visual_hit: 줌인 배율. makeQueue가 카드 zoom/프리셋으로 산출 */
   zoom?: number;
+  /**
+   * visual_hit: 가드 히트 — 스윙은 닿았지만 블록에 전부 흡수돼 체력이 안 깎인 경우.
+   * 격겜의 가드 임팩트처럼 히트스탑·흔들림은 재생하되 피격 포즈로 전환하지 않는다
+   * (가드 자세가 흐트러지지 않음).
+   */
+  guarded?: boolean;
   /** 포즈 결정용 액션 태그 (action_start) */
   actionTag?: ActionTag;
   /** fighter_move: 이동하는 파이터 */
@@ -463,6 +469,13 @@ export type AnimScriptEntry = {
   hpAfter: { P1: number; AI: number };
   /** 이 카드 공격으로 인해 카운터된 플레이어 (UI 지연 표시용) */
   counteredPlayer?: PlayerId;
+  /**
+   * 스윙이 대상에 닿았는지 (블록에 전부 막혀도 true) — 연출용.
+   * 애니메이션이 카드 스탯으로 적중을 재계산하지 않도록 엔진 판정을 그대로 싣는다.
+   */
+  attackLanded?: boolean;
+  /** 실제로 체력을 깎았는지(=적중) — 피격 포즈 재생 여부를 가른다. */
+  attackConnected?: boolean;
   /** 이 카드 효과 적용 후의 콤보 카운트 (UI 지연 표시용) */
   comboAfter?: number;
   /** 이 카드 효과 적용 후의 콤보 보유 플레이어 (UI 지연 표시용) */
@@ -566,6 +579,24 @@ export type GameState = {
 
   /** 카운터된 카드의 소유 플레이어. 다음 턴 시작 시 null로 클리어. */
   recentlyCounteredPlayer: PlayerId | null;
+
+  /**
+   * 직전에 해결한 카드의 스윙이 대상에 닿았는지 (블록에 전부 막혀도 true).
+   * 연출 기준 — 가드 임팩트(히트스탑·흔들림)와 거리 전이(대시 인게이지)에 쓰인다.
+   * 체력이 깎였는지는 attackConnected로 따로 판단한다.
+   */
+  attackLanded?: boolean;
+
+  /**
+   * 직전에 해결한 카드의 공격 스탯이 실제로 체력을 깎았는지(=적중).
+   * 리졸브 1스텝 안에서만 의미가 있는 일시값 — applyCardEffectsWithPause가 쓰고
+   * 곧바로 resolve의 적중 판정(didDirectAttackHit)이 읽는다.
+   *
+   * 적중을 "카드 해결 전후 HP 차이"로 추정하지 않기 위해 존재한다.
+   * damage 효과는 순수 체력 차감이라 적중이 아니므로, HP 비교로 판정하면
+   * damage가 이니셔티브/어드밴티지/카운터를 잘못 유발하게 된다.
+   */
+  attackConnected?: boolean;
 
   log: string[];
 

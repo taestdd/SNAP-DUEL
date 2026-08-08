@@ -91,6 +91,13 @@ export type ActorHpData = {
   counteredPlayer?: PlayerId;
   comboAfter?: number;
   comboHolder?: PlayerId;
+  /**
+   * 엔진이 내린 타격 판정 (연출이 카드 스탯으로 재계산하지 않도록 그대로 전달).
+   * landed = 스윙이 닿음(블록 포함) / connected = 실제로 체력이 깎임.
+   * 미지정 시 카드 스탯 기반 추정으로 폴백한다 (저수준 makeQueue 직접 호출용).
+   */
+  attackLanded?: boolean;
+  attackConnected?: boolean;
 };
 
 /**
@@ -226,12 +233,32 @@ function flashDur(card: Card): number {
   return card.superFlash ? SUPER_FLASH_DUR : 0;
 }
 
-/** 공격 타입 카드의 공격 스탯이 타겟에 실제로 적중하는지 확인 */
+/**
+ * 스윙이 타겟에 닿는지 추정 (카드 스탯 기반 폴백).
+ *
+ * 정식 판정은 엔진(applyAttackStats)이 내리며 animScript에 실려 온다.
+ * statModifiers 보정과 블록 흡수를 반영하지 못하므로, 엔진 판정이 없는
+ * 저수준 makeQueue 직접 호출(테스트 등)에서만 쓰인다.
+ */
 function hasConnectingAttack(card: Card, targetAirborne: number): boolean {
   if (card.cardType !== "attack") return false;
   const groundHits = (card.groundAttack ?? 0) > 0 && targetAirborne === 0;
   const antiAirHits = (card.antiAirAttack ?? 0) > 0 && targetAirborne >= 1;
   return groundHits || antiAirHits;
+}
+
+/**
+ * 이 시퀀스의 타격 판정 — 엔진 판정 우선, 없으면 카드 스탯 추정.
+ *
+ * landed  : 스윙이 닿음(블록에 전부 막혀도 true) → 거리 전이·임팩트 연출
+ * guarded : 닿았지만 체력은 안 깎임 → 히트스탑·흔들림은 재생하되 피격 포즈는 생략
+ */
+function resolveImpact(card: Card, targetAirborne: number, hpData?: ActorHpData): { landed: boolean; guarded: boolean } {
+  const landed = hpData?.attackLanded ?? hasConnectingAttack(card, targetAirborne);
+  if (!landed) return { landed: false, guarded: false };
+  // connected 정보가 없으면(폴백) 종전처럼 온전한 타격으로 간주
+  const connected = hpData?.attackConnected ?? true;
+  return { landed: true, guarded: !connected };
 }
 
 function pushSequence(
@@ -267,9 +294,10 @@ function pushSequenceWithHold(
     ? card.actionTagAirborne
     : card.actionTag;
   const hasTimings = !!(card.hitTimings && card.hitTimings.length > 0);
-  // 넉백·거리 상태 전이는 "타격이 성립하는 공격"에만 적용
+  // 넉백·거리 상태 전이는 "스윙이 닿은 공격"에만 적용 (가드로 막혀도 닿은 것은 닿은 것)
   // (카운터된 카드는 애초에 스크립트에 없음)
-  const willConnect = hasTimings && hasConnectingAttack(card, targetAirborne);
+  const impact = resolveImpact(card, targetAirborne, hpData);
+  const willConnect = hasTimings && impact.landed;
   // 근접 스윙: 공격 스탯이 있는 근접 카드의 휘두름 — 적중 여부와 무관 (빗나가면 휘핑)
   const meleeSwing = hasTimings
     && card.cardType === "attack"
@@ -297,7 +325,7 @@ function pushSequenceWithHold(
 
   let lastImpactAt = 0;  // offset+shift 기준 마지막 히트(임팩트 프레임) 발화 시각
   if (card.hitTimings && card.hitTimings.length > 0) {
-    const connects = hasConnectingAttack(card, targetAirborne);
+    const connects = impact.landed;
 
     // 히트스탑 인지 타임라인:
     // 각 히트가 freeze만큼 스프라이트 프레임을 멈추므로, 후속 히트의 발화 시점에
@@ -312,10 +340,10 @@ function pushSequenceWithHold(
       const zoom = timing.zoom ?? HIT_ZOOM_PRESET[hitPose];
       const impactAt = frameToMs(timing.frame, pose, actorSpriteId) + acc;
 
-      // visual_hit은 실제로 타격이 성립할 때만 생성
-      // hasConnectingAttack이 false면 데미지도 없고 피격 포즈도 없음
+      // visual_hit은 스윙이 닿았을 때만 생성 (빗나가면 데미지도 피격도 없음)
+      // guarded=true면 히트스탑·흔들림만 재생하고 피격 포즈는 생략한다
       if (connects) {
-        events.push({ type: "visual_hit", delay: offset + shift + impactAt, target, hitPose, freezeMs, zoom });
+        events.push({ type: "visual_hit", delay: offset + shift + impactAt, target, hitPose, freezeMs, zoom, guarded: impact.guarded });
       }
 
       lastImpactAt = impactAt;
@@ -425,10 +453,12 @@ export function makeQueueFromScript(
   const aiTargetAirborne = aiEntry?.targetAirborne ?? 0;
 
   const p1HpData: ActorHpData | undefined = p1Entry
-    ? { hpAfter: p1Entry.hpAfter, counteredPlayer: p1Entry.counteredPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder }
+    ? { hpAfter: p1Entry.hpAfter, counteredPlayer: p1Entry.counteredPlayer, comboAfter: p1Entry.comboAfter, comboHolder: p1Entry.comboHolder,
+        attackLanded: p1Entry.attackLanded, attackConnected: p1Entry.attackConnected }
     : undefined;
   const aiHpData: ActorHpData | undefined = aiEntry
-    ? { hpAfter: aiEntry.hpAfter, counteredPlayer: aiEntry.counteredPlayer, comboAfter: aiEntry.comboAfter, comboHolder: aiEntry.comboHolder }
+    ? { hpAfter: aiEntry.hpAfter, counteredPlayer: aiEntry.counteredPlayer, comboAfter: aiEntry.comboAfter, comboHolder: aiEntry.comboHolder,
+        attackLanded: aiEntry.attackLanded, attackConnected: aiEntry.attackConnected }
     : undefined;
 
   const initiative: "player" | "ai" =

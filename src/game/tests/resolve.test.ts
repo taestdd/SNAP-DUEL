@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { enterResolving } from "@/game/engine/resolve";
+import { registerCards } from "@/game/engine/cards";
 import { makeState, resolveOrder } from "./fixtures";
+
+/** 적중 효과 게이팅 검증용 — 체력을 깎지만 "타격"은 아닌 스킬 */
+registerCards({
+  bolt: { id: "bolt", name: "Bolt", cardType: "skill", cost: 0, delay: 0, advantage: 0,
+    effects: [{ type: "damage", target: "enemy", value: 5 }], text: "" },
+});
 
 /**
  * Phase 1 — 리졸브 핵심 규칙.
@@ -58,6 +65,40 @@ describe("데미지 적용", () => {
     const s = enterResolving(makeState({ P1: { queue: ["launcher"] } }));
     expect(s.AI.hp).toBe(27); // 30 - 3
     expect(s.AI.airborneStack).toBe(1);
+  });
+});
+
+/**
+ * 적중(타격)으로만 발동하는 상대 대상 효과: 카운터 · 주도권 · 어드밴티지 · 콤보.
+ * damage 효과의 체력 차감은 적중이 아니므로 이 중 무엇도 유발하지 못한다.
+ */
+describe("적중 효과 게이팅 — damage 효과는 타격이 아니다", () => {
+  it("damage 스킬이 먼저 체력을 깎아도 상대 큐 카드를 카운터하지 않는다", () => {
+    // P1 bolt(dly0, damage 5) 먼저 해결 → AI jab(dly2)은 카운터되지 않고 그대로 적중
+    const s = enterResolving(
+      makeState({ initiative: "P1", P1: { queue: ["bolt"] }, AI: { queue: ["jab"] } }),
+    );
+    expect(s.AI.hp).toBe(25); // bolt 체력 차감은 정상 적용
+    expect(s.recentlyCounteredPlayer).toBeNull(); // 카운터 없음
+    expect(s.P1.hp).toBe(25); // AI jab이 살아남아 P1을 타격
+  });
+
+  it("damage 스킬은 주도권을 가져오지 않는다", () => {
+    const s = enterResolving(
+      makeState({ initiative: "AI", P1: { queue: ["bolt"] }, AI: { queue: [] } }),
+    );
+    expect(s.AI.hp).toBe(25); // 체력은 깎였지만
+    expect(s.initiative).toBe("AI"); // 주도권은 그대로
+  });
+
+  it("공격이 블록에 완전히 흡수되면 타격이 아니다 — 카운터·주도권 없음", () => {
+    // P1 quick_jab(dly1, 5) → AI block 5로 전부 흡수 → 체력 변화 없음
+    const s = enterResolving(
+      makeState({ initiative: "P1", P1: { queue: ["quick_jab"] }, AI: { queue: ["jab"], block: 5 } }),
+    );
+    expect(s.AI.hp).toBe(30); // 흡수됨
+    expect(s.recentlyCounteredPlayer).toBeNull(); // 카운터 없음
+    expect(s.P1.hp).toBe(25); // AI jab 정상 해결
   });
 });
 

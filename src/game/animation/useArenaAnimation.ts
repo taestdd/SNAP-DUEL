@@ -304,15 +304,25 @@ export function useArenaAnimation(
           const setFlashKey  = isP1 ? setPlayerFlashKey  : setAiFlashKey;
           const setKnockback = isP1 ? setPlayerKnockbackKey : setAiKnockbackKey;
           const setHitShake  = isP1 ? setPlayerHitShake  : setAiHitShake;
-          setBgOffset((o) => o + (isP1 ? 40 : -40));
-          setPose(pose);
-          setPoseKey((k) => k + 1);
-          setFlashKey((k) => k + 1);
-          setKnockback((k) => k + 1);
-          // 히트스탑 동안 피격자 잔떨림 — freeze 윈도우와 같은 길이로 재생
+
+          // 히트스탑 동안 피격자 잔떨림 — freeze 윈도우와 같은 길이로 재생.
+          // 가드 히트에서도 임팩트는 전달되므로 잔떨림은 그대로 둔다.
           setHitShake((prev) => ({ key: prev.key + 1, ms: freezeMs }));
+
+          // 가드 히트: 격겜의 가드처럼 임팩트(히트스탑·흔들림·이펙트)는 나되
+          // 자세는 흐트러지지 않는다 → 포즈 전환·피격 플래시·넉백·배경 밀림 생략
+          if (!event.guarded) {
+            setBgOffset((o) => o + (isP1 ? 40 : -40));
+            setPose(pose);
+            setPoseKey((k) => k + 1);
+            setFlashKey((k) => k + 1);
+            setKnockback((k) => k + 1);
+          }
         }
-        setAnimLog((prev) => [...prev, `visual_hit: ${event.target ?? "?"} [${pose}]`]);
+        setAnimLog((prev) => [
+          ...prev,
+          `visual_hit: ${event.target ?? "?"} [${pose}]${event.guarded ? " (guarded)" : ""}`,
+        ]);
         break;
       }
       case "super_flash": {

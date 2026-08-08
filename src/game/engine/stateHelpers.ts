@@ -331,13 +331,18 @@ export function discardAIExcess(state: GameState): GameState {
 /* ── 공격 적중 판정 ─────────────────────────────── */
 
 /**
- * 공격 카드가 상대에게 실제로 데미지를 입혔는지 판정한다.
- * - 태그 효과만 있는 공격 카드는 제외 (캐릭터 교체 목적)
- * - 상대 HP가 감소했으면 적중(hit)
+ * 공격 카드의 "타격"이 성립했는지 판정한다. (이니셔티브/어드밴티지/카운터의 트리거)
+ *
+ * 적중은 **공격 스탯(groundAttack/antiAirAttack)이 체력을 깎았을 때만** 성립한다.
+ * `attackConnected`는 applyAttackStats가 그 단계에서만 기록한 값이므로,
+ * 뒤따르는 damage 효과의 체력 차감은 여기에 섞이지 않는다
+ * (damage는 순수 체력 차감이라 적중 효과를 유발하지 못한다).
+ *
+ * - 태그 효과를 가진 공격 카드는 제외 (캐릭터 교체 목적)
+ * - 블록에 전부 흡수되면 체력이 안 줄어 적중 아님
  */
 export function didDirectAttackHit(
-  stateBefore: GameState,
-  stateAfter: GameState,
+  state: GameState,
   player: PlayerId,
   cardId: string,
 ): boolean {
@@ -345,5 +350,5 @@ export function didDirectAttackHit(
   if (!card) return false;
   if (card.cardType !== "attack") return false;
   if (card.effects.some((e) => e.type === "tag")) return false;
-  return stateAfter[opponentOf(player)].hp < stateBefore[opponentOf(player)].hp;
+  return state.attackConnected === true;
 }
