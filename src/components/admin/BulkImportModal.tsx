@@ -28,6 +28,7 @@ export default function BulkImportModal({
   const [items, setItems] = useState<ParsedItem[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [progress, setProgress] = useState(0);
+  const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   function parseCSV(text: string): string {
@@ -102,6 +103,7 @@ export default function BulkImportModal({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = (ev.target?.result as string) ?? "";
@@ -192,9 +194,7 @@ export default function BulkImportModal({
               <button className={styles.fileBtn} onClick={() => fileRef.current?.click()}>
                 파일 선택 (JSON / CSV)
               </button>
-              {fileRef.current?.files?.[0] && (
-                <span className={styles.fileName}>{fileRef.current.files[0].name}</span>
-              )}
+              {fileName && <span className={styles.fileName}>{fileName}</span>}
             </div>
             <textarea
               className={styles.textarea}

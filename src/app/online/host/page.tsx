@@ -43,17 +43,6 @@ function HostPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!roomCode || stage !== "waiting" || !player) return;
-    const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
-      if (data.status !== "ready") return;
-      unsubscribe();
-      handleGuestConnected(player);
-    });
-    return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, stage]);
-
   async function handleGuestConnected(config: SetupConfig) {
     setStage("waitingGuest");
     try {
@@ -78,6 +67,18 @@ function HostPageInner() {
       }
     });
   }
+
+  // 게스트 입장 감지 → handleGuestConnected (선언 이후에 배치해야 최신 클로저를 참조한다)
+  useEffect(() => {
+    if (!roomCode || stage !== "waiting" || !player) return;
+    const unsubscribe = subscribeRoom(roomCode, (data: RoomData) => {
+      if (data.status !== "ready") return;
+      unsubscribe();
+      handleGuestConnected(player);
+    });
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode, stage]);
 
   const joinUrl = typeof window !== "undefined"
     ? `${window.location.origin}/online/join?code=${roomCode}`

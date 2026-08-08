@@ -41,10 +41,16 @@ export default function FighterSprite({
   const [frameIdx, setFrameIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frozenUntilRef = useRef(frozenUntil);
-  frozenUntilRef.current = frozenUntil;
   const entryRef = useRef(entry);
-  entryRef.current = entry;
   const spriteRef = useRef<HTMLDivElement>(null);
+
+  // interval 콜백이 읽는 최신값 동기화.
+  // 렌더 중 ref 쓰기는 금지(react-hooks/refs)이므로 커밋 직후 layout 단계에서 갱신한다 —
+  // 프레임 틱은 최소 1프레임(1000/fps) 뒤라 타이밍 차이는 없다.
+  useLayoutEffect(() => {
+    frozenUntilRef.current = frozenUntil;
+    entryRef.current = entry;
+  });
 
   const startInterval = useCallback((ms: number) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
