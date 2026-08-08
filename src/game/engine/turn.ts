@@ -288,5 +288,17 @@ export function queueCard(state: GameState, player: PlayerId, cardId: string, ha
     }
   }
 
+  // additionalCost 소모 — 요구 충족 여부는 위의 canUseCard가 이미 검증했다
+  if (card.additionalCost) {
+    const { requires, consumeTo } = card.additionalCost;
+    for (const req of requires) {
+      const zone = s[player][req.zone] as string[];
+      const toConsume = zone.filter((id) => id === req.cardId).slice(0, req.count);
+      if (toConsume.length === 0) continue;
+      s = moveCardsBetweenZones(s, player, req.zone, player, consumeTo, toConsume, "bottom");
+      s = pushLog(s, `${player} consumes ${toConsume.length}x ${req.cardId} (${req.zone}→${consumeTo})`);
+    }
+  }
+
   return s;
 }

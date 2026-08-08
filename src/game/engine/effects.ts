@@ -43,7 +43,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 
   // 1. 탈출 효과
   if (currentDef.exitEffect) {
-    s = applyEffect(s, currentDef.exitEffect, tagEffectContext(player));
+    s = applyCharacterEffects(s, player, currentDef.exitEffect);
     if (s.phase === "GAME_OVER") return s;
     s = updateCombatant(s, player, { characterHp: { ...s[player].characterHp, [currentChar]: s[player].hp } });
   }
@@ -56,10 +56,29 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 
   // 3. 진입 효과
   if (newDef.entryEffect) {
-    s = applyEffect(s, newDef.entryEffect, tagEffectContext(player));
+    s = applyCharacterEffects(s, player, newDef.entryEffect);
     if (s.phase === "GAME_OVER") return s;
   }
 
+  return s;
+}
+
+/**
+ * 캐릭터 진입/퇴장 효과를 적용한다. 단일 효과와 배열을 모두 받는다.
+ * 중간에 게임이 끝나면 즉시 중단한다.
+ */
+function applyCharacterEffects(
+  state: GameState,
+  player: PlayerId,
+  effects: CardEffect | CardEffect[],
+): GameState {
+  const list = Array.isArray(effects) ? effects : [effects];
+  let s = state;
+  for (const effect of list) {
+    s = applyEffect(s, effect, tagEffectContext(player));
+    s = checkGameOver(s);
+    if (s.phase === "GAME_OVER") return s;
+  }
   return s;
 }
 
@@ -79,6 +98,8 @@ type EffectContext = {
   resolveItems: { player: PlayerId; cardId: string }[];
   resolveNextIndex: number;
   unresolved: PlayerId[];
+  /** 지금 처리 중인 효과의 card.effects 내 위치 — 선택 대기 후 이어서 재개하는 데 쓰인다 */
+  effectIndex: number;
 };
 
 type EffectHandler = (state: GameState, effect: CardEffect, ctx: EffectContext) => GameState;
@@ -134,6 +155,20 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
     const target = resolveTarget(effect, ctx.player);
     const amount = effect.value ?? 0;
     const t = state[target];
+
+    // 벤치 회복: characterHp만 올리고 활성 hp는 그대로 둔다.
+    // (벤치가 0이면 checkGameOver가 이미 패배 처리하므로 "부활" 상황은 생기지 않는다)
+    if (effect.character === "bench") {
+      const benchChar = getBenchChar(t);
+      if (benchChar === t.activeCharacter) return state; // 벤치 없음(단일 캐릭터)
+      return pushLog(
+        updateCombatant(state, target, {
+          characterHp: { ...t.characterHp, [benchChar]: (t.characterHp[benchChar] ?? 0) + amount },
+        }),
+        `${target} (Bench ${benchChar}) heals ${amount}`,
+      );
+    }
+
     const newHp = t.hp + amount;
     return pushLog(
       updateCombatant(state, target, { hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } }),
@@ -273,6 +308,8 @@ function makePendingSelection(
     toPosition: sel.toPosition,
     sourcePlayer: ctx.player,
     sourceCardId: ctx.cardId,
+    // 선택을 끝낸 뒤 이 카드의 다음 효과부터 이어서 처리한다
+    resumeEffectIndex: ctx.effectIndex + 1,
     resolveItems: ctx.resolveItems,
     resolveNextIndex: ctx.resolveNextIndex,
     unresolvedPlayers: ctx.unresolved.filter((p) => p !== ctx.player),
@@ -287,7 +324,7 @@ function applyEffect(state: GameState, effect: CardEffect, ctx: EffectContext): 
 
 /** 캐릭터 진입/퇴장 효과용 컨텍스트 (카드 선택형 효과는 pauseable=false로 무동작). */
 function tagEffectContext(player: PlayerId): EffectContext {
-  return { player, cardId: "", pauseable: false, resolveItems: [], resolveNextIndex: 0, unresolved: [player] };
+  return { player, cardId: "", pauseable: false, resolveItems: [], resolveNextIndex: 0, unresolved: [player], effectIndex: 0 };
 }
 
 /* -------------------------- */
@@ -356,40 +393,52 @@ export function applyCardEffectsWithPause(
   resolveItems: { player: PlayerId; cardId: string }[],
   resolveNextIndex: number,
   currentUnresolved: PlayerId[],
+  /**
+   * 이 인덱스의 효과부터 적용한다 (기본 0 = 처음부터).
+   * 0보다 크면 선택 대기에서 재개하는 경로다 — 공격 스탯은 이미 처리됐으므로
+   * 다시 적용하면 데미지가 이중으로 들어간다. 그래서 1~2단계를 건너뛴다.
+   */
+  startEffectIndex = 0,
 ): GameState {
   const card = getCard(cardId);
   if (!card) return state;
 
-  let s = pushLog(state, `${player} resolves "${card.name}"`);
+  let s = state;
 
-  // 1) 공격 스탯 타격 — 적중 여부를 상태에 기록한다.
-  //    적중은 오직 이 단계로만 성립하며, 뒤따르는 damage 효과의 체력 차감은
-  //    적중으로 취급되지 않는다 (resolve의 이니셔티브/어드밴티지/카운터 판정 입력).
-  const attack = applyAttackStats(s, player, card);
-  s = { ...attack.state, attackLanded: attack.landed, attackConnected: attack.connected };
+  if (startEffectIndex === 0) {
+    s = pushLog(state, `${player} resolves "${card.name}"`);
 
-  if (attack.connected) {
-    s = checkGameOver(s);
-    if (s.phase === "GAME_OVER") return s;
+    // 1) 공격 스탯 타격 — 적중 여부를 상태에 기록한다.
+    //    적중은 오직 이 단계로만 성립하며, 뒤따르는 damage 효과의 체력 차감은
+    //    적중으로 취급되지 않는다 (resolve의 이니셔티브/어드밴티지/카운터 판정 입력).
+    const attack = applyAttackStats(s, player, card);
+    s = { ...attack.state, attackLanded: attack.landed, attackConnected: attack.connected };
+
+    if (attack.connected) {
+      s = checkGameOver(s);
+      if (s.phase === "GAME_OVER") return s;
+    }
+
+    // 2) 태그 효과 제외 공격 카드는 타격이 성립해야 추가 효과가 발동한다.
+    const isTagAttack = card.cardType === "attack" && card.effects.some((e) => e.type === "tag");
+    if (card.cardType === "attack" && !isTagAttack && !attack.connected) {
+      return pushLog(s, `${player}'s attack missed — bonus effects skipped`);
+    }
   }
 
-  // 2) 태그 효과 제외 공격 카드는 타격이 성립해야 추가 효과가 발동한다.
-  const isTagAttack = card.cardType === "attack" && card.effects.some((e) => e.type === "tag");
-  if (card.cardType === "attack" && !isTagAttack && !attack.connected) {
-    return pushLog(s, `${player}'s attack missed — bonus effects skipped`);
-  }
+  // 효과마다 ctx를 새로 만든다 — effectIndex가 선택 대기 시 재개 지점이 된다
+  for (let i = startEffectIndex; i < card.effects.length; i++) {
+    const ctx: EffectContext = {
+      player,
+      cardId,
+      pauseable: true,
+      resolveItems,
+      resolveNextIndex,
+      unresolved: currentUnresolved,
+      effectIndex: i,
+    };
 
-  const ctx: EffectContext = {
-    player,
-    cardId,
-    pauseable: true,
-    resolveItems,
-    resolveNextIndex,
-    unresolved: currentUnresolved,
-  };
-
-  for (const effect of card.effects) {
-    s = applyEffect(s, effect, ctx);
+    s = applyEffect(s, card.effects[i], ctx);
     if (s.phase === "WAITING_SELECTION") return s;
     s = checkGameOver(s);
     if (s.phase === "GAME_OVER") return s;
@@ -437,7 +486,7 @@ export function deriveCardStats(state: GameState, player: PlayerId, cardId: stri
 export function getCardPlayability(state: GameState, player: PlayerId, cardId: string): CardPlayability {
   const card = getCard(cardId);
   if (!card) {
-    return { playable: false, effectiveCost: 0, costOk: false, conditionMet: false, affinityMet: false, altCostOk: false };
+    return { playable: false, effectiveCost: 0, costOk: false, conditionMet: false, affinityMet: false, altCostOk: false, additionalCostOk: false };
   }
   const me = state[player];
 
@@ -472,17 +521,33 @@ export function getCardPlayability(state: GameState, player: PlayerId, cardId: s
   if (card.useCondition === "ground") conditionMet = me.airborneStack === 0;
   else if (card.useCondition === "airborne") conditionMet = me.airborneStack >= 1;
 
-  const playable = costOk && affinityMet && altCostOk && conditionMet;
-  return { playable, effectiveCost, costOk, conditionMet, affinityMet, altCostOk };
+  // additionalCost: 요구 카드가 지정 영역에 충분히 있는지
+  const additionalCostOk = hasAdditionalCost(state, player, card);
+
+  const playable = costOk && affinityMet && altCostOk && conditionMet && additionalCostOk;
+  return { playable, effectiveCost, costOk, conditionMet, affinityMet, altCostOk, additionalCostOk };
 }
 
 /**
- * 덱 코스트를 제외한 규칙 자격(어피니티·altCost·useCondition)만 검사한다.
+ * additionalCost가 요구하는 카드가 모두 갖춰졌는지.
+ * 요구가 없으면 항상 true.
+ */
+export function hasAdditionalCost(state: GameState, player: PlayerId, card: Card): boolean {
+  if (!card.additionalCost) return true;
+  const me = state[player];
+  return card.additionalCost.requires.every((req) => {
+    const zone = me[req.zone] as string[];
+    return zone.filter((id) => id === req.cardId).length >= req.count;
+  });
+}
+
+/**
+ * 덱 코스트를 제외한 규칙 자격(어피니티·altCost·additionalCost·useCondition)만 검사한다.
  * 코스트 지불은 queueCard가 별도로 처리하므로 기존 동작을 유지한다.
  */
 export function canUseCard(state: GameState, player: PlayerId, cardId: string): boolean {
   const p = getCardPlayability(state, player, cardId);
-  return p.affinityMet && p.altCostOk && p.conditionMet;
+  return p.affinityMet && p.altCostOk && p.conditionMet && p.additionalCostOk;
 }
 
 /** 코스트까지 포함해 실제로 사용 가능한지. */

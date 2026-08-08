@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACTION_TAG_TO_POSE } from "./types";
+import { ACTION_TAG_TO_POSE, CARD_TAGS } from "./types";
 
 const ACTION_TAG_KEYS = Object.keys(ACTION_TAG_TO_POSE) as [
   keyof typeof ACTION_TAG_TO_POSE,
@@ -9,10 +9,8 @@ export const ActionTagSchema = z.enum(ACTION_TAG_KEYS);
 
 export const HitPoseSchema = z.enum(["hit_weak", "hit_strong", "hit_aerial"]);
 
-export const CardTagSchema = z.enum([
-  "마법", "격투", "구룡권", "독", "마나", "특공인법", "혈계권", "혈계", "제압투척구 3형",
-  "검술", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기", "필살", "준비", "암기", "power",
-]);
+/** 태그 목록의 단일 진실원은 types.ts의 CARD_TAGS — 새 태그는 그쪽에만 추가한다 */
+export const CardTagSchema = z.enum(CARD_TAGS);
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
@@ -22,6 +20,9 @@ export const EffectTypeSchema = z.enum([
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);
 
 export const TargetSchema = z.enum(["self", "enemy"]);
+
+/** heal 대상 캐릭터 — 미지정 시 활성 캐릭터 */
+export const HealCharacterSchema = z.enum(["active", "bench"]);
 
 export const CardZoneSchema = z.enum(["hand", "deck", "trash", "cooldown", "queue"]);
 
@@ -90,6 +91,7 @@ export const CardEffectSchema = z.object({
   tag: CardTagSchema.optional(),
   zone: CardZoneSchema.optional(),
   cardId: z.string().optional(),
+  character: HealCharacterSchema.optional(),
 });
 
 /**
@@ -107,7 +109,7 @@ const CardEffectStrictSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("damage"), value: z.number().int().min(1), damageType: DamageTypeSchema.optional(), target: TargetSchema.optional() }),
   z.object({ type: z.literal("block"), value: z.number().int().min(1), target: TargetSchema.optional() }),
   z.object({ type: z.literal("draw"), value: z.number().int().min(1), target: TargetSchema.optional() }),
-  z.object({ type: z.literal("heal"), value: z.number().int().min(1), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("heal"), value: z.number().int().min(1), target: TargetSchema.optional(), character: HealCharacterSchema.optional() }),
   z.object({ type: z.literal("buff_attack"), value: z.number().int().min(1), target: TargetSchema.optional() }),
   z.object({ type: z.literal("tag"), target: TargetSchema.optional() }),
   z.object({ type: z.literal("airborne"), value: z.number().int().min(0), target: TargetSchema.optional() }),
@@ -157,6 +159,15 @@ export const AltCostMoveCardsSchema = z.object({
 });
 
 export const AltCostSchema = z.union([AltCostHpSchema, AltCostMoveCardsSchema]);
+
+export const AdditionalCostSchema = z.object({
+  requires: z.array(z.object({
+    cardId: z.string().min(1),
+    zone: CardZoneSchema,
+    count: z.number().int().min(1),
+  })).min(1),
+  consumeTo: CardZoneSchema,
+});
 
 export const HitTimingSchema = z.object({
   frame: z.number().int().min(0),
@@ -214,6 +225,8 @@ const CardObjectSchema = z.object({
   knockback: z.boolean().optional(),
   statModifiers: z.array(StatModifierSchema).optional(),
   altCost: AltCostSchema.optional(),
+  additionalCost: AdditionalCostSchema.optional(),
+  generateOnly: z.boolean().optional(),
 });
 
 export const CardSchema = z.preprocess(acceptLegacyCardKeys, CardObjectSchema);

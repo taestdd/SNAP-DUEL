@@ -6,7 +6,7 @@ import Link from "next/link";
 import styles from "./CardEditor.module.css";
 import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { AltCost, AltCostMoveCards, CardEffect, CardType, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
+import type { AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
 
 const ACTION_TAGS = ActionTagSchema.options;
 
@@ -189,6 +189,8 @@ export default function CardEditor({ initial, mode }: Props) {
   // meleeAttack은 미지정 = true가 기본 (원거리 카드만 false 저장)
   const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? true);
   const [knockback, setKnockback] = useState(initial?.knockback ?? false);
+  const [generateOnly, setGenerateOnly] = useState(initial?.generateOnly ?? false);
+  const [additionalCost, setAdditionalCost] = useState<AdditionalCost | null>(initial?.additionalCost ?? null);
   const [statModifiers, setStatModifiers] = useState<StatModifier[]>(initial?.statModifiers ?? []);
   const [altCost, setAltCost] = useState<AltCost | null>(initial?.altCost ?? null);
   const [saving, setSaving] = useState(false);
@@ -319,6 +321,8 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(knockback ? { knockback: true } : {}),
       ...(statModifiers.length > 0 ? { statModifiers } : {}),
       ...(altCost ? { altCost } : {}),
+      ...(additionalCost && additionalCost.requires.length > 0 ? { additionalCost } : {}),
+      ...(generateOnly ? { generateOnly: true } : {}),
     };
 
     try {
@@ -620,6 +624,95 @@ export default function CardEditor({ initial, mode }: Props) {
             )}
           </div>
 
+          {/* 요구 카드 코스트 (additionalCost) */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>요구 카드 코스트 (additionalCost)</div>
+            <div className={styles.hint}>
+              지정한 카드가 해당 영역에 있어야 사용 가능하고, 사용 시 그 카드들을 소모합니다.
+              조건이 안 맞으면 핸드에서 사용 불가로 표시됩니다.
+            </div>
+            {additionalCost ? (
+              <>
+                {additionalCost.requires.map((req, i) => (
+                  <ItemCard
+                    key={i}
+                    title={`요구 #${i + 1}`}
+                    onRemove={() => {
+                      const next = additionalCost.requires.filter((_, j) => j !== i);
+                      setAdditionalCost(next.length > 0 ? { ...additionalCost, requires: next } : null);
+                    }}
+                  >
+                    <div className={styles.row}>
+                      <div className={styles.field}>
+                        <label className={styles.label}>카드 ID</label>
+                        <input
+                          className={styles.input}
+                          value={req.cardId}
+                          placeholder="arm_shield"
+                          onChange={(e) => {
+                            const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, cardId: e.target.value } : r);
+                            setAdditionalCost({ ...additionalCost, requires });
+                          }}
+                        />
+                      </div>
+                      <SelectField
+                        label="영역"
+                        value={req.zone}
+                        onChange={(v) => {
+                          const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, zone: v as CardZone } : r);
+                          setAdditionalCost({ ...additionalCost, requires });
+                        }}
+                      >
+                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                      </SelectField>
+                      <NumericField
+                        label="장수"
+                        min={1}
+                        value={req.count}
+                        onChange={(n) => {
+                          const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, count: Math.max(1, n) } : r);
+                          setAdditionalCost({ ...additionalCost, requires });
+                        }}
+                      />
+                    </div>
+                  </ItemCard>
+                ))}
+                <div className={styles.row}>
+                  <SelectField
+                    label="소모 후 이동 영역"
+                    value={additionalCost.consumeTo}
+                    onChange={(v) => setAdditionalCost({ ...additionalCost, consumeTo: v as CardZone })}
+                  >
+                    {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                  </SelectField>
+                </div>
+                <div className={styles.row}>
+                  <button
+                    type="button"
+                    className={styles.addBtn}
+                    onClick={() => setAdditionalCost({
+                      ...additionalCost,
+                      requires: [...additionalCost.requires, { cardId: "", zone: "cooldown", count: 1 }],
+                    })}
+                  >
+                    + 요구 카드 추가
+                  </button>
+                  <button type="button" className={styles.removeBtn} onClick={() => setAdditionalCost(null)}>
+                    additionalCost 제거
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className={styles.addBtn}
+                onClick={() => setAdditionalCost({ requires: [{ cardId: "", zone: "cooldown", count: 1 }], consumeTo: "trash" })}
+              >
+                + additionalCost 추가
+              </button>
+            )}
+          </div>
+
           {/* 발동 조건 */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>발동 조건</div>
@@ -771,6 +864,16 @@ export default function CardEditor({ initial, mode }: Props) {
                   onChange={(e) => setKnockback(e.target.checked)}
                 />
                 넉백 — 타격 후 상대를 밀어내 비근접 상태로
+              </label>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={generateOnly}
+                  onChange={(e) => setGenerateOnly(e.target.checked)}
+                />
+                생성 전용 — 효과로만 등장하며 덱 구축에 넣을 수 없음 (파츠·토큰)
               </label>
             </div>
             <div className={styles.row} style={{ marginTop: 12 }}>

@@ -51,7 +51,10 @@ export default function DeckEditor({ initial, mode }: Props) {
 
   const totalCards = Object.values(deckCounts).reduce((s, c) => s + c, 0);
 
-  const filteredCards = allCards.filter((c) =>
+  // generateOnly 카드(파츠·토큰 등)는 효과로만 등장하므로 덱 구축 대상에서 제외한다
+  const buildableCards = allCards.filter((c) => !c.generateOnly);
+
+  const filteredCards = buildableCards.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.id.toLowerCase().includes(search.toLowerCase())
   );
@@ -214,7 +217,7 @@ export default function DeckEditor({ initial, mode }: Props) {
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <span className={styles.panelTitle}>카드 풀</span>
-              <span className={styles.panelCount}>{allCards.length}종</span>
+              <span className={styles.panelCount}>{buildableCards.length}종</span>
             </div>
             <input
               className={styles.searchInput}

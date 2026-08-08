@@ -6,8 +6,9 @@ export const CharacterDefSchema = z.object({
   name: z.string().min(1),
   maxHp: z.number().int().min(1),
   spriteId: z.string().min(1),
-  entryEffect: CardEffectSchema.nullable(),
-  exitEffect: CardEffectSchema.nullable(),
+  // 단일 효과(기존 데이터)와 배열을 모두 허용 — 효과 여러 개가 필요한 캐릭터가 있다
+  entryEffect: z.union([CardEffectSchema, z.array(CardEffectSchema)]).nullable(),
+  exitEffect: z.union([CardEffectSchema, z.array(CardEffectSchema)]).nullable(),
   affinities: z.array(z.string()),
 });
 
