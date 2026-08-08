@@ -1,4 +1,4 @@
-import type { Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, GameState, PendingSelection, PlayerId } from "./types";
+import type { Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, EffectType, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -43,7 +43,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 
   // 1. 탈출 효과
   if (currentDef.exitEffect) {
-    s = applySingleEffect(s, player, currentDef.exitEffect);
+    s = applyEffect(s, currentDef.exitEffect, tagEffectContext(player));
     if (s.phase === "GAME_OVER") return s;
     s = updateCombatant(s, player, { characterHp: { ...s[player].characterHp, [currentChar]: s[player].hp } });
   }
@@ -56,7 +56,7 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 
   // 3. 진입 효과
   if (newDef.entryEffect) {
-    s = applySingleEffect(s, player, newDef.entryEffect);
+    s = applyEffect(s, newDef.entryEffect, tagEffectContext(player));
     if (s.phase === "GAME_OVER") return s;
   }
 
@@ -64,109 +64,221 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
 }
 
 /* -------------------------- */
-/* 단일 효과 적용              */
+/* 효과 디스패치 (단일 레지스트리) */
 /* -------------------------- */
 
-function applySingleEffect(state: GameState, player: PlayerId, effect: CardEffect): GameState {
-  const target =
-    effect.target === "self" ? player
+/**
+ * 효과 핸들러가 받는 실행 컨텍스트.
+ * pauseable=false(캐릭터 진입/퇴장 효과 등)일 때 카드 선택형 효과(draw_tagged/move_cards)는
+ * 무동작으로 보존한다 — 기존 applySingleEffect의 default(no-op) 동작과 동일.
+ */
+type EffectContext = {
+  player: PlayerId;
+  cardId: string;
+  pauseable: boolean;
+  resolveItems: { player: PlayerId; cardId: string }[];
+  resolveNextIndex: number;
+  unresolved: PlayerId[];
+};
+
+type EffectHandler = (state: GameState, effect: CardEffect, ctx: EffectContext) => GameState;
+
+/** effect.target(self/enemy) → 실제 대상 플레이어. 미지정 시 self(사용자). */
+function resolveTarget(effect: CardEffect, player: PlayerId): PlayerId {
+  return effect.target === "self" ? player
     : effect.target === "enemy" ? opponentOf(player)
     : player;
+}
 
-  switch (effect.type) {
-    case "damage": {
-      const dt = effect.damageType;
-      const targetStack = state[target].airborneStack;
+/** 모든 효과 타입의 단일 처리 지점. 새 효과는 여기에만 한 줄 추가한다. */
+const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
+  damage: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const dt = effect.damageType;
+    const targetStack = state[target].airborneStack;
 
-      if (dt === "ground" && targetStack >= 1) {
-        return pushLog(state, `Damage (ground) blocked — ${target} is airborne`);
-      }
-      if (dt === "anti-air" && targetStack === 0) {
-        return pushLog(state, `Damage (anti-air) missed — ${target} is grounded`);
-      }
-
-      const amount = effect.value ?? 0;
-      const bonus = state[player].status.attackBuff ?? 0;
-      const total = amount + bonus;
-
-      const next = dealDamage(state, target, total, dt ? `Damage(${dt})` : "Damage");
-      return clearAttackBuff(next, player);
+    if (dt === "ground" && targetStack >= 1) {
+      return pushLog(state, `Damage (ground) blocked — ${target} is airborne`);
+    }
+    if (dt === "anti-air" && targetStack === 0) {
+      return pushLog(state, `Damage (anti-air) missed — ${target} is grounded`);
     }
 
-    case "block": {
-      const amount = effect.value ?? 0;
-      return pushLog(
-        updateCombatant(state, target, { block: state[target].block + amount }),
-        `${target} gains ${amount} Block`,
-      );
+    const amount = effect.value ?? 0;
+    const bonus = state[ctx.player].status.attackBuff ?? 0;
+    const next = dealDamage(state, target, amount + bonus, dt ? `Damage(${dt})` : "Damage");
+    return clearAttackBuff(next, ctx.player);
+  },
+
+  block: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const amount = effect.value ?? 0;
+    return pushLog(
+      updateCombatant(state, target, { block: state[target].block + amount }),
+      `${target} gains ${amount} Block`,
+    );
+  },
+
+  draw: (state, effect, ctx) => draw(state, resolveTarget(effect, ctx.player), effect.value ?? 0),
+
+  heal: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const amount = effect.value ?? 0;
+    const t = state[target];
+    const newHp = t.hp + amount;
+    return pushLog(
+      updateCombatant(state, target, { hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } }),
+      `${target} (Char ${t.activeCharacter}) heals ${amount}`,
+    );
+  },
+
+  buff_attack: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const amount = effect.value ?? 0;
+    return pushLog(
+      updateStatus(state, target, { attackBuff: (state[target].status.attackBuff ?? 0) + amount }),
+      `${target} gains ATK +${amount}`,
+    );
+  },
+
+  tag: (state, _effect, ctx) => applyTagSwitch(state, ctx.player),
+
+  airborne: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const stack = effect.value ?? 0;
+    const prevStack = state[target].airborneStack;
+    return pushLog(
+      updateCombatant(state, target, { airborneStack: stack }),
+      `${target} airborne ${prevStack}→${stack}`,
+    );
+  },
+
+  shuffle: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const zone = effect.zone ?? "deck";
+    const arr = state[target][zone] as string[];
+    if (arr.length === 0) return pushLog(state, `${target} shuffles ${zone} (empty)`);
+    const [shuffled, nextRng] = shuffleSeeded([...arr], state.rng);
+    return pushLog(
+      { ...state, rng: nextRng, [target]: { ...state[target], [zone]: shuffled } } as GameState,
+      `${target} shuffles ${zone}`,
+    );
+  },
+
+  generate: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const genCardId = effect.cardId;
+    if (!genCardId) return state;
+    const genCard = getCard(genCardId);
+    if (!genCard) return pushLog(state, `generate: unknown card "${genCardId}"`);
+
+    const count = effect.count ?? 1;
+    const toZone = effect.toZone ?? "hand";
+    const toPosition = effect.toPosition ?? "bottom";
+    const generated = Array.from({ length: count }, () => genCardId);
+
+    const targetArr = state[target][toZone] as string[];
+    const [newArr, nextRng] = insertCards(targetArr, generated, toZone, toPosition, state.rng);
+
+    let s = { ...state, rng: nextRng, [target]: { ...state[target], [toZone]: newArr } } as GameState;
+    if (toZone === "deck") s = syncExhausted(s, target);
+    return pushLog(s, `${target} generates ${count}x "${genCard.name}" → ${toZone}`);
+  },
+
+  draw_tagged: (state, effect, ctx) => {
+    // 진입/퇴장 효과 등 일시정지 불가 컨텍스트에서는 무동작 (기존 default no-op 보존)
+    if (!ctx.pauseable) return state;
+    const tag = effect.tag;
+    if (!tag) return state;
+
+    const { player } = ctx;
+    const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+    const zone: CardZone = effect.zone ?? "deck";
+    const count = effect.value ?? 1;
+
+    const pool = state[fromPlayerId][zone] as string[];
+    const candidates = pool.filter((id) => getCard(id)?.tags?.includes(tag));
+
+    if (player === "P1") {
+      return { ...state, phase: "WAITING_SELECTION", pendingSelection: makePendingSelection(ctx, {
+        candidates, count, fromZone: zone, fromPlayerId, toZone: "hand", toPlayerId: player, toPosition: "bottom",
+      }) };
     }
 
-    case "draw":
-      return draw(state, target, effect.value ?? 0);
+    const autoSelected = candidates.slice(0, count);
+    const moved = moveCardsBetweenZones(state, fromPlayerId, zone, player, "hand", autoSelected, "bottom");
+    return pushLog(moved, `${player} draw_tagged [${tag}] ${autoSelected.length} card(s) from ${zone}`);
+  },
 
-    case "heal": {
-      const amount = effect.value ?? 0;
-      const t = state[target];
-      const newHp = t.hp + amount;
-      return pushLog(
-        updateCombatant(state, target, { hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } }),
-        `${target} (Char ${t.activeCharacter}) heals ${amount}`,
-      );
+  move_cards: (state, effect, ctx) => {
+    // 진입/퇴장 효과 등 일시정지 불가 컨텍스트에서는 무동작 (기존 default no-op 보존)
+    if (!ctx.pauseable) return state;
+
+    const { player } = ctx;
+    const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
+    const toPlayerId: PlayerId = (effect.toTarget ?? effect.target) === "enemy" ? opponentOf(player) : player;
+    const fromZone: CardZone = effect.fromZone ?? "trash";
+    const toZone: CardZone = effect.toZone ?? "hand";
+    const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
+    const count = effect.count ?? 1;
+
+    const allCards = state[fromPlayerId][fromZone] as string[];
+    const candidates = effect.tag
+      ? allCards.filter((id) => getCard(id)?.tags?.includes(effect.tag!))
+      : allCards;
+
+    if (effect.userSelects) {
+      return { ...state, phase: "WAITING_SELECTION", pendingSelection: makePendingSelection(ctx, {
+        candidates, count, fromZone, fromPlayerId, toZone, toPlayerId, toPosition,
+      }) };
     }
 
-    case "buff_attack": {
-      const amount = effect.value ?? 0;
-      return pushLog(
-        updateStatus(state, target, { attackBuff: (state[target].status.attackBuff ?? 0) + amount }),
-        `${target} gains ATK +${amount}`,
-      );
-    }
+    const autoSelected = candidates.slice(0, count);
+    if (autoSelected.length === 0) return state;
+    const moved = moveCardsBetweenZones(state, fromPlayerId, fromZone, toPlayerId, toZone, autoSelected, toPosition);
+    return pushLog(moved, `${player} moves ${autoSelected.length} card(s) from ${fromZone} to ${toZone}`);
+  },
+};
 
-    case "tag":
-      return applyTagSwitch(state, player);
+/** WAITING_SELECTION 진입 시 PendingSelection 구성 — draw_tagged/move_cards 공통. */
+function makePendingSelection(
+  ctx: EffectContext,
+  sel: {
+    candidates: string[];
+    count: number;
+    fromZone: CardZone;
+    fromPlayerId: PlayerId;
+    toZone: CardZone;
+    toPlayerId: PlayerId;
+    toPosition: DeckInsertPosition;
+  },
+): PendingSelection {
+  return {
+    selectingPlayer: ctx.player,
+    candidates: [...sel.candidates],
+    count: sel.count,
+    fromZone: sel.fromZone,
+    fromPlayerId: sel.fromPlayerId,
+    toZone: sel.toZone,
+    toPlayerId: sel.toPlayerId,
+    toPosition: sel.toPosition,
+    sourcePlayer: ctx.player,
+    sourceCardId: ctx.cardId,
+    resolveItems: ctx.resolveItems,
+    resolveNextIndex: ctx.resolveNextIndex,
+    unresolvedPlayers: ctx.unresolved.filter((p) => p !== ctx.player),
+  };
+}
 
-    case "airborne": {
-      const stack = effect.value ?? 0;
-      const prevStack = state[target].airborneStack;
-      return pushLog(
-        updateCombatant(state, target, { airborneStack: stack }),
-        `${target} airborne ${prevStack}→${stack}`,
-      );
-    }
+/** 단일 효과를 레지스트리로 디스패치. */
+function applyEffect(state: GameState, effect: CardEffect, ctx: EffectContext): GameState {
+  const handler = EFFECT_HANDLERS[effect.type];
+  return handler ? handler(state, effect, ctx) : state;
+}
 
-    case "shuffle": {
-      const zone = effect.zone ?? "deck";
-      const arr = state[target][zone] as string[];
-      if (arr.length === 0) return pushLog(state, `${target} shuffles ${zone} (empty)`);
-      const [shuffled, nextRng] = shuffleSeeded([...arr], state.rng);
-      return pushLog(
-        { ...state, rng: nextRng, [target]: { ...state[target], [zone]: shuffled } } as GameState,
-        `${target} shuffles ${zone}`,
-      );
-    }
-
-    case "generate": {
-      const genCardId = effect.cardId;
-      if (!genCardId) return state;
-      const genCard = getCard(genCardId);
-      if (!genCard) return pushLog(state, `generate: unknown card "${genCardId}"`);
-
-      const count = effect.count ?? 1;
-      const toZone = effect.toZone ?? "hand";
-      const toPosition = effect.toPosition ?? "bottom";
-      const generated = Array.from({ length: count }, () => genCardId);
-
-      const targetArr = state[target][toZone] as string[];
-      const [newArr, nextRng] = insertCards(targetArr, generated, toZone, toPosition, state.rng);
-
-      let s = { ...state, rng: nextRng, [target]: { ...state[target], [toZone]: newArr } } as GameState;
-      if (toZone === "deck") s = syncExhausted(s, target);
-      return pushLog(s, `${target} generates ${count}x "${genCard.name}" → ${toZone}`);
-    }
-
-    default:
-      return state;
-  }
+/** 캐릭터 진입/퇴장 효과용 컨텍스트 (카드 선택형 효과는 pauseable=false로 무동작). */
+function tagEffectContext(player: PlayerId): EffectContext {
+  return { player, cardId: "", pauseable: false, resolveItems: [], resolveNextIndex: 0, unresolved: [player] };
 }
 
 /* -------------------------- */
@@ -220,83 +332,18 @@ export function applyCardEffectsWithPause(
     return pushLog(s, `${player}'s attack missed — bonus effects skipped`);
   }
 
+  const ctx: EffectContext = {
+    player,
+    cardId,
+    pauseable: true,
+    resolveItems,
+    resolveNextIndex,
+    unresolved: currentUnresolved,
+  };
+
   for (const effect of card.effects) {
-    if (effect.type === "draw_tagged") {
-      const tag = effect.tag;
-      if (!tag) continue;
-      const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
-      const zone: CardZone = effect.zone ?? "deck";
-      const count = effect.value ?? 1;
-
-      const pool = s[fromPlayerId][zone] as string[];
-      const candidates = pool.filter((id) => getCard(id)?.tags?.includes(tag));
-
-      if (player === "P1") {
-        const pendingSelection: PendingSelection = {
-          selectingPlayer: player,
-          candidates: [...candidates],
-          count,
-          fromZone: zone,
-          fromPlayerId,
-          toZone: "hand",
-          toPlayerId: player,
-          toPosition: "bottom",
-          sourcePlayer: player,
-          sourceCardId: cardId,
-          resolveItems,
-          resolveNextIndex,
-          unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
-        };
-        return { ...s, phase: "WAITING_SELECTION", pendingSelection };
-      }
-
-      const autoSelected = candidates.slice(0, count);
-      s = moveCardsBetweenZones(s, fromPlayerId, zone, player, "hand", autoSelected, "bottom");
-      s = pushLog(s, `${player} draw_tagged [${tag}] ${autoSelected.length} card(s) from ${zone}`);
-      continue;
-    }
-
-    if (effect.type === "move_cards") {
-      const fromPlayerId: PlayerId = effect.target === "enemy" ? opponentOf(player) : player;
-      const toPlayerId: PlayerId = (effect.toTarget ?? effect.target) === "enemy" ? opponentOf(player) : player;
-      const fromZone: CardZone = effect.fromZone ?? "trash";
-      const toZone: CardZone = effect.toZone ?? "hand";
-      const toPosition: DeckInsertPosition = effect.toPosition ?? "bottom";
-      const count = effect.count ?? 1;
-
-      const allCards = s[fromPlayerId][fromZone] as string[];
-      const candidates = effect.tag
-        ? allCards.filter((id) => getCard(id)?.tags?.includes(effect.tag!))
-        : allCards;
-
-      if (effect.userSelects) {
-        const pendingSelection: PendingSelection = {
-          selectingPlayer: player,
-          candidates: [...candidates],
-          count,
-          fromZone,
-          fromPlayerId,
-          toZone,
-          toPlayerId,
-          toPosition,
-          sourcePlayer: player,
-          sourceCardId: cardId,
-          resolveItems,
-          resolveNextIndex,
-          unresolvedPlayers: currentUnresolved.filter((p) => p !== player),
-        };
-        return { ...s, phase: "WAITING_SELECTION", pendingSelection };
-      }
-
-      const autoSelected = candidates.slice(0, count);
-      if (autoSelected.length > 0) {
-        s = moveCardsBetweenZones(s, fromPlayerId, fromZone, toPlayerId, toZone, autoSelected, toPosition);
-        s = pushLog(s, `${player} moves ${autoSelected.length} card(s) from ${fromZone} to ${toZone}`);
-      }
-      continue;
-    }
-
-    s = applySingleEffect(s, player, effect);
+    s = applyEffect(s, effect, ctx);
+    if (s.phase === "WAITING_SELECTION") return s;
     s = checkGameOver(s);
     if (s.phase === "GAME_OVER") return s;
   }

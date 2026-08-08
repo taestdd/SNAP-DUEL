@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CardSchema, CardsRecordSchema } from "@/game/engine/cardSchema";
+import { CardSchema, CardsRecordSchema, CardStrictSchema } from "@/game/engine/cardSchema";
 
 /**
  * 구 필드명(speed/gain) 읽기 호환 검증.
@@ -73,5 +73,57 @@ describe("CardSchema 구 필드명 읽기 호환", () => {
     void _d;
     void _a;
     expect(CardSchema.safeParse(missing).success).toBe(false);
+  });
+});
+
+/**
+ * 엄격 작성 스키마(CardStrictSchema) — 효과 타입별 필수 필드 검증.
+ * 어드민 저장/임포트 경로에서만 사용. 읽기(CardSchema)는 관대함을 유지한다.
+ */
+const STRICT_BASE = { id: "sc", name: "Strict Card", cost: 0, delay: 1, advantage: 0, text: "" };
+
+describe("CardStrictSchema 엄격 작성 검증", () => {
+  it("유효한 효과는 통과한다", () => {
+    const ok = CardStrictSchema.safeParse({ ...STRICT_BASE, effects: [
+      { type: "damage", value: 3, target: "enemy" },
+      { type: "generate", cardId: "jab", count: 2 },
+      { type: "draw_tagged", tag: "마법", value: 1 },
+    ] });
+    expect(ok.success).toBe(true);
+  });
+
+  it("damage에 value가 없으면 실패한다", () => {
+    const bad = CardStrictSchema.safeParse({ ...STRICT_BASE, effects: [{ type: "damage", target: "enemy" }] });
+    expect(bad.success).toBe(false);
+  });
+
+  it("generate에 cardId가 없으면 실패한다", () => {
+    const bad = CardStrictSchema.safeParse({ ...STRICT_BASE, effects: [{ type: "generate", count: 1 }] });
+    expect(bad.success).toBe(false);
+  });
+
+  it("draw_tagged에 tag가 없으면 실패한다", () => {
+    const bad = CardStrictSchema.safeParse({ ...STRICT_BASE, effects: [{ type: "draw_tagged", value: 1 }] });
+    expect(bad.success).toBe(false);
+  });
+
+  it("airborne value 0(착지)은 유효하다", () => {
+    const ok = CardStrictSchema.safeParse({ ...STRICT_BASE, effects: [{ type: "airborne", value: 0, target: "self" }] });
+    expect(ok.success).toBe(true);
+  });
+
+  it("구 필드명(speed/gain) 호환 preprocess는 엄격 스키마에도 적용된다", () => {
+    // 신 키(delay/advantage) 우선 원칙이 있으므로 구 키만 있는 카드로 검증
+    const { delay: _d, advantage: _a, ...legacyBase } = STRICT_BASE;
+    void _d; void _a;
+    const parsed = CardStrictSchema.parse({ ...legacyBase, speed: 4, gain: 2, effects: [] });
+    expect(parsed.delay).toBe(4);
+    expect(parsed.advantage).toBe(2);
+  });
+
+  it("읽기용 CardSchema는 value 없는 damage도 관대하게 수용한다", () => {
+    // 엄격 스키마는 거부하지만 읽기 경로는 기존 데이터 호환을 위해 통과시킨다
+    const lenient = CardSchema.safeParse({ ...STRICT_BASE, effects: [{ type: "damage", target: "enemy" }] });
+    expect(lenient.success).toBe(true);
   });
 });

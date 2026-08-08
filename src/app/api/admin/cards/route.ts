@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { CardSchema } from "@/game/engine/cardSchema";
+import { CardStrictSchema } from "@/game/engine/cardSchema";
 import { z } from "zod";
 
 export async function GET() {
@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const parsed = CardSchema.safeParse(body);
+    const parsed = CardStrictSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }

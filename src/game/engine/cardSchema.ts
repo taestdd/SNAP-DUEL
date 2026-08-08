@@ -72,6 +72,54 @@ export const CardEffectSchema = z.object({
   cardId: z.string().optional(),
 });
 
+/**
+ * 엄격 작성(write)용 효과 스키마 — 효과 타입별 필수 필드를 강제하는 판별 유니온.
+ * 어드민 저장·CSV 임포트 등 "새로 쓰는" 경로에서만 사용한다.
+ * 읽기(CardEffectSchema)는 기존 Firestore 데이터 호환을 위해 관대하게 유지한다.
+ *
+ * 미지정 시 무동작(no-op)이 되는 필드만 필수로 지정:
+ *   - value가 없으면 0 → 무의미해지는 효과(damage/block/draw/heal/buff_attack)
+ *   - airborne.value는 0(착지)도 유효하므로 min(0)
+ *   - generate.cardId / draw_tagged.tag는 없으면 완전 무동작 → 필수
+ * (알 수 없는 키는 discriminatedUnion 기본 동작대로 제거됨 — 폼 잔여 필드 허용)
+ */
+const CardEffectStrictSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("damage"), value: z.number().int().min(1), damageType: DamageTypeSchema.optional(), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("block"), value: z.number().int().min(1), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("draw"), value: z.number().int().min(1), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("heal"), value: z.number().int().min(1), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("buff_attack"), value: z.number().int().min(1), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("tag"), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("airborne"), value: z.number().int().min(0), target: TargetSchema.optional() }),
+  z.object({ type: z.literal("shuffle"), zone: CardZoneSchema.optional(), target: TargetSchema.optional() }),
+  z.object({
+    type: z.literal("generate"),
+    cardId: z.string().min(1),
+    count: z.number().int().min(1).optional(),
+    toZone: CardZoneSchema.optional(),
+    toPosition: DeckInsertPositionSchema.optional(),
+    target: TargetSchema.optional(),
+  }),
+  z.object({
+    type: z.literal("draw_tagged"),
+    tag: CardTagSchema,
+    value: z.number().int().min(1).optional(),
+    zone: CardZoneSchema.optional(),
+    target: TargetSchema.optional(),
+  }),
+  z.object({
+    type: z.literal("move_cards"),
+    fromZone: CardZoneSchema.optional(),
+    toZone: CardZoneSchema.optional(),
+    toPosition: DeckInsertPositionSchema.optional(),
+    count: z.number().int().min(1).optional(),
+    tag: CardTagSchema.optional(),
+    userSelects: z.boolean().optional(),
+    target: TargetSchema.optional(),
+    toTarget: TargetSchema.optional(),
+  }),
+]);
+
 export const AltCostHpSchema = z.object({
   type: z.literal("hp"),
   amount: z.number().int().min(1),
@@ -153,3 +201,14 @@ export const CardSchema = z.preprocess(acceptLegacyCardKeys, CardObjectSchema);
 export const CardsRecordSchema = z.record(z.string(), CardSchema);
 
 export type CardSchemaType = z.infer<typeof CardSchema>;
+
+/**
+ * 엄격 작성용 카드 스키마 — effects를 타입별 필수 필드가 강제되는 판별 유니온으로 검증.
+ * 읽기용 CardSchema와 필드 구성은 동일하되 effects 검증만 엄격하다.
+ * 구 필드명(speed/gain) 호환 preprocess는 그대로 적용된다.
+ */
+const CardStrictObjectSchema = CardObjectSchema.extend({
+  effects: z.array(CardEffectStrictSchema).default([]),
+});
+
+export const CardStrictSchema = z.preprocess(acceptLegacyCardKeys, CardStrictObjectSchema);
