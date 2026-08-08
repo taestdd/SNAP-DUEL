@@ -35,6 +35,41 @@ function visualHits(events: CombatAnimationEvent[]): CombatAnimationEvent[] {
   return events.filter((e) => e.type === "visual_hit");
 }
 
+/**
+ * 가드 히트 — 스윙은 닿았지만(landed) 블록에 전부 흡수돼 체력이 안 깎인 경우(!connected).
+ * 히트스탑·흔들림은 재생하되 피격 포즈는 생략하도록 guarded 플래그가 실려야 한다.
+ */
+describe("가드 히트 (landed / connected 분리)", () => {
+  const timing = [{ frame: 1, ground: "hit_weak", airborne: "hit_weak", freeze: 100, zoom: 1.1 }] as Card["hitTimings"];
+  const hpData = (landed: boolean, connected: boolean) => ({
+    hpAfter: { P1: 30, AI: 30 }, attackLanded: landed, attackConnected: connected,
+  });
+
+  it("블록에 전부 막히면 visual_hit이 나되 guarded=true", () => {
+    const events = makeQueue(attackCard(timing), null, "player", 0, 0, 0, 0, "a", "a", hpData(true, false));
+    const hits = visualHits(events);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].guarded).toBe(true);
+  });
+
+  it("체력이 깎인 온전한 타격은 guarded=false", () => {
+    const events = makeQueue(attackCard(timing), null, "player", 0, 0, 0, 0, "a", "a", hpData(true, true));
+    expect(visualHits(events)[0].guarded).toBe(false);
+  });
+
+  it("스윙이 빗나가면 visual_hit 자체가 없다", () => {
+    const events = makeQueue(attackCard(timing), null, "player", 0, 0, 0, 0, "a", "a", hpData(false, false));
+    expect(visualHits(events)).toHaveLength(0);
+  });
+
+  it("엔진 판정이 없으면 카드 스탯 추정으로 폴백한다 (종전 동작)", () => {
+    const events = makeQueue(attackCard(timing), null, "player", 0, 0, 0, 0, "a", "a");
+    const hits = visualHits(events);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].guarded).toBe(false);
+  });
+});
+
 describe("frame → ms 환산", () => {
   it("frame 1은 fps 10 포즈에서 100ms에 발화한다", () => {
     const card = attackCard([{ frame: 1, ground: "hit_weak", airborne: "hit_weak", freeze: 100, zoom: 1.1 }]);

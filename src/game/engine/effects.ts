@@ -92,6 +92,18 @@ function resolveTarget(effect: CardEffect, player: PlayerId): PlayerId {
 
 /** 모든 효과 타입의 단일 처리 지점. 새 효과는 여기에만 한 줄 추가한다. */
 const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
+  /**
+   * damage 효과 — "순수 체력 차감". 공격(attack)과는 별개의 개념이다.
+   *
+   * 공격과 달리 의도적으로 다음을 **하지 않는다**:
+   *  - attackBuff를 참조하지 않는다 (합산도, 소모도 없음) — 버프는 공격 전용
+   *  - statModifiers 보정을 받지 않는다 (보정 대상 스탯은 공격력뿐)
+   *  - 적중으로 취급되지 않는다 → 이니셔티브/어드밴티지/카운터를 유발하지 못한다
+   *  - 핸드의 스탯 표시(deriveCardStats)에 집계되지 않는다
+   *
+   * 그 대가로 대상이 자유롭고(self/enemy), 스킬 카드에도 자연스럽게 실린다.
+   * damageType은 버프가 아니라 이 효과 자체의 조준 조건(지상/대공)이다.
+   */
   damage: (state, effect, ctx) => {
     const target = resolveTarget(effect, ctx.player);
     const dt = effect.damageType;
@@ -104,10 +116,7 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
       return pushLog(state, `Damage (anti-air) missed — ${target} is grounded`);
     }
 
-    const amount = effect.value ?? 0;
-    const bonus = state[ctx.player].status.attackBuff ?? 0;
-    const next = dealDamage(state, target, amount + bonus, dt ? `Damage(${dt})` : "Damage");
-    return clearAttackBuff(next, ctx.player);
+    return dealDamage(state, target, effect.value ?? 0, dt ? `Damage(${dt})` : "Damage");
   },
 
   block: (state, effect, ctx) => {
@@ -282,6 +291,56 @@ function tagEffectContext(player: PlayerId): EffectContext {
 }
 
 /* -------------------------- */
+/* 공격 스탯 데미지            */
+/* -------------------------- */
+
+/**
+ * 공격(attack) 스탯 데미지 — damage 효과와 구분되는 "타격" 개념.
+ *
+ * damage 효과와 달리 다음을 모두 수행한다:
+ *  - statModifiers의 ground_attack / anti_air_attack 보정을 반영
+ *  - attackBuff를 합산한 뒤 소모(clearAttackBuff)
+ *  - 연결되면 적중으로 취급 → 이니셔티브/어드밴티지/카운터의 트리거가 된다
+ *  - 핸드 표시(deriveCardStats)와 같은 식(base + mods + attackBuff)을 사용
+ *
+ * 지상/대공 선택은 카드가 고르는 게 아니라 **대상의 체공 상태**가 결정한다.
+ *
+ * 결과를 두 단계로 구분해 돌려준다 — 규칙과 연출이 서로 다른 기준을 쓰기 때문:
+ * @returns landed    — 스윙이 대상에 닿았는지 (체공 조건 통과 + 실효 공격력 > 0).
+ *                      블록에 전부 막혀도 true. → 연출용(가드 임팩트·거리 전이)
+ * @returns connected — 실제로 체력을 깎았는지(=적중). 블록에 전부 흡수되면 false.
+ *                      → 규칙용(카운터·주도권·어드밴티지·콤보·피격 포즈)
+ */
+function applyAttackStats(
+  state: GameState,
+  player: PlayerId,
+  card: Card,
+): { state: GameState; landed: boolean; connected: boolean } {
+  if (card.cardType !== "attack") return { state, landed: false, connected: false };
+
+  const opponent = opponentOf(player);
+  const targetAirborne = state[opponent].airborneStack;
+  const attackBuff = state[player].status.attackBuff ?? 0;
+  const mods = evaluateModifiers(state, player, card.statModifiers);
+  const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0));
+  const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0));
+
+  const swing =
+    groundAtk > 0 && targetAirborne === 0 ? { amount: groundAtk, label: "Ground" }
+    : antiAirAtk > 0 && targetAirborne >= 1 ? { amount: antiAirAtk, label: "Anti-Air" }
+    : null;
+
+  if (!swing) return { state, landed: false, connected: false };
+
+  const hpBefore = state[opponent].hp;
+  let s = dealDamage(state, opponent, Math.max(0, swing.amount + attackBuff), swing.label);
+  s = clearAttackBuff(s, player);
+
+  // 스윙은 닿았다(landed). 다만 블록에 전부 흡수되면 체력이 그대로 → 적중은 아님
+  return { state: s, landed: true, connected: s[opponent].hp < hpBefore };
+}
+
+/* -------------------------- */
 /* 카드 효과 순차 적용          */
 /* -------------------------- */
 
@@ -303,32 +362,20 @@ export function applyCardEffectsWithPause(
 
   let s = pushLog(state, `${player} resolves "${card.name}"`);
 
-  const opponent = opponentOf(player);
-  const hpBeforeAttack = s[opponent].hp;
+  // 1) 공격 스탯 타격 — 적중 여부를 상태에 기록한다.
+  //    적중은 오직 이 단계로만 성립하며, 뒤따르는 damage 효과의 체력 차감은
+  //    적중으로 취급되지 않는다 (resolve의 이니셔티브/어드밴티지/카운터 판정 입력).
+  const attack = applyAttackStats(s, player, card);
+  s = { ...attack.state, attackLanded: attack.landed, attackConnected: attack.connected };
 
-  if (card.cardType === "attack") {
-    const targetAirborne = s[opponent].airborneStack;
-    const attackBuff = s[player].status.attackBuff ?? 0;
-    const mods = evaluateModifiers(s, player, card.statModifiers);
-    const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0));
-    const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0));
-
-    if (groundAtk > 0 && targetAirborne === 0) {
-      s = dealDamage(s, opponent, Math.max(0, groundAtk + attackBuff), "Ground");
-      s = clearAttackBuff(s, player);
-      s = checkGameOver(s);
-      if (s.phase === "GAME_OVER") return s;
-    } else if (antiAirAtk > 0 && targetAirborne >= 1) {
-      s = dealDamage(s, opponent, Math.max(0, antiAirAtk + attackBuff), "Anti-Air");
-      s = clearAttackBuff(s, player);
-      s = checkGameOver(s);
-      if (s.phase === "GAME_OVER") return s;
-    }
+  if (attack.connected) {
+    s = checkGameOver(s);
+    if (s.phase === "GAME_OVER") return s;
   }
 
-  // 태그 효과 제외 공격 카드는 데미지가 1 이상 들어가야 추가 효과 발동
+  // 2) 태그 효과 제외 공격 카드는 타격이 성립해야 추가 효과가 발동한다.
   const isTagAttack = card.cardType === "attack" && card.effects.some((e) => e.type === "tag");
-  if (card.cardType === "attack" && !isTagAttack && s[opponent].hp >= hpBeforeAttack) {
+  if (card.cardType === "attack" && !isTagAttack && !attack.connected) {
     return pushLog(s, `${player}'s attack missed — bonus effects skipped`);
   }
 

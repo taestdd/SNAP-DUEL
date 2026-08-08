@@ -194,18 +194,22 @@ describe("기타 헬퍼", () => {
     const s = clearAttackBuff(makeState({ P1: { status: { attackBuff: 5 } } }), "P1");
     expect(s.P1.status.attackBuff).toBe(0);
   });
-  it("didDirectAttackHit: 공격으로 HP 감소 시 true", () => {
-    const before = makeState();
-    const after = dealDamage(before, "AI", 5);
-    expect(didDirectAttackHit(before, after, "P1", "jab")).toBe(true);
+  it("didDirectAttackHit: 공격 스탯이 연결되면 true", () => {
+    const s = { ...makeState(), attackConnected: true };
+    expect(didDirectAttackHit(s, "P1", "jab")).toBe(true);
   });
   it("didDirectAttackHit: 태그 효과 공격은 제외", () => {
-    const before = makeState();
-    const after = dealDamage(before, "AI", 5);
-    expect(didDirectAttackHit(before, after, "P1", "tag_strike")).toBe(false);
+    const s = { ...makeState(), attackConnected: true };
+    expect(didDirectAttackHit(s, "P1", "tag_strike")).toBe(false);
   });
-  it("didDirectAttackHit: HP 변화 없으면 false", () => {
-    const s = makeState();
-    expect(didDirectAttackHit(s, s, "P1", "jab")).toBe(false);
+  it("didDirectAttackHit: 공격 스탯이 연결되지 않으면 false", () => {
+    const s = { ...makeState(), attackConnected: false };
+    expect(didDirectAttackHit(s, "P1", "jab")).toBe(false);
+  });
+  it("didDirectAttackHit: damage 효과로 HP가 줄어도 적중이 아니다", () => {
+    // damage는 순수 체력 차감 — 적중(이니셔티브/어드밴티지/카운터)을 유발하지 못한다
+    const s = { ...dealDamage(makeState(), "AI", 5), attackConnected: false };
+    expect(s.AI.hp).toBeLessThan(makeState().AI.hp);
+    expect(didDirectAttackHit(s, "P1", "jab")).toBe(false);
   });
 });

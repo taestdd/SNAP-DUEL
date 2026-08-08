@@ -79,6 +79,17 @@ describe("applyCardEffectsWithPause — 스킬/효과", () => {
     const s = apply(makeState(), "P1", "zap");
     expect(s.AI.hp).toBe(26); // 30 - 4
   });
+  it("damage 효과는 attackBuff를 더하지도, 소모하지도 않는다", () => {
+    // damage는 순수 체력 차감 — 버프는 공격(attack) 스탯 전용이다
+    const s = apply(makeState({ P1: { status: { attackBuff: 3 } } }), "P1", "zap");
+    expect(s.AI.hp).toBe(26); // 버프 미적용 (30 - 4)
+    expect(s.P1.status.attackBuff).toBe(3); // 버프 유지
+  });
+  it("damage 효과는 적중이 아니다 — 이니셔티브가 넘어가지 않는다", () => {
+    const s = apply(makeState({ initiative: "AI" }), "P1", "zap");
+    expect(s.AI.hp).toBe(26); // 체력은 깎였지만
+    expect(s.attackConnected).toBe(false); // 적중은 아님
+  });
   it("generate: 카드를 손패에 생성", () => {
     const s = apply(makeState({ P1: { hand: [] } }), "P1", "make_jab");
     expect(s.P1.hand).toEqual(["jab", "jab"]);

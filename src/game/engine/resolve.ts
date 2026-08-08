@@ -101,19 +101,20 @@ function resolveAll(state: GameState): GameState {
     const target = opponentOf(it.player);
     const actorAirborne = s[it.player].airborneStack;
     const targetAirborne = s[target].airborneStack;
-    const beforeStep = s;
 
     s = applyCardEffectsWithPause(s, it.player, it.cardId, items, idx + 1, [...unresolved]);
 
     if (s.phase === "WAITING_SELECTION") {
       animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
-        hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
+        hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
+        attackLanded: s.attackLanded, attackConnected: s.attackConnected });
       return { ...s, animScript };
     }
 
     if (s.phase === "GAME_OVER") {
       animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
-        hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
+        hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
+        attackLanded: s.attackLanded, attackConnected: s.attackConnected });
       if (animScript.length > 0) {
         return { ...s, phase: "ANIMATING", resolveContext: emptyResolveContext(), animScript };
       }
@@ -126,7 +127,7 @@ function resolveAll(state: GameState): GameState {
     let counteredPlayerByThisCard: PlayerId | undefined;
     let comboAfterThisCard: number | undefined;
     let comboHolderAfterThisCard: PlayerId | undefined;
-    const hit = didDirectAttackHit(beforeStep, s, it.player, it.cardId);
+    const hit = didDirectAttackHit(s, it.player, it.cardId);
     if (hit) {
       const hadInitiative = s.initiative === it.player;
       s = applyInitiativeOnHit(s, it.player);
@@ -148,6 +149,9 @@ function resolveAll(state: GameState): GameState {
       cardId: it.cardId,
       actorAirborne,
       targetAirborne,
+      // 연출이 카드 스탯으로 적중을 재계산하지 않도록 엔진 판정을 그대로 싣는다
+      attackLanded: s.attackLanded,
+      attackConnected: s.attackConnected,
       hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
       counteredPlayer: counteredPlayerByThisCard,
       comboAfter: comboAfterThisCard,
