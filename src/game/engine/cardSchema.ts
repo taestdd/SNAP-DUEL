@@ -43,18 +43,38 @@ export const StatTargetSchema = z.enum([
   "cost", "delay", "ground_attack", "anti_air_attack", "advantage",
 ]);
 
-export const ModifierConditionSchema = z.object({
+export const StatSourceSchema = z.object({
   check: ConditionCheckSchema,
   target: TargetSchema,
+});
+
+export const ModifierConditionSchema = StatSourceSchema.extend({
   op: CompareOpSchema,
   value: z.number().int(),
 });
 
-export const StatModifierSchema = z.object({
+/** 임계값 보정 — mode 생략 시 이 형태로 해석 (기존 Firestore 카드 호환) */
+export const ThresholdModifierSchema = z.object({
+  mode: z.literal("threshold").optional(),
   condition: ModifierConditionSchema,
   stat: StatTargetSchema,
   delta: z.number().int(),
 });
+
+/** 비례 보정 — delta = clamp(trunc((source - baseline) * perUnit / divisor), min, max) */
+export const ScalingModifierSchema = z.object({
+  mode: z.literal("scaling"),
+  source: StatSourceSchema,
+  stat: StatTargetSchema,
+  perUnit: z.number().int(),
+  baseline: z.number().int().optional(),
+  divisor: z.number().int().min(1).optional(),
+  min: z.number().int().optional(),
+  max: z.number().int().optional(),
+});
+
+/** scaling을 먼저 시도 — mode 리터럴로 갈리므로 구 카드는 threshold로 안전하게 떨어진다 */
+export const StatModifierSchema = z.union([ScalingModifierSchema, ThresholdModifierSchema]);
 
 export const CardEffectSchema = z.object({
   type: EffectTypeSchema,

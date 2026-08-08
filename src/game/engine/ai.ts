@@ -1,6 +1,6 @@
 import type { Card, GameState, PlayerId } from "./types";
 import { getAllCards, getCard } from "./cards";
-import { getPlayableCards, getBenchChar, opponentOf } from "./rules";
+import { getPlayableCards, getBenchChar, opponentOf, deriveCardStats } from "./rules";
 
 function getMinAttackDelay(): number {
   const delays = Object.values(getAllCards())
@@ -13,22 +13,30 @@ function getMinAttackDelay(): number {
  * 상대의 현재 airborne 상태를 기반으로 실제로 적중할 데미지만 계산한다.
  * ground 타입은 상대가 체공 중이면 0, anti-air 타입은 상대가 지상이면 0.
  */
-/** 카드가 데미지를 줄 수 있는지 — 공격 스탯 또는 damage 효과 보유 여부. */
-function dealsDamage(card: Card): boolean {
+/**
+ * 카드가 데미지를 줄 수 있는지 — 실효 공격 스탯 또는 damage 효과 보유 여부.
+ *
+ * base가 아니라 deriveCardStats(실효 스탯)로 판단해야 한다.
+ * 비례 보정 카드는 base 공격력이 0이고 보정으로만 공격력이 생기므로,
+ * base만 보면 "공격 카드가 아니다"로 오판한다.
+ */
+function dealsDamage(state: GameState, player: PlayerId, card: Card): boolean {
+  const stats = deriveCardStats(state, player, card.id);
   return (
-    (card.groundAttack ?? 0) > 0 ||
-    (card.antiAirAttack ?? 0) > 0 ||
+    stats.groundAttack > 0 ||
+    stats.antiAirAttack > 0 ||
     card.effects.some((e) => e.type === "damage")
   );
 }
 
-function effectiveDamage(card: Card, oppAirborneStack: number): number {
+function effectiveDamage(state: GameState, player: PlayerId, card: Card, oppAirborneStack: number): number {
   let total = 0;
 
-  // 공격 스탯(groundAttack/antiAirAttack)이 실제 데미지 모델 — 엔진(effects.ts)과 일치.
+  // 실효 공격 스탯(statModifiers·attackBuff 반영)이 실제 데미지 모델 — 엔진(effects.ts)과 일치.
   // ground는 상대가 지상일 때만, anti-air는 상대가 공중일 때만 적중.
-  if (oppAirborneStack === 0) total += card.groundAttack ?? 0;
-  if (oppAirborneStack >= 1) total += card.antiAirAttack ?? 0;
+  const stats = deriveCardStats(state, player, card.id);
+  if (oppAirborneStack === 0) total += stats.groundAttack;
+  if (oppAirborneStack >= 1) total += stats.antiAirAttack;
 
   // effects 배열의 damage 타입은 보너스 데미지로 추가 집계.
   for (const effect of card.effects) {
@@ -66,7 +74,7 @@ function scoreCard(state: GameState, cardId: string, player: PlayerId): number {
   // 실효 데미지 × 코스트 할인 가중치
   // 코스트가 높을수록 카드 1장당 데미지 가치가 감소 (덱 자원 대비 효율 반영)
   // cost-3 카드: ×7, cost-5 카드: ×5, 아이템(effDmg=0): 영향 없음
-  const effDmg = effectiveDamage(card, oppAirborne);
+  const effDmg = effectiveDamage(state, player, card, oppAirborne);
   score += effDmg * Math.max(1, 10 - card.cost);
 
   // 속도: 낮을수록 먼저 행동 → 카운터 위험 감소
@@ -167,7 +175,7 @@ function oppFastestAttackDelay(state: GameState, player: PlayerId): number {
     for (const cardId of opp.queue) {
       const card = getCard(cardId);
       if (!card) continue;
-      if (!dealsDamage(card)) continue;
+      if (!dealsDamage(state, opponentOf(player), card)) continue;
       fastest = Math.min(fastest, Math.max(0, card.delay - oppBonus));
     }
     return fastest;
@@ -212,14 +220,14 @@ export function selectCard(
   const best = candidates[0];
   const bestCard = getCard(best.id)!;
   const myEffDelay = Math.max(0, bestCard.delay - (me.status.delayAdvantage ?? 0));
-  const isAttack = dealsDamage(bestCard);
+  const isAttack = dealsDamage(state, player, bestCard);
 
   // 패스 판단: 공격 카드인데 주도권 없고 상대 최속 공격보다 느리거나 같으면 카운터 확정
   if (isAttack && state.initiative !== player && myEffDelay > oppFastestAttackDelay(state, player)) {
     // 공격 대신 아이템 카드(카운터 불가)가 있으면 그것을 사용
     const safeCard = candidates.find(({ id }) => {
       const c = getCard(id);
-      return c && !dealsDamage(c);
+      return c && !dealsDamage(state, player, c);
     });
     return safeCard ?? null;
   }
@@ -250,7 +258,7 @@ export function selectDraftCards(
     if (!card) return { id, score: -Infinity };
 
     let score = 0;
-    const effDmg = effectiveDamage(card, oppAirborne);
+    const effDmg = effectiveDamage(state, player, card, oppAirborne);
     score += effDmg * Math.max(1, 10 - card.cost);
     score -= card.delay * 1.5;
     score += (card.advantage ?? 0) * 5;

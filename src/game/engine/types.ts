@@ -259,19 +259,59 @@ export type CompareOp = "<" | ">" | "=";
 /** StatModifier가 보정할 카드 스탯 */
 export type StatTarget = "cost" | "delay" | "ground_attack" | "anti_air_attack" | "advantage";
 
-export type ModifierCondition = {
+/** 게임 상태에서 읽어올 수치의 출처 (누구의 무엇을 볼 것인가) */
+export type StatSource = {
   check: ConditionCheck;
   target: "self" | "enemy";
+};
+
+export type ModifierCondition = StatSource & {
   op: CompareOp;
   value: number;
 };
 
-/** 조건부 스탯 보정 — 조건 충족 시 delta를 해당 스탯에 누적 적용. 최종값 0 고정 */
-export type StatModifier = {
+/** 임계값 보정 — 조건 충족 시 고정 delta. mode 생략 = threshold (기존 카드 호환) */
+export type ThresholdModifier = {
+  mode?: "threshold";
   condition: ModifierCondition;
   stat: StatTarget;
   delta: number;
 };
+
+/**
+ * 비례 보정 — 소스 수치에 비례해 보정치를 산출한다.
+ *
+ *   delta = clamp(trunc((source - baseline) * perUnit / divisor), min, max)
+ *
+ * 예) "상대 손패 1장당 공격력 +1, 최대 +6"
+ *   { mode: "scaling", source: { check: "hand_count", target: "enemy" },
+ *     stat: "ground_attack", perUnit: 1, max: 6 }
+ *
+ * 예) "내 덱 2장당 딜레이 -1"
+ *   { mode: "scaling", source: { check: "deck_count", target: "self" },
+ *     stat: "delay", perUnit: -1, divisor: 2 }
+ *
+ * 나눗셈은 0 방향 버림(trunc)이라 부호에 대칭이다.
+ * 소스 값은 **리졸브 시점**에 다시 읽으므로, 핸드 표시는 그 시점의 추정치다.
+ */
+export type ScalingModifier = {
+  mode: "scaling";
+  source: StatSource;
+  stat: StatTarget;
+  /** 소스 1단위당 증감 (음수 = 소스가 클수록 약해짐) */
+  perUnit: number;
+  /** 이 값을 기준으로 차이만큼만 반영 (기본 0) */
+  baseline?: number;
+  /** N단위당 perUnit 적용 (기본 1). 0 이하는 1로 취급 */
+  divisor?: number;
+  /** 보정치 하한 — "초과분만 반영"처럼 한쪽 방향만 쓸 때 0으로 지정 */
+  min?: number;
+  /** 보정치 상한 — 밸런스 안전장치 */
+  max?: number;
+};
+
+/** 조건부 스탯 보정 — 결과 delta를 해당 스탯에 누적 적용. 최종 스탯은 0 하한 */
+export type StatModifier = ThresholdModifier | ScalingModifier;
 
 /** 카드 사용 가능 조건 */
 export type UseCondition =

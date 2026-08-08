@@ -106,6 +106,16 @@
   letter-spacing: 0.05em;
 }
 
+/* 비례 보정 식을 문장으로 되풀이해 보여주는 줄 — 입력값 검증용 */
+.hint {
+  font-size: 12px;
+  color: #7a9;
+  padding: 6px 8px;
+  background: #0f1a14;
+  border-left: 2px solid #2a5;
+  border-radius: 2px;
+}
+
 .input,
 .select,
 .textarea {
