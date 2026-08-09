@@ -376,3 +376,97 @@
   padding: 40px 0;
   font-size: 13px;
 }
+
+/* ─── 카드 풀: 어피니티 활성/비활성 · 타입 구분 ─────────────────────────── */
+
+/* 캐릭터 미지정 안내 / 필터 토글 — 검색창 바로 아래 한 줄 */
+.poolHint,
+.poolToggle {
+  font-size: 11px;
+  padding: 7px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.poolHint {
+  color: #666;
+}
+
+.poolToggle {
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 지정 캐릭터가 쓸 수 없는 카드 — 클릭 불가 */
+.cardRowDisabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.cardRowDisabled:hover {
+  background: transparent;
+}
+
+.addBtn:disabled {
+  background: #1a1a1a;
+  color: #444;
+  border-color: #2a2a2a;
+  cursor: not-allowed;
+}
+
+/* 공격 / 스킬 구분 배지 */
+.typeBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.typeBadgeAttack {
+  background: #3a1c1c;
+  color: #ff8a7a;
+  border: 1px solid #5a2a2a;
+}
+
+.typeBadgeSkill {
+  background: #17263a;
+  color: #7ab6ff;
+  border: 1px solid #274058;
+}
+
+/* 두 캐릭터 중 한쪽만 쓸 수 있는 카드 (태그 교체가 필요하다는 신호) */
+.charOnlyBadge {
+  font-size: 10px;
+  color: #c9a227;
+  border: 1px solid #4a3d12;
+  background: #2a2410;
+  border-radius: 2px;
+  padding: 2px 5px;
+  margin-left: 6px;
+}
+
+/* 덱에 담겨 있는데 지정 캐릭터가 못 쓰는 카드 */
+.deckCardRowWarn {
+  background: #2a1616;
+}
+
+.deckCardRowWarn:hover {
+  background: #331a1a;
+}
+
+.unusableBadge {
+  font-size: 10px;
+  color: #ff8a7a;
+  border: 1px solid #5a2a2a;
+  border-radius: 2px;
+  padding: 2px 5px;
+  margin-left: 6px;
+}

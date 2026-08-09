@@ -495,11 +495,7 @@ export function getCardPlayability(state: GameState, player: PlayerId, cardId: s
   const costOk = effectiveCost <= me.deck.length;
 
   // 어피니티: 카드 태그가 모두 캐릭터 어피니티에 포함되어야 함
-  let affinityMet = true;
-  if (card.tags && card.tags.length > 0) {
-    const charAffinities = CHARACTERS[me.activeCharacter].affinities;
-    affinityMet = card.tags.every((t) => charAffinities.includes(t));
-  }
+  const affinityMet = affinityAllows(card.tags, CHARACTERS[me.activeCharacter].affinities);
 
   // altCost: HP 또는 덱/묘지 카드 지불 가능 여부
   let altCostOk = true;
@@ -526,6 +522,18 @@ export function getCardPlayability(state: GameState, player: PlayerId, cardId: s
 
   const playable = costOk && affinityMet && altCostOk && conditionMet && additionalCostOk;
   return { playable, effectiveCost, costOk, conditionMet, affinityMet, altCostOk, additionalCostOk };
+}
+
+/**
+ * 어피니티 판정의 단일 진실원 — 카드 태그가 모두 캐릭터 어피니티에 포함되는가.
+ * 태그가 없는 카드는 누구나 쓸 수 있다.
+ *
+ * 게임 판정(getCardPlayability)과 어드민 덱 편집기가 **같은 함수**를 써야 한다.
+ * 어긋나면 "덱에는 넣었는데 게임에서 못 쓰는 카드"가 생긴다.
+ */
+export function affinityAllows(cardTags: readonly string[] | undefined, affinities: readonly string[]): boolean {
+  if (!cardTags || cardTags.length === 0) return true;
+  return cardTags.every((t) => affinities.includes(t));
 }
 
 /**

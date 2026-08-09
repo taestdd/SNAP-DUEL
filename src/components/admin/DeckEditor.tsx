@@ -7,8 +7,14 @@ import styles from "./DeckEditor.module.css";
 import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
+import { affinityAllows } from "@/game/engine/rules";
 
 const MIN_CARDS = 20;
+
+/** 어피니티 판정은 엔진의 단일 진실원(affinityAllows)에 위임한다 */
+function canCharacterUse(card: CardSchemaType, char: CharacterDefSchemaType): boolean {
+  return affinityAllows(card.tags, char.affinities);
+}
 
 interface Props {
   initial?: DeckSchemaType;
@@ -36,6 +42,7 @@ export default function DeckEditor({ initial, mode }: Props) {
 
   const [allCards, setAllCards] = useState<CardSchemaType[]>([]);
   const [search, setSearch] = useState("");
+  const [hideUnusable, setHideUnusable] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -54,10 +61,28 @@ export default function DeckEditor({ initial, mode }: Props) {
   // generateOnly 카드(파츠·토큰 등)는 효과로만 등장하므로 덱 구축 대상에서 제외한다
   const buildableCards = allCards.filter((c) => !c.generateOnly);
 
-  const filteredCards = buildableCards.filter((c) =>
+  // 지정된 캐릭터들 — 둘 중 누구든 쓸 수 있으면 덱에 넣을 수 있다 (태그로 교체해 쓰면 되므로)
+  const selectedChars = chars
+    .map((id) => availableChars.find((c) => c.id === id))
+    .filter((c): c is CharacterDefSchemaType => !!c);
+
+  /** 이 카드를 쓸 수 있는 지정 캐릭터 목록. 캐릭터 미지정이면 판정 불가라 빈 배열 */
+  function usersOf(card: CardSchemaType): CharacterDefSchemaType[] {
+    return selectedChars.filter((ch) => canCharacterUse(card, ch));
+  }
+
+  /** 캐릭터를 아직 안 골랐으면 제한하지 않는다 */
+  function isUsable(card: CardSchemaType): boolean {
+    return selectedChars.length === 0 || usersOf(card).length > 0;
+  }
+
+  const searched = buildableCards.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.id.toLowerCase().includes(search.toLowerCase())
   );
+
+  const usableCount = searched.filter(isUsable).length;
+  const filteredCards = hideUnusable ? searched.filter(isUsable) : searched;
 
   function addCard(cardId: string) {
     setDeckCounts((prev) => ({ ...prev, [cardId]: (prev[cardId] ?? 0) + 1 }));
@@ -217,7 +242,11 @@ export default function DeckEditor({ initial, mode }: Props) {
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <span className={styles.panelTitle}>카드 풀</span>
-              <span className={styles.panelCount}>{buildableCards.length}종</span>
+              <span className={styles.panelCount}>
+                {selectedChars.length > 0
+                  ? `사용 가능 ${usableCount} / ${searched.length}종`
+                  : `${searched.length}종`}
+              </span>
             </div>
             <input
               className={styles.searchInput}
@@ -225,20 +254,65 @@ export default function DeckEditor({ initial, mode }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {selectedChars.length === 0 ? (
+              <div className={styles.poolHint}>
+                캐릭터를 지정하면 그 캐릭터가 쓸 수 있는 카드만 활성화됩니다.
+              </div>
+            ) : (
+              <label className={styles.poolToggle}>
+                <input
+                  type="checkbox"
+                  checked={hideUnusable}
+                  onChange={(e) => setHideUnusable(e.target.checked)}
+                />
+                사용 불가 카드 숨기기
+              </label>
+            )}
             <div className={styles.cardList}>
-              {filteredCards.map((card) => (
-                <div key={card.id} className={styles.cardRow} onClick={() => addCard(card.id)}>
-                  <div className={styles.cardRowInfo}>
-                    <div className={styles.cardRowName}>{card.name}</div>
-                    <div className={styles.cardRowMeta}>
-                      코스트 {card.cost} · 딜레이 {card.delay} · {card.effects.map(e => e.type).join(", ")}
+              {filteredCards.map((card) => {
+                const users = usersOf(card);
+                const usable = isUsable(card);
+                const isAttack = card.cardType === "attack";
+                // 한쪽 캐릭터만 쓸 수 있으면 누구인지 알려준다 (태그 교체가 필요하다는 뜻)
+                const onlyOne = selectedChars.length === 2 && users.length === 1 ? users[0] : null;
+
+                return (
+                  <div
+                    key={card.id}
+                    className={`${styles.cardRow} ${usable ? "" : styles.cardRowDisabled}`}
+                    onClick={() => usable && addCard(card.id)}
+                    title={usable ? undefined : `${card.tags?.join(", ") ?? ""} — 지정 캐릭터의 어피니티에 없음`}
+                  >
+                    <div className={styles.cardRowInfo}>
+                      <div className={styles.cardRowName}>
+                        <span className={`${styles.typeBadge} ${isAttack ? styles.typeBadgeAttack : styles.typeBadgeSkill}`}>
+                          {isAttack ? "공격" : "스킬"}
+                        </span>
+                        {card.name}
+                        {onlyOne && <span className={styles.charOnlyBadge}>{onlyOne.name} 전용</span>}
+                      </div>
+                      <div className={styles.cardRowMeta}>
+                        코스트 {card.cost} · 딜레이 {card.delay}
+                        {isAttack && (card.groundAttack || card.antiAirAttack)
+                          ? ` · ${[
+                              card.groundAttack ? `지상 ${card.groundAttack}` : null,
+                              card.antiAirAttack ? `대공 ${card.antiAirAttack}` : null,
+                            ].filter(Boolean).join(" / ")}`
+                          : ""}
+                        {card.effects.length > 0 ? ` · ${card.effects.map((e) => e.type).join(", ")}` : ""}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      className={styles.addBtn}
+                      disabled={!usable}
+                      onClick={(ev) => { ev.stopPropagation(); addCard(card.id); }}
+                    >
+                      +
+                    </button>
                   </div>
-                  <button type="button" className={styles.addBtn} onClick={(ev) => { ev.stopPropagation(); addCard(card.id); }}>
-                    +
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -256,9 +330,19 @@ export default function DeckEditor({ initial, mode }: Props) {
               )}
               {deckEntries.map(([cardId, count]) => {
                 const card = allCards.find((c) => c.id === cardId);
+                // 캐릭터를 나중에 바꾸면 이미 담은 카드가 못 쓰게 될 수 있다 — 눈에 띄게 표시
+                const unusable = !!card && !isUsable(card);
                 return (
-                  <div key={cardId} className={styles.deckCardRow}>
-                    <div className={styles.deckCardName}>{card?.name ?? cardId}</div>
+                  <div key={cardId} className={`${styles.deckCardRow} ${unusable ? styles.deckCardRowWarn : ""}`}>
+                    <div className={styles.deckCardName}>
+                      {card && (
+                        <span className={`${styles.typeBadge} ${card.cardType === "attack" ? styles.typeBadgeAttack : styles.typeBadgeSkill}`}>
+                          {card.cardType === "attack" ? "공격" : "스킬"}
+                        </span>
+                      )}
+                      {card?.name ?? cardId}
+                      {unusable && <span className={styles.unusableBadge} title="지정 캐릭터가 쓸 수 없는 카드">사용 불가</span>}
+                    </div>
                     <div className={styles.countCtrl}>
                       <button type="button" className={styles.countBtn} onClick={() => changeCount(cardId, -1)}>−</button>
                       <span className={styles.countNum}>{count}</span>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyCardEffectsWithPause, getCardPlayability, canUseCard } from "@/game/engine/effects";
+import { applyCardEffectsWithPause, getCardPlayability, canUseCard, affinityAllows } from "@/game/engine/effects";
 import { resumeResolve } from "@/game/engine/resolve";
 import { queueCard } from "@/game/engine/turn";
 import { registerCards } from "@/game/engine/cards";
@@ -56,6 +56,7 @@ registerCards({
       consumeTo: "trash",
     },
   },
+  pf_tagged: { id: "pf_tagged", name: "태그 카드", cardType: "skill", cost: 0, delay: 1, advantage: 0, effects: [], text: "", tags: ["공안"] },
   arm_a: { id: "arm_a", name: "팔 A", cardType: "skill", cost: 0, delay: 0, advantage: 0, effects: [], text: "", generateOnly: true },
   arm_b: { id: "arm_b", name: "팔 B", cardType: "skill", cost: 0, delay: 0, advantage: 0, effects: [], text: "", generateOnly: true },
 });
@@ -236,5 +237,30 @@ describe("E. generateOnly", () => {
     const parsed = CardSchema.safeParse(card);
     expect(parsed.success).toBe(true);
     if (parsed.success) expect(parsed.data.generateOnly).toBeUndefined();
+  });
+});
+
+/* ── 어피니티 단일 진실원 (덱 편집기 == 게임 판정) ────────────────────── */
+describe("affinityAllows — 어피니티 판정 단일 진실원", () => {
+  it("태그가 없는 카드는 누구나 쓴다", () => {
+    expect(affinityAllows(undefined, [])).toBe(true);
+    expect(affinityAllows([], ["공안"])).toBe(true);
+  });
+
+  it("태그가 모두 포함돼야 통과한다", () => {
+    expect(affinityAllows(["공안"], ["공통", "공안", "나기"])).toBe(true);
+    expect(affinityAllows(["공안", "나기"], ["공통", "공안", "나기"])).toBe(true);
+    // 하나라도 빠지면 불가
+    expect(affinityAllows(["공안", "기계"], ["공통", "공안", "나기"])).toBe(false);
+    expect(affinityAllows(["기계"], ["공통", "공안", "나기"])).toBe(false);
+  });
+
+  it("게임 판정(getCardPlayability.affinityMet)과 결과가 일치한다", () => {
+    // 합성 캐릭터 p1_main의 affinities는 [] — 태그 있는 카드는 전부 불가여야 한다
+    const s = makeState({ phase: "SETUP_INIT", P1: { hand: ["pf_tagged"], deck: ["jab"] } });
+    const engine = getCardPlayability(s, "P1", "pf_tagged").affinityMet;
+    const ui = affinityAllows(["공안"], []);
+    expect(ui).toBe(engine);
+    expect(engine).toBe(false);
   });
 });
