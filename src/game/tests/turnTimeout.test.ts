@@ -110,7 +110,7 @@ describe("TURN/TIMEOUT — WAITING_* 페이즈", () => {
       selectingPlayer: "P1", candidates: ["a", "b"], count: 1,
       fromZone: "trash", fromPlayerId: "P1", toZone: "hand", toPlayerId: "P1",
       toPosition: "bottom", sourcePlayer: "P1", sourceCardId: "jab",
-      resolveItems: [], resolveNextIndex: 0, unresolvedPlayers: [],
+      resolveItems: [], resolveNextIndex: 0, unresolvedPlayers: [], resumeEffectIndex: 0,
     };
     const base = makeState({ phase: "WAITING_SELECTION", pendingSelection, P1: { trash: ["a", "b"] } });
     const byTimeout = gameReducer(base, { type: "TURN/TIMEOUT", player: "P1" });
@@ -123,7 +123,7 @@ describe("TURN/TIMEOUT — WAITING_* 페이즈", () => {
       selectingPlayer: "AI", candidates: [], count: 1,
       fromZone: "trash", fromPlayerId: "AI", toZone: "hand", toPlayerId: "AI",
       toPosition: "bottom", sourcePlayer: "AI", sourceCardId: "jab",
-      resolveItems: [], resolveNextIndex: 0, unresolvedPlayers: [],
+      resolveItems: [], resolveNextIndex: 0, unresolvedPlayers: [], resumeEffectIndex: 0,
     };
     const base = makeState({ phase: "WAITING_SELECTION", pendingSelection });
     expect(gameReducer(base, { type: "TURN/TIMEOUT", player: "P1" })).toBe(base);

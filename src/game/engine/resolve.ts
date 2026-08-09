@@ -210,6 +210,22 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
     s = pushLog(s, `${ps.sourcePlayer} returns ${selectedCards.length} card(s) from ${ps.fromZone} to ${ps.toZone}`);
   }
 
+  // 선택을 유발한 카드에 아직 안 처리된 효과가 남아 있으면 이어서 적용한다.
+  // (예: 회수 후 shuffle, userSelects 효과가 연속으로 있는 카드)
+  // 공격 스탯은 이미 처리됐으므로 startEffectIndex > 0 경로가 이를 건너뛴다.
+  s = applyCardEffectsWithPause(
+    s,
+    ps.sourcePlayer,
+    ps.sourceCardId,
+    ps.resolveItems,
+    ps.resolveNextIndex,
+    [ps.sourcePlayer, ...ps.unresolvedPlayers],
+    ps.resumeEffectIndex,
+  );
+
+  // 남은 효과가 또 선택을 요구하거나 게임이 끝났으면 여기서 멈춘다
+  if (s.phase === "WAITING_SELECTION" || s.phase === "GAME_OVER") return s;
+
   s = moveQueuedCard(s, ps.sourcePlayer, ps.sourceCardId, "cooldown");
 
   return resolveAll({

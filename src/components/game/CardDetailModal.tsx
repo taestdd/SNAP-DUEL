@@ -24,12 +24,27 @@ const STAT_LABEL: Record<string, string> = {
   advantage: "Advantage",
 };
 
+function signed(n: number): string {
+  return n >= 0 ? `+${n}` : `${n}`;
+}
+
 function modifierText(mod: StatModifier): string {
-  const { condition, stat, delta } = mod;
+  const statLabel = STAT_LABEL[mod.stat] ?? mod.stat;
+
+  if (mod.mode === "scaling") {
+    const who = mod.source.target === "enemy" ? "Enemy " : "";
+    const check = CHECK_LABEL[mod.source.check] ?? mod.source.check;
+    // "per 2 Hand" 처럼 몇 단위당인지 드러낸다 (divisor 1이면 생략)
+    const per = mod.divisor && mod.divisor > 1 ? `per ${mod.divisor} ${who}${check}` : `per ${who}${check}`;
+    const over = mod.baseline ? ` over ${mod.baseline}` : "";
+    const cap = mod.max !== undefined ? ` (max ${signed(mod.max)})` : "";
+    return `${per}${over} → ${statLabel} ${signed(mod.perUnit)}${cap}`;
+  }
+
+  const { condition } = mod;
   const who = condition.target === "enemy" ? "Enemy " : "";
   const check = CHECK_LABEL[condition.check] ?? condition.check;
-  const sign = delta >= 0 ? `+${delta}` : `${delta}`;
-  return `${who}${check} ${condition.op} ${condition.value} → ${STAT_LABEL[stat] ?? stat} ${sign}`;
+  return `${who}${check} ${condition.op} ${condition.value} → ${statLabel} ${signed(mod.delta)}`;
 }
 
 export default function CardDetailModal({

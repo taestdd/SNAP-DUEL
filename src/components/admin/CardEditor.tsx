@@ -6,7 +6,7 @@ import Link from "next/link";
 import styles from "./CardEditor.module.css";
 import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { AltCost, AltCostMoveCards, CardEffect, CardType, StatModifier } from "@/game/engine/types";
+import type { AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
 
 const ACTION_TAGS = ActionTagSchema.options;
 
@@ -89,6 +89,55 @@ function NumericField({
   );
 }
 
+/** 체크박스로 "미지정"을 표현하는 숫자 입력 — min/max처럼 생략 가능한 필드용 */
+function OptionalNumericField({
+  label,
+  value,
+  onChange,
+  fallback,
+  ...rest
+}: {
+  label: string;
+  value: number | undefined;
+  onChange: (n: number | undefined) => void;
+  /** 체크를 켤 때 채워 넣을 초기값 (HTML placeholder와 무관) */
+  fallback: number;
+} & Omit<React.ComponentProps<typeof NumericInput>, "value" | "onChange" | "className">) {
+  const enabled = value !== undefined;
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => onChange(e.target.checked ? fallback : undefined)}
+        />{" "}
+        {label}
+      </label>
+      <NumericInput
+        {...rest}
+        className={styles.input}
+        value={value ?? fallback}
+        onChange={(n) => { if (enabled) onChange(n); }}
+        disabled={!enabled}
+      />
+    </div>
+  );
+}
+
+/** 비례 보정을 사람이 읽는 문장으로 — 어드민에서 식을 눈으로 검증하기 위함 */
+function describeScaling(mod: ScalingModifier): string {
+  const who = mod.source.target === "enemy" ? "상대" : "자신";
+  const per = mod.divisor && mod.divisor > 1 ? `${mod.divisor}당` : "1당";
+  const sign = mod.perUnit >= 0 ? "+" : "";
+  const base = mod.baseline ? ` (기준선 ${mod.baseline} 초과분)` : "";
+  const bounds = [
+    mod.min !== undefined ? `하한 ${mod.min}` : null,
+    mod.max !== undefined ? `상한 ${mod.max}` : null,
+  ].filter(Boolean).join(", ");
+  return `${who} ${mod.source.check} ${per} ${mod.stat} ${sign}${mod.perUnit}${base}${bounds ? ` — ${bounds}` : ""}`;
+}
+
 function ItemCard({ title, onRemove, children }: {
   title: string;
   onRemove: () => void;
@@ -140,26 +189,72 @@ export default function CardEditor({ initial, mode }: Props) {
   // meleeAttack은 미지정 = true가 기본 (원거리 카드만 false 저장)
   const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? true);
   const [knockback, setKnockback] = useState(initial?.knockback ?? false);
+  const [generateOnly, setGenerateOnly] = useState(initial?.generateOnly ?? false);
+  const [additionalCost, setAdditionalCost] = useState<AdditionalCost | null>(initial?.additionalCost ?? null);
   const [statModifiers, setStatModifiers] = useState<StatModifier[]>(initial?.statModifiers ?? []);
   const [altCost, setAltCost] = useState<AltCost | null>(initial?.altCost ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  function addModifier() {
+  function addModifier(mode: "threshold" | "scaling") {
     setStatModifiers((prev) => [
       ...prev,
-      { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "delay", delta: -1 },
+      mode === "scaling"
+        ? { mode: "scaling", source: { check: "hand_count", target: "enemy" }, stat: "ground_attack", perUnit: 1 }
+        : { condition: { check: "hand_count", target: "self", op: "<", value: 3 }, stat: "delay", delta: -1 },
     ]);
   }
 
-  function updateModifier(index: number, patch: Partial<StatModifier>) {
+  /** 모드 전환 — 보정 스탯과 소스(대상·항목)는 유지하고 나머지는 기본값으로 재구성 */
+  function setModifierMode(index: number, mode: "threshold" | "scaling") {
+    setStatModifiers((prev) =>
+      prev.map((m, i) => {
+        if (i !== index) return m;
+        const src: StatSource = m.mode === "scaling"
+          ? m.source
+          : { check: m.condition.check, target: m.condition.target };
+
+        if (mode === "scaling") {
+          return m.mode === "scaling" ? m : { mode: "scaling", source: src, stat: m.stat, perUnit: 1 };
+        }
+        return m.mode === "scaling"
+          ? { condition: { ...src, op: ">", value: 0 }, stat: m.stat, delta: 1 }
+          : m;
+      })
+    );
+  }
+
+  /** 두 모드가 공통으로 갖는 필드(stat)만 패치 */
+  function updateModifier(index: number, patch: { stat: StatModifier["stat"] }) {
     setStatModifiers((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)));
   }
 
-  function updateModifierCondition(index: number, patch: Partial<StatModifier["condition"]>) {
+  function updateThreshold(index: number, patch: Partial<ThresholdModifier>) {
     setStatModifiers((prev) =>
-      prev.map((m, i) => i === index ? { ...m, condition: { ...m.condition, ...patch } } : m)
+      prev.map((m, i) => (i === index && m.mode !== "scaling" ? { ...m, ...patch } : m))
+    );
+  }
+
+  function updateScaling(index: number, patch: Partial<ScalingModifier>) {
+    setStatModifiers((prev) =>
+      prev.map((m, i) => (i === index && m.mode === "scaling" ? { ...m, ...patch } : m))
+    );
+  }
+
+  function updateModifierCondition(index: number, patch: Partial<ModifierCondition>) {
+    setStatModifiers((prev) =>
+      prev.map((m, i) =>
+        i === index && m.mode !== "scaling" ? { ...m, condition: { ...m.condition, ...patch } } : m
+      )
+    );
+  }
+
+  function updateModifierSource(index: number, patch: Partial<StatSource>) {
+    setStatModifiers((prev) =>
+      prev.map((m, i) =>
+        i === index && m.mode === "scaling" ? { ...m, source: { ...m.source, ...patch } } : m
+      )
     );
   }
 
@@ -226,6 +321,8 @@ export default function CardEditor({ initial, mode }: Props) {
       ...(knockback ? { knockback: true } : {}),
       ...(statModifiers.length > 0 ? { statModifiers } : {}),
       ...(altCost ? { altCost } : {}),
+      ...(additionalCost && additionalCost.requires.length > 0 ? { additionalCost } : {}),
+      ...(generateOnly ? { generateOnly: true } : {}),
     };
 
     try {
@@ -389,29 +486,65 @@ export default function CardEditor({ initial, mode }: Props) {
             {statModifiers.map((mod, i) => (
               <ItemCard key={i} title={`보정 #${i + 1}`} onRemove={() => removeModifier(i)}>
                 <div className={styles.row}>
-                  <SelectField label="조건 대상" value={mod.condition.target} onChange={(v) => updateModifierCondition(i, { target: v as "self" | "enemy" })}>
-                    <option value="self">self</option>
-                    <option value="enemy">enemy</option>
+                  <SelectField
+                    label="보정 방식"
+                    value={mod.mode === "scaling" ? "scaling" : "threshold"}
+                    onChange={(v) => setModifierMode(i, v as "threshold" | "scaling")}
+                  >
+                    <option value="threshold">임계값 (조건 충족 시 고정)</option>
+                    <option value="scaling">비례 (수치에 비례)</option>
                   </SelectField>
-                  <SelectField label="체크 항목" value={mod.condition.check} onChange={(v) => updateModifierCondition(i, { check: v as StatModifier["condition"]["check"] })}>
-                    {ConditionCheckSchema.options.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </SelectField>
-                  <SelectField label="연산자" value={mod.condition.op} onChange={(v) => updateModifierCondition(i, { op: v as "<" | ">" | "=" })}>
-                    {CompareOpSchema.options.map((op) => <option key={op} value={op}>{op}</option>)}
-                  </SelectField>
-                  <NumericField label="값" value={mod.condition.value} onChange={(n) => updateModifierCondition(i, { value: n })} />
-                </div>
-                <div className={styles.row}>
                   <SelectField label="보정 스탯" value={mod.stat} onChange={(v) => updateModifier(i, { stat: v as StatModifier["stat"] })}>
                     {StatTargetSchema.options.map((s) => <option key={s} value={s}>{s}</option>)}
                   </SelectField>
-                  <NumericField label="Delta" value={mod.delta} onChange={(n) => updateModifier(i, { delta: n })} />
                 </div>
+
+                {mod.mode === "scaling" ? (
+                  <>
+                    <div className={styles.row}>
+                      <SelectField label="소스 대상" value={mod.source.target} onChange={(v) => updateModifierSource(i, { target: v as "self" | "enemy" })}>
+                        <option value="self">self</option>
+                        <option value="enemy">enemy</option>
+                      </SelectField>
+                      <SelectField label="소스 항목" value={mod.source.check} onChange={(v) => updateModifierSource(i, { check: v as StatSource["check"] })}>
+                        {ConditionCheckSchema.options.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </SelectField>
+                      <NumericField label="1단위당 (perUnit)" value={mod.perUnit} onChange={(n) => updateScaling(i, { perUnit: n })} />
+                    </div>
+                    <div className={styles.row}>
+                      <NumericField label="기준선 (baseline)" value={mod.baseline ?? 0} onChange={(n) => updateScaling(i, { baseline: n })} />
+                      <NumericField label="N단위당 (divisor)" min={1} value={mod.divisor ?? 1} onChange={(n) => updateScaling(i, { divisor: Math.max(1, n) })} />
+                      <OptionalNumericField label="하한 (min)" value={mod.min} fallback={0} onChange={(n) => updateScaling(i, { min: n })} />
+                      <OptionalNumericField label="상한 (max)" value={mod.max} fallback={5} onChange={(n) => updateScaling(i, { max: n })} />
+                    </div>
+                    <div className={styles.hint}>{describeScaling(mod)}</div>
+                  </>
+                ) : (
+                  <div className={styles.row}>
+                    <SelectField label="조건 대상" value={mod.condition.target} onChange={(v) => updateModifierCondition(i, { target: v as "self" | "enemy" })}>
+                      <option value="self">self</option>
+                      <option value="enemy">enemy</option>
+                    </SelectField>
+                    <SelectField label="체크 항목" value={mod.condition.check} onChange={(v) => updateModifierCondition(i, { check: v as ModifierCondition["check"] })}>
+                      {ConditionCheckSchema.options.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </SelectField>
+                    <SelectField label="연산자" value={mod.condition.op} onChange={(v) => updateModifierCondition(i, { op: v as "<" | ">" | "=" })}>
+                      {CompareOpSchema.options.map((op) => <option key={op} value={op}>{op}</option>)}
+                    </SelectField>
+                    <NumericField label="값" value={mod.condition.value} onChange={(n) => updateModifierCondition(i, { value: n })} />
+                    <NumericField label="Delta" value={mod.delta} onChange={(n) => updateThreshold(i, { delta: n })} />
+                  </div>
+                )}
               </ItemCard>
             ))}
-            <button type="button" className={styles.addBtn} onClick={addModifier}>
-              + 스탯 보정 추가
-            </button>
+            <div className={styles.row}>
+              <button type="button" className={styles.addBtn} onClick={() => addModifier("threshold")}>
+                + 임계값 보정
+              </button>
+              <button type="button" className={styles.addBtn} onClick={() => addModifier("scaling")}>
+                + 비례 보정
+              </button>
+            </div>
           </div>
 
           {/* 추가 코스트 (altCost) */}
@@ -487,6 +620,95 @@ export default function CardEditor({ initial, mode }: Props) {
             ) : (
               <button type="button" className={styles.addBtn} onClick={() => setAltCost({ type: "move_cards", fromZone: "hand", toZone: "trash", count: 1 })}>
                 + altCost 추가
+              </button>
+            )}
+          </div>
+
+          {/* 요구 카드 코스트 (additionalCost) */}
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>요구 카드 코스트 (additionalCost)</div>
+            <div className={styles.hint}>
+              지정한 카드가 해당 영역에 있어야 사용 가능하고, 사용 시 그 카드들을 소모합니다.
+              조건이 안 맞으면 핸드에서 사용 불가로 표시됩니다.
+            </div>
+            {additionalCost ? (
+              <>
+                {additionalCost.requires.map((req, i) => (
+                  <ItemCard
+                    key={i}
+                    title={`요구 #${i + 1}`}
+                    onRemove={() => {
+                      const next = additionalCost.requires.filter((_, j) => j !== i);
+                      setAdditionalCost(next.length > 0 ? { ...additionalCost, requires: next } : null);
+                    }}
+                  >
+                    <div className={styles.row}>
+                      <div className={styles.field}>
+                        <label className={styles.label}>카드 ID</label>
+                        <input
+                          className={styles.input}
+                          value={req.cardId}
+                          placeholder="arm_shield"
+                          onChange={(e) => {
+                            const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, cardId: e.target.value } : r);
+                            setAdditionalCost({ ...additionalCost, requires });
+                          }}
+                        />
+                      </div>
+                      <SelectField
+                        label="영역"
+                        value={req.zone}
+                        onChange={(v) => {
+                          const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, zone: v as CardZone } : r);
+                          setAdditionalCost({ ...additionalCost, requires });
+                        }}
+                      >
+                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                      </SelectField>
+                      <NumericField
+                        label="장수"
+                        min={1}
+                        value={req.count}
+                        onChange={(n) => {
+                          const requires = additionalCost.requires.map((r, j) => j === i ? { ...r, count: Math.max(1, n) } : r);
+                          setAdditionalCost({ ...additionalCost, requires });
+                        }}
+                      />
+                    </div>
+                  </ItemCard>
+                ))}
+                <div className={styles.row}>
+                  <SelectField
+                    label="소모 후 이동 영역"
+                    value={additionalCost.consumeTo}
+                    onChange={(v) => setAdditionalCost({ ...additionalCost, consumeTo: v as CardZone })}
+                  >
+                    {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                  </SelectField>
+                </div>
+                <div className={styles.row}>
+                  <button
+                    type="button"
+                    className={styles.addBtn}
+                    onClick={() => setAdditionalCost({
+                      ...additionalCost,
+                      requires: [...additionalCost.requires, { cardId: "", zone: "cooldown", count: 1 }],
+                    })}
+                  >
+                    + 요구 카드 추가
+                  </button>
+                  <button type="button" className={styles.removeBtn} onClick={() => setAdditionalCost(null)}>
+                    additionalCost 제거
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className={styles.addBtn}
+                onClick={() => setAdditionalCost({ requires: [{ cardId: "", zone: "cooldown", count: 1 }], consumeTo: "trash" })}
+              >
+                + additionalCost 추가
               </button>
             )}
           </div>
@@ -642,6 +864,16 @@ export default function CardEditor({ initial, mode }: Props) {
                   onChange={(e) => setKnockback(e.target.checked)}
                 />
                 넉백 — 타격 후 상대를 밀어내 비근접 상태로
+              </label>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={generateOnly}
+                  onChange={(e) => setGenerateOnly(e.target.checked)}
+                />
+                생성 전용 — 효과로만 등장하며 덱 구축에 넣을 수 없음 (파츠·토큰)
               </label>
             </div>
             <div className={styles.row} style={{ marginTop: 12 }}>

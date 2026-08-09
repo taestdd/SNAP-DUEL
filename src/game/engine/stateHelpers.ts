@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, StatModifier, StatTarget, Status } from "./types";
+import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
 import { getCard } from "./cards";
 import { shuffleSeeded, randomInt } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -96,6 +96,65 @@ export function syncExhausted(state: GameState, player: PlayerId): GameState {
   return s;
 }
 
+/**
+ * StatSource가 가리키는 수치를 현재 상태에서 읽는다.
+ * 알 수 없는 check면 null → 보정 자체를 건너뛴다.
+ */
+function readStatSource(state: GameState, player: PlayerId, source: StatSource): number | null {
+  const from = source.target === "enemy"
+    ? (player === "P1" ? "AI" : "P1") as PlayerId
+    : player;
+  const t = state[from];
+
+  switch (source.check) {
+    case "hand_count":     return t.hand.length;
+    case "deck_count":     return t.deck.length;
+    case "cooldown_count": return t.cooldown.length;
+    case "hp":             return t.hp;
+    case "bench_hp":       return t.characterHp[getBenchChar(t)] ?? 0;
+    case "airborne_stack": return t.airborneStack;
+    case "turn":           return state.turn;
+    case "round":          return state.round;
+    default:               return null;
+  }
+}
+
+/** 비례 보정치 — trunc(0 방향 버림) 후 min/max 클램프 */
+function scalingDelta(state: GameState, player: PlayerId, mod: ScalingModifier): number | null {
+  const source = readStatSource(state, player, mod.source);
+  if (source === null) return null;
+
+  // divisor 0/음수는 나눗셈을 무의미하게 만들므로 1로 취급 (스키마도 min 1로 막지만 런타임 방어)
+  const divisor = mod.divisor && mod.divisor > 0 ? mod.divisor : 1;
+  const raw = ((source - (mod.baseline ?? 0)) * mod.perUnit) / divisor;
+
+  return Math.min(
+    Math.max(Math.trunc(raw), mod.min ?? Number.NEGATIVE_INFINITY),
+    mod.max ?? Number.POSITIVE_INFINITY,
+  );
+}
+
+/** 임계값 보정치 — 조건 충족 시에만 고정 delta */
+function thresholdDelta(state: GameState, player: PlayerId, mod: ThresholdModifier): number | null {
+  const checkVal = readStatSource(state, player, mod.condition);
+  if (checkVal === null) return null;
+
+  const { op, value } = mod.condition;
+  const met =
+    op === "<" ? checkVal < value :
+    op === ">" ? checkVal > value :
+    op === "=" ? checkVal === value :
+    false;
+
+  return met ? mod.delta : null;
+}
+
+/**
+ * 카드의 statModifiers를 현재 상태로 평가해 스탯별 보정 합계를 낸다.
+ *
+ * 핸드 표시(deriveCardStats)와 전투 해결(applyAttackStats)이 **모두 이 함수만** 호출한다.
+ * 새 보정 방식을 추가할 때도 여기만 확장하면 표시와 실제 데미지가 자동으로 일치한다.
+ */
 export function evaluateModifiers(
   state: GameState,
   player: PlayerId,
@@ -105,36 +164,12 @@ export function evaluateModifiers(
   const result: Partial<Record<StatTarget, number>> = {};
 
   for (const mod of modifiers) {
-    const { condition, stat, delta } = mod;
-    const condPlayer = condition.target === "enemy"
-      ? (player === "P1" ? "AI" : "P1") as PlayerId
-      : player;
-    const condTarget = state[condPlayer];
+    const delta = mod.mode === "scaling"
+      ? scalingDelta(state, player, mod)
+      : thresholdDelta(state, player, mod);
 
-    let checkVal: number;
-    switch (condition.check) {
-      case "hand_count":     checkVal = condTarget.hand.length; break;
-      case "deck_count":     checkVal = condTarget.deck.length; break;
-      case "cooldown_count": checkVal = condTarget.cooldown.length; break;
-      case "hp":             checkVal = condTarget.hp; break;
-      case "bench_hp": {
-        checkVal = condTarget.characterHp[getBenchChar(condTarget)] ?? 0;
-        break;
-      }
-      case "airborne_stack": checkVal = condTarget.airborneStack; break;
-      case "turn":           checkVal = state.turn; break;
-      case "round":          checkVal = state.round; break;
-      default:               continue;
-    }
-
-    const met =
-      condition.op === "<" ? checkVal < condition.value :
-      condition.op === ">" ? checkVal > condition.value :
-      condition.op === "=" ? checkVal === condition.value :
-      false;
-
-    if (met) {
-      result[stat] = (result[stat] ?? 0) + delta;
+    if (delta !== null) {
+      result[mod.stat] = (result[mod.stat] ?? 0) + delta;
     }
   }
 

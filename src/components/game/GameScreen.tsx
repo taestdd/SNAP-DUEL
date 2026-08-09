@@ -240,6 +240,7 @@ export default function GameScreen({
             toPosition: state.pendingCostPayment.toPosition,
             sourcePlayer: "P1",
             sourceCardId: state.pendingCostPayment.cardId,
+            resumeEffectIndex: 0,
             resolveItems: [],
             resolveNextIndex: 0,
             unresolvedPlayers: [],

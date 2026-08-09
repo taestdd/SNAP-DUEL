@@ -1,0 +1,549 @@
+[
+  {
+    "id": "koan_search",
+    "name": "검문",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 1,
+    "advantage": 0,
+    "effects": [{ "type": "draw_tagged", "value": 1, "tag": "공안" }],
+    "text": "덱에서 공안 카드 1장을 뽑는다.",
+    "tags": ["공안"],
+    "actionTag": "draw"
+  },
+  {
+    "id": "koan_report",
+    "name": "조서 작성",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 1,
+    "advantage": 0,
+    "effects": [
+      { "type": "move_cards", "count": 1, "fromZone": "trash", "toZone": "hand", "userSelects": true }
+    ],
+    "text": "trash에서 카드 1장을 골라 핸드로 가져온다.",
+    "tags": ["공안"],
+    "actionTag": "reclaim"
+  },
+  {
+    "id": "koan_lookup",
+    "name": "수배 조회",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "draw", "value": 3 },
+      { "type": "move_cards", "count": 2, "fromZone": "hand", "toZone": "deck", "toPosition": "bottom", "userSelects": true }
+    ],
+    "text": "카드 3장을 뽑은 뒤, 핸드에서 2장을 골라 덱 아래로 보낸다.",
+    "tags": ["공안"],
+    "actionTag": "draw"
+  },
+  {
+    "id": "koan_guard",
+    "name": "방패 대형",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [{ "type": "block", "value": 3 }],
+    "text": "블록 3을 얻는다.",
+    "tags": ["공안"],
+    "actionTag": "block"
+  },
+  {
+    "id": "koan_control",
+    "name": "출입 통제",
+    "cardType": "skill",
+    "cost": 2,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "block", "value": 3 },
+      { "type": "heal", "value": 2, "target": "self" }
+    ],
+    "text": "블록 3을 얻고 HP를 2 회복한다.",
+    "tags": ["공안"],
+    "actionTag": "block"
+  },
+  {
+    "id": "koan_baton",
+    "name": "경봉 타격",
+    "cardType": "attack",
+    "cost": 2,
+    "delay": 2,
+    "groundAttack": 2,
+    "antiAirAttack": 0,
+    "advantage": 1,
+    "effects": [],
+    "text": "지상 2. 적중 시 다음 턴 딜레이 −1.",
+    "tags": ["공안"],
+    "meleeAttack": true,
+    "actionTag": "weak_punch",
+    "hitTimings": [{ "frame": 1, "ground": "hit_weak", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "koan_charge",
+    "name": "진압 방패 돌격",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 2,
+    "groundAttack": 3,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [],
+    "text": "지상 3. 상대를 밀어낸다.",
+    "tags": ["공안"],
+    "meleeAttack": true,
+    "knockback": true,
+    "actionTag": "strong_punch",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "koan_aa",
+    "name": "대공 제압 사격",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 3,
+    "groundAttack": 0,
+    "antiAirAttack": 4,
+    "advantage": 0,
+    "effects": [],
+    "text": "대공 4. 체공 중인 상대에게만 적중.",
+    "tags": ["공안"],
+    "meleeAttack": false,
+    "actionTag": "hadouken",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+
+  {
+    "id": "mech_firstaid",
+    "name": "수리 — 응급",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [{ "type": "heal", "value": 2, "target": "self" }],
+    "text": "HP를 2 회복한다.",
+    "tags": ["기계"],
+    "actionTag": "use_item"
+  },
+  {
+    "id": "mech_joint",
+    "name": "수리 — 관절",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "heal", "value": 3, "target": "self" },
+      { "type": "move_cards", "count": 1, "tag": "기계", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom", "userSelects": true }
+    ],
+    "text": "HP를 3 회복하고, trash의 기계 카드 1장을 덱 아래로 되돌린다.",
+    "tags": ["기계"],
+    "actionTag": "reclaim"
+  },
+  {
+    "id": "mech_armor",
+    "name": "수리 — 장갑",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "block", "value": 4 },
+      { "type": "heal", "value": 2, "target": "self" }
+    ],
+    "text": "블록 4를 얻고 HP를 2 회복한다.",
+    "tags": ["기계"],
+    "actionTag": "block"
+  },
+  {
+    "id": "mech_salvage",
+    "name": "부품 회수",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 2,
+    "advantage": 0,
+    "effects": [
+      { "type": "move_cards", "count": 2, "tag": "기계", "fromZone": "trash", "toZone": "deck", "userSelects": true },
+      { "type": "shuffle", "zone": "deck" }
+    ],
+    "text": "trash의 기계 카드 2장을 덱으로 되돌리고 덱을 섞는다.",
+    "tags": ["기계"],
+    "actionTag": "reclaim"
+  },
+  {
+    "id": "mech_spare",
+    "name": "예비 부품",
+    "cardType": "skill",
+    "cost": 2,
+    "delay": 1,
+    "advantage": 0,
+    "effects": [
+      { "type": "heal", "value": 4, "target": "self" },
+      { "type": "heal", "value": 2, "target": "self", "character": "bench" }
+    ],
+    "text": "자신 HP 4, 벤치 캐릭터 HP 2를 회복한다.",
+    "tags": ["기계"],
+    "actionTag": "use_item"
+  },
+  {
+    "id": "mech_drive",
+    "name": "관절 구동",
+    "cardType": "attack",
+    "cost": 2,
+    "delay": 2,
+    "groundAttack": 3,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [],
+    "text": "지상 3.",
+    "tags": ["기계"],
+    "meleeAttack": true,
+    "actionTag": "strong_kick",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "mech_launch",
+    "name": "사출 파츠",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 3,
+    "groundAttack": 0,
+    "antiAirAttack": 4,
+    "advantage": 0,
+    "effects": [
+      { "type": "move_cards", "count": 1, "tag": "기계", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom", "userSelects": true }
+    ],
+    "text": "대공 4. trash의 기계 카드 1장을 덱 아래로 되돌린다.",
+    "tags": ["기계"],
+    "meleeAttack": false,
+    "actionTag": "hadouken",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "mech_overload",
+    "name": "과부하 출력",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 3,
+    "groundAttack": 5,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [{ "type": "damage", "value": 2, "target": "self" }],
+    "text": "지상 5. 자신이 2 데미지를 받는다.",
+    "tags": ["기계"],
+    "meleeAttack": true,
+    "actionTag": "dragon_kick",
+    "hitTimings": [{ "frame": 2, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+
+  {
+    "id": "nagi_toxin",
+    "name": "제압독 살포",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 1,
+    "advantage": 0,
+    "effects": [
+      { "type": "generate", "cardId": "toxin_dummy", "toZone": "deck", "toPosition": "top", "count": 2, "target": "enemy" }
+    ],
+    "text": "상대 덱 위에 「제압독」 2장을 넣는다.",
+    "tags": ["나기", "투척형"],
+    "actionTag": "use_item"
+  },
+  {
+    "id": "nagi_molar",
+    "name": "MOLAR 투척",
+    "cardType": "attack",
+    "cost": 2,
+    "delay": 2,
+    "groundAttack": 2,
+    "antiAirAttack": 0,
+    "advantage": 1,
+    "effects": [],
+    "text": "지상 2. 적중 시 다음 턴 딜레이 −1.",
+    "tags": ["나기", "투척형"],
+    "meleeAttack": false,
+    "actionTag": "hadouken",
+    "hitTimings": [{ "frame": 1, "ground": "hit_weak", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "nagi_lock",
+    "name": "관절 결박",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 3,
+    "groundAttack": 3,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [],
+    "text": "지상 3.",
+    "tags": ["나기"],
+    "meleeAttack": true,
+    "actionTag": "throw",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "nagi_checklist",
+    "name": "퇴사 체크리스트",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [{ "type": "draw_tagged", "value": 1, "tag": "나기" }],
+    "text": "덱에서 나기 카드 1장을 뽑는다.",
+    "tags": ["나기"],
+    "actionTag": "draw"
+  },
+  {
+    "id": "nagi_calm",
+    "name": "凪 (고요)",
+    "cardType": "attack",
+    "cost": 4,
+    "delay": 4,
+    "groundAttack": 1,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "statModifiers": [
+      {
+        "mode": "scaling",
+        "source": { "check": "hand_count", "target": "enemy" },
+        "stat": "ground_attack",
+        "perUnit": 1
+      }
+    ],
+    "effects": [],
+    "text": "지상 공격력은 상대 핸드 수 + 1과 같다.",
+    "tags": ["나기"],
+    "meleeAttack": false,
+    "superFlash": true,
+    "actionTag": "hadouken",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+
+  {
+    "id": "ukai_escort",
+    "name": "임의 동행",
+    "cardType": "attack",
+    "cost": 3,
+    "delay": 3,
+    "groundAttack": 3,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "draw", "value": 1, "target": "enemy" },
+      { "type": "move_cards", "count": 1, "target": "enemy", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" }
+    ],
+    "text": "지상 3. 상대는 카드 1장을 뽑고, 상대 trash의 1장이 덱 아래로 돌아간다.",
+    "tags": ["우카이"],
+    "meleeAttack": true,
+    "actionTag": "strong_punch",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "ukai_inquiry",
+    "name": "참고인 조사",
+    "cardType": "attack",
+    "cost": 4,
+    "delay": 3,
+    "groundAttack": 4,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "draw", "value": 2, "target": "enemy" },
+      { "type": "move_cards", "count": 2, "target": "enemy", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" }
+    ],
+    "text": "지상 4. 상대는 카드 2장을 뽑고, 상대 trash의 2장이 덱 아래로 돌아간다.",
+    "tags": ["우카이"],
+    "meleeAttack": true,
+    "actionTag": "strong_punch",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "ukai_statement",
+    "name": "진술 확보",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 2,
+    "advantage": 0,
+    "effects": [
+      { "type": "draw", "value": 1, "target": "enemy" },
+      { "type": "move_cards", "count": 1, "target": "enemy", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" },
+      { "type": "draw", "value": 2, "target": "self" },
+      { "type": "move_cards", "count": 2, "target": "self", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" }
+    ],
+    "text": "상대는 1장, 자신은 2장을 뽑는다. 양쪽 trash에서 각각 같은 수만큼 덱 아래로 되돌린다.",
+    "tags": ["우카이"],
+    "actionTag": "draw"
+  },
+  {
+    "id": "ukai_arrest",
+    "name": "강제 연행",
+    "cardType": "attack",
+    "cost": 5,
+    "delay": 4,
+    "groundAttack": 5,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "draw", "value": 2, "target": "enemy" },
+      { "type": "move_cards", "count": 2, "target": "enemy", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" }
+    ],
+    "text": "지상 5. 상대는 카드 2장을 뽑고, 상대 trash의 2장이 덱 아래로 돌아간다.",
+    "tags": ["우카이"],
+    "meleeAttack": true,
+    "actionTag": "strong_kick",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "ukai_order",
+    "name": "직무 명령",
+    "cardType": "attack",
+    "cost": 6,
+    "delay": 4,
+    "groundAttack": 7,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "statModifiers": [
+      {
+        "condition": { "check": "hand_count", "target": "enemy", "op": ">", "value": 6 },
+        "stat": "cost",
+        "delta": -2
+      }
+    ],
+    "effects": [
+      { "type": "draw", "value": 3, "target": "enemy" },
+      { "type": "move_cards", "count": 3, "target": "enemy", "fromZone": "trash", "toZone": "deck", "toPosition": "bottom" }
+    ],
+    "text": "지상 7. 상대는 카드 3장을 뽑고, 상대 trash의 3장이 덱 아래로 돌아간다. 상대 핸드가 7장 이상이면 코스트 −2.",
+    "tags": ["우카이"],
+    "meleeAttack": true,
+    "superFlash": true,
+    "actionTag": "dragon_kick",
+    "hitTimings": [{ "frame": 2, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+
+  {
+    "id": "arm_shield",
+    "name": "팔: 방패",
+    "cardType": "skill",
+    "cost": 2,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "block", "value": 4 },
+      { "type": "generate", "cardId": "arm_blade", "toZone": "hand", "count": 1 }
+    ],
+    "text": "블록 4를 얻고 「팔: 칼날」을 핸드에 생성한다.",
+    "tags": ["DM-7", "파츠", "기계"],
+    "generateOnly": true,
+    "actionTag": "block"
+  },
+  {
+    "id": "arm_blade",
+    "name": "팔: 칼날",
+    "cardType": "attack",
+    "cost": 4,
+    "delay": 2,
+    "groundAttack": 4,
+    "antiAirAttack": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "generate", "cardId": "arm_launcher", "toZone": "hand", "count": 1 }
+    ],
+    "text": "지상 4. 「팔: 사출」을 핸드에 생성한다.",
+    "tags": ["DM-7", "파츠", "기계"],
+    "meleeAttack": true,
+    "generateOnly": true,
+    "actionTag": "strong_punch",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "arm_launcher",
+    "name": "팔: 사출",
+    "cardType": "attack",
+    "cost": 4,
+    "delay": 3,
+    "groundAttack": 0,
+    "antiAirAttack": 5,
+    "advantage": 0,
+    "effects": [
+      { "type": "generate", "cardId": "arm_shield", "toZone": "hand", "count": 1 }
+    ],
+    "text": "대공 5. 「팔: 방패」를 핸드에 생성한다.",
+    "tags": ["DM-7", "파츠", "기계"],
+    "meleeAttack": false,
+    "generateOnly": true,
+    "actionTag": "hadouken",
+    "hitTimings": [{ "frame": 1, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+  {
+    "id": "dm7_maintenance",
+    "name": "정비 요청",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 1,
+    "advantage": 0,
+    "effects": [
+      { "type": "move_cards", "count": 1, "tag": "기계", "fromZone": "trash", "toZone": "hand", "userSelects": true }
+    ],
+    "text": "trash의 기계 카드 1장을 골라 핸드로 가져온다.",
+    "tags": ["DM-7"],
+    "actionTag": "reclaim"
+  },
+  {
+    "id": "dm7_realign",
+    "name": "축 재정렬",
+    "cardType": "skill",
+    "cost": 1,
+    "delay": 0,
+    "advantage": 0,
+    "effects": [
+      { "type": "move_cards", "count": 1, "tag": "파츠", "fromZone": "hand", "toZone": "cooldown", "userSelects": true },
+      { "type": "move_cards", "count": 1, "tag": "파츠", "fromZone": "cooldown", "toZone": "hand", "userSelects": true }
+    ],
+    "text": "핸드의 파츠 1장을 cooldown으로 보내고, cooldown의 파츠 1장을 핸드로 가져온다.",
+    "tags": ["DM-7"],
+    "actionTag": "use_item"
+  },
+  {
+    "id": "dm7_triple",
+    "name": "3연 회전",
+    "cardType": "attack",
+    "cost": 4,
+    "delay": 3,
+    "groundAttack": 3,
+    "antiAirAttack": 3,
+    "advantage": 0,
+    "additionalCost": {
+      "requires": [
+        { "cardId": "arm_shield", "zone": "cooldown", "count": 1 },
+        { "cardId": "arm_blade", "zone": "cooldown", "count": 1 },
+        { "cardId": "arm_launcher", "zone": "cooldown", "count": 1 }
+      ],
+      "consumeTo": "trash"
+    },
+    "effects": [],
+    "text": "cooldown의 팔 3종을 각 1장씩 trash로 보낸다. 지상 3 / 대공 3.",
+    "tags": ["DM-7"],
+    "superFlash": true,
+    "actionTag": "dragon_kick",
+    "hitTimings": [{ "frame": 2, "ground": "hit_strong", "airborne": "hit_aerial" }]
+  },
+
+  {
+    "id": "toxin_dummy",
+    "name": "제압독",
+    "cardType": "skill",
+    "cost": 0,
+    "delay": 9,
+    "advantage": 0,
+    "effects": [],
+    "text": "효과 없음.",
+    "tags": ["토큰"],
+    "generateOnly": true
+  }
+]

@@ -126,10 +126,10 @@ export type CharacterDef = {
   maxHp: number;
   /** spriteMap.ts의 CHARACTER_SPRITES 키. 스프라이트 에셋과 캐릭터 ID를 분리 */
   spriteId: string;
-  /** 이 캐릭터로 교체될 때 발동 */
-  entryEffect: CardEffect | null;
-  /** 이 캐릭터에서 다른 캐릭터로 교체될 때 발동 */
-  exitEffect: CardEffect | null;
+  /** 이 캐릭터로 교체될 때 발동. 배열이면 순서대로 적용 */
+  entryEffect: CardEffect | CardEffect[] | null;
+  /** 이 캐릭터에서 다른 캐릭터로 교체될 때 발동. 배열이면 순서대로 적용 */
+  exitEffect: CardEffect | CardEffect[] | null;
   /** 이 캐릭터가 사용할 수 있는 카드 태그 집합. 카드의 tags가 모두 포함되어야 사용 가능 */
   affinities: string[];
 };
@@ -144,29 +144,17 @@ export type DeckInsertPosition = "top" | "bottom" | "random";
  * 카드 태그 — 카드 분류 및 태그 기반 효과 타게팅에 사용
  * 새 태그 추가 시 이 한 곳만 수정하면 됨
  */
-export type CardTag =
-  | "마법"
-  | "격투"
-  | "구룡권"
-  | "독"
-  | "마나"
-  | "특공인법"
-  | "혈계권"
-  | "혈계"
-  | "제압투척구 3형"
-  | "검술"
-  | "방어"
-  | "방패"
-  | "한손검"
-  | "제압독"
-  | "투척형"
-  | "MOLAR"
-  | "인법"
-  | "제압기"
-  | "필살"
-  | "준비"
-  | "암기"
-  | "power";
+export const CARD_TAGS = [
+  "마법", "격투", "구룡권", "독", "마나", "특공인법", "혈계권", "혈계", "제압투척구 3형",
+  "검술", "방어", "방패", "한손검", "제압독", "투척형", "MOLAR", "인법", "제압기",
+  "필살", "준비", "암기", "power",
+  // 어피니티 3층 구조: 공통 / 조직(공안·기계) / 개인(나기·우카이·DM-7)
+  "공통", "공안", "기계", "나기", "우카이", "DM-7",
+  // 파츠: DM-7 팔 3종 (기계 태그를 함께 가져 회수 대상이 된다) / 토큰: 덱 구축 불가 더미
+  "파츠", "토큰",
+] as const;
+
+export type CardTag = typeof CARD_TAGS[number];
 
 /**
  * 카드 효과 타입
@@ -217,6 +205,29 @@ export type AltCostHp = {
 
 export type AltCost = AltCostMoveCards | AltCostHp;
 
+/** additionalCost가 요구하는 카드 한 종류 */
+export type AdditionalCostRequirement = {
+  /** 요구 카드 id */
+  cardId: string;
+  /** 그 카드가 있어야 할 영역 */
+  zone: CardZone;
+  /** 필요한 장수 */
+  count: number;
+};
+
+/**
+ * 추가 코스트 — 지정한 카드들이 특정 영역에 있어야 사용 가능하고, 사용 시 소모된다.
+ *
+ * altCost가 "아무 카드 N장"을 지불한다면 이쪽은 **특정 카드를 지목**한다.
+ * (예: cooldown에 팔 3종이 모여야 열리는 피니셔)
+ * 조건 미충족 시 getCardPlayability가 사용 불가로 판정한다.
+ */
+export type AdditionalCost = {
+  requires: AdditionalCostRequirement[];
+  /** 소모된 카드가 이동할 영역 */
+  consumeTo: CardZone;
+};
+
 export type CardEffect = {
   type: EffectType;
   value?: number;
@@ -241,7 +252,16 @@ export type CardEffect = {
   zone?: CardZone;
   /** generate: 생성할 카드 id */
   cardId?: string;
+  /** heal: 대상 플레이어의 어느 캐릭터를 회복할지 (미지정 시 활성 캐릭터) */
+  character?: HealCharacter;
 };
+
+/**
+ * heal 대상 캐릭터.
+ * `target`(self/enemy)이 "누구"를 고르고, 이 필드가 그 플레이어의 "어느 캐릭터"를 고른다.
+ * bench는 characterHp만 갱신하고 활성 hp는 건드리지 않는다.
+ */
+export type HealCharacter = "active" | "bench";
 
 /** StatModifier 조건 체크 대상 */
 export type ConditionCheck =
@@ -259,19 +279,59 @@ export type CompareOp = "<" | ">" | "=";
 /** StatModifier가 보정할 카드 스탯 */
 export type StatTarget = "cost" | "delay" | "ground_attack" | "anti_air_attack" | "advantage";
 
-export type ModifierCondition = {
+/** 게임 상태에서 읽어올 수치의 출처 (누구의 무엇을 볼 것인가) */
+export type StatSource = {
   check: ConditionCheck;
   target: "self" | "enemy";
+};
+
+export type ModifierCondition = StatSource & {
   op: CompareOp;
   value: number;
 };
 
-/** 조건부 스탯 보정 — 조건 충족 시 delta를 해당 스탯에 누적 적용. 최종값 0 고정 */
-export type StatModifier = {
+/** 임계값 보정 — 조건 충족 시 고정 delta. mode 생략 = threshold (기존 카드 호환) */
+export type ThresholdModifier = {
+  mode?: "threshold";
   condition: ModifierCondition;
   stat: StatTarget;
   delta: number;
 };
+
+/**
+ * 비례 보정 — 소스 수치에 비례해 보정치를 산출한다.
+ *
+ *   delta = clamp(trunc((source - baseline) * perUnit / divisor), min, max)
+ *
+ * 예) "상대 손패 1장당 공격력 +1, 최대 +6"
+ *   { mode: "scaling", source: { check: "hand_count", target: "enemy" },
+ *     stat: "ground_attack", perUnit: 1, max: 6 }
+ *
+ * 예) "내 덱 2장당 딜레이 -1"
+ *   { mode: "scaling", source: { check: "deck_count", target: "self" },
+ *     stat: "delay", perUnit: -1, divisor: 2 }
+ *
+ * 나눗셈은 0 방향 버림(trunc)이라 부호에 대칭이다.
+ * 소스 값은 **리졸브 시점**에 다시 읽으므로, 핸드 표시는 그 시점의 추정치다.
+ */
+export type ScalingModifier = {
+  mode: "scaling";
+  source: StatSource;
+  stat: StatTarget;
+  /** 소스 1단위당 증감 (음수 = 소스가 클수록 약해짐) */
+  perUnit: number;
+  /** 이 값을 기준으로 차이만큼만 반영 (기본 0) */
+  baseline?: number;
+  /** N단위당 perUnit 적용 (기본 1). 0 이하는 1로 취급 */
+  divisor?: number;
+  /** 보정치 하한 — "초과분만 반영"처럼 한쪽 방향만 쓸 때 0으로 지정 */
+  min?: number;
+  /** 보정치 상한 — 밸런스 안전장치 */
+  max?: number;
+};
+
+/** 조건부 스탯 보정 — 결과 delta를 해당 스탯에 누적 적용. 최종 스탯은 0 하한 */
+export type StatModifier = ThresholdModifier | ScalingModifier;
 
 /** 카드 사용 가능 조건 */
 export type UseCondition =
@@ -348,6 +408,15 @@ export type Card = {
 
   /** 카드 발동 전 지불하는 추가 코스트. ready 시점에 처리 */
   altCost?: AltCost;
+
+  /** 특정 카드를 특정 영역에 요구하고 사용 시 소모하는 추가 코스트 */
+  additionalCost?: AdditionalCost;
+
+  /**
+   * true면 효과로 생성될 때만 등장하는 카드 — 덱 구축에 넣을 수 없다.
+   * (DM-7 파츠 3종, 나기가 상대 덱에 심는 토큰 등)
+   */
+  generateOnly?: boolean;
 };
 
 export type SelectedCard = {
@@ -390,6 +459,8 @@ export type CardPlayability = {
   affinityMet: boolean;
   /** altCost(HP/덱 지불) 지불 가능 */
   altCostOk: boolean;
+  /** additionalCost가 요구하는 카드가 모두 갖춰짐 */
+  additionalCostOk: boolean;
 };
 
 export type Status = {
@@ -536,6 +607,12 @@ export type PendingSelection = {
   /** 이 선택을 유발한 카드 */
   sourcePlayer: PlayerId;
   sourceCardId: string;
+  /**
+   * 선택 종료 후 이어서 처리할 효과의 인덱스 (선택을 유발한 효과의 다음).
+   * 이게 없으면 "선택 뒤에 오는 효과"(예: 회수 후 shuffle, userSelects 2연속)가
+   * 조용히 누락된다.
+   */
+  resumeEffectIndex: number;
   /** resolve 재개용 컨텍스트 */
   resolveItems: { player: PlayerId; cardId: string }[];
   resolveNextIndex: number;
