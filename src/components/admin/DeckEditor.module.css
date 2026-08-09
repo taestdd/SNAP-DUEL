@@ -470,3 +470,41 @@
   padding: 2px 5px;
   margin-left: 6px;
 }
+
+/* 카드 타입 필터 (전체 / 공격 / 스킬) */
+.typeFilter {
+  display: flex;
+  gap: 4px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.typeFilterBtn {
+  flex: 1;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: #777;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 5px 0;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.typeFilterBtn:hover {
+  background: #1c1c1c;
+  color: #aaa;
+}
+
+.typeFilterBtnActive {
+  background: #1e2438;
+  border-color: #3a4668;
+  color: #9db4ff;
+}
+
+.typeFilterCount {
+  opacity: 0.6;
+  margin-left: 2px;
+}

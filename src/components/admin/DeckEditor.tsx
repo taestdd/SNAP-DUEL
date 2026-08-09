@@ -8,6 +8,7 @@ import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { affinityAllows } from "@/game/engine/rules";
+import type { CardType } from "@/game/engine/types";
 
 const MIN_CARDS = 20;
 
@@ -43,6 +44,7 @@ export default function DeckEditor({ initial, mode }: Props) {
   const [allCards, setAllCards] = useState<CardSchemaType[]>([]);
   const [search, setSearch] = useState("");
   const [hideUnusable, setHideUnusable] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<CardType | "all">("all");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -76,13 +78,24 @@ export default function DeckEditor({ initial, mode }: Props) {
     return selectedChars.length === 0 || usersOf(card).length > 0;
   }
 
+  // cardType 미지정(구 카드)은 스킬로 취급 — 게임 엔진도 공격 스탯이 없으면 스킬처럼 동작한다
+  const typeOf = (c: CardSchemaType): CardType => (c.cardType === "attack" ? "attack" : "skill");
+
   const searched = buildableCards.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  const usableCount = searched.filter(isUsable).length;
-  const filteredCards = hideUnusable ? searched.filter(isUsable) : searched;
+  const typeCounts = {
+    all: searched.length,
+    attack: searched.filter((c) => typeOf(c) === "attack").length,
+    skill: searched.filter((c) => typeOf(c) === "skill").length,
+  };
+
+  const typeFiltered = typeFilter === "all" ? searched : searched.filter((c) => typeOf(c) === typeFilter);
+
+  const usableCount = typeFiltered.filter(isUsable).length;
+  const filteredCards = hideUnusable ? typeFiltered.filter(isUsable) : typeFiltered;
 
   function addCard(cardId: string) {
     setDeckCounts((prev) => ({ ...prev, [cardId]: (prev[cardId] ?? 0) + 1 }));
@@ -244,8 +257,8 @@ export default function DeckEditor({ initial, mode }: Props) {
               <span className={styles.panelTitle}>카드 풀</span>
               <span className={styles.panelCount}>
                 {selectedChars.length > 0
-                  ? `사용 가능 ${usableCount} / ${searched.length}종`
-                  : `${searched.length}종`}
+                  ? `사용 가능 ${usableCount} / ${typeFiltered.length}종`
+                  : `${typeFiltered.length}종`}
               </span>
             </div>
             <input
@@ -254,6 +267,22 @@ export default function DeckEditor({ initial, mode }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <div className={styles.typeFilter}>
+              {([
+                ["all", "전체", typeCounts.all],
+                ["attack", "공격", typeCounts.attack],
+                ["skill", "스킬", typeCounts.skill],
+              ] as const).map(([value, label, count]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`${styles.typeFilterBtn} ${typeFilter === value ? styles.typeFilterBtnActive : ""}`}
+                  onClick={() => setTypeFilter(value)}
+                >
+                  {label} <span className={styles.typeFilterCount}>{count}</span>
+                </button>
+              ))}
+            </div>
             {selectedChars.length === 0 ? (
               <div className={styles.poolHint}>
                 캐릭터를 지정하면 그 캐릭터가 쓸 수 있는 카드만 활성화됩니다.
