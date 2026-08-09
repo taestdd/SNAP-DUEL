@@ -9,6 +9,7 @@ import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { affinityAllows } from "@/game/engine/rules";
 import type { CardType } from "@/game/engine/types";
+import { parseDeckBulkInput, formatDeckBulkInput } from "./deckBulkInput";
 
 const MIN_CARDS = 20;
 
@@ -45,6 +46,8 @@ export default function DeckEditor({ initial, mode }: Props) {
   const [search, setSearch] = useState("");
   const [hideUnusable, setHideUnusable] = useState(false);
   const [typeFilter, setTypeFilter] = useState<CardType | "all">("all");
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -109,6 +112,37 @@ export default function DeckEditor({ initial, mode }: Props) {
       else next[cardId] = newVal;
       return next;
     });
+  }
+
+  /** 일괄 입력 열기 — 현재 덱을 채워 넣어 편집 후 되붙일 수 있게 한다 */
+  function openBulk() {
+    setBulkText(formatDeckBulkInput(deckCounts));
+    setBulkOpen(true);
+  }
+
+  const bulkResult = bulkOpen
+    ? parseDeckBulkInput(
+        bulkText,
+        (cardId) => allCards.some((c) => c.id === cardId),
+        (cardId) => !!allCards.find((c) => c.id === cardId)?.generateOnly,
+      )
+    : null;
+
+  const bulkTotal = bulkResult?.entries.reduce((s, e) => s + e.count, 0) ?? 0;
+
+  function applyBulk(mode: "replace" | "merge") {
+    if (!bulkResult) return;
+    const parsed = Object.fromEntries(bulkResult.entries.map((e) => [e.cardId, e.count]));
+
+    setDeckCounts((prev) => {
+      if (mode === "replace") return parsed;
+      const next = { ...prev };
+      for (const { cardId, count } of bulkResult.entries) {
+        next[cardId] = (next[cardId] ?? 0) + count;
+      }
+      return next;
+    });
+    setBulkOpen(false);
   }
 
   function handleCharClick(charId: string) {
@@ -349,10 +383,76 @@ export default function DeckEditor({ initial, mode }: Props) {
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <span className={styles.panelTitle}>현재 덱</span>
-              <span className={`${styles.panelCount} ${totalCards < MIN_CARDS ? styles.panelCountWarn : ""}`}>
-                {totalCards}장 {totalCards < MIN_CARDS ? `(최소 ${MIN_CARDS}장)` : ""}
-              </span>
+              <div className={styles.panelHeaderRight}>
+                <button
+                  type="button"
+                  className={styles.bulkOpenBtn}
+                  onClick={() => (bulkOpen ? setBulkOpen(false) : openBulk())}
+                >
+                  {bulkOpen ? "닫기" : "일괄 입력"}
+                </button>
+                <span className={`${styles.panelCount} ${totalCards < MIN_CARDS ? styles.panelCountWarn : ""}`}>
+                  {totalCards}장 {totalCards < MIN_CARDS ? `(최소 ${MIN_CARDS}장)` : ""}
+                </span>
+              </div>
             </div>
+
+            {bulkOpen && bulkResult && (
+              <div className={styles.bulkPanel}>
+                <textarea
+                  className={styles.bulkTextarea}
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  spellCheck={false}
+                  rows={10}
+                  placeholder={"카드 id와 매수를 한 줄에 하나씩\n\nkoan_search 1\nmech_joint 3\nnagi_calm x2\n\n매수를 생략하면 1장, # 로 시작하면 주석"}
+                />
+
+                <div className={styles.bulkSummary}>
+                  <span className={styles.bulkSummaryOk}>
+                    {bulkResult.entries.length}종 · {bulkTotal}장
+                  </span>
+                  {bulkResult.unknown.length > 0 && (
+                    <span className={styles.bulkSummaryErr}>
+                      없는 카드 {bulkResult.unknown.length}: {bulkResult.unknown.join(", ")}
+                    </span>
+                  )}
+                  {bulkResult.generateOnly.length > 0 && (
+                    <span className={styles.bulkSummaryErr}>
+                      덱 구축 불가(생성 전용) {bulkResult.generateOnly.length}: {bulkResult.generateOnly.join(", ")}
+                    </span>
+                  )}
+                  {bulkResult.invalid.length > 0 && (
+                    <span className={styles.bulkSummaryErr}>
+                      형식 오류 {bulkResult.invalid.length}줄: {bulkResult.invalid.slice(0, 3).join(" / ")}
+                      {bulkResult.invalid.length > 3 ? " …" : ""}
+                    </span>
+                  )}
+                </div>
+
+                <div className={styles.bulkBtns}>
+                  <button
+                    type="button"
+                    className={styles.bulkApplyBtn}
+                    disabled={bulkResult.entries.length === 0}
+                    onClick={() => applyBulk("replace")}
+                  >
+                    덱 교체
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.bulkApplyBtn}
+                    disabled={bulkResult.entries.length === 0}
+                    onClick={() => applyBulk("merge")}
+                  >
+                    덱에 추가
+                  </button>
+                  <button type="button" className={styles.bulkCancelBtn} onClick={() => setBulkOpen(false)}>
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
             <div className={styles.cardList}>
               {deckEntries.length === 0 && (
                 <div className={styles.emptyDeck}>← 카드 풀에서 카드를 추가하세요</div>

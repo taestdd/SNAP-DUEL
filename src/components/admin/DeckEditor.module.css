@@ -508,3 +508,105 @@
   opacity: 0.6;
   margin-left: 2px;
 }
+
+/* ─── 덱 일괄 입력 ──────────────────────────────────────────────────────── */
+
+.panelHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bulkOpenBtn {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: #9db4ff;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.bulkOpenBtn:hover { background: #1e2438; }
+
+.bulkPanel {
+  padding: 10px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  background: #0e0e0e;
+  flex-shrink: 0;
+}
+
+.bulkTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px;
+  outline: none;
+  resize: vertical;
+}
+
+.bulkTextarea:focus { border-color: #3a4668; }
+
+.bulkSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 8px 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.bulkSummaryOk { color: #6dbe6d; }
+
+.bulkSummaryErr {
+  color: #ff8a7a;
+  word-break: break-all;
+}
+
+.bulkBtns {
+  display: flex;
+  gap: 6px;
+}
+
+.bulkApplyBtn {
+  flex: 1;
+  background: #1e2a1e;
+  border: 1px solid #2a3d2a;
+  color: #6dbe6d;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 0;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.bulkApplyBtn:hover:not(:disabled) { background: #243024; }
+
+.bulkApplyBtn:disabled {
+  background: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #444;
+  cursor: not-allowed;
+}
+
+.bulkCancelBtn {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: #777;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.bulkCancelBtn:hover { background: #1c1c1c; }
