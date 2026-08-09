@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import styles from "./CardEditor.module.css";
+import styles from "./AdminForm.module.css";
+import { SelectField, NumericField, OptionalNumericField, ItemCard } from "./AdminFields";
+import EffectListEditor, { emptyEffect } from "./EffectListEditor";
 import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
@@ -12,118 +14,10 @@ const ACTION_TAGS = ActionTagSchema.options;
 
 const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = CardTagSchema.options;
-const EFFECT_TYPES = [
-  "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
-] as const;
-const TARGETS = ["self", "enemy"] as const;
-const DAMAGE_TYPES = ["ground", "anti-air"] as const;
 const ZONES = ["hand", "deck", "trash", "cooldown", "queue"] as const;
 const POSITIONS = ["top", "bottom", "random"] as const;
 
 // ── 공용 UI 컴포넌트 ──────────────────────────────────────────
-
-function NumericInput({
-  value,
-  onChange,
-  className,
-  ...rest
-}: {
-  value: number;
-  onChange: (n: number) => void;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type">) {
-  const [str, setStr] = useState(String(value));
-
-  useEffect(() => { setStr(String(value)); }, [value]);
-
-  return (
-    <input
-      {...rest}
-      type="number"
-      className={className}
-      value={str}
-      onChange={(e) => setStr(e.target.value)}
-      onBlur={() => {
-        const n = Number(str);
-        const final = str.trim() === "" || isNaN(n) ? 0 : n;
-        onChange(final);
-        setStr(String(final));
-      }}
-    />
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  children,
-  ...rest
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  children: React.ReactNode;
-} & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">) {
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
-        {children}
-      </select>
-    </div>
-  );
-}
-
-function NumericField({
-  label,
-  ...rest
-}: {
-  label: string;
-} & Omit<React.ComponentProps<typeof NumericInput>, "className">) {
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <NumericInput className={styles.input} {...rest} />
-    </div>
-  );
-}
-
-/** 체크박스로 "미지정"을 표현하는 숫자 입력 — min/max처럼 생략 가능한 필드용 */
-function OptionalNumericField({
-  label,
-  value,
-  onChange,
-  fallback,
-  ...rest
-}: {
-  label: string;
-  value: number | undefined;
-  onChange: (n: number | undefined) => void;
-  /** 체크를 켤 때 채워 넣을 초기값 (HTML placeholder와 무관) */
-  fallback: number;
-} & Omit<React.ComponentProps<typeof NumericInput>, "value" | "onChange" | "className">) {
-  const enabled = value !== undefined;
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => onChange(e.target.checked ? fallback : undefined)}
-        />{" "}
-        {label}
-      </label>
-      <NumericInput
-        {...rest}
-        className={styles.input}
-        value={value ?? fallback}
-        onChange={(n) => { if (enabled) onChange(n); }}
-        disabled={!enabled}
-      />
-    </div>
-  );
-}
 
 /** 비례 보정을 사람이 읽는 문장으로 — 어드민에서 식을 눈으로 검증하기 위함 */
 function describeScaling(mod: ScalingModifier): string {
@@ -138,29 +32,7 @@ function describeScaling(mod: ScalingModifier): string {
   return `${who} ${mod.source.check} ${per} ${mod.stat} ${sign}${mod.perUnit}${base}${bounds ? ` — ${bounds}` : ""}`;
 }
 
-function ItemCard({ title, onRemove, children }: {
-  title: string;
-  onRemove: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={styles.effectItem}>
-      <div className={styles.effectHeader}>
-        <span className={styles.effectIndex}>{title}</span>
-        <button type="button" className={styles.removeBtn} onClick={onRemove}>
-          ✕ 삭제
-        </button>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────
-
-function emptyEffect(): CardEffect {
-  return { type: "damage", value: 0, target: "enemy" };
-}
 
 interface Props {
   initial?: CardSchemaType;
@@ -264,14 +136,6 @@ export default function CardEditor({ initial, mode }: Props) {
 
   function toggleTag(tag: string) {
     setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
-  }
-
-  function updateEffect(index: number, patch: Partial<CardEffect>) {
-    setEffects((prev) => prev.map((e, i) => (i === index ? { ...e, ...patch } : e)));
-  }
-
-  function removeEffect(index: number) {
-    setEffects((prev) => prev.filter((_, i) => i !== index));
   }
 
   function addHitTiming() {
@@ -728,109 +592,7 @@ export default function CardEditor({ initial, mode }: Props) {
           {/* 효과 */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>효과 (Effects) *</div>
-            {effects.map((effect, i) => (
-              <ItemCard key={i} title={`효과 #${i + 1}`} onRemove={() => removeEffect(i)}>
-                <div className={styles.row}>
-                  <SelectField label="Type *" value={effect.type} onChange={(v) => updateEffect(i, { type: v as CardEffect["type"] })}>
-                    {EFFECT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </SelectField>
-                  {!["tag", "move_cards", "shuffle", "generate"].includes(effect.type) && (
-                    <NumericField label="Value" value={effect.value ?? 0} onChange={(n) => updateEffect(i, { value: n })} />
-                  )}
-                  {effect.type !== "tag" && (
-                    <SelectField label="Target" value={effect.target ?? "enemy"} onChange={(v) => updateEffect(i, { target: v as "self" | "enemy" })}>
-                      {TARGETS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </SelectField>
-                  )}
-                </div>
-
-                {effect.type === "damage" && (
-                  <div className={styles.row}>
-                    <SelectField label="Damage Type" value={effect.damageType ?? ""} onChange={(v) => updateEffect(i, { damageType: (v || undefined) as CardEffect["damageType"] })}>
-                      <option value="">항상 적용</option>
-                      {DAMAGE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </SelectField>
-                  </div>
-                )}
-
-                {effect.type === "move_cards" && (
-                  <>
-                    <div className={styles.row}>
-                      <SelectField label="From Zone" value={effect.fromZone ?? "deck"} onChange={(v) => updateEffect(i, { fromZone: v as CardEffect["fromZone"] })}>
-                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                      </SelectField>
-                      <SelectField label="To Zone" value={effect.toZone ?? "hand"} onChange={(v) => updateEffect(i, { toZone: v as CardEffect["toZone"] })}>
-                        {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                      </SelectField>
-                      <NumericField label="Count" min={1} value={effect.count ?? 1} onChange={(n) => updateEffect(i, { count: n })} />
-                      <SelectField label="To Position" value={effect.toPosition ?? ""} onChange={(v) => updateEffect(i, { toPosition: (v || undefined) as CardEffect["toPosition"] })}>
-                        <option value="">기본</option>
-                        {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                      </SelectField>
-                    </div>
-                    <div className={styles.checkRow}>
-                      <input
-                        className={styles.checkbox}
-                        type="checkbox"
-                        id={`userSelects-${i}`}
-                        checked={effect.userSelects ?? false}
-                        onChange={(e) => updateEffect(i, { userSelects: e.target.checked })}
-                      />
-                      <label htmlFor={`userSelects-${i}`}>P1이 직접 선택 (userSelects)</label>
-                    </div>
-                  </>
-                )}
-
-                {effect.type === "generate" && (
-                  <div className={styles.row}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Card ID *</label>
-                      <input
-                        className={styles.input}
-                        value={effect.cardId ?? ""}
-                        onChange={(e) => updateEffect(i, { cardId: e.target.value || undefined })}
-                        placeholder="weak_punch"
-                      />
-                    </div>
-                    <NumericField label="Count" min={1} value={effect.count ?? 1} onChange={(n) => updateEffect(i, { count: n })} />
-                    <SelectField label="To Zone" value={effect.toZone ?? "hand"} onChange={(v) => updateEffect(i, { toZone: v as CardEffect["toZone"] })}>
-                      {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </SelectField>
-                    <SelectField label="To Position" value={effect.toPosition ?? ""} onChange={(v) => updateEffect(i, { toPosition: (v || undefined) as CardEffect["toPosition"] })}>
-                      <option value="">기본</option>
-                      {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                    </SelectField>
-                  </div>
-                )}
-
-                {effect.type === "shuffle" && (
-                  <div className={styles.row}>
-                    <SelectField label="Zone" value={effect.zone ?? "deck"} onChange={(v) => updateEffect(i, { zone: v as CardEffect["zone"] })}>
-                      {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </SelectField>
-                  </div>
-                )}
-
-                {effect.type === "draw_tagged" && (
-                  <div className={styles.row}>
-                    <SelectField label="Tag" value={effect.tag ?? ""} onChange={(v) => updateEffect(i, { tag: (v || undefined) as CardEffect["tag"] })}>
-                      <option value="">선택</option>
-                      {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </SelectField>
-                    <SelectField label="Zone" value={effect.zone ?? "deck"} onChange={(v) => updateEffect(i, { zone: v as CardEffect["zone"] })}>
-                      {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
-                    </SelectField>
-                  </div>
-                )}
-              </ItemCard>
-            ))}
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={() => setEffects((prev) => [...prev, emptyEffect()])}
-            >
-              + 효과 추가
-            </button>
+            <EffectListEditor effects={effects} onChange={setEffects} />
           </div>
 
           {/* 애니메이션 */}

@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
+import type { CardEffect } from "@/game/engine/types";
 import { CardTagSchema } from "@/game/engine/cardSchema";
+import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
+import EffectListEditor from "./EffectListEditor";
 import styles from "./DeckEditor.module.css";
 
 interface Props {
@@ -13,6 +16,19 @@ interface Props {
 }
 
 const AVAILABLE_TAGS = CardTagSchema.options;
+const SPRITE_IDS = Object.keys(CHARACTER_SPRITES);
+
+/** 저장된 효과(단일 | 배열 | null)를 편집용 배열로 편다 */
+function toEffectList(value: CharacterDefSchemaType["entryEffect"] | undefined): CardEffect[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+/** 편집용 배열을 저장 형태로 — 0개는 null, 1개는 단일(기존 데이터 형태 유지) */
+function fromEffectList(list: CardEffect[]): CharacterDefSchemaType["entryEffect"] {
+  if (list.length === 0) return null;
+  return list.length === 1 ? list[0] : list;
+}
 
 export default function CharacterEditor({ initial, mode }: Props) {
   const router = useRouter();
@@ -22,12 +38,8 @@ export default function CharacterEditor({ initial, mode }: Props) {
   const [maxHp, setMaxHp] = useState(initial?.maxHp ?? 10);
   const [spriteId, setSpriteId] = useState(initial?.spriteId ?? "");
   const [affinities, setAffinities] = useState<string[]>(initial?.affinities ?? []);
-  const [entryEffect, setEntryEffect] = useState(
-    initial?.entryEffect ? JSON.stringify(initial.entryEffect, null, 2) : ""
-  );
-  const [exitEffect, setExitEffect] = useState(
-    initial?.exitEffect ? JSON.stringify(initial.exitEffect, null, 2) : ""
-  );
+  const [entryEffects, setEntryEffects] = useState<CardEffect[]>(toEffectList(initial?.entryEffect));
+  const [exitEffects, setExitEffects] = useState<CardEffect[]>(toEffectList(initial?.exitEffect));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -36,15 +48,6 @@ export default function CharacterEditor({ initial, mode }: Props) {
     setAffinities((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-  }
-
-  function parseEffect(raw: string) {
-    if (!raw.trim()) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      throw new Error("효과 JSON 파싱 실패");
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,8 +63,8 @@ export default function CharacterEditor({ initial, mode }: Props) {
         maxHp,
         spriteId,
         affinities,
-        entryEffect: parseEffect(entryEffect),
-        exitEffect: parseEffect(exitEffect),
+        entryEffect: fromEffectList(entryEffects),
+        exitEffect: fromEffectList(exitEffects),
       };
 
       const url = mode === "create" ? "/api/admin/characters" : `/api/admin/characters/${id}`;
@@ -94,7 +97,7 @@ export default function CharacterEditor({ initial, mode }: Props) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/admin" className={styles.backLink}>← 목록</Link>
+        <Link href="/admin?tab=characters" className={styles.backLink}>← 목록</Link>
         <h1 className={styles.title}>
           {mode === "create" ? "새 캐릭터 만들기" : `편집: ${initial?.id}`}
         </h1>
@@ -138,14 +141,20 @@ export default function CharacterEditor({ initial, mode }: Props) {
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>스프라이트 ID * (예: a, b)</label>
-            <input
+            <label className={styles.label}>스프라이트 *</label>
+            <select
               className={styles.input}
               value={spriteId}
               onChange={(e) => setSpriteId(e.target.value)}
-              placeholder="a"
               required
-            />
+            >
+              <option value="">선택...</option>
+              {SPRITE_IDS.map((sid) => <option key={sid} value={sid}>{sid}</option>)}
+              {/* 목록에 없는 기존 값도 잃지 않도록 남겨둔다 */}
+              {spriteId && !SPRITE_IDS.includes(spriteId) && (
+                <option value={spriteId}>{spriteId} (등록되지 않은 스프라이트)</option>
+              )}
+            </select>
           </div>
         </div>
 
@@ -165,31 +174,28 @@ export default function CharacterEditor({ initial, mode }: Props) {
           </div>
         </div>
 
-        <div className={styles.metaRow}>
-          <div className={styles.field} style={{ flex: 1 }}>
-            <label className={styles.label}>진입 효과 (JSON, 없으면 빈칸)</label>
-            <textarea
-              className={styles.input}
-              rows={4}
-              value={entryEffect}
-              onChange={(e) => setEntryEffect(e.target.value)}
-              placeholder={'{"type": "draw", "value": 1, "target": "self"}'}
-            />
-          </div>
-          <div className={styles.field} style={{ flex: 1 }}>
-            <label className={styles.label}>퇴장 효과 (JSON, 없으면 빈칸)</label>
-            <textarea
-              className={styles.input}
-              rows={4}
-              value={exitEffect}
-              onChange={(e) => setExitEffect(e.target.value)}
-              placeholder={'{"type": "draw", "value": 1, "target": "self"}'}
-            />
-          </div>
+        <div className={styles.charSection}>
+          <div className={styles.sectionTitle}>진입 효과 (이 캐릭터로 교체될 때)</div>
+          <EffectListEditor
+            effects={entryEffects}
+            onChange={setEntryEffects}
+            addLabel="+ 진입 효과 추가"
+            emptyHint="효과 없음 — 등장할 때 아무 일도 일어나지 않습니다."
+          />
+        </div>
+
+        <div className={styles.charSection}>
+          <div className={styles.sectionTitle}>퇴장 효과 (이 캐릭터에서 교체될 때)</div>
+          <EffectListEditor
+            effects={exitEffects}
+            onChange={setExitEffects}
+            addLabel="+ 퇴장 효과 추가"
+            emptyHint="효과 없음 — 물러날 때 아무 일도 일어나지 않습니다."
+          />
         </div>
 
         <div className={styles.footer}>
-          <Link href="/admin" className={styles.cancelLink}>취소</Link>
+          <Link href="/admin?tab=characters" className={styles.cancelLink}>취소</Link>
           <button type="submit" className={styles.submitBtn} disabled={saving}>
             {saving ? "저장 중..." : mode === "create" ? "캐릭터 생성" : "캐릭터 수정"}
           </button>

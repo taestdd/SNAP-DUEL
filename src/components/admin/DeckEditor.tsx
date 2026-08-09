@@ -205,7 +205,7 @@ export default function DeckEditor({ initial, mode }: Props) {
         setError(msg);
       } else {
         setSuccess(true);
-        setTimeout(() => router.push("/admin"), 800);
+        setTimeout(() => router.push("/admin?tab=decks"), 800);
       }
     } catch {
       setError("네트워크 오류");
@@ -219,7 +219,7 @@ export default function DeckEditor({ initial, mode }: Props) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/admin" className={styles.backLink}>← 목록</Link>
+        <Link href="/admin?tab=decks" className={styles.backLink}>← 목록</Link>
         <h1 className={styles.title}>
           {mode === "create" ? "새 덱 만들기" : `편집: ${initial?.id}`}
         </h1>
@@ -485,7 +485,7 @@ export default function DeckEditor({ initial, mode }: Props) {
         </div>
 
         <div className={styles.footer}>
-          <Link href="/admin" className={styles.cancelLink}>취소</Link>
+          <Link href="/admin?tab=decks" className={styles.cancelLink}>취소</Link>
           <button type="submit" className={styles.submitBtn} disabled={saving}>
             {saving ? "저장 중..." : mode === "create" ? "덱 생성" : "덱 수정"}
           </button>
