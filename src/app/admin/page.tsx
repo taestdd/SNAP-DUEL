@@ -8,6 +8,7 @@ import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { CardTagSchema } from "@/game/engine/cardSchema";
 import BulkImportModal from "@/components/admin/BulkImportModal";
+import type { ImportKind } from "@/components/admin/BulkImportModal";
 
 type Tab = "cards" | "decks" | "characters";
 type SortField = "id" | "name" | "cost" | "delay" | "advantage";
@@ -40,6 +41,7 @@ export default function AdminPage() {
   /** 탭 전환 시 URL도 맞춘다 — 새로고침·뒤로가기·편집 후 복귀가 같은 탭을 연다 */
   function changeTab(next: Tab) {
     setTab(next);
+    setShowBulkImport(false);
     window.history.replaceState(null, "", next === "cards" ? "/admin" : `/admin?tab=${next}`);
   }
   const [cards, setCards] = useState<Record<string, CardSchemaType>>({});
@@ -167,7 +169,7 @@ export default function AdminPage() {
           </button>
         </div>
         <div className={styles.headerActions}>
-          {tab === "cards" && (
+          {(tab === "cards" || tab === "characters") && (
             <button className={styles.bulkBtn} onClick={() => setShowBulkImport(true)}>
               ↑ 일괄 등록
             </button>
@@ -178,14 +180,17 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {showBulkImport && (
+      {showBulkImport && (tab === "cards" || tab === "characters") && (
         <BulkImportModal
+          kind={tab as ImportKind}
           onClose={() => setShowBulkImport(false)}
           onSuccess={() => {
             setShowBulkImport(false);
-            fetch("/api/admin/cards")
+            // 등록 직후 목록을 다시 읽어 방금 넣은 항목이 바로 보이게 한다
+            const url = tab === "cards" ? "/api/admin/cards" : "/api/admin/characters";
+            fetch(url)
               .then((r) => r.json())
-              .then(setCards);
+              .then((data) => (tab === "cards" ? setCards(data) : setCharacters(data)));
           }}
         />
       )}

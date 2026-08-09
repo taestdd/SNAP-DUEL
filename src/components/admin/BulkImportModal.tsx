@@ -1,12 +1,58 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { ZodError } from "zod";
 import { CardSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
+import { CharacterDefSchema } from "@/game/engine/characterSchema";
+import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import styles from "./BulkImportModal.module.css";
 
+export type ImportKind = "cards" | "characters";
+
+type ParseOutcome = { success: true; data: unknown } | { success: false; error: ZodError };
+
+/**
+ * 종류별 차이만 모아둔 설정 — 파싱·검증·미리보기·저장 경로.
+ * 새 종류(덱 등)를 추가하려면 여기에 한 항목만 더하면 된다.
+ */
+const KINDS: Record<ImportKind, {
+  label: string;
+  endpoint: string;
+  accept: string;
+  supportsCsv: boolean;
+  placeholder: string;
+  parse: (raw: unknown) => ParseOutcome;
+  describe: (data: unknown) => { id: string; name: string; summary: string };
+}> = {
+  cards: {
+    label: "카드",
+    endpoint: "/api/admin/cards",
+    accept: ".json,.csv",
+    supportsCsv: true,
+    placeholder: '[\n  {\n    "id": "my_card",\n    "name": "카드 이름",\n    "cost": 1,\n    ...\n  }\n]',
+    parse: (raw) => CardSchema.safeParse(raw) as ParseOutcome,
+    describe: (data) => {
+      const c = data as CardSchemaType;
+      return { id: c.id, name: c.name, summary: `cost ${c.cost} · dly ${c.delay}` };
+    },
+  },
+  characters: {
+    label: "캐릭터",
+    endpoint: "/api/admin/characters",
+    accept: ".json",
+    supportsCsv: false,
+    placeholder: '[\n  {\n    "id": "nagi",\n    "name": "凪",\n    "maxHp": 12,\n    "spriteId": "a",\n    "affinities": ["공통", "공안", "나기"],\n    "entryEffect": null,\n    "exitEffect": null\n  }\n]',
+    parse: (raw) => CharacterDefSchema.safeParse(raw) as ParseOutcome,
+    describe: (data) => {
+      const c = data as CharacterDefSchemaType;
+      return { id: c.id, name: c.name, summary: `HP ${c.maxHp} · ${c.spriteId} · ${c.affinities.join(" / ")}` };
+    },
+  },
+};
+
 type ParsedItem =
-  | { status: "ok"; card: CardSchemaType }
+  | { status: "ok"; id: string; name: string; summary: string; data: unknown }
   | { status: "error"; raw: unknown; message: string };
 
 type ImportResult =
@@ -17,12 +63,15 @@ type ImportResult =
 type Stage = "edit" | "preview" | "importing" | "done";
 
 export default function BulkImportModal({
+  kind = "cards",
   onClose,
   onSuccess,
 }: {
+  kind?: ImportKind;
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const config = KINDS[kind];
   const [json, setJson] = useState("");
   const [stage, setStage] = useState<Stage>("edit");
   const [items, setItems] = useState<ParsedItem[]>([]);
@@ -105,7 +154,7 @@ export default function BulkImportModal({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = (ev.target?.result as string) ?? "";
-      setJson(file.name.endsWith(".csv") ? parseCSV(text) : text);
+      setJson(config.supportsCsv && file.name.endsWith(".csv") ? parseCSV(text) : text);
     };
     reader.readAsText(file, "utf-8");
   }
@@ -121,8 +170,8 @@ export default function BulkImportModal({
 
     const arr = Array.isArray(raw) ? raw : [raw];
     const parsed: ParsedItem[] = arr.map((item) => {
-      const result = CardSchema.safeParse(item);
-      if (result.success) return { status: "ok", card: result.data };
+      const result = config.parse(item);
+      if (result.success) return { status: "ok", ...config.describe(result.data), data: result.data };
       const msg = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
       return { status: "error", raw: item, message: msg };
     });
@@ -138,23 +187,23 @@ export default function BulkImportModal({
 
     const res: ImportResult[] = [];
     for (let i = 0; i < valid.length; i++) {
-      const card = valid[i].card;
+      const item = valid[i];
       try {
-        const r = await fetch("/api/admin/cards", {
+        const r = await fetch(config.endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(card),
+          body: JSON.stringify(item.data),
         });
         if (r.status === 201) {
-          res.push({ status: "ok", id: card.id });
+          res.push({ status: "ok", id: item.id });
         } else if (r.status === 409) {
-          res.push({ status: "skip", id: card.id, reason: "이미 존재" });
+          res.push({ status: "skip", id: item.id, reason: "이미 존재" });
         } else {
           const data = await r.json().catch(() => ({}));
-          res.push({ status: "error", id: card.id, reason: JSON.stringify(data.error ?? "저장 실패") });
+          res.push({ status: "error", id: item.id, reason: JSON.stringify(data.error ?? "저장 실패") });
         }
       } catch {
-        res.push({ status: "error", id: card.id, reason: "네트워크 오류" });
+        res.push({ status: "error", id: item.id, reason: "네트워크 오류" });
       }
       setProgress(i + 1);
     }
@@ -171,7 +220,7 @@ export default function BulkImportModal({
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <span className={styles.title}>카드 일괄 등록</span>
+          <span className={styles.title}>{config.label} 일괄 등록</span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
@@ -179,18 +228,20 @@ export default function BulkImportModal({
         {stage === "edit" && (
           <>
             <div className={styles.hint}>
-              JSON 배열 또는 CSV 파일을 업로드하세요. CSV는 자동으로 JSON으로 변환됩니다.
+              {config.supportsCsv
+                ? "JSON 배열 또는 CSV 파일을 업로드하세요. CSV는 자동으로 JSON으로 변환됩니다."
+                : `${config.label} JSON 배열을 붙여넣거나 .json 파일을 업로드하세요.`}
             </div>
             <div className={styles.fileRow}>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".json,.csv"
+                accept={config.accept}
                 className={styles.fileInput}
                 onChange={handleFileChange}
               />
               <button className={styles.fileBtn} onClick={() => fileRef.current?.click()}>
-                파일 선택 (JSON / CSV)
+                {config.supportsCsv ? "파일 선택 (JSON / CSV)" : "파일 선택 (JSON)"}
               </button>
               {fileRef.current?.files?.[0] && (
                 <span className={styles.fileName}>{fileRef.current.files[0].name}</span>
@@ -198,7 +249,7 @@ export default function BulkImportModal({
             </div>
             <textarea
               className={styles.textarea}
-              placeholder={'[\n  {\n    "id": "my_card",\n    "name": "카드 이름",\n    "cost": 1,\n    ...\n  }\n]'}
+              placeholder={config.placeholder}
               value={json}
               onChange={(e) => setJson(e.target.value)}
               spellCheck={false}
@@ -225,9 +276,9 @@ export default function BulkImportModal({
                 item.status === "ok" ? (
                   <div key={i} className={`${styles.previewItem} ${styles.previewOk}`}>
                     <span className={styles.previewIcon}>✓</span>
-                    <span className={styles.previewId}>{item.card.id}</span>
-                    <span className={styles.previewName}>{item.card.name}</span>
-                    <span className={styles.previewMeta}>cost {item.card.cost} · dly {item.card.delay}</span>
+                    <span className={styles.previewId}>{item.id}</span>
+                    <span className={styles.previewName}>{item.name}</span>
+                    <span className={styles.previewMeta}>{item.summary}</span>
                   </div>
                 ) : (
                   <div key={i} className={`${styles.previewItem} ${styles.previewErr}`}>
