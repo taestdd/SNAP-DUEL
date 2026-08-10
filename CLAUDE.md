@@ -179,13 +179,38 @@ UI(Hand)·AI(ai.ts)·집행(turn.ts)이 모두 같은 결과를 보도록 보장
 - `getEffectiveCost(state, player, card)`: statModifiers 보정 반영 실효 코스트
 
 **스탯 — `deriveCardStats(state, player, cardId): CardStats`**
-- base + statModifiers + status 버프(delayAdvantage / attackBuff)를 합산
-- 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
+- base + statModifiers + `status.buffs` + 구 status 버프(delayAdvantage / attackBuff)를 합산
+- 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + buffs + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
 - CardView는 자체 계산 없이 이 결과(`stats` prop)만 표시
 
 **규칙:** 카드 표시/판정 로직을 컴포넌트나 ai.ts에 새로 인라인하지 말 것.
 새 조건/스탯이 생기면 위 두 함수에만 추가하고, `playability.test.ts`/`cardStats.test.ts`의
 정합성 테스트(판정===집행, 표시===전투 데미지)로 어긋남을 막는다.
+
+---
+
+## 버프/디버프 (status.buffs)
+
+`buff` 효과가 `Combatant.status.buffs`에 `Buff`를 쌓는다. delta 음수 = 디버프.
+
+```ts
+Buff = { label?, stat, delta, duration, scope, characterId?, filter? }
+```
+
+- **지속(duration)** — `{ type: "turns", remaining }`(턴 시작마다 감소, `tickTurnBuffs`) /
+  `{ type: "uses", remaining }`(필터에 맞는 카드를 **실제로 쓸 때만** 감소, `consumeUseBuffs`)
+- **스코프(scope)** — `player`(태그해도 유지) / `character`(걸린 시점의 활성 캐릭터에 붙어 **태그 시 소멸**, `clearCharacterBuffs`)
+- **대상** — 효과의 `target`(self/enemy) × `buffScope`로 4조합
+- **필터(filter)** — `cardType` / `tags`(하나만 맞아도 통과) / `statRange`.
+  `statRange`는 **버프 적용 전 base 스탯**으로 판정한다 (실효 스탯으로 보면 적용 순서에 따라 결과가 흔들린다)
+- **라운드 경계** — 라운드가 바뀌면 남은 지속과 무관하게 전부 소멸 (`prepareNextRound`)
+
+**계산 지점은 하나다 — `evaluateBuffs(state, player, card)`.**
+`getEffectiveCost` / `getEffectiveDelay` / `deriveCardStats` / `applyAttackStats` 넷 다 이 함수를 거친다.
+새 스탯을 버프 대상에 추가할 땐 `StatTarget` + `baseStatOf` + `buffText.STAT_LABELS`만 채우면 된다.
+
+표시 문구(로그·HP 바 배지·어드민 미리보기)는 `engine/buffText.ts`가 단일 지점.
+검증은 `buffs.test.ts`(지속·스코프·필터·표시===실제 데미지·표기).
 
 ---
 

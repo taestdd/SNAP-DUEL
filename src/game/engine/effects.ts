@@ -22,6 +22,7 @@ import {
   updateStatus,
 } from "./stateHelpers";
 import { shuffleSeeded } from "./rng";
+import { formatBuffDetail } from "./buffText";
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체)          */
@@ -211,11 +212,9 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
       ...(effect.buffFilter ? { filter: effect.buffFilter } : {}),
     };
 
-    const sign = delta > 0 ? `+${delta}` : `${delta}`;
-    const dur = d.type === "uses" ? `${d.value}회 사용` : `${d.value}턴`;
     return pushLog(
       updateStatus(state, target, { buffs: [...(state[target].status.buffs ?? []), buff] }),
-      `${target} gains buff ${effect.label ?? stat} ${sign} (${scope}, ${dur})`,
+      `${target} gains buff ${formatBuffDetail(buff)}`,
     );
   },
 

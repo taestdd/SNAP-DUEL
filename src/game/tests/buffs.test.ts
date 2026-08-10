@@ -5,6 +5,7 @@ import { beginTurn } from "@/game/engine/turn";
 import { getEffectiveDelay } from "@/game/engine/stateHelpers";
 import { registerCards, getCard } from "@/game/engine/cards";
 import type { Buff, GameState, PlayerId } from "@/game/engine/types";
+import { formatBuffShort, formatBuffDetail } from "@/game/engine/buffText";
 import { makeState } from "./fixtures";
 
 /**
@@ -254,5 +255,47 @@ describe("핸드 표시 == 실제 데미지", () => {
     const before = s.P1.hp;
     const after = apply(s, "AI", "bf_atk").P1.hp;
     expect(before - after).toBe(shown);
+  });
+});
+
+/* ── 표기 헬퍼 ────────────────────────────────────────────────────────── */
+describe("버프 표기 (로그·배지 공용)", () => {
+  it("배지는 스탯·증감·남은 지속을 한 줄로 보여준다", () => {
+    const buff: Buff = {
+      stat: "ground_attack", delta: 3, scope: "player",
+      duration: { type: "turns", remaining: 2 },
+    };
+    expect(formatBuffShort(buff)).toBe("ATK+3 2턴");
+    expect(formatBuffShort({ ...buff, delta: -2 })).toBe("ATK-2 2턴");
+  });
+
+  it("label이 있으면 스탯명 대신 label을 쓴다", () => {
+    const buff: Buff = {
+      label: "집중", stat: "cost", delta: -1, scope: "character",
+      duration: { type: "uses", remaining: 1 },
+    };
+    expect(formatBuffShort(buff)).toBe("집중-1 1회");
+  });
+
+  it("상세 설명에 필터 조건과 스코프가 들어간다", () => {
+    const buff: Buff = {
+      stat: "cost", delta: -1, scope: "character",
+      duration: { type: "uses", remaining: 2 },
+      filter: { cardType: "attack", tags: ["격투"] },
+    };
+    const text = formatBuffDetail(buff);
+    expect(text).toContain("attack 카드");
+    expect(text).toContain("격투");
+    expect(text).toContain("2회 사용");
+    expect(text).toContain("태그 시 소멸");
+  });
+
+  it("필터가 없으면 모든 카드로 설명한다", () => {
+    const text = formatBuffDetail({
+      stat: "delay", delta: -1, scope: "player",
+      duration: { type: "turns", remaining: 1 },
+    });
+    expect(text).toContain("모든 카드");
+    expect(text).toContain("태그해도 유지");
   });
 });
