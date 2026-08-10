@@ -1,4 +1,4 @@
-import type { Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, EffectType, GameState, PendingSelection, PlayerId } from "./types";
+import type { Buff, BuffScope, Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, EffectType, GameState, PendingSelection, PlayerId } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -13,6 +13,9 @@ import {
   syncExhausted,
   clearAttackBuff,
   evaluateModifiers,
+  evaluateBuffs,
+  consumeUseBuffs,
+  clearCharacterBuffs,
   getEffectiveDelay,
   getBenchChar,
   updateCombatant,
@@ -51,6 +54,8 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
   // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환, airborne 초기화
   const newHp = s[player].characterHp[newChar];
   s = updateCombatant(s, player, { activeCharacter: newChar, hp: newHp, airborneStack: 0 });
+  // 캐릭터에 걸린 버프는 그 캐릭터와 함께 물러난다 (플레이어 스코프는 유지)
+  s = clearCharacterBuffs(s, player);
 
   s = pushLog(s, `${player} tags out Char ${currentChar} → tags in Char ${newChar} (HP: ${newHp})`);
 
@@ -173,6 +178,44 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
     return pushLog(
       updateCombatant(state, target, { hp: newHp, characterHp: { ...t.characterHp, [t.activeCharacter]: newHp } }),
       `${target} (Char ${t.activeCharacter}) heals ${amount}`,
+    );
+  },
+
+  /**
+   * 범용 버프/디버프 — 지정한 스탯에 delta를 걸고 지속 조건이 다할 때까지 유지한다.
+   * value가 증감량(음수 = 디버프), stat이 대상 스탯.
+   * scope가 character면 지금 활성 캐릭터에 붙어 그 쪽이 태그할 때 사라진다.
+   */
+  buff: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const stat = effect.stat;
+    if (!stat) return state;
+
+    const delta = effect.value ?? 0;
+    if (delta === 0) return state;
+
+    const scope: BuffScope = effect.buffScope ?? "player";
+    const d = effect.buffDuration ?? { type: "turns" as const, value: 1 };
+    if (d.value <= 0) return state;
+
+    const buff: Buff = {
+      label: effect.label,
+      stat,
+      delta,
+      scope,
+      duration: d.type === "uses"
+        ? { type: "uses", remaining: d.value }
+        : { type: "turns", remaining: d.value },
+      // 태그 시 소멸 판정에 쓰려고 걸린 시점의 캐릭터를 기록해 둔다
+      ...(scope === "character" ? { characterId: state[target].activeCharacter } : {}),
+      ...(effect.buffFilter ? { filter: effect.buffFilter } : {}),
+    };
+
+    const sign = delta > 0 ? `+${delta}` : `${delta}`;
+    const dur = d.type === "uses" ? `${d.value}회 사용` : `${d.value}턴`;
+    return pushLog(
+      updateStatus(state, target, { buffs: [...(state[target].status.buffs ?? []), buff] }),
+      `${target} gains buff ${effect.label ?? stat} ${sign} (${scope}, ${dur})`,
     );
   },
 
@@ -364,8 +407,9 @@ function applyAttackStats(
   const targetAirborne = state[opponent].airborneStack;
   const attackBuff = state[player].status.attackBuff ?? 0;
   const mods = evaluateModifiers(state, player, card.statModifiers);
-  const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0));
-  const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0));
+  const buffs = evaluateBuffs(state, player, card);
+  const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + (buffs.ground_attack ?? 0));
+  const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + (buffs.anti_air_attack ?? 0));
 
   const swing =
     groundAtk > 0 && targetAirborne === 0 ? { amount: groundAtk, label: "Ground" }
@@ -419,6 +463,10 @@ export function applyCardEffectsWithPause(
     const attack = applyAttackStats(s, player, card);
     s = { ...attack.state, attackLanded: attack.landed, attackConnected: attack.connected };
 
+    // 사용기반 버프 소모 — 공격 스탯이 이 버프를 이미 반영한 뒤에 줄인다.
+    // 빗나가도 "썼다"는 사실은 같으므로 아래 조기 반환보다 앞에 둔다.
+    s = consumeUseBuffs(s, player, card);
+
     if (attack.connected) {
       s = checkGameOver(s);
       if (s.phase === "GAME_OVER") return s;
@@ -459,7 +507,8 @@ export function applyCardEffectsWithPause(
 /** statModifiers 보정을 반영한 카드의 실효 코스트. */
 export function getEffectiveCost(state: GameState, player: PlayerId, card: Card): number {
   const mods = evaluateModifiers(state, player, card.statModifiers);
-  return Math.max(0, card.cost + (mods.cost ?? 0));
+  const buffs = evaluateBuffs(state, player, card);
+  return Math.max(0, card.cost + (mods.cost ?? 0) + (buffs.cost ?? 0));
 }
 
 /**
@@ -472,14 +521,15 @@ export function deriveCardStats(state: GameState, player: PlayerId, cardId: stri
   if (!card) return { cost: 0, delay: 0, groundAttack: 0, antiAirAttack: 0, advantage: 0 };
 
   const mods = evaluateModifiers(state, player, card.statModifiers);
+  const buffs = evaluateBuffs(state, player, card);
   const attackBuff = state[player].status.attackBuff ?? 0;
 
   return {
     cost: getEffectiveCost(state, player, card),
     delay: getEffectiveDelay(state, player, cardId),
-    groundAttack: Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + attackBuff),
-    antiAirAttack: Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + attackBuff),
-    advantage: Math.max(0, (card.advantage ?? 0) + (mods.advantage ?? 0)),
+    groundAttack: Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + (buffs.ground_attack ?? 0) + attackBuff),
+    antiAirAttack: Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + (buffs.anti_air_attack ?? 0) + attackBuff),
+    advantage: Math.max(0, (card.advantage ?? 0) + (mods.advantage ?? 0) + (buffs.advantage ?? 0)),
   };
 }
 

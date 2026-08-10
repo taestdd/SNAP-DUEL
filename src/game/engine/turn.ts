@@ -11,6 +11,7 @@ import {
   decideWinnerByHp,
   moveCardsBetweenZones,
   updateCombatant,
+  tickTurnBuffs,
 } from "./stateHelpers";
 import { HAND_LIMIT } from "./constants";
 import { canUseCard, getEffectiveCost } from "./effects";
@@ -38,8 +39,9 @@ function prepareNextRound(state: GameState): GameState {
     comboCount: 0,
     animStartCombo: null,
     draftSelections: { P1: null, AI: null },
-    P1: { ...s.P1, queue: [], ready: false, block: 0 },
-    AI: { ...s.AI, queue: [], ready: false, block: 0 },
+    // 라운드는 핸드·쿨다운을 전부 정리하는 경계 — 버프도 남은 턴과 무관하게 끊는다
+    P1: { ...s.P1, queue: [], ready: false, block: 0, status: { ...s.P1.status, buffs: [] } },
+    AI: { ...s.AI, queue: [], ready: false, block: 0, status: { ...s.AI.status, buffs: [] } },
   };
 
   s = syncExhausted(nextState, "P1");
@@ -116,12 +118,22 @@ function applyTurnStartStatuses(state: GameState): GameState {
     ...state,
     P1: {
       ...state.P1,
-      status: { ...state.P1.status, delayAdvantage: state.P1.status.delayAdvantageNext ?? 0, delayAdvantageNext: 0 },
+      status: {
+        ...state.P1.status,
+        delayAdvantage: state.P1.status.delayAdvantageNext ?? 0,
+        delayAdvantageNext: 0,
+        buffs: tickTurnBuffs(state.P1.status.buffs ?? []),
+      },
       airborneStack: Math.max(0, state.P1.airborneStack - 1),
     },
     AI: {
       ...state.AI,
-      status: { ...state.AI.status, delayAdvantage: state.AI.status.delayAdvantageNext ?? 0, delayAdvantageNext: 0 },
+      status: {
+        ...state.AI.status,
+        delayAdvantage: state.AI.status.delayAdvantageNext ?? 0,
+        delayAdvantageNext: 0,
+        buffs: tickTurnBuffs(state.AI.status.buffs ?? []),
+      },
       airborneStack: Math.max(0, state.AI.airborneStack - 1),
     },
   };

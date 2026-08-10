@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
+import type { Buff, Card, CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
 import { getCard } from "./cards";
 import { shuffleSeeded, randomInt } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -149,6 +149,110 @@ function thresholdDelta(state: GameState, player: PlayerId, mod: ThresholdModifi
   return met ? mod.delta : null;
 }
 
+/* ── 버프/디버프 ──────────────────────────────────────────────────────── */
+
+/** 카드의 base 스탯 — 버프 필터는 항상 이 값으로 판정한다 (순환 방지) */
+function baseStatOf(card: Card, stat: StatTarget): number {
+  switch (stat) {
+    case "cost":            return card.cost;
+    case "delay":           return card.delay;
+    case "ground_attack":   return card.groundAttack ?? 0;
+    case "anti_air_attack": return card.antiAirAttack ?? 0;
+    case "advantage":       return card.advantage ?? 0;
+    default:                return 0;
+  }
+}
+
+/**
+ * 이 버프가 해당 카드에 적용되는지.
+ * 조건은 모두 만족해야 하고(AND), tags만 하나라도 일치하면 통과한다(OR).
+ */
+export function buffApplies(buff: Buff, card: Card): boolean {
+  const f = buff.filter;
+  if (!f) return true;
+
+  if (f.cardType && (card.cardType ?? "skill") !== f.cardType) return false;
+
+  if (f.tags && f.tags.length > 0) {
+    const tags = card.tags ?? [];
+    if (!f.tags.some((t) => tags.includes(t))) return false;
+  }
+
+  if (f.statRange) {
+    const v = baseStatOf(card, f.statRange.stat);
+    if (f.statRange.min !== undefined && v < f.statRange.min) return false;
+    if (f.statRange.max !== undefined && v > f.statRange.max) return false;
+  }
+
+  return true;
+}
+
+/**
+ * 이 카드에 적용되는 버프들의 스탯별 합계.
+ *
+ * evaluateModifiers(카드 자체의 조건부 보정)와 짝을 이루며, 실효 스탯을 구하는
+ * 네 지점(코스트·딜레이·핸드 표시·전투 해결)이 모두 이 함수를 함께 호출해야
+ * 표시와 실제가 어긋나지 않는다.
+ */
+export function evaluateBuffs(
+  state: GameState,
+  player: PlayerId,
+  card: Card | undefined,
+): Partial<Record<StatTarget, number>> {
+  const buffs = state[player].status.buffs;
+  if (!card || !buffs || buffs.length === 0) return {};
+
+  const result: Partial<Record<StatTarget, number>> = {};
+  for (const buff of buffs) {
+    if (!buffApplies(buff, card)) continue;
+    result[buff.stat] = (result[buff.stat] ?? 0) + buff.delta;
+  }
+  return result;
+}
+
+/** 턴 시작 — turns 버프를 1 감소시키고 만료된 것을 제거한다 */
+export function tickTurnBuffs(buffs: Buff[]): Buff[] {
+  return buffs
+    .map((b) => (b.duration.type === "turns"
+      ? { ...b, duration: { ...b.duration, remaining: b.duration.remaining - 1 } }
+      : b))
+    .filter((b) => b.duration.remaining > 0);
+}
+
+/**
+ * 카드 사용 — 그 카드에 적용된 uses 버프만 1 감소시키고 만료된 것을 제거한다.
+ * (필터에 맞지 않는 카드를 써도 줄지 않는다)
+ */
+export function consumeUseBuffs(state: GameState, player: PlayerId, card: Card): GameState {
+  const buffs = state[player].status.buffs;
+  if (!buffs || buffs.length === 0) return state;
+
+  let consumed = 0;
+  const next = buffs
+    .map((b) => {
+      if (b.duration.type !== "uses" || !buffApplies(b, card)) return b;
+      consumed++;
+      return { ...b, duration: { ...b.duration, remaining: b.duration.remaining - 1 } };
+    })
+    .filter((b) => b.duration.remaining > 0);
+
+  if (consumed === 0) return state;
+  return updateStatus(state, player, { buffs: next });
+}
+
+/** 캐릭터 교체 — 그 플레이어의 character 스코프 버프를 걷어낸다 */
+export function clearCharacterBuffs(state: GameState, player: PlayerId): GameState {
+  const buffs = state[player].status.buffs;
+  if (!buffs || buffs.length === 0) return state;
+
+  const next = buffs.filter((b) => b.scope !== "character");
+  if (next.length === buffs.length) return state;
+  return pushLog(
+    updateStatus(state, player, { buffs: next }),
+    `${player} loses ${buffs.length - next.length} character buff(s) on tag`,
+  );
+}
+
 /**
  * 카드의 statModifiers를 현재 상태로 평가해 스탯별 보정 합계를 낸다.
  *
@@ -185,7 +289,8 @@ export function getEffectiveDelay(
   if (!c) return Number.MAX_SAFE_INTEGER;
   const bonus = state[player].status.delayAdvantage ?? 0;
   const modDelta = evaluateModifiers(state, player, c.statModifiers).delay ?? 0;
-  return Math.max(0, c.delay - bonus + modDelta);
+  const buffDelta = evaluateBuffs(state, player, c).delay ?? 0;
+  return Math.max(0, c.delay - bonus + modDelta + buffDelta);
 }
 
 export function moveQueuedCard(
