@@ -280,7 +280,12 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
     const autoSelected = candidates.slice(0, count);
     if (autoSelected.length === 0) return state;
     const moved = moveCardsBetweenZones(state, fromPlayerId, fromZone, toPlayerId, toZone, autoSelected, toPosition);
-    return pushLog(moved, `${player} moves ${autoSelected.length} card(s) from ${fromZone} to ${toZone}`);
+    // 카드 사용자와 이동 대상이 다를 수 있다(target:"enemy") — 실제 대상을 찍어야
+    // "누구의 무엇이 움직였나"를 로그로 판별할 수 있다
+    return pushLog(
+      moved,
+      `${player} moves ${autoSelected.length} card(s): ${fromPlayerId} ${fromZone} → ${toPlayerId} ${toZone}`,
+    );
   },
 };
 

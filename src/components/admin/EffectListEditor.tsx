@@ -62,8 +62,9 @@ export default function EffectListEditor({
             {NEEDS_VALUE.includes(effect.type) && (
               <NumericField label="Value" value={effect.value ?? 0} onChange={(n) => update(i, { value: n })} />
             )}
+            {/* Target 미지정 시 엔진은 self로 처리한다(resolveTarget) — 표시도 self여야 실제 동작과 맞는다 */}
             {effect.type !== "tag" && (
-              <SelectField label="Target" value={effect.target ?? "enemy"} onChange={(v) => update(i, { target: v as "self" | "enemy" })}>
+              <SelectField label="Target" value={effect.target ?? "self"} onChange={(v) => update(i, { target: v as "self" | "enemy" })}>
                 {TARGETS.map((t) => <option key={t} value={t}>{t}</option>)}
               </SelectField>
             )}

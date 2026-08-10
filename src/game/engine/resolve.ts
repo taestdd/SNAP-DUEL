@@ -207,7 +207,10 @@ export function resumeResolve(state: GameState, selectedCards: string[]): GameSt
 
   if (selectedCards.length > 0) {
     s = moveCardsBetweenZones(s, ps.fromPlayerId, ps.fromZone, ps.toPlayerId, ps.toZone, selectedCards, ps.toPosition);
-    s = pushLog(s, `${ps.sourcePlayer} returns ${selectedCards.length} card(s) from ${ps.fromZone} to ${ps.toZone}`);
+    s = pushLog(
+      s,
+      `${ps.sourcePlayer} returns ${selectedCards.length} card(s): ${ps.fromPlayerId} ${ps.fromZone} → ${ps.toPlayerId} ${ps.toZone}`,
+    );
   }
 
   // 선택을 유발한 카드에 아직 안 처리된 효과가 남아 있으면 이어서 적용한다.
