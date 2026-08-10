@@ -8,6 +8,7 @@ import type { DeckSchemaType } from "@/game/engine/deckSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { CardTagSchema } from "@/game/engine/cardSchema";
 import BulkImportModal from "@/components/admin/BulkImportModal";
+import type { ImportKind } from "@/components/admin/BulkImportModal";
 
 type Tab = "cards" | "decks" | "characters";
 type SortField = "id" | "name" | "cost" | "delay" | "advantage";
@@ -21,8 +22,28 @@ function loadFilter(): Record<string, string> {
   try { return JSON.parse(sessionStorage.getItem(FILTER_KEY) ?? "{}"); } catch { return {}; }
 }
 
+const TABS: Tab[] = ["cards", "decks", "characters"];
+
+function isTab(v: string | null): v is Tab {
+  return v !== null && (TABS as string[]).includes(v);
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("cards");
+
+  // ?tab= 복원 — 마운트 후에 읽어야 SSR 결과와 어긋나지 않는다.
+  // (편집기가 저장 후 ?tab=characters 로 돌려보내도 종전에는 항상 카드 탭이 열렸다)
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (isTab(t)) setTab(t);
+  }, []);
+
+  /** 탭 전환 시 URL도 맞춘다 — 새로고침·뒤로가기·편집 후 복귀가 같은 탭을 연다 */
+  function changeTab(next: Tab) {
+    setTab(next);
+    setShowBulkImport(false);
+    window.history.replaceState(null, "", next === "cards" ? "/admin" : `/admin?tab=${next}`);
+  }
   const [cards, setCards] = useState<Record<string, CardSchemaType>>({});
   const [decks, setDecks] = useState<Record<string, DeckSchemaType>>({});
   const [characters, setCharacters] = useState<Record<string, CharacterDefSchemaType>>({});
@@ -130,25 +151,25 @@ export default function AdminPage() {
         <div className={styles.tabs}>
           <button
             className={`${styles.tabBtn} ${tab === "cards" ? styles.tabActive : ""}`}
-            onClick={() => setTab("cards")}
+            onClick={() => changeTab("cards")}
           >
             카드
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "decks" ? styles.tabActive : ""}`}
-            onClick={() => setTab("decks")}
+            onClick={() => changeTab("decks")}
           >
             덱
           </button>
           <button
             className={`${styles.tabBtn} ${tab === "characters" ? styles.tabActive : ""}`}
-            onClick={() => setTab("characters")}
+            onClick={() => changeTab("characters")}
           >
             캐릭터
           </button>
         </div>
         <div className={styles.headerActions}>
-          {tab === "cards" && (
+          {(tab === "cards" || tab === "characters") && (
             <button className={styles.bulkBtn} onClick={() => setShowBulkImport(true)}>
               ↑ 일괄 등록
             </button>
@@ -159,14 +180,17 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {showBulkImport && (
+      {showBulkImport && (tab === "cards" || tab === "characters") && (
         <BulkImportModal
+          kind={tab as ImportKind}
           onClose={() => setShowBulkImport(false)}
           onSuccess={() => {
             setShowBulkImport(false);
-            fetch("/api/admin/cards")
+            // 등록 직후 목록을 다시 읽어 방금 넣은 항목이 바로 보이게 한다
+            const url = tab === "cards" ? "/api/admin/cards" : "/api/admin/characters";
+            fetch(url)
               .then((r) => r.json())
-              .then(setCards);
+              .then((data) => (tab === "cards" ? setCards(data) : setCharacters(data)));
           }}
         />
       )}

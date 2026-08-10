@@ -1,0 +1,51 @@
+[
+  {
+    "id": "nagi",
+    "name": "凪",
+    "maxHp": 12,
+    "spriteId": "a",
+    "affinities": ["공통", "공안", "나기", "투척형"],
+    "entryEffect": {
+      "type": "generate",
+      "cardId": "toxin_dummy",
+      "toZone": "deck",
+      "toPosition": "top",
+      "count": 1,
+      "target": "enemy"
+    },
+    "exitEffect": { "type": "heal", "value": 2, "target": "self" }
+  },
+  {
+    "id": "ukai",
+    "name": "鵜飼",
+    "maxHp": 14,
+    "spriteId": "b",
+    "affinities": ["공통", "공안", "우카이"],
+    "entryEffect": { "type": "damage", "value": 2, "target": "enemy" },
+    "exitEffect": [
+      { "type": "draw", "value": 1, "target": "enemy" },
+      {
+        "type": "move_cards",
+        "count": 1,
+        "target": "enemy",
+        "fromZone": "trash",
+        "toZone": "deck",
+        "toPosition": "bottom"
+      }
+    ]
+  },
+  {
+    "id": "dm7",
+    "name": "DM-7",
+    "maxHp": 12,
+    "spriteId": "c",
+    "affinities": ["공통", "공안", "기계", "DM-7", "파츠"],
+    "entryEffect": {
+      "type": "generate",
+      "cardId": "arm_shield",
+      "toZone": "hand",
+      "count": 1
+    },
+    "exitEffect": { "type": "heal", "value": 3, "target": "self" }
+  }
+]
