@@ -264,3 +264,60 @@ describe("affinityAllows — 어피니티 판정 단일 진실원", () => {
     expect(engine).toBe(false);
   });
 });
+
+/* ── target 기본값 / 로그 정확성 ──────────────────────────────────────── */
+
+registerCards({
+  pf_give: {
+    id: "pf_give", name: "자원 공여", cardType: "skill", cost: 0, delay: 1,
+    advantage: 0, text: "", effects: [
+      { type: "draw", value: 1, target: "enemy" },
+      { type: "move_cards", count: 1, target: "enemy", fromZone: "trash", toZone: "deck", toPosition: "bottom" },
+      { type: "draw", value: 2, target: "self" },
+      { type: "move_cards", count: 2, target: "self", fromZone: "trash", toZone: "deck", toPosition: "bottom" },
+    ],
+  },
+  // target 미지정 — 엔진은 self로 처리해야 한다 (어드민 표시도 self로 맞춰져 있다)
+  pf_no_target: {
+    id: "pf_no_target", name: "대상 미지정", cardType: "skill", cost: 0, delay: 1,
+    advantage: 0, text: "", effects: [{ type: "draw", value: 2 }],
+  },
+});
+
+describe("target 기본값과 로그", () => {
+  const give = () => makeState({
+    P1: { hand: [], deck: Array(10).fill("jab"), trash: ["heavy", "heavy", "heavy"], queue: ["pf_give"] },
+    AI: { hand: [], deck: Array(10).fill("jab"), trash: ["heavy", "heavy", "heavy"] },
+  });
+
+  it("draw/move가 각자의 target 플레이어에게 적용된다", () => {
+    const s = apply(give(), "P1", "pf_give");
+
+    expect(s.P1.hand).toHaveLength(2);   // self draw 2
+    expect(s.AI.hand).toHaveLength(1);   // enemy draw 1
+    expect(s.P1.trash).toHaveLength(1);  // self 2장 회수
+    expect(s.AI.trash).toHaveLength(2);  // enemy 1장 회수
+    // 덱 총량은 draw와 회수가 상쇄돼 그대로 (우카이 설계의 핵심)
+    expect(s.P1.deck).toHaveLength(10);
+    expect(s.AI.deck).toHaveLength(10);
+  });
+
+  it("move_cards 로그가 카드 사용자가 아니라 실제 이동 대상을 남긴다", () => {
+    const s = apply(give(), "P1", "pf_give");
+    const moves = s.log.filter((l) => l.includes("moves"));
+
+    // 상대 자원을 옮긴 줄과 자기 자원을 옮긴 줄이 구분돼야 한다
+    expect(moves.some((l) => l.includes("AI trash → AI deck"))).toBe(true);
+    expect(moves.some((l) => l.includes("P1 trash → P1 deck"))).toBe(true);
+  });
+
+  it("target 미지정은 self로 처리된다", () => {
+    const s = apply(
+      makeState({ P1: { hand: [], deck: Array(10).fill("jab"), queue: ["pf_no_target"] } }),
+      "P1",
+      "pf_no_target",
+    );
+    expect(s.P1.hand).toHaveLength(2);
+    expect(s.AI.hand).toHaveLength(0);
+  });
+});
