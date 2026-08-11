@@ -14,7 +14,7 @@ export const CardTagSchema = z.enum(CARD_TAGS);
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate", "buff",
+  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate", "buff", "poison",
 ]);
 
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);
@@ -119,6 +119,7 @@ export const CardEffectSchema = z.object({
   buffDuration: BuffDurationInputSchema.optional(),
   buffFilter: BuffFilterSchema.optional(),
   label: z.string().optional(),
+  poisonTurns: z.number().int().min(1).optional(),
 });
 
 /**
@@ -165,6 +166,15 @@ const CardEffectStrictSchema = z.discriminatedUnion("type", [
     buffScope: BuffScopeSchema.optional(),
     buffDuration: BuffDurationInputSchema.optional(),
     buffFilter: BuffFilterSchema.optional(),
+    label: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("poison"),
+    // 틱당 데미지 — 0 이하는 무동작이라 거부
+    value: z.number().int().min(1),
+    poisonTurns: z.number().int().min(1).optional(),
+    target: TargetSchema.optional(),
+    buffScope: BuffScopeSchema.optional(),
     label: z.string().optional(),
   }),
   z.object({

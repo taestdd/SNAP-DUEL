@@ -79,7 +79,7 @@ export interface FighterViewState {
  * delay: 큐 시작 시점으로부터의 절대 지연 (ms)
  */
 export interface CombatAnimationEvent {
-  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash" | "fighter_move";
+  type: "action_start" | "visual_hit" | "damage_resolve" | "action_end" | "super_flash" | "fighter_move" | "poison_tick";
   /** 큐 시작 시점으로부터의 절대 지연 (ms) */
   delay: number;
   /** 행동하는 플레이어 (action_start, action_end, damage_resolve) */
@@ -171,7 +171,8 @@ export type EffectType =
   | "move_cards"
   | "shuffle"
   | "generate"
-  | "buff";
+  | "buff"
+  | "poison";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -266,8 +267,13 @@ export type CardEffect = {
   buffDuration?: { type: "turns" | "uses"; value: number };
   /** 영향받을 카드 한정 (미지정 시 전부) */
   buffFilter?: BuffFilter;
-  /** 로그·UI 표시용 이름 */
+  /** 로그·UI 표시용 이름 (buff / poison 공용) */
   label?: string;
+
+  /* ── poison 효과 전용 ───────────────────────────────────────────
+   * 틱당 데미지는 value를 쓴다. 스코프는 buff와 같은 buffScope를 공유한다. */
+  /** 지속 턴 수 (미지정 시 2) */
+  poisonTurns?: number;
 };
 
 /**
@@ -522,6 +528,29 @@ export type Buff = {
   filter?: BuffFilter;
 };
 
+/**
+ * 걸려 있는 중독(지속 데미지).
+ *
+ * 버프와 수명주기 규칙을 공유한다 — scope로 태그 소멸 여부가 갈리고, 라운드가 바뀌면 전부 사라진다.
+ * 다른 점은 스탯을 바꾸는 대신 **매 턴 리졸브 끝에 HP를 깎는다**는 것.
+ */
+export type Poison = {
+  /** 로그·UI 표시용 이름 (없으면 "독"으로 대체) */
+  label?: string;
+  /** 틱당 데미지 — 블록을 무시하고 그대로 들어간다 */
+  damage: number;
+  /** 남은 틱 수. 리졸브 끝에 1씩 줄고 0이 되면 소멸 */
+  turns: number;
+  scope: BuffScope;
+  /** scope가 character일 때 걸린 캐릭터 — 태그로 바뀌면 소멸 판정에 쓴다 */
+  characterId?: CharacterId;
+  /**
+   * 걸린 턴. **그 턴에는 틱하지 않는다** — 건 턴에 바로 깎이면
+   * 같은 카드가 즉발 데미지 + 지속 데미지를 겸하게 되어 지속의 의미가 흐려진다.
+   */
+  appliedTurn: number;
+};
+
 export type Status = {
   attackBuff: number;
 
@@ -535,6 +564,20 @@ export type Status = {
    * (기존 attackBuff·delayAdvantage와는 당분간 병존한다)
    */
   buffs: Buff[];
+
+  /** 걸려 있는 중독 목록. 여러 개면 전부 따로 틱하고 데미지가 합산된다 */
+  poisons: Poison[];
+};
+
+/**
+ * 한 번의 중독 틱 결과 — ANIMATING 재생용.
+ * animScript는 "카드 1장당 1항목" 구조라 카드가 없는 틱을 담을 수 없어 별도 배열로 싣는다.
+ */
+export type PoisonTick = {
+  target: PlayerId;
+  damage: number;
+  /** 이 틱 적용 후의 HP 스냅샷 (HP 바 지연 표시용) */
+  hpAfter: { P1: number; AI: number };
 };
 
 export type Combatant = {
@@ -761,6 +804,9 @@ export type GameState = {
 
   /** ANIMATING 페이즈: 재생할 애니메이션 항목 목록 (카운터된 카드 제외) */
   animScript: AnimScriptEntry[];
+
+  /** ANIMATING 페이즈: 카드 연출이 모두 끝난 뒤 재생할 중독 틱 (리졸브 끝에 계산) */
+  poisonTicks: PoisonTick[];
 
   /** ANIMATING 페이즈: 카드 효과 적용 직전 HP 스냅샷 (UI 지연 표시 초기값) */
   animStartHp: { P1: number; AI: number } | null;

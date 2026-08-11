@@ -3,7 +3,7 @@
  * 이 파일의 함수는 서로만 의존하며 rules.ts를 import하지 않는다
  */
 
-import type { Buff, Card, CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
+import type { Buff, Card, CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, PoisonTick, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
 import { getCard } from "./cards";
 import { shuffleSeeded, randomInt } from "./rng";
 import { LOG_LIMIT, HAND_LIMIT } from "./constants";
@@ -253,6 +253,60 @@ export function clearCharacterBuffs(state: GameState, player: PlayerId): GameSta
   );
 }
 
+/* -------------------------- */
+/* 중독 (지속 데미지)          */
+/* -------------------------- */
+
+/** 캐릭터 교체 — 그 플레이어의 character 스코프 중독을 걷어낸다 (버프와 같은 규칙) */
+export function clearCharacterPoisons(state: GameState, player: PlayerId): GameState {
+  const poisons = state[player].status.poisons;
+  if (!poisons || poisons.length === 0) return state;
+
+  const next = poisons.filter((p) => p.scope !== "character");
+  if (next.length === poisons.length) return state;
+  return pushLog(
+    updateStatus(state, player, { poisons: next }),
+    `${player} shakes off ${poisons.length - next.length} poison(s) on tag`,
+  );
+}
+
+/**
+ * 중독 1틱 — 리졸브 끝에 양쪽 플레이어에 대해 호출한다.
+ *
+ * - 걸린 그 턴에는 틱하지 않는다 (`appliedTurn < state.turn`)
+ * - 데미지는 **블록을 무시한다** — 막을 수 없는 것이 중독의 정체성이고,
+ *   블록을 깎으면 "블록 쌓고 버티기"가 그대로 해독제가 되어 버린다
+ * - 여러 개가 걸려 있으면 각각 틱하고 데미지는 합산된다
+ *
+ * 반환하는 ticks는 ANIMATING 재생용 — 실제 HP는 이 함수가 이미 반영해 둔다.
+ */
+export function tickPoisons(state: GameState): { state: GameState; ticks: PoisonTick[] } {
+  let s = state;
+  const ticks: PoisonTick[] = [];
+
+  for (const player of ["P1", "AI"] as PlayerId[]) {
+    const poisons = s[player].status.poisons;
+    if (!poisons || poisons.length === 0) continue;
+
+    const due = poisons.filter((p) => p.appliedTurn < state.turn);
+    const damage = due.reduce((sum, p) => sum + p.damage, 0);
+
+    // 틱한 것만 남은 턴을 줄이고, 0이 된 것은 걷어낸다
+    const next = poisons
+      .map((p) => (p.appliedTurn < state.turn ? { ...p, turns: p.turns - 1 } : p))
+      .filter((p) => p.turns > 0);
+    s = updateStatus(s, player, { poisons: next });
+
+    if (damage <= 0) continue;
+
+    const label = due.map((p) => p.label).find(Boolean) ?? "Poison";
+    s = dealDamage(s, player, damage, label, { ignoreBlock: true });
+    ticks.push({ target: player, damage, hpAfter: { P1: s.P1.hp, AI: s.AI.hp } });
+  }
+
+  return { state: s, ticks };
+}
+
 /**
  * 카드의 statModifiers를 현재 상태로 평가해 스탯별 보정 합계를 낸다.
  *
@@ -320,10 +374,12 @@ export function dealDamage(
   state: GameState,
   target: PlayerId,
   amount: number,
-  label?: string
+  label?: string,
+  /** ignoreBlock: 블록을 소모하지도, 감산하지도 않는다 (중독 등 막을 수 없는 피해) */
+  opts?: { ignoreBlock?: boolean },
 ): GameState {
   const t = state[target];
-  const blocked = Math.min(t.block, amount);
+  const blocked = opts?.ignoreBlock ? 0 : Math.min(t.block, amount);
   const dmg = amount - blocked;
   const hpBefore = t.hp;
   const newHp = hpBefore - dmg;

@@ -106,7 +106,8 @@ ROUND_DRAFT → TURN_START → SETUP_INIT → SETUP_OTHER → RESOLVE → ANIMAT
 | `draw_tagged` | value, tag | 특정 태그 카드를 덱에서 드로우 |
 | `heal` | value, target | HP 회복 |
 | `buff_attack` | value, target | 다음 공격력 버프 |
-| `burn` | value (dmgPerTurn), turns, target | 매 턴 데미지 |
+| `poison` | value (턴당 데미지), poisonTurns, buffScope, target | 중독 — 매 턴 리졸브 끝에 블록을 무시하고 피해. 건 턴에는 틱하지 않음 |
+| `buff` | stat, value(증감), buffScope, buffDuration, buffFilter, target | 스탯 버프/디버프 |
 | `airborne` | value (스택 수) | 체공 상태 부여 |
 | `move_cards` | count, fromZone, toZone, toPosition, userSelects | 카드 영역 간 이동 |
 | `shuffle` | zone | 대상 영역 셔플 |

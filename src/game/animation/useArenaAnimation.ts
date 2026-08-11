@@ -225,7 +225,13 @@ export function useArenaAnimation(
     setDisplayedCounteredPlayer(null);
 
     // 현재 파이터 오프셋을 시작점으로 대시/넉백 거리 시뮬레이션 (턴 사이 보존값)
-    const queue = makeQueueFromScript(state.animScript, state.P1.activeCharacter, state.AI.activeCharacter, moveRef.current);
+    const queue = makeQueueFromScript(
+      state.animScript,
+      state.P1.activeCharacter,
+      state.AI.activeCharacter,
+      moveRef.current,
+      state.poisonTicks,
+    );
     setAnimQueue(queue);
     setAnimRunning(true);
     setAnimLog([]);
@@ -352,6 +358,21 @@ export function useArenaAnimation(
         setAnimLog((prev) => [...prev, `fighter_move: ${event.subject} → ${event.toOffset}px [${event.motion}]`]);
         break;
       }
+      /**
+       * 중독 틱 — 카드 없는 데미지라 포즈 전환 없이 HP만 내리고 가볍게 흔든다.
+       * 히트스탑·줌은 걸지 않는다 (타격이 아니므로 화면을 멈출 이유가 없다).
+       */
+      case "poison_tick": {
+        if (event.hpAfter) setDisplayedHp({ ...event.hpAfter });
+        if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+        setShakeLevel("light");
+        shakeTimerRef.current = setTimeout(() => setShakeLevel("none"), 120);
+        setHitEffectTarget(event.target ?? null);
+        setHitEffectStrength("weak");
+        setHitEffectKey((k) => k + 1);
+        break;
+      }
+
       case "damage_resolve": {
         if (event.hpAfter) {
           setDisplayedHp({ ...event.hpAfter });

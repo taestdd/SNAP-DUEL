@@ -62,6 +62,12 @@ export function flipState(state: GameState): GameState {
       // hpAfter는 절대 P1/AI 키 — 값도 교환해야 HP 지연 표시가 올바름
       hpAfter: { P1: entry.hpAfter.AI, AI: entry.hpAfter.P1 },
     })),
+    // 중독 틱도 대상(PlayerId)과 HP 스냅샷을 둘 다 갖는다 — animScript와 같은 이유로 교환
+    poisonTicks: state.poisonTicks.map((tick) => ({
+      ...tick,
+      target: flipId(tick.target),
+      hpAfter: { P1: tick.hpAfter.AI, AI: tick.hpAfter.P1 },
+    })),
     // ANIMATING 진입 시 displayedHp 초기값 — 교환 누락 시 애니메이션 동안
     // 내/상대 HP 바가 서로 바뀌어 보이는 버그가 발생한다
     animStartHp: state.animStartHp

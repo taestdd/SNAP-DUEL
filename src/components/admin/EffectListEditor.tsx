@@ -15,7 +15,7 @@ import styles from "./AdminForm.module.css";
 const CARD_TAGS = CardTagSchema.options;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
+  "heal", "buff", "poison", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
 ] as const;
 const STAT_TARGETS = StatTargetSchema.options;
 /** 스코프 목록은 스키마에서 뽑고, 설명만 여기서 붙인다 — 스코프가 늘면 이 표만 채우면 된다 */
@@ -40,6 +40,13 @@ export function emptyEffect(): CardEffect {
 }
 
 /** 버프 설정을 문장으로 되풀이 — 입력한 조합이 의도대로인지 눈으로 확인하기 위함 */
+/** 중독 설정을 문장으로 되풀이 */
+function describePoison(effect: CardEffect): string {
+  const who = effect.target === "enemy" ? "상대" : "자신";
+  const scope = effect.buffScope === "player" ? "플레이어 (태그해도 유지)" : "현재 캐릭터 (태그 시 소멸)";
+  return `${who}의 ${scope}에게: 턴당 ${effect.value ?? 0} 피해 (블록 무시) · ${effect.poisonTurns ?? 2}턴 · 건 턴에는 틱하지 않음`;
+}
+
 function describeBuff(effect: CardEffect): string {
   const who = effect.target === "enemy" ? "상대" : "자신";
   const scope = effect.buffScope === "character" ? "현재 캐릭터" : "플레이어";
@@ -269,6 +276,32 @@ export default function EffectListEditor({
               />
 
               <div className={styles.hint}>{describeBuff(effect)}</div>
+            </>
+          )}
+
+          {effect.type === "poison" && (
+            <>
+              <div className={styles.row}>
+                <NumericField label="턴당 데미지 *" min={1} value={effect.value ?? 1} onChange={(n) => update(i, { value: Math.max(1, n) })} />
+                <NumericField label="지속 턴" min={1} value={effect.poisonTurns ?? 2} onChange={(n) => update(i, { poisonTurns: Math.max(1, n) })} />
+                <SelectField
+                  label="스코프"
+                  value={effect.buffScope ?? "character"}
+                  onChange={(v) => update(i, { buffScope: v as CardEffect["buffScope"] })}
+                >
+                  {BUFF_SCOPES.map((s) => <option key={s} value={s}>{BUFF_SCOPE_LABELS[s]}</option>)}
+                </SelectField>
+                <div className={styles.field}>
+                  <label className={styles.label}>표시 이름 (선택)</label>
+                  <input
+                    className={styles.input}
+                    value={effect.label ?? ""}
+                    onChange={(e) => update(i, { label: e.target.value || undefined })}
+                    placeholder="맹독"
+                  />
+                </div>
+              </div>
+              <div className={styles.hint}>{describePoison(effect)}</div>
             </>
           )}
 

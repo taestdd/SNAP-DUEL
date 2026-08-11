@@ -19,6 +19,7 @@ const emptyStatus = (): Status => ({
   delayAdvantageNext: 0,
   exhausted: false,
   buffs: [],
+  poisons: [],
 });
 
 function createCombatant(
@@ -87,6 +88,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig, 
 
     resolveContext: { queue: [], index: 0, unresolved: [] },
     animScript: [],
+    poisonTicks: [],
     animStartHp: null,
     animStartCombo: null,
     comboCount: 0,

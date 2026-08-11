@@ -18,6 +18,7 @@ function emptyStatus(): Status {
     delayAdvantageNext: 0,
     exhausted: false,
     buffs: [],
+    poisons: [],
   };
 }
 
@@ -75,6 +76,7 @@ export function createTutorialState(stage: TutorialStage): GameState {
     aiTaggedThisTurn: false,
     resolveContext: { queue: [], index: 0, unresolved: [] },
     animScript: [],
+    poisonTicks: [],
     animStartHp: null,
     animStartCombo: null,
     comboCount: 0,

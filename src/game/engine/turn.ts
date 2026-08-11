@@ -39,9 +39,9 @@ function prepareNextRound(state: GameState): GameState {
     comboCount: 0,
     animStartCombo: null,
     draftSelections: { P1: null, AI: null },
-    // 라운드는 핸드·쿨다운을 전부 정리하는 경계 — 버프도 남은 턴과 무관하게 끊는다
-    P1: { ...s.P1, queue: [], ready: false, block: 0, status: { ...s.P1.status, buffs: [] } },
-    AI: { ...s.AI, queue: [], ready: false, block: 0, status: { ...s.AI.status, buffs: [] } },
+    // 라운드는 핸드·쿨다운을 전부 정리하는 경계 — 버프·중독도 남은 턴과 무관하게 끊는다
+    P1: { ...s.P1, queue: [], ready: false, block: 0, status: { ...s.P1.status, buffs: [], poisons: [] } },
+    AI: { ...s.AI, queue: [], ready: false, block: 0, status: { ...s.AI.status, buffs: [], poisons: [] } },
   };
 
   s = syncExhausted(nextState, "P1");

@@ -1,4 +1,4 @@
-import type { Buff, BuffFilter, StatTarget } from "./types";
+import type { Buff, BuffFilter, Poison, StatTarget } from "./types";
 
 /**
  * 버프를 사람이 읽는 문장으로 옮기는 단일 지점.
@@ -54,4 +54,19 @@ export function formatBuffDetail(buff: Buff): string {
     ? `해당 카드 ${buff.duration.remaining}회 사용까지`
     : `${buff.duration.remaining}턴 남음`;
   return `${name}${target}의 ${STAT_LABELS[buff.stat]} ${signed(buff.delta)} · ${dur} · ${scope}`;
+}
+
+/* ── 중독 ─────────────────────────────────────────────────────────────── */
+
+/** 배지용 짧은 표기 — "☠ 3 x2" (틱당 3, 2턴 남음) */
+export function formatPoisonShort(poison: Poison): string {
+  const name = poison.label ? `${poison.label} ` : "";
+  return `☠ ${name}${poison.damage} ×${poison.turns}`;
+}
+
+/** 툴팁·로그용 전체 설명 */
+export function formatPoisonDetail(poison: Poison): string {
+  const name = poison.label ? `${poison.label} — ` : "";
+  const scope = poison.scope === "character" ? "현재 캐릭터 (태그 시 소멸)" : "플레이어 (태그해도 유지)";
+  return `${name}턴당 ${poison.damage} 피해 (블록 무시) · ${poison.turns}턴 남음 · ${scope}`;
 }
