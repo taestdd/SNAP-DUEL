@@ -10,6 +10,8 @@ import {
   didDirectAttackHit,
   updateCombatant,
   updateStatus,
+  tickPoisons,
+  checkGameOver,
 } from "./stateHelpers";
 import { applyCardEffectsWithPause } from "./effects";
 import { endTurnCleanup } from "./turn";
@@ -115,6 +117,7 @@ function resolveAll(state: GameState): GameState {
       animScript.push({ actor: it.player, cardId: it.cardId, actorAirborne, targetAirborne,
         hpAfter: { P1: s.P1.hp, AI: s.AI.hp },
         attackLanded: s.attackLanded, attackConnected: s.attackConnected });
+      // 이미 승부가 났으므로 중독 틱은 돌지 않는다 (죽은 뒤에 독이 더 들어갈 이유가 없다)
       if (animScript.length > 0) {
         return { ...s, phase: "ANIMATING", resolveContext: emptyResolveContext(), animScript };
       }
@@ -161,8 +164,23 @@ function resolveAll(state: GameState): GameState {
     idx++;
   }
 
-  const base = { ...s, resolveContext: emptyResolveContext(), animScript };
-  if (animScript.length > 0) return { ...base, phase: "ANIMATING" };
+  return finishResolve(s, animScript);
+}
+
+/**
+ * 리졸브 마무리 — 중독 틱을 넣고 ANIMATING으로 넘긴다.
+ *
+ * 틱을 여기서 도는 이유: HP 변화는 반드시 animScript/poisonTicks를 거쳐야
+ * `animStartHp` 스냅샷과 어긋나지 않는다. 턴 시작에서 깎으면 ANIMATING 바깥이라
+ * HP 바가 예고 없이 떨어진다.
+ */
+function finishResolve(state: GameState, animScript: AnimScriptEntry[]): GameState {
+  const { state: ticked, ticks } = tickPoisons(state);
+  // 중독으로 캐릭터가 쓰러질 수 있다 — 연출은 끝까지 재생하고 ANIM/DONE이 GAME_OVER로 넘긴다
+  const s = checkGameOver(ticked);
+
+  const base: GameState = { ...s, resolveContext: emptyResolveContext(), animScript, poisonTicks: ticks };
+  if (animScript.length > 0 || ticks.length > 0) return { ...base, phase: "ANIMATING" };
   return endTurnCleanup(base);
 }
 
@@ -182,8 +200,9 @@ export function enterResolving(state: GameState): GameState {
   if (state.P1.queue[0]) unresolvedArr.push("P1");
   if (state.AI.queue[0]) unresolvedArr.push("AI");
 
+  // 양쪽 다 패스해도 중독은 돈다 — 카드를 안 내는 것으로 독을 흘려보낼 수 없어야 한다
   if (items.length === 0) {
-    return endTurnCleanup({ ...state, resolveContext: emptyResolveContext(), animScript: [] });
+    return finishResolve({ ...state, animStartHp: { P1: state.P1.hp, AI: state.AI.hp } }, []);
   }
 
   return resolveAll({

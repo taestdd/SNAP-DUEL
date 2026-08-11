@@ -1,4 +1,4 @@
-import type { Buff, BuffScope, Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, EffectType, GameState, PendingSelection, PlayerId } from "./types";
+import type { Buff, BuffScope, Card, CardEffect, CardPlayability, CardStats, CardZone, DeckInsertPosition, EffectType, GameState, PendingSelection, PlayerId, Poison } from "./types";
 import { getCard } from "./cards";
 import { CHARACTERS } from "./characters";
 import {
@@ -16,13 +16,14 @@ import {
   evaluateBuffs,
   consumeUseBuffs,
   clearCharacterBuffs,
+  clearCharacterPoisons,
   getEffectiveDelay,
   getBenchChar,
   updateCombatant,
   updateStatus,
 } from "./stateHelpers";
 import { shuffleSeeded } from "./rng";
-import { formatBuffDetail } from "./buffText";
+import { formatBuffDetail, formatPoisonDetail } from "./buffText";
 
 /* -------------------------- */
 /* 태그 (캐릭터 교체)          */
@@ -55,8 +56,9 @@ export function applyTagSwitch(state: GameState, player: PlayerId): GameState {
   // 2. 캐릭터 교체 — 새 캐릭터의 hp로 전환, airborne 초기화
   const newHp = s[player].characterHp[newChar];
   s = updateCombatant(s, player, { activeCharacter: newChar, hp: newHp, airborneStack: 0 });
-  // 캐릭터에 걸린 버프는 그 캐릭터와 함께 물러난다 (플레이어 스코프는 유지)
+  // 캐릭터에 걸린 버프·중독은 그 캐릭터와 함께 물러난다 (플레이어 스코프는 유지)
   s = clearCharacterBuffs(s, player);
+  s = clearCharacterPoisons(s, player);
 
   s = pushLog(s, `${player} tags out Char ${currentChar} → tags in Char ${newChar} (HP: ${newHp})`);
 
@@ -215,6 +217,34 @@ const EFFECT_HANDLERS: Record<EffectType, EffectHandler> = {
     return pushLog(
       updateStatus(state, target, { buffs: [...(state[target].status.buffs ?? []), buff] }),
       `${target} gains buff ${formatBuffDetail(buff)}`,
+    );
+  },
+
+  /**
+   * 중독 — 매 턴 리졸브 끝에 블록을 무시하고 데미지를 넣는다.
+   * value가 틱당 데미지, poisonTurns가 지속(기본 2), buffScope가 태그 소멸 여부를 가른다.
+   */
+  poison: (state, effect, ctx) => {
+    const target = resolveTarget(effect, ctx.player);
+    const damage = effect.value ?? 0;
+    if (damage <= 0) return state;
+
+    const turns = effect.poisonTurns ?? 2;
+    if (turns <= 0) return state;
+
+    const scope: BuffScope = effect.buffScope ?? "character";
+    const poison: Poison = {
+      label: effect.label,
+      damage,
+      turns,
+      scope,
+      appliedTurn: state.turn,
+      ...(scope === "character" ? { characterId: state[target].activeCharacter } : {}),
+    };
+
+    return pushLog(
+      updateStatus(state, target, { poisons: [...(state[target].status.poisons ?? []), poison] }),
+      `${target} is poisoned — ${formatPoisonDetail(poison)}`,
     );
   },
 

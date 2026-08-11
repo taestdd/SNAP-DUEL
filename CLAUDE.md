@@ -214,6 +214,36 @@ Buff = { label?, stat, delta, duration, scope, characterId?, filter? }
 
 ---
 
+## 중독 (status.poisons)
+
+`poison` 효과가 `Combatant.status.poisons`에 `Poison`을 쌓는다. 스탯을 바꾸는 대신 **매 턴 HP를 깎는다**.
+
+```ts
+Poison = { label?, damage, turns, scope, characterId?, appliedTurn }
+```
+
+- **틱 시점 — 리졸브 끝(`finishResolve`)**. 턴 시작에서 깎으면 ANIMATING 바깥이라
+  `animStartHp` 스냅샷과 어긋나 HP 바가 예고 없이 떨어진다. 양쪽이 다 패스해도 틱은 돈다
+  (카드를 안 내는 것으로 독을 흘려보낼 수 없어야 한다)
+- **건 턴에는 틱하지 않는다** — `appliedTurn < state.turn`. 즉발 데미지 + 중독을 겸하는
+  카드가 같은 턴에 두 번 때리는 것을 막는다
+- **블록을 무시한다** — `dealDamage(..., { ignoreBlock: true })`. 막을 수 없는 것이
+  중독의 정체성이고, 블록을 깎으면 "블록 쌓고 버티기"가 그대로 해독제가 된다
+- **스코프** — 버프와 같은 `BuffScope`. `character`(기본)는 태그로 벗어나고,
+  `player`는 태그해도 따라온다 (`clearCharacterPoisons`)
+- **라운드 경계** — 버프와 함께 전부 소멸 (`prepareNextRound`)
+- **KO 허용** — 중독 틱으로 캐릭터가 쓰러지면 그대로 게임이 끝난다. 연출은 끝까지
+  재생하고 `ANIM/DONE`이 GAME_OVER로 넘긴다
+
+**연출** — `animScript`는 "카드 1장당 1항목" 구조라 카드 없는 틱을 담을 수 없다.
+`GameState.poisonTicks: PoisonTick[]`에 따로 싣고, `makeQueueFromScript`가
+카드 연출 **뒤에** `poison_tick` 이벤트를 덧붙인다.
+`poisonTicks`는 `PlayerId`와 `{P1,AI}` 스냅샷을 둘 다 가지므로 **`flipState`에서 교환한다.**
+
+검증은 `poisons.test.ts`(틱 타이밍·블록 무시·스코프·리졸브 연동·KO·연출 큐·표기).
+
+---
+
 ## TurnPhase 상태 머신
 
 ```

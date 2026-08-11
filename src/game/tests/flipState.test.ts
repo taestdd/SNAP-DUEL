@@ -20,6 +20,15 @@ describe("flipState (게스트 뷰 P1↔AI 교환)", () => {
     expect(flipState(makeState({ animStartHp: null })).animStartHp).toBeNull();
   });
 
+  it("poisonTicks의 target과 hpAfter를 함께 교환한다", () => {
+    const s = flipState(makeState({
+      poisonTicks: [{ target: "AI", damage: 3, hpAfter: { P1: 30, AI: 27 } }],
+    }));
+    expect(s.poisonTicks[0].target).toBe("P1");
+    expect(s.poisonTicks[0].hpAfter).toEqual({ P1: 27, AI: 30 });
+    expect(s.poisonTicks[0].damage).toBe(3);
+  });
+
   it("animScript의 actor와 hpAfter를 함께 교환한다", () => {
     const s = flipState(makeState({
       animScript: [{

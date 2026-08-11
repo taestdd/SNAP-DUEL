@@ -1,4 +1,4 @@
-import type { AnimScriptEntry, Card, CombatAnimationEvent, FighterPose, HitPose, PlayerId } from "@/game/engine/types";
+import type { AnimScriptEntry, Card, CombatAnimationEvent, FighterPose, HitPose, PlayerId, PoisonTick } from "@/game/engine/types";
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
@@ -426,6 +426,31 @@ function pushSequenceWithHold(
  * 과거 구현: p1Airborne / aiAirborne 단일값 → 후공의 targetAirborne이
  * 선공 처리 이전 값으로 고정되어 에어본 히트 판정이 틀리는 버그 존재.
  */
+/** 중독 틱 사이 간격 (ms) — 여러 개가 겹쳐도 HP 바가 한 칸씩 내려가는 게 보이도록 */
+export const POISON_TICK_GAP_MS = 620;
+/** 마지막 카드 연출이 끝나고 첫 중독 틱까지의 여백 (ms) */
+export const POISON_LEAD_MS = 420;
+
+/**
+ * 카드 연출 뒤에 중독 틱을 이어 붙인다.
+ *
+ * 중독은 카드가 없는 데미지라 animScript(카드 1장당 1항목)에 담기지 않는다.
+ * 타임라인상 항상 모든 카드 뒤에 오므로 꼬리에 덧붙이는 것으로 충분하다.
+ */
+function appendPoisonTicks(events: CombatAnimationEvent[], ticks: PoisonTick[]): void {
+  if (ticks.length === 0) return;
+
+  const lastDelay = events.reduce((max, e) => Math.max(max, e.delay), 0);
+  ticks.forEach((tick, i) => {
+    events.push({
+      type: "poison_tick",
+      delay: lastDelay + POISON_LEAD_MS + i * POISON_TICK_GAP_MS,
+      target: tick.target,
+      hpAfter: tick.hpAfter,
+    });
+  });
+}
+
 export function makeQueueFromScript(
   script: AnimScriptEntry[],
   /** P1 활성 캐릭터 ID (frame→ms fps 조회용). 게스트는 flip된 state 기준 */
@@ -434,8 +459,15 @@ export function makeQueueFromScript(
   aiCharacter?: string,
   /** 턴 시작 시점의 파이터 오프셋 (미지정 시 홈=비근접) */
   startOffsets?: FighterOffsets,
+  /** 카드 연출 뒤에 이어 재생할 중독 틱 */
+  poisonTicks: PoisonTick[] = [],
 ): CombatAnimationEvent[] {
-  if (script.length === 0) return [];
+  // 양쪽 다 패스해도 중독은 돈다 — 카드가 없어도 틱만 재생할 수 있어야 한다
+  if (script.length === 0) {
+    const only: CombatAnimationEvent[] = [];
+    appendPoisonTicks(only, poisonTicks);
+    return only;
+  }
 
   const fallbackSprite = Object.keys(CHARACTER_SPRITES)[0]!;
   const p1SpriteId = p1Character ? spriteIdOf(p1Character) : fallbackSprite;
@@ -464,5 +496,7 @@ export function makeQueueFromScript(
   const initiative: "player" | "ai" =
     script[0].actor === "P1" ? "player" : "ai";
 
-  return makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1SpriteId, aiSpriteId, p1HpData, aiHpData, startOffsets);
+  const events = makeQueue(p1Card, aiCard, initiative, p1ActorAirborne, p1TargetAirborne, aiActorAirborne, aiTargetAirborne, p1SpriteId, aiSpriteId, p1HpData, aiHpData, startOffsets);
+  appendPoisonTicks(events, poisonTicks);
+  return events;
 }
