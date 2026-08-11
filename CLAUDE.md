@@ -341,6 +341,27 @@ resolveContext: {
 
 ---
 
+## 레퍼런스 레포
+
+**[TheCardGoat/lorcana-simulator](https://github.com/TheCardGoat/lorcana-simulator)**
+— Lorcana TCG의 TypeScript 구현. **외부 오픈소스이며 이 레포에 코드를 복사해 온 것은 없다.**
+설계 패턴만 참고했고, 코드에는 아래 두 곳에 출처 주석이 남아 있다.
+
+| 가져온 패턴 | 원본 | SNAP-DUEL 적용 |
+|---|---|---|
+| passive clock — 상태에 wall-clock을 넣지 않고, 표시값은 `(snapshot, now)`를 받는 순수 함수가 계산 | `lorcana-engine/src/core/runtime/clock-view.ts` | `hooks/useTurnTimer.ts` — GameState에 시간 미포함(결정론·flipState 미러 보호), 훅은 마감 시각만 기억 |
+| 단일 ticker — 모든 시간 표시가 같은 타임스탬프를 읽어 표시 간 drift를 없앰 (100ms) | `lorcana-simulator/src/lib/features/simulator/model/clock-ticker.svelte.ts` | `useTurnTimer.ts`의 `TICK_MS = 100` |
+| flow — 턴/페이즈/전환 **자체를 1급 데이터**로 노출하고 UI는 읽기만 함 | `lorcana-engine/src/flow/`, `src/projection/` | `hooks/useGameTransitions.ts` (전환 감지 단일 진실원) |
+
+`clock-view.ts`가 못 박은 원칙이 `useTurnTimer`의 뼈대다:
+> Never calls `Date.now()` internally — the caller must supply `now` so drift
+> between display and affordance logic is impossible.
+
+시간·페이즈 전환 쪽을 손볼 때 참고할 만하다. 다만 저쪽은 Svelte + 서버 권위 구조라
+훅/리듀서 구조는 그대로 옮겨지지 않는다 — **패턴만 가져오고 구현은 우리 구조에 맞춘다.**
+
+---
+
 ## 작업 규칙
 
 - 테스트 실행 전 반드시 먼저 알릴 것
