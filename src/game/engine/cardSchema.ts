@@ -14,7 +14,7 @@ export const CardTagSchema = z.enum(CARD_TAGS);
 
 export const EffectTypeSchema = z.enum([
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
+  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate", "buff",
 ]);
 
 export const DamageTypeSchema = z.enum(["ground", "anti-air"]);
@@ -43,6 +43,28 @@ export const CompareOpSchema = z.enum(["<", ">", "="]);
 export const StatTargetSchema = z.enum([
   "cost", "delay", "ground_attack", "anti_air_attack", "advantage",
 ]);
+
+export const BuffScopeSchema = z.enum(["player", "character"]);
+
+/** 지속 방식 — turns: 턴 시작마다 감소 / uses: 필터에 맞는 카드를 쓸 때만 감소 */
+export const BuffDurationInputSchema = z.object({
+  type: z.enum(["turns", "uses"]),
+  value: z.number().int().min(1),
+});
+
+/**
+ * 영향받을 카드 한정. 지정 조건을 모두 만족해야 하고(AND), tags는 하나만 맞아도 통과(OR).
+ * statRange는 **base 스탯**으로 판정한다 (버프가 스스로 조건을 무너뜨리지 않도록).
+ */
+export const BuffFilterSchema = z.object({
+  cardType: CardTypeSchema.optional(),
+  tags: z.array(CardTagSchema).optional(),
+  statRange: z.object({
+    stat: StatTargetSchema,
+    min: z.number().int().optional(),
+    max: z.number().int().optional(),
+  }).optional(),
+});
 
 export const StatSourceSchema = z.object({
   check: ConditionCheckSchema,
@@ -92,6 +114,11 @@ export const CardEffectSchema = z.object({
   zone: CardZoneSchema.optional(),
   cardId: z.string().optional(),
   character: HealCharacterSchema.optional(),
+  stat: StatTargetSchema.optional(),
+  buffScope: BuffScopeSchema.optional(),
+  buffDuration: BuffDurationInputSchema.optional(),
+  buffFilter: BuffFilterSchema.optional(),
+  label: z.string().optional(),
 });
 
 /**
@@ -128,6 +155,17 @@ const CardEffectStrictSchema = z.discriminatedUnion("type", [
     value: z.number().int().min(1).optional(),
     zone: CardZoneSchema.optional(),
     target: TargetSchema.optional(),
+  }),
+  z.object({
+    type: z.literal("buff"),
+    stat: StatTargetSchema,
+    // 증감량 — 음수(디버프) 허용, 0은 무동작이라 거부
+    value: z.number().int().refine((n) => n !== 0, "증감량은 0이 될 수 없습니다"),
+    target: TargetSchema.optional(),
+    buffScope: BuffScopeSchema.optional(),
+    buffDuration: BuffDurationInputSchema.optional(),
+    buffFilter: BuffFilterSchema.optional(),
+    label: z.string().optional(),
   }),
   z.object({
     type: z.literal("move_cards"),

@@ -1,8 +1,8 @@
 "use client";
 
-import type { CardEffect } from "@/game/engine/types";
-import { CardTagSchema } from "@/game/engine/cardSchema";
-import { SelectField, NumericField, ItemCard } from "./AdminFields";
+import type { BuffFilter, CardEffect, CardTag, StatTarget } from "@/game/engine/types";
+import { CardTagSchema, StatTargetSchema, BuffScopeSchema } from "@/game/engine/cardSchema";
+import { SelectField, NumericField, OptionalNumericField, ItemCard } from "./AdminFields";
 import styles from "./AdminForm.module.css";
 
 /**
@@ -15,18 +15,156 @@ import styles from "./AdminForm.module.css";
 const CARD_TAGS = CardTagSchema.options;
 const EFFECT_TYPES = [
   "damage", "block", "draw", "draw_tagged",
-  "heal", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
+  "heal", "buff", "buff_attack", "tag", "airborne", "move_cards", "shuffle", "generate",
 ] as const;
+const STAT_TARGETS = StatTargetSchema.options;
+/** 스코프 목록은 스키마에서 뽑고, 설명만 여기서 붙인다 — 스코프가 늘면 이 표만 채우면 된다 */
+const BUFF_SCOPE_LABELS: Record<(typeof BuffScopeSchema.options)[number], string> = {
+  player: "player (태그해도 유지)",
+  character: "character (태그 시 소멸)",
+};
+const BUFF_SCOPES = BuffScopeSchema.options;
 const TARGETS = ["self", "enemy"] as const;
 const DAMAGE_TYPES = ["ground", "anti-air"] as const;
 const ZONES = ["hand", "deck", "trash", "cooldown", "queue"] as const;
 const POSITIONS = ["top", "bottom", "random"] as const;
 
-/** value가 없으면 무동작이 되는 효과들 — 이들만 Value 입력을 노출한다 */
+/**
+ * value가 없으면 무동작이 되는 효과들 — 이들만 Value 입력을 노출한다.
+ * buff는 값의 의미가 "증감량"이라 전용 입력(음수 허용)을 따로 둔다.
+ */
 const NEEDS_VALUE = ["damage", "block", "draw", "heal", "buff_attack", "airborne", "draw_tagged"];
 
 export function emptyEffect(): CardEffect {
   return { type: "damage", value: 0, target: "enemy" };
+}
+
+/** 버프 설정을 문장으로 되풀이 — 입력한 조합이 의도대로인지 눈으로 확인하기 위함 */
+function describeBuff(effect: CardEffect): string {
+  const who = effect.target === "enemy" ? "상대" : "자신";
+  const scope = effect.buffScope === "character" ? "현재 캐릭터" : "플레이어";
+  const sign = (effect.value ?? 0) >= 0 ? "+" : "";
+  const d = effect.buffDuration ?? { type: "turns" as const, value: 1 };
+  const dur = d.type === "uses" ? `해당 카드 ${d.value}회 사용` : `${d.value}턴`;
+
+  const f = effect.buffFilter;
+  const scopeText = !f
+    ? "모든 카드"
+    : [
+        f.cardType ? `${f.cardType} 카드` : null,
+        f.tags?.length ? `태그 ${f.tags.join("/")}` : null,
+        f.statRange
+          ? `base ${f.statRange.stat} ${f.statRange.min ?? "-"}~${f.statRange.max ?? "-"}`
+          : null,
+      ].filter(Boolean).join(" · ") || "모든 카드";
+
+  return `${who}의 ${scope}에게: ${scopeText}의 ${effect.stat ?? "?"} ${sign}${effect.value ?? 0} · ${dur}`;
+}
+
+/** 버프가 영향을 줄 카드를 한정하는 조건 편집기 */
+function BuffFilterEditor({
+  filter,
+  onChange,
+}: {
+  filter: BuffFilter | undefined;
+  onChange: (f: BuffFilter | undefined) => void;
+}) {
+  if (!filter) {
+    return (
+      <button type="button" className={styles.addBtn} onClick={() => onChange({})}>
+        + 영향받을 카드 한정
+      </button>
+    );
+  }
+
+  const patch = (p: Partial<BuffFilter>) => onChange({ ...filter, ...p });
+
+  const toggleTag = (tag: string) => {
+    const tags = filter.tags ?? [];
+    const next = tags.includes(tag as CardTag)
+      ? tags.filter((t) => t !== tag)
+      : [...tags, tag as CardTag];
+    patch({ tags: next.length > 0 ? next : undefined });
+  };
+
+  return (
+    <div className={styles.effectItem}>
+      <div className={styles.effectHeader}>
+        <span className={styles.effectIndex}>영향받을 카드 한정</span>
+        <button type="button" className={styles.removeBtn} onClick={() => onChange(undefined)}>
+          ✕ 한정 해제
+        </button>
+      </div>
+
+      <div className={styles.row}>
+        <SelectField
+          label="카드 타입"
+          value={filter.cardType ?? ""}
+          onChange={(v) => patch({ cardType: (v || undefined) as BuffFilter["cardType"] })}
+        >
+          <option value="">전체</option>
+          <option value="attack">attack</option>
+          <option value="skill">skill</option>
+        </SelectField>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>태그 (하나라도 맞으면 적용)</label>
+        <div className={styles.tagGroup}>
+          {CARD_TAGS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={`${styles.tagBtn} ${filter.tags?.includes(t) ? styles.active : ""}`}
+              onClick={() => toggleTag(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filter.statRange ? (
+        <div className={styles.row}>
+          <SelectField
+            label="base 스탯"
+            value={filter.statRange.stat}
+            onChange={(v) => patch({ statRange: { ...filter.statRange!, stat: v as StatTarget } })}
+          >
+            {STAT_TARGETS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </SelectField>
+          <OptionalNumericField
+            label="최소"
+            value={filter.statRange.min}
+            fallback={0}
+            onChange={(n) => patch({ statRange: { ...filter.statRange!, min: n } })}
+          />
+          <OptionalNumericField
+            label="최대"
+            value={filter.statRange.max}
+            fallback={9}
+            onChange={(n) => patch({ statRange: { ...filter.statRange!, max: n } })}
+          />
+          <button type="button" className={styles.removeBtn} onClick={() => patch({ statRange: undefined })}>
+            범위 제거
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className={styles.addBtn}
+          onClick={() => patch({ statRange: { stat: "cost", min: 3 } })}
+        >
+          + 스탯 범위 조건
+        </button>
+      )}
+
+      <div className={styles.hint}>
+        지정한 조건을 <b>모두</b> 만족하는 카드에만 적용됩니다. 태그는 하나만 맞아도 통과.
+        스탯 범위는 버프 적용 전 <b>base 값</b>으로 판정합니다.
+      </div>
+    </div>
+  );
 }
 
 export default function EffectListEditor({
@@ -79,6 +217,60 @@ export default function EffectListEditor({
               </SelectField>
             )}
           </div>
+
+          {effect.type === "buff" && (
+            <>
+              <div className={styles.row}>
+                <SelectField label="보정 스탯 *" value={effect.stat ?? "ground_attack"} onChange={(v) => update(i, { stat: v as CardEffect["stat"] })}>
+                  {STAT_TARGETS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </SelectField>
+                <NumericField label="증감량 (음수=디버프)" value={effect.value ?? 0} onChange={(n) => update(i, { value: n })} />
+                <SelectField
+                  label="스코프"
+                  value={effect.buffScope ?? "player"}
+                  onChange={(v) => update(i, { buffScope: v as CardEffect["buffScope"] })}
+                >
+                  {BUFF_SCOPES.map((s) => <option key={s} value={s}>{BUFF_SCOPE_LABELS[s]}</option>)}
+                </SelectField>
+              </div>
+              <div className={styles.row}>
+                <SelectField
+                  label="지속 방식"
+                  value={effect.buffDuration?.type ?? "turns"}
+                  onChange={(v) => update(i, {
+                    buffDuration: { type: v as "turns" | "uses", value: effect.buffDuration?.value ?? 1 },
+                  })}
+                >
+                  <option value="turns">turns (턴 시작마다 감소)</option>
+                  <option value="uses">uses (해당 카드를 쓸 때만 감소)</option>
+                </SelectField>
+                <NumericField
+                  label="지속 값"
+                  min={1}
+                  value={effect.buffDuration?.value ?? 1}
+                  onChange={(n) => update(i, {
+                    buffDuration: { type: effect.buffDuration?.type ?? "turns", value: Math.max(1, n) },
+                  })}
+                />
+                <div className={styles.field}>
+                  <label className={styles.label}>표시 이름 (선택)</label>
+                  <input
+                    className={styles.input}
+                    value={effect.label ?? ""}
+                    onChange={(e) => update(i, { label: e.target.value || undefined })}
+                    placeholder="집중"
+                  />
+                </div>
+              </div>
+
+              <BuffFilterEditor
+                filter={effect.buffFilter}
+                onChange={(f) => update(i, { buffFilter: f })}
+              />
+
+              <div className={styles.hint}>{describeBuff(effect)}</div>
+            </>
+          )}
 
           {effect.type === "damage" && (
             <div className={styles.row}>

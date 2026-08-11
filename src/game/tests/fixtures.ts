@@ -73,7 +73,7 @@ function makeCombatant(id: PlayerId, o: CombatantOverrides = {}): Combatant {
     activeCharacter: active,
     characterHp: o.characterHp ?? { [active]: hp, [bench]: 30 },
     airborneStack: o.airborneStack ?? 0,
-    status: { attackBuff: 0, delayAdvantage: 0, delayAdvantageNext: 0, exhausted: false, ...o.status },
+    status: { attackBuff: 0, delayAdvantage: 0, delayAdvantageNext: 0, exhausted: false, buffs: [], ...o.status },
     deck: o.deck ?? [],
     hand: o.hand ?? [],
     trash: o.trash ?? [],

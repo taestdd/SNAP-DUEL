@@ -170,7 +170,8 @@ export type EffectType =
   | "airborne"
   | "move_cards"
   | "shuffle"
-  | "generate";
+  | "generate"
+  | "buff";
 
 /** damage 효과의 적중 조건 */
 export type DamageType =
@@ -254,6 +255,19 @@ export type CardEffect = {
   cardId?: string;
   /** heal: 대상 플레이어의 어느 캐릭터를 회복할지 (미지정 시 활성 캐릭터) */
   character?: HealCharacter;
+
+  /* ── buff 효과 전용 ─────────────────────────────────────────────
+   * 증감량은 value를 쓴다 (음수 = 디버프). */
+  /** 보정할 스탯 */
+  stat?: StatTarget;
+  /** 플레이어에 걸지, 지금 활성 캐릭터에 걸지 (미지정 시 player) */
+  buffScope?: BuffScope;
+  /** 지속 방식 (미지정 시 1턴) */
+  buffDuration?: { type: "turns" | "uses"; value: number };
+  /** 영향받을 카드 한정 (미지정 시 전부) */
+  buffFilter?: BuffFilter;
+  /** 로그·UI 표시용 이름 */
+  label?: string;
 };
 
 /**
@@ -463,6 +477,51 @@ export type CardPlayability = {
   additionalCostOk: boolean;
 };
 
+/**
+ * 버프 지속 방식.
+ *  - turns: 턴 시작마다 1 감소, 0이 되면 소멸. 라운드가 바뀌면 남은 턴과 무관하게 전부 소멸
+ *  - uses:  **필터에 맞는 카드를 사용할 때만** 1 감소 (스킬만 써서는 줄지 않는다)
+ */
+export type BuffDuration =
+  | { type: "turns"; remaining: number }
+  | { type: "uses"; remaining: number };
+
+/**
+ * 버프가 붙는 단위.
+ *  - player:    플레이어에게 붙어 캐릭터를 교체해도 유지된다
+ *  - character: 걸릴 당시의 활성 캐릭터에게 붙어, **그 쪽이 태그하면 소멸**한다
+ */
+export type BuffScope = "player" | "character";
+
+/**
+ * 어떤 카드가 이 버프의 영향을 받는지.
+ * 지정한 조건을 **모두** 만족해야 하고(AND), tags는 그중 하나만 있어도 통과한다(OR).
+ * 조건이 없으면 모든 카드에 적용된다.
+ */
+export type BuffFilter = {
+  cardType?: CardType;
+  tags?: CardTag[];
+  /**
+   * 스탯 범위 조건. **버프가 적용되기 전 base 스탯**으로 판정한다 —
+   * 실효 스탯으로 보면 "코스트 3 이상 카드의 코스트 -1"이 스스로 조건을 무너뜨려
+   * 적용 순서에 따라 결과가 달라진다.
+   */
+  statRange?: { stat: StatTarget; min?: number; max?: number };
+};
+
+/** 실제로 걸려 있는 버프/디버프 (delta 음수 = 디버프) */
+export type Buff = {
+  /** 로그·UI 표시용 이름 (없으면 스탯명으로 대체) */
+  label?: string;
+  stat: StatTarget;
+  delta: number;
+  duration: BuffDuration;
+  scope: BuffScope;
+  /** scope가 character일 때 걸린 캐릭터 — 태그로 바뀌면 소멸 판정에 쓴다 */
+  characterId?: CharacterId;
+  filter?: BuffFilter;
+};
+
 export type Status = {
   attackBuff: number;
 
@@ -470,6 +529,12 @@ export type Status = {
   delayAdvantageNext: number;
 
   exhausted: boolean;
+
+  /**
+   * 걸려 있는 버프/디버프 목록. 같은 스탯에 여러 개가 걸리면 전부 합산된다.
+   * (기존 attackBuff·delayAdvantage와는 당분간 병존한다)
+   */
+  buffs: Buff[];
 };
 
 export type Combatant = {

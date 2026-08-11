@@ -1,4 +1,5 @@
 import type { Combatant } from "@/game/engine/types";
+import { formatBuffShort, formatBuffDetail } from "@/game/engine/buffText";
 import styles from "./StatusBadges.module.css";
 
 export default function StatusBadges({
@@ -13,6 +14,7 @@ export default function StatusBadges({
   isInitiative?: boolean;
 }) {
   const { status, block, airborneStack } = combatant;
+  const buffs = status.buffs ?? [];
 
   const hasAny =
     (combo > 0 && isInitiative) ||
@@ -21,7 +23,8 @@ export default function StatusBadges({
     status.attackBuff > 0 ||
     status.exhausted ||
     status.delayAdvantage > 0 ||
-    status.delayAdvantageNext > 0;
+    status.delayAdvantageNext > 0 ||
+    buffs.length > 0;
 
   if (!hasAny) return null;
 
@@ -42,6 +45,16 @@ export default function StatusBadges({
       {status.delayAdvantageNext > 0 && (
         <span className={styles.badge}>ADV+{status.delayAdvantageNext} next</span>
       )}
+      {/* 버프/디버프 — delta 부호로 색을 갈라 한눈에 유불리가 보이게 한다 */}
+      {buffs.map((buff, i) => (
+        <span
+          key={`${buff.stat}-${i}`}
+          className={[styles.badge, buff.delta >= 0 ? styles.badgeBuff : styles.badgeDebuff].join(" ")}
+          title={formatBuffDetail(buff)}
+        >
+          {buff.filter ? "◈ " : ""}{formatBuffShort(buff)}
+        </span>
+      ))}
     </div>
   );
 }

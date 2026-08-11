@@ -39,3 +39,15 @@
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
+.badgeBuff {
+  background: rgba(80, 200, 255, 0.16);
+  border-color: rgba(80, 200, 255, 0.45);
+  color: #7fd4ff;
+}
+
+.badgeDebuff {
+  background: rgba(200, 90, 220, 0.16);
+  border-color: rgba(200, 90, 220, 0.45);
+  color: #d792ea;
+}

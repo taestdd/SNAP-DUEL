@@ -17,6 +17,7 @@ function emptyStatus(): Status {
     delayAdvantage: 0,
     delayAdvantageNext: 0,
     exhausted: false,
+    buffs: [],
   };
 }
 
