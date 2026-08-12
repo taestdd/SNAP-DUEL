@@ -425,6 +425,42 @@ function tagEffectContext(player: PlayerId): EffectContext {
  * @returns connected — 실제로 체력을 깎았는지(=적중). 블록에 전부 흡수되면 false.
  *                      → 규칙용(카운터·주도권·어드밴티지·콤보·피격 포즈)
  */
+/**
+ * 공격 수단별 실효 공격력 — **핸드 표시와 전투 해결이 같이 쓰는 단일 지점**.
+ *
+ * `groundAttack: 0` / `antiAirAttack: 0`은 "그 공격 수단이 없다"는 뜻이다
+ * (지상 전용 카드가 `antiAirAttack: 0`으로 체공 상대를 못 때리는 것이 그 규칙).
+ * 그래서 스탯을 가리지 않는 `status.attackBuff`는 **없던 수단을 새로 열지 않는다** —
+ * 열어 주면 지상 전용 카드가 버프받는 동안 대공 카드로 둔갑한다.
+ *
+ * 예외는 양쪽 다 0인 카드다. 이 카드는 "수치를 전부 밖에서 받는 공격 카드"이므로
+ * 지상·대공 양쪽 수단을 가진 것으로 보고 attackBuff를 받는다.
+ * (수단을 특정하고 싶으면 `buff` 효과나 statModifiers로 해당 스탯을 올리면 된다 —
+ *  그쪽은 어느 스탯인지 스스로 밝히므로 그 수단만 열린다)
+ */
+export function deriveAttackPower(
+  state: GameState,
+  player: PlayerId,
+  card: Card,
+): { ground: number; antiAir: number } {
+  const mods = evaluateModifiers(state, player, card.statModifiers);
+  const buffs = evaluateBuffs(state, player, card);
+
+  const ground = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + (buffs.ground_attack ?? 0));
+  const antiAir = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + (buffs.anti_air_attack ?? 0));
+
+  const attackBuff = state[player].status.attackBuff ?? 0;
+  if (attackBuff === 0) return { ground, antiAir };
+
+  // 수단이 하나도 없는 공격 카드만 양쪽으로 취급 (스킬 카드는 애초에 공격하지 않는다)
+  const noMeans = card.cardType === "attack" && ground === 0 && antiAir === 0;
+
+  return {
+    ground: ground > 0 || noMeans ? ground + attackBuff : 0,
+    antiAir: antiAir > 0 || noMeans ? antiAir + attackBuff : 0,
+  };
+}
+
 function applyAttackStats(
   state: GameState,
   player: PlayerId,
@@ -434,11 +470,7 @@ function applyAttackStats(
 
   const opponent = opponentOf(player);
   const targetAirborne = state[opponent].airborneStack;
-  const attackBuff = state[player].status.attackBuff ?? 0;
-  const mods = evaluateModifiers(state, player, card.statModifiers);
-  const buffs = evaluateBuffs(state, player, card);
-  const groundAtk = Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + (buffs.ground_attack ?? 0));
-  const antiAirAtk = Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + (buffs.anti_air_attack ?? 0));
+  const { ground: groundAtk, antiAir: antiAirAtk } = deriveAttackPower(state, player, card);
 
   const swing =
     groundAtk > 0 && targetAirborne === 0 ? { amount: groundAtk, label: "Ground" }
@@ -448,7 +480,7 @@ function applyAttackStats(
   if (!swing) return { state, landed: false, connected: false };
 
   const hpBefore = state[opponent].hp;
-  let s = dealDamage(state, opponent, Math.max(0, swing.amount + attackBuff), swing.label);
+  let s = dealDamage(state, opponent, swing.amount, swing.label);
   s = clearAttackBuff(s, player);
 
   // 스윙은 닿았다(landed). 다만 블록에 전부 흡수되면 체력이 그대로 → 적중은 아님
@@ -551,13 +583,14 @@ export function deriveCardStats(state: GameState, player: PlayerId, cardId: stri
 
   const mods = evaluateModifiers(state, player, card.statModifiers);
   const buffs = evaluateBuffs(state, player, card);
-  const attackBuff = state[player].status.attackBuff ?? 0;
+  // 공격력은 전투 해결과 같은 함수를 써야 "표시 == 실제 데미지"가 성립한다
+  const attack = deriveAttackPower(state, player, card);
 
   return {
     cost: getEffectiveCost(state, player, card),
     delay: getEffectiveDelay(state, player, cardId),
-    groundAttack: Math.max(0, (card.groundAttack ?? 0) + (mods.ground_attack ?? 0) + (buffs.ground_attack ?? 0) + attackBuff),
-    antiAirAttack: Math.max(0, (card.antiAirAttack ?? 0) + (mods.anti_air_attack ?? 0) + (buffs.anti_air_attack ?? 0) + attackBuff),
+    groundAttack: attack.ground,
+    antiAirAttack: attack.antiAir,
     advantage: Math.max(0, (card.advantage ?? 0) + (mods.advantage ?? 0) + (buffs.advantage ?? 0)),
   };
 }

@@ -180,8 +180,17 @@ UI(Hand)·AI(ai.ts)·집행(turn.ts)이 모두 같은 결과를 보도록 보장
 
 **스탯 — `deriveCardStats(state, player, cardId): CardStats`**
 - base + statModifiers + `status.buffs` + 구 status 버프(delayAdvantage / attackBuff)를 합산
-- 공격력은 전투 해결(`applyCardEffectsWithPause`)과 **동일한 식**(base + mods + buffs + attackBuff)을 사용 → 핸드 표시 == 실제 데미지
+- 공격력은 표시·전투가 **같은 함수 `deriveAttackPower`를 호출**한다 → 핸드 표시 == 실제 데미지
 - CardView는 자체 계산 없이 이 결과(`stats` prop)만 표시
+
+**공격 수단 — `groundAttack: 0` / `antiAirAttack: 0`은 "그 수단이 없다"는 뜻**
+- 지상 전용 카드가 `antiAirAttack: 0`으로 체공 상대를 못 때리는 것이 이 규칙이다
+- 스탯을 가리지 않는 `status.attackBuff`는 **없던 수단을 새로 열지 않는다** —
+  열어 주면 지상 전용 카드가 버프받는 동안 대공 카드로 둔갑한다
+- 예외: **양쪽 다 0인 카드**는 "수치를 전부 밖에서 받는 공격 카드"로 보고 양쪽 수단을 가진 것으로 취급
+- 수단을 특정하고 싶으면 `buff` 효과나 statModifiers로 해당 스탯을 올린다 —
+  그쪽은 어느 스탯인지 스스로 밝히므로 그 수단만 열린다
+- 검증: `cardStats.test.ts`의 "attackBuff와 공격 수단(0)의 관계"
 
 **규칙:** 카드 표시/판정 로직을 컴포넌트나 ai.ts에 새로 인라인하지 말 것.
 새 조건/스탯이 생기면 위 두 함수에만 추가하고, `playability.test.ts`/`cardStats.test.ts`의
