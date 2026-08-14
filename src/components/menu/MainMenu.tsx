@@ -85,6 +85,8 @@ export default function MainMenu() {
   const [showAi, setShowAi] = useState(false);
   const [aiDeckId, setAiDeckId] = useState<string | null>(null);
   const [aiCharOrder, setAiCharOrder] = useState<[CharacterId, CharacterId] | null>(null);
+  // AI 대전 전용 옵션 — 온라인은 양측이 같은 규칙으로 돌아야 하므로 제공하지 않는다
+  const [noTimeLimit, setNoTimeLimit] = useState(false);
 
   function pickDeck(who: "player" | "ai", deckId: string) {
     const deck = getDeckRegistry()[deckId];
@@ -115,7 +117,7 @@ export default function MainMenu() {
     if (!playerReady || !aiReady) return;
     const player: SetupConfig = { deckId: playerDeckId!, characters: playerCharOrder! };
     const ai: SetupConfig = { deckId: aiDeckId!, characters: aiCharOrder! };
-    router.push(`/game?${encodeSetupParams(player, ai)}`);
+    router.push(`/game?${encodeSetupParams(player, ai, { noTimeLimit })}`);
   }
 
   function goOnline() {
@@ -209,6 +211,18 @@ export default function MainMenu() {
               onCharSelect={(c) => pickChar("ai", c)}
               onSwap={() => swap("ai")}
             />
+            <label className={styles.optionRow}>
+              <input
+                type="checkbox"
+                checked={noTimeLimit}
+                onChange={(e) => setNoTimeLimit(e.target.checked)}
+              />
+              <span className={styles.optionLabel}>시간제한 없음</span>
+              <span className={styles.optionHint}>
+                {noTimeLimit ? "천천히 생각할 수 있습니다" : "선택마다 20초"}
+              </span>
+            </label>
+
             <button
               type="button"
               className={`${styles.startBtn} ${!aiReady ? styles.startBtnDisabled : ""}`}
