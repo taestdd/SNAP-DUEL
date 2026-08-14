@@ -148,12 +148,21 @@ export function useTurnTimer(
     onTimeout: (player: PlayerId) => void;
     /** 태그 연출 등으로 카운트다운을 잠시 멈춰야 할 때 true */
     paused?: boolean;
+    /**
+     * 시간제약 사용 여부 (기본 true).
+     *
+     * false면 창을 아예 열지 않는다 — 카운트다운도, 만료 강제도 없다.
+     * 싱글플레이에서 "시간제한 없음"을 고른 경우가 이 경로다.
+     * 온라인은 양측이 같은 규칙으로 돌아야 하므로 끄지 않는다.
+     */
+    enabled?: boolean;
   },
 ): TurnTimerView {
-  const { role, onTimeout, paused = false } = opts;
+  const { role, onTimeout, paused = false, enabled = true } = opts;
 
-  const timedActor = state ? getTimedActor(state) : null;
-  const windowKey = state ? getWindowKey(state) : null;
+  // 비활성이면 창 자체가 없다 → 아래 effect들이 전부 조기 반환하고 표시도 null이 된다
+  const timedActor = enabled && state ? getTimedActor(state) : null;
+  const windowKey = enabled && state ? getWindowKey(state) : null;
 
   // 카운트다운 표시값 — interval 틱에서만 갱신 (effect 내 동기 setState 회피).
   // 창 키를 함께 저장해 이전 창의 잔여값이 새 창에서 표시되지 않게 한다.

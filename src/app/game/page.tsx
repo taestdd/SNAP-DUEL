@@ -12,7 +12,13 @@ import { useTagAnimating } from "@/hooks/useTagAnimating";
 import { useTurnTimer } from "@/hooks/useTurnTimer";
 import { decodeSetupParams } from "@/lib/setupConfig";
 
-function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?: SetupConfig; onExit: () => void }) {
+function GameApp({ config, aiConfig, onExit, noTimeLimit = false }: {
+  config: SetupConfig;
+  aiConfig?: SetupConfig;
+  onExit: () => void;
+  /** 시간제약 해제 — 카운트다운도 자동 패스도 없앤다 */
+  noTimeLimit?: boolean;
+}) {
   const [state, dispatch] = useReducer(
     gameReducer,
     undefined,
@@ -24,7 +30,8 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
   // 페이즈 자동 전환 (TURN_START / RESOLVE / TURN_END) — 공용 훅
   useFlowDriver(state, dispatch, { paused: isTagAnimating });
 
-  // 턴 시간제약: P1의 결정 창만 강제 (AI는 즉시 행동)
+  // 턴 시간제약: P1의 결정 창만 강제 (AI는 즉시 행동).
+  // noTimeLimit이면 훅이 창을 열지 않아 카운트다운·자동 패스가 모두 사라진다.
   const onTimeout = useCallback((player: PlayerId) => {
     dispatch({ type: "TURN/TIMEOUT", player });
   }, []);
@@ -32,6 +39,7 @@ function GameApp({ config, aiConfig, onExit }: { config: SetupConfig; aiConfig?:
     role: "single",
     onTimeout,
     paused: isTagAnimating,
+    enabled: !noTimeLimit,
   });
 
   useEffect(() => {
@@ -70,7 +78,7 @@ function GamePageInner() {
   const params = useSearchParams();
   const dataStatus = useGameData();
 
-  const { player, ai } = decodeSetupParams(params);
+  const { player, ai, noTimeLimit } = decodeSetupParams(params);
 
   if (dataStatus === "loading") {
     return (
@@ -93,7 +101,7 @@ function GamePageInner() {
     return null;
   }
 
-  return <GameApp config={player} aiConfig={ai ?? undefined} onExit={() => router.push("/")} />;
+  return <GameApp config={player} aiConfig={ai ?? undefined} onExit={() => router.push("/")} noTimeLimit={noTimeLimit} />;
 }
 
 export default function Page() {

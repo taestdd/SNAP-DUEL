@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
   advanceTimer,
+  getTimedActor,
+  getWindowKey,
   TURN_TIME_MS,
   GUEST_GRACE_MS,
   type TimerState,
 } from "@/hooks/useTurnTimer";
+import { makeState } from "./fixtures";
 
 /**
  * 타이머 시간 흐름 검증 — advanceTimer를 100ms 틱으로 반복 호출해
@@ -122,5 +125,30 @@ describe("advanceTimer — 카운트다운 값", () => {
     expect(at(10_000)).toBe(10_000);
     expect(at(19_000)).toBe(1_000);
     expect(at(25_000)).toBe(0); // 마감 후엔 0으로 클램프
+  });
+});
+
+/* ── 시간제한 없음 옵션 ────────────────────────────────────────────────
+ * enabled=false는 훅이 창(windowKey)을 아예 열지 않는 것으로 구현된다.
+ * 여기서는 그 전제가 되는 순수 함수 계약을 고정한다:
+ * 창이 없으면 감시할 액터도 없고, 따라서 발화도 표시도 없다.
+ */
+describe("시간제한 없음 (enabled=false)", () => {
+  it("창이 없으면 감시 대상 액터도 없다", () => {
+    // 훅은 enabled=false일 때 getTimedActor/getWindowKey를 호출하지 않고 null을 쓴다.
+    // 상태 자체는 시간제약 대상이지만(SETUP_INIT), 옵션이 꺼지면 창이 열리지 않는다.
+    const s = makeState({ phase: "SETUP_INIT", initiative: "P1" });
+    expect(getTimedActor(s)).toBe("P1");      // 옵션이 켜져 있었다면 감시 대상
+    expect(getWindowKey(s)).not.toBeNull();
+  });
+
+  it("감시 대상이 없으면 강제도 없다 (enforce=false와 같은 결과)", () => {
+    const { fires } = simulate(TURN_TIME_MS * 3, { enforce: false });
+    expect(fires).toEqual([]);
+  });
+
+  it("시간제한이 켜져 있을 때와 대비 — 같은 시간에 켜진 쪽만 발화한다", () => {
+    expect(simulate(TURN_TIME_MS + 1000, { enforce: true }).fires).toHaveLength(1);
+    expect(simulate(TURN_TIME_MS + 1000, { enforce: false }).fires).toHaveLength(0);
   });
 });

@@ -334,3 +334,24 @@
 .adminLink:hover {
   color: rgba(255, 255, 255, 0.55);
 }
+
+/* AI 대전 옵션 (시간제한 없음 등) */
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.optionLabel {
+  font-size: 13px;
+  color: var(--clr-text-1, #ddd);
+}
+
+.optionHint {
+  font-size: 11px;
+  color: var(--clr-text-2, #888);
+  margin-left: auto;
+}
