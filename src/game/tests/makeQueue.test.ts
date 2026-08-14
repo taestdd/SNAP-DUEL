@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeQueue, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX, WHIFF_RETURN_MS } from "@/game/animation/makeQueue";
+import { makeQueue, resolveHitTimings, DEFAULT_HIT_TIMINGS, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX, WHIFF_RETURN_MS } from "@/game/animation/makeQueue";
 import type { Card, CombatAnimationEvent } from "@/game/engine/types";
 
 /**
@@ -318,5 +318,93 @@ describe("거리 시뮬레이션 스레딩 (양측 시퀀스)", () => {
     const dashes = moves(events).filter((e) => e.motion === "dash");
     expect(dashes).toHaveLength(2);
     expect(dashes.map((e) => e.subject)).toEqual(["P1", "AI"]);
+  });
+});
+
+/* ── 동작별 기본 히트 타이밍 ───────────────────────────────────────────
+ * hitTimings를 안 적은 공격 카드는 actionTag의 기본값으로 히트를 재생한다.
+ * 카드에 적힌 값은 언제나 기본값을 이기고, 스킬 카드는 기본값을 받지 않는다.
+ */
+describe("resolveHitTimings — 동작별 기본값", () => {
+  const card = (over: Partial<Card>): Card => ({
+    id: "t", name: "t", cardType: "attack", cost: 0, delay: 1, advantage: 0,
+    groundAttack: 1, effects: [], text: "", ...over,
+  });
+
+  it("hitTimings가 없는 공격 카드는 actionTag 기본값을 쓴다", () => {
+    const c = card({ actionTag: "strong_punch" });
+    expect(resolveHitTimings(c, "strong_punch")).toEqual(
+      DEFAULT_HIT_TIMINGS.strong_punch,
+    );
+  });
+
+  it("카드에 적힌 값이 기본값을 이긴다", () => {
+    const own = [{ frame: 7, ground: "hit_weak" as const, airborne: "hit_weak" as const }];
+    const c = card({ actionTag: "strong_punch", hitTimings: own });
+    expect(resolveHitTimings(c, "strong_punch")).toBe(own);
+  });
+
+  it("스킬 카드는 actionTag가 있어도 기본값을 받지 않는다", () => {
+    const c = card({ cardType: "skill", actionTag: "strong_punch", groundAttack: 0 });
+    expect(resolveHitTimings(c, "strong_punch")).toEqual([]);
+  });
+
+  it("타격이 아닌 동작(block/draw/jump)은 기본값이 없다", () => {
+    for (const tag of ["block", "draw", "jump", "use_item", "reclaim", "tag_switch"] as const) {
+      expect(DEFAULT_HIT_TIMINGS[tag]).toBeUndefined();
+      expect(resolveHitTimings(card({ actionTag: tag }), tag)).toEqual([]);
+    }
+  });
+
+  it("actionTag가 없으면 기본값도 없다", () => {
+    expect(resolveHitTimings(card({}), undefined)).toEqual([]);
+  });
+
+  it("기본값은 모두 단발 히트다 (다단은 카드가 직접 적는다)", () => {
+    for (const [tag, timings] of Object.entries(DEFAULT_HIT_TIMINGS)) {
+      expect(timings, tag).toHaveLength(1);
+    }
+  });
+});
+
+describe("기본값이 실제 이벤트 큐에 반영된다", () => {
+  const bare: Card = {
+    id: "bare", name: "기본값 카드", cardType: "attack", cost: 0, delay: 1, advantage: 0,
+    groundAttack: 3, effects: [], text: "", actionTag: "strong_punch", meleeAttack: false,
+  };
+
+  it("hitTimings 없는 공격 카드도 visual_hit이 생성된다", () => {
+    const q = makeQueue(bare, null, "player", 0, 0, 0, 0, "a", "a");
+    const hits = q.filter((e) => e.type === "visual_hit");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].hitPose).toBe("hit_strong");
+  });
+
+  it("체공 상대에게는 기본값의 airborne 포즈가 쓰인다", () => {
+    // 지상 전용 카드는 체공 상대에게 애초에 안 닿으므로 대공 수단이 있는 카드로 본다
+    const antiAir: Card = { ...bare, antiAirAttack: 3 };
+    const q = makeQueue(antiAir, null, "player", 0, 1, 0, 0, "a", "a");
+    const hit = q.find((e) => e.type === "visual_hit");
+    expect(hit?.hitPose).toBe("hit_aerial");
+  });
+
+  it("지상 전용 카드는 체공 상대에게 히트가 나지 않는다 (기본값이 생겨도 마찬가지)", () => {
+    const q = makeQueue(bare, null, "player", 0, 1, 0, 0, "a", "a");
+    expect(q.filter((e) => e.type === "visual_hit")).toHaveLength(0);
+  });
+
+  it("근접 카드는 기본값만으로도 대시-인이 생긴다", () => {
+    const melee: Card = { ...bare, meleeAttack: true };
+    const q = makeQueue(melee, null, "player", 0, 0, 0, 0, "a", "a");
+    expect(q.some((e) => e.type === "fighter_move" && e.motion === "dash")).toBe(true);
+  });
+
+  it("스킬 카드는 여전히 히트 없이 지나간다", () => {
+    const skill: Card = {
+      id: "sk", name: "스킬", cardType: "skill", cost: 0, delay: 1, advantage: 0,
+      effects: [], text: "", actionTag: "block",
+    };
+    const q = makeQueue(skill, null, "player", 0, 0, 0, 0, "a", "a");
+    expect(q.filter((e) => e.type === "visual_hit")).toHaveLength(0);
   });
 });

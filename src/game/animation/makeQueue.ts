@@ -1,4 +1,4 @@
-import type { AnimScriptEntry, Card, CombatAnimationEvent, FighterPose, HitPose, PlayerId, PoisonTick } from "@/game/engine/types";
+import type { ActionTag, AnimScriptEntry, Card, CombatAnimationEvent, FighterPose, HitPose, HitTiming, PlayerId, PoisonTick } from "@/game/engine/types";
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import { getCard } from "@/game/engine/cards";
 import { CHARACTERS } from "@/game/engine/characters";
@@ -56,6 +56,41 @@ export const HIT_ZOOM_PRESET: Record<HitPose, number> = {
   hit_aerial: 1.15,
   hit_weak:   1.09,
 };
+
+/**
+ * 동작(actionTag)별 기본 히트 타이밍 — 카드가 hitTimings를 안 적었을 때 쓰인다.
+ *
+ * 임팩트 프레임과 피격 강도는 본래 "그 동작의 성질"이지 카드마다 다를 이유가 없다.
+ * (frameToMs가 해당 포즈의 fps로 환산하는 것도 같은 전제다)
+ * 그래서 freeze/zoom이 히트 포즈별 프리셋으로 떨어지는 것과 같은 방식으로,
+ * 타이밍 자체도 동작별 기본값을 두고 카드는 예외만 적는다.
+ *
+ * 값은 카드 풀의 실제 사용례에서 뽑았다 — 신규 세트는 동작별로 값이 일치한다.
+ * 여기 없는 태그(block/draw/jump 등)는 타격이 아니므로 기본값이 없다.
+ */
+export const DEFAULT_HIT_TIMINGS: Partial<Record<ActionTag, HitTiming[]>> = {
+  weak_punch:   [{ frame: 1, ground: "hit_weak",   airborne: "hit_aerial" }],
+  strong_punch: [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
+  strong_kick:  [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
+  dragon_kick:  [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
+  hadouken:     [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
+  throw:        [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
+  rising_punch: [{ frame: 2, ground: "hit_aerial", airborne: "hit_aerial" }],
+  aerial_punch: [{ frame: 3, ground: "hit_aerial", airborne: "hit_aerial" }],
+};
+
+/**
+ * 이 카드가 실제로 재생할 히트 타이밍.
+ *
+ * 카드에 적힌 값이 항상 이긴다 — 기본값은 "안 적었을 때"만 채운다.
+ * 기본값은 **공격 카드에만** 적용한다. 스킬 카드는 actionTag가 있어도
+ * (block·use_item 등) 타격이 아니므로 지금처럼 히트 없이 지나간다.
+ */
+export function resolveHitTimings(card: Card, resolvedTag: ActionTag | undefined): HitTiming[] {
+  if (card.hitTimings && card.hitTimings.length > 0) return card.hitTimings;
+  if (card.cardType !== "attack" || !resolvedTag) return [];
+  return DEFAULT_HIT_TIMINGS[resolvedTag] ?? [];
+}
 
 /** characterId → 스프라이트 ID (fps 조회용) */
 function spriteIdOf(characterId: string): string {
@@ -293,7 +328,8 @@ function pushSequenceWithHold(
   const resolvedTag = (actorAirborne >= 1 && card.actionTagAirborne)
     ? card.actionTagAirborne
     : card.actionTag;
-  const hasTimings = !!(card.hitTimings && card.hitTimings.length > 0);
+  const timings = resolveHitTimings(card, resolvedTag);
+  const hasTimings = timings.length > 0;
   // 넉백·거리 상태 전이는 "스윙이 닿은 공격"에만 적용 (가드로 막혀도 닿은 것은 닿은 것)
   // (카운터된 카드는 애초에 스크립트에 없음)
   const impact = resolveImpact(card, targetAirborne, hpData);
@@ -324,7 +360,7 @@ function pushSequenceWithHold(
   events.push({ type: "action_start", delay: offset + shift, actor, actionTag: resolvedTag });
 
   let lastImpactAt = 0;  // offset+shift 기준 마지막 히트(임팩트 프레임) 발화 시각
-  if (card.hitTimings && card.hitTimings.length > 0) {
+  if (hasTimings) {
     const connects = impact.landed;
 
     // 히트스탑 인지 타임라인:
@@ -334,7 +370,7 @@ function pushSequenceWithHold(
     let acc = 0;
     let lastFreeze = 0;
 
-    for (const timing of card.hitTimings) {
+    for (const timing of timings) {
       const hitPose: HitPose = targetAirborne >= 1 ? timing.airborne : timing.ground;
       const freezeMs = timing.freeze ?? HIT_FREEZE_PRESET[hitPose];
       const zoom = timing.zoom ?? HIT_ZOOM_PRESET[hitPose];

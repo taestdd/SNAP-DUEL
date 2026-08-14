@@ -28,6 +28,20 @@ export const ACTION_TAG_TO_POSE = {
 export type ActionTag = keyof typeof ACTION_TAG_TO_POSE;
 
 /**
+ * 히트 한 번의 타이밍과 피격 자세.
+ * - frame: 공격 포즈 재생 시퀀스 내 순번(0-based). actor 포즈 fps로 ms 환산
+ * - freeze: 히트스탑 = 줌 유지 윈도우(ms). 미지정 시 강도별 프리셋
+ * - zoom: 줌인 배율. 미지정 시 강도별 프리셋
+ */
+export type HitTiming = {
+  frame: number;
+  ground: HitPose;
+  airborne: HitPose;
+  freeze?: number;
+  zoom?: number;
+};
+
+/**
  * 파이터 포즈 — 스프라이트 시퀀스 키
  */
 export type FighterPose =
@@ -410,7 +424,7 @@ export type Card = {
    * - freeze: 히트스탑 = 줌 유지 윈도우(ms). 미지정 시 강도별 프리셋
    * - zoom: 줌인 배율. 미지정 시 강도별 프리셋
    */
-  hitTimings?: { frame: number; ground: HitPose; airborne: HitPose; freeze?: number; zoom?: number }[];
+  hitTimings?: HitTiming[];
 
   /** true면 기술 발동 전 슈퍼 플래시 연출 재생 */
   superFlash?: boolean;
