@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { FighterPose } from "@/game/engine/types";
 import { CHARACTERS } from "@/game/engine/characters";
 import { CHARACTER_SPRITES, frameToBackgroundPosition, backgroundSize } from "@/game/animation/spriteMap";
@@ -39,48 +39,55 @@ export default function FighterSprite({
   const config = CHARACTER_SPRITES[spriteId] ?? Object.values(CHARACTER_SPRITES)[0]!;
   const entry = config.poses[pose];
   const [frameIdx, setFrameIdx] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frozenUntilRef = useRef(frozenUntil);
   frozenUntilRef.current = frozenUntil;
   const entryRef = useRef(entry);
   entryRef.current = entry;
   const spriteRef = useRef<HTMLDivElement>(null);
 
-  const startInterval = useCallback((ms: number) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setFrameIdx((prev) => {
-        if (Date.now() < frozenUntilRef.current) return prev;
-        const next = prev + 1;
-        if (next >= entryRef.current.frames.length) {
-          if (entryRef.current.hold) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            intervalRef.current = null;
-            return prev;
-          }
-          return 0;
-        }
-        return next;
-      });
-    }, ms);
-  }, []);
+  // 포즈 클럭 기준점 + 누적 freeze 시간. rAF마다 "지금이 몇 번째 프레임인지"를
+  // 경과시간으로 다시 계산한다 — setInterval 카운터(+1씩 누적)와 달리 한 틱이
+  // 늦게 걸려도 다음 틱에서 스스로 보정되고, 리액트 effect 스케줄 지연(useEffect는
+  // 페인트 이후 실행)으로 클럭 시작점 자체가 밀리는 것도 useLayoutEffect로 시작점을
+  // 커밋 직후(페인트 전)에 못박아 없앤다. (히트 프레임이 한 프레임 일찍 보이던 버그 수정)
+  const startedAtRef = useRef(0);
+  const frozenAccumRef = useRef(0);
+  const lastTickRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const now = Date.now();
+    startedAtRef.current = now;
+    frozenAccumRef.current = 0;
+    lastTickRef.current = now;
     setFrameIdx(0);
-    startInterval(Math.round(1000 / entry.fps));
+
+    const frameMs = 1000 / entry.fps;
+
+    function tick() {
+      const nowTick = Date.now();
+      if (nowTick < frozenUntilRef.current) {
+        frozenAccumRef.current += nowTick - lastTickRef.current;
+      }
+      lastTickRef.current = nowTick;
+
+      const elapsed = nowTick - startedAtRef.current - frozenAccumRef.current;
+      const raw = Math.round(elapsed / frameMs);
+      const len = entryRef.current.frames.length;
+      const idx = entryRef.current.hold
+        ? Math.min(Math.max(raw, 0), len - 1)
+        : ((raw % len) + len) % len;
+
+      setFrameIdx((prev) => (prev === idx ? prev : idx));
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poseKey, pose]);
-
-  // hold:true 포즈에서 interval이 클리어된 뒤 frozenUntil이 세팅되면 interval 재시작
-  useEffect(() => {
-    if (frozenUntil <= Date.now()) return;
-    if (intervalRef.current !== null) return; // 이미 살아있으면 스킵
-    startInterval(Math.round(1000 / entry.fps));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frozenUntil]);
 
   useLayoutEffect(() => {
     if (flashKey === 0) return;
