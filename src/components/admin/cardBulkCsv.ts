@@ -63,8 +63,9 @@ export function splitCsvLine(line: string): string[] {
 /**
  * CSV 텍스트를 카드 객체 배열로 바꾼다.
  *
- * 값이 빈 컬럼은 **키 자체를 넣지 않는다** — 갱신(병합) 경로에서 "적지 않은 필드"와
- * "빈 값으로 적은 필드"가 구분되어야 하기 때문이다.
+ * 값이 빈 컬럼은 **키 자체를 넣지 않는다** — 그대로 넣으면 groundAttack: NaN,
+ * tags: [] 같은 값이 새어 들어간다. 덮어쓰기 경로에서 부분 입력을 낸 필수 필드
+ * 누락은 파서가 조용히 지나가지 않고 스키마 검증에서 걸리게 둔다.
  */
 export function parseCardCsv(text: string): Record<string, unknown>[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
@@ -88,7 +89,7 @@ export function parseCardCsv(text: string): Record<string, unknown>[] {
     if (delay !== undefined && delay !== "") card.delay = Number(delay);
     const advantage = row.advantage ?? row.gain;
     if (advantage !== undefined && advantage !== "") card.advantage = Number(advantage);
-    if (row.text !== undefined && headers.includes("text")) card.text = row.text;
+    if (row.text !== undefined) card.text = row.text;
 
     for (const key of STRING_COLUMNS) {
       if (row[key]) card[key] = row[key];

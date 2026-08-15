@@ -39,14 +39,14 @@ export function emptyEffect(): CardEffect {
   return { type: "damage", value: 0, target: "enemy" };
 }
 
-/** 버프 설정을 문장으로 되풀이 — 입력한 조합이 의도대로인지 눈으로 확인하기 위함 */
-/** 중독 설정을 문장으로 되풀이 */
+/** 중독 설정을 문장으로 되풀이 — 입력한 조합이 의도대로인지 눈으로 확인하기 위함 */
 function describePoison(effect: CardEffect): string {
   const who = effect.target === "enemy" ? "상대" : "자신";
   const scope = effect.buffScope === "player" ? "플레이어 (태그해도 유지)" : "현재 캐릭터 (태그 시 소멸)";
   return `${who}의 ${scope}에게: 턴당 ${effect.value ?? 0} 피해 (블록 무시) · ${effect.poisonTurns ?? 2}턴 · 건 턴에는 틱하지 않음`;
 }
 
+/** 버프 설정을 문장으로 되풀이 — 입력한 조합이 의도대로인지 눈으로 확인하기 위함 */
 function describeBuff(effect: CardEffect): string {
   const who = effect.target === "enemy" ? "상대" : "자신";
   const scope = effect.buffScope === "character" ? "현재 캐릭터" : "플레이어";
