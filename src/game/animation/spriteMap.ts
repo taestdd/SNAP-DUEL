@@ -52,7 +52,7 @@ const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   idle:               { frames: [0],                                  fps: 6,  hold: false },
   dash:               { frames: [30],                                 fps: 6,  hold: true  },
   attack_weak_punch:  { frames: [1, 2, 3],                            fps: 10, hold: true  },
-  attack_strong_punch:{ frames: [8, 9, 10],                           fps: 10, hold: true  },
+  attack_strong_punch:{ frames: [8, 9, 10, 7],                        fps: 10, hold: true  },
   attack_aerial_punch:{ frames: [1, 2],                               fps: 10, hold: true  },
   attack_weak_kick:   { frames: [1, 4, 5, 7],                         fps: 8,  hold: true  },
   attack_strong_kick: { frames: [1, 4, 5, 7],                         fps: 8,  hold: true  },
