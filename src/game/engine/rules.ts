@@ -9,7 +9,7 @@
  */
 
 export { applyTagSwitch, applyCardEffectsWithPause, canUseCard, canPlayCard, getCardPlayability, getPlayableCards, getEffectiveCost, deriveCardStats, affinityAllows, hasAdditionalCost } from "./effects";
-export { beginTurn, endTurnCleanup, queueCard, resumeCostPayment, submitDraft } from "./turn";
+export { beginTurn, endTurnCleanup, queueCard, resumeCostPayment, submitDraft, resolveHandLimits } from "./turn";
 export { enterResolving, resumeResolve } from "./resolve";
 export { LOG_LIMIT } from "./constants";
 export { draw, checkGameOver, getBenchChar, opponentOf } from "./stateHelpers";

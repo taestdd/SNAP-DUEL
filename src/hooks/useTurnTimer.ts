@@ -50,7 +50,7 @@ export function getTimedActor(state: GameState): PlayerId | null {
     case "WAITING_SELECTION":
       return state.pendingSelection?.selectingPlayer ?? null;
     case "WAITING_DISCARD":
-      return state.pendingDiscard ? "P1" : null;
+      return state.pendingDiscard?.player ?? null;
     default:
       return null;
   }

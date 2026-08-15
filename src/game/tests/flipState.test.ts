@@ -47,6 +47,14 @@ describe("flipState (게스트 뷰 P1↔AI 교환)", () => {
     expect(s.animScript[0].comboHolder).toBe("AI");
   });
 
+  it("pendingDiscard의 player를 교환한다 (게스트 자기 버리기 모달 노출용)", () => {
+    const s = flipState(makeState({
+      pendingDiscard: { player: "AI", count: 2, candidates: ["c0", "c1"] },
+    }));
+    expect(s.pendingDiscard).toEqual({ player: "P1", count: 2, candidates: ["c0", "c1"] });
+    expect(flipState(makeState({ pendingDiscard: null })).pendingDiscard).toBeNull();
+  });
+
   it("태그 플래그를 교환한다 — 게스트 Tag 버튼 잠금용", () => {
     const s = flipState(makeState({ p1TaggedThisTurn: false, aiTaggedThisTurn: true }));
     expect(s.p1TaggedThisTurn).toBe(true);  // 게스트(내부 AI)가 태그함 → 게스트 화면에서 잠김

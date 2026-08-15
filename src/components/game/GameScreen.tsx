@@ -263,7 +263,7 @@ export default function GameScreen({
         />
       )}
 
-      {state.phase === "WAITING_DISCARD" && state.pendingDiscard && (
+      {state.phase === "WAITING_DISCARD" && state.pendingDiscard && state.pendingDiscard.player === "P1" && (
         <DiscardModal
           count={state.pendingDiscard.count}
           candidates={state.pendingDiscard.candidates}

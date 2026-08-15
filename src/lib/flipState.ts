@@ -49,6 +49,9 @@ export function flipState(state: GameState): GameState {
           unresolvedPlayers: state.pendingSelection.unresolvedPlayers.map(flipId),
         }
       : null,
+    pendingDiscard: state.pendingDiscard
+      ? { ...state.pendingDiscard, player: flipId(state.pendingDiscard.player) }
+      : null,
     resolveContext: {
       queue: state.resolveContext.queue.map((item) => ({ ...item, player: flipId(item.player) })),
       index: state.resolveContext.index,

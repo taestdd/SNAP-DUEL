@@ -4,7 +4,6 @@ import {
   pushLog,
   syncExhausted,
   areBothPlayersExhausted,
-  discardAIExcess,
   moveHandToTrash,
   recycleTrashIntoDeck,
   moveCooldownToTrash,
@@ -152,6 +151,26 @@ export function beginTurn(state: GameState): GameState {
 /* 턴 종료                    */
 /* -------------------------- */
 
+/**
+ * 핸드 사이즈 초과분을 WAITING_DISCARD로 뺀다 — AI도 P1과 같은 경로를 탄다.
+ * "밖에서 결정 → 액션 디스패치" 패턴(SETUP/선택효과/드래프트)과 통일해 두면
+ * AI 쪽 결정 주체를 로컬 규칙이든 외부(Claude 등)든 갈아끼울 수 있다.
+ *
+ * AI를 먼저 확인하는 순서는 과거 discardAIExcess가 P1 체크보다 먼저 돌던
+ * 순서를 그대로 유지한 것 — 양쪽이 동시에 초과해도 한 쪽씩 순차 처리된다
+ * (DISCARD/CONFIRM이 매번 이 함수를 다시 불러 남은 쪽을 확인한다).
+ */
+export function resolveHandLimits(state: GameState): GameState {
+  for (const player of ["AI", "P1"] as PlayerId[]) {
+    const excess = state[player].hand.length - HAND_LIMIT;
+    if (excess > 0) {
+      const pendingDiscard: PendingDiscard = { player, count: excess, candidates: [...state[player].hand] };
+      return { ...state, phase: "WAITING_DISCARD", pendingDiscard };
+    }
+  }
+  return { ...state, phase: "TURN_END" };
+}
+
 export function endTurnCleanup(state: GameState): GameState {
   const p1Card = state.animScript.find((e) => e.actor === "P1")?.cardId
     ?? (state.recentlyCounteredPlayer === "P1" ? state.recentlyCounteredId : null)
@@ -178,15 +197,7 @@ export function endTurnCleanup(state: GameState): GameState {
 
   if (areBothPlayersExhausted(s)) return handleRoundEnd(s);
 
-  s = discardAIExcess(s);
-
-  const p1Excess = s.P1.hand.length - HAND_LIMIT;
-  if (p1Excess > 0) {
-    const pendingDiscard: PendingDiscard = { count: p1Excess, candidates: [...s.P1.hand] };
-    return { ...s, phase: "WAITING_DISCARD", pendingDiscard };
-  }
-
-  return { ...s, phase: "TURN_END" };
+  return resolveHandLimits(s);
 }
 
 /* -------------------------- */

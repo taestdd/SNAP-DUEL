@@ -73,7 +73,20 @@ describe("endTurnCleanup", () => {
     const hand = Array.from({ length: 11 }, (_, i) => `c${i}`);
     const s = endTurnCleanup(makeState({ P1: { hand } }));
     expect(s.phase).toBe("WAITING_DISCARD");
-    expect(s.pendingDiscard?.count).toBe(1);
+    expect(s.pendingDiscard).toMatchObject({ player: "P1", count: 1 });
+  });
+  it("AI 핸드가 10장 초과면 (자동 처리하지 않고) WAITING_DISCARD로 뺀다", () => {
+    const hand = Array.from({ length: 12 }, (_, i) => `c${i}`);
+    const s = endTurnCleanup(makeState({ AI: { hand } }));
+    expect(s.phase).toBe("WAITING_DISCARD");
+    expect(s.pendingDiscard).toMatchObject({ player: "AI", count: 2 });
+    expect(s.AI.hand).toHaveLength(12); // 아직 실제로 버려지지 않음 — DISCARD/CONFIRM이 처리
+  });
+  it("양쪽 다 초과면 AI를 먼저 대기시킨다", () => {
+    const p1Hand = Array.from({ length: 11 }, (_, i) => `p${i}`);
+    const aiHand = Array.from({ length: 13 }, (_, i) => `a${i}`);
+    const s = endTurnCleanup(makeState({ P1: { hand: p1Hand }, AI: { hand: aiHand } }));
+    expect(s.pendingDiscard).toMatchObject({ player: "AI", count: 3 });
   });
   it("양쪽 모두 exhausted면 라운드 종료 (round<3 → 다음 라운드 ROUND_DRAFT)", () => {
     const s = endTurnCleanup(makeState({

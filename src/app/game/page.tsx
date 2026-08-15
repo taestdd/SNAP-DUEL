@@ -4,6 +4,7 @@ import { useCallback, useEffect, useReducer, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createInitialState } from "@/game/engine/state";
+import { selectDiscards } from "@/game/engine/ai";
 import type { PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
 import { useGameData } from "@/hooks/useGameData";
@@ -63,6 +64,14 @@ function GameApp({ config, aiConfig, onExit, noTimeLimit = false }: {
     if (autoSelected.length > 0) dispatch({ type: "SELECTION/CONFIRM", selectedCards: autoSelected });
     else dispatch({ type: "SELECTION/SKIP" });
   }, [state.phase, state.pendingSelection]);
+
+  // WAITING_DISCARD: AI 자기 초과분은 즉시 자동 처리 (P1 것은 DiscardModal 대기)
+  useEffect(() => {
+    if (state.phase !== "WAITING_DISCARD" || !state.pendingDiscard) return;
+    if (state.pendingDiscard.player !== "AI") return;
+    const discardCards = selectDiscards(state, "AI", state.pendingDiscard.count);
+    dispatch({ type: "DISCARD/CONFIRM", discardCards });
+  }, [state.phase, state.pendingDiscard]);
 
   // 싱글플레이는 P1 창만 표시 (AI는 즉시 행동하므로 타이머 무의미)
   const turnTimer =

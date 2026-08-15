@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
 import { createTutorialState } from "@/game/tutorial/tutorialState";
 import { TUTORIAL_STAGES } from "@/game/tutorial/tutorialStages";
-import { selectDraftCards } from "@/game/engine/ai";
+import { selectDraftCards, selectDiscards } from "@/game/engine/ai";
 import { useTagAnimating } from "@/hooks/useTagAnimating";
 import GameScreen from "@/components/game/GameScreen";
 import TutorialOverlay from "@/components/tutorial/TutorialOverlay";
@@ -85,6 +85,14 @@ function TutorialGame({
     if (autoSelected.length > 0) dispatch({ type: "SELECTION/CONFIRM", selectedCards: autoSelected });
     else dispatch({ type: "SELECTION/SKIP" });
   }, [state.phase, state.pendingSelection]);
+
+  // WAITING_DISCARD: AI 자기 초과분은 즉시 자동 처리
+  useEffect(() => {
+    if (state.phase !== "WAITING_DISCARD" || !state.pendingDiscard) return;
+    if (state.pendingDiscard.player !== "AI") return;
+    const discardCards = selectDiscards(state, "AI", state.pendingDiscard.count);
+    dispatch({ type: "DISCARD/CONFIRM", discardCards });
+  }, [state.phase, state.pendingDiscard]);
 
   // TURN_END: advance to next turn
   useEffect(() => {
