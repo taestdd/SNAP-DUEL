@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { makeQueue, resolveHitTimings, DEFAULT_HIT_TIMINGS, HIT_FREEZE_PRESET, HIT_ZOOM_PRESET, HOME_OFFSET, DASH_MS, CLOSE_OVERLAP_PX, WHIFF_RETURN_MS } from "@/game/animation/makeQueue";
-import type { Card, CombatAnimationEvent } from "@/game/engine/types";
+import type { ActionTag, Card, CombatAnimationEvent } from "@/game/engine/types";
+import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
+import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
 
 /**
  * makeQueue — 프레임 기반 히트 타이밍 + 히트스탑 인지 타임라인.
@@ -360,9 +362,22 @@ describe("resolveHitTimings — 동작별 기본값", () => {
     expect(resolveHitTimings(card({}), undefined)).toEqual([]);
   });
 
-  it("기본값은 모두 단발 히트다 (다단은 카드가 직접 적는다)", () => {
+  it("돌려차기는 시퀀스가 두 바퀴 돌므로 기본값이 2히트다", () => {
+    expect(DEFAULT_HIT_TIMINGS.dragon_kick).toHaveLength(2);
+    expect(DEFAULT_HIT_TIMINGS.dragon_kick!.map((t) => t.frame)).toEqual([1, 5]);
+  });
+
+  it("모든 기본값의 frame이 해당 포즈 시퀀스 안에 있다 (clamp되지 않는다)", () => {
+    // frame은 시트 번호가 아니라 재생 순번이라, 배열 길이를 넘으면 조용히 잘린다.
+    // 표에 적힌 숫자와 실제 재생 위치가 어긋나는 것을 막는다.
+    const sprite = CHARACTER_SPRITES["a"];
     for (const [tag, timings] of Object.entries(DEFAULT_HIT_TIMINGS)) {
-      expect(timings, tag).toHaveLength(1);
+      const pose = ACTION_TAG_TO_POSE[tag as ActionTag];
+      const seq = pose ? sprite.poses[pose] : undefined;
+      expect(seq, `${tag} 포즈 없음`).toBeDefined();
+      for (const t of timings!) {
+        expect(t.frame, `${tag} frame ${t.frame}`).toBeLessThan(seq!.frames.length);
+      }
     }
   });
 });

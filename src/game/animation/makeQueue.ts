@@ -70,13 +70,18 @@ export const HIT_ZOOM_PRESET: Record<HitPose, number> = {
  */
 export const DEFAULT_HIT_TIMINGS: Partial<Record<ActionTag, HitTiming[]>> = {
   weak_punch:   [{ frame: 1, ground: "hit_weak",   airborne: "hit_aerial" }],
-  strong_punch: [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
-  strong_kick:  [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
-  dragon_kick:  [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
-  hadouken:     [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
-  throw:        [{ frame: 1, ground: "hit_strong", airborne: "hit_aerial" }],
+  strong_punch: [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
+  strong_kick:  [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
+  // 돌려차기는 시퀀스가 두 바퀴 도는 동작이라 기본값도 2히트 (1바퀴당 1히트)
+  dragon_kick:  [
+    { frame: 1, ground: "hit_strong", airborne: "hit_aerial" },
+    { frame: 5, ground: "hit_strong", airborne: "hit_aerial" },
+  ],
+  hadouken:     [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
+  throw:        [{ frame: 2, ground: "hit_strong", airborne: "hit_aerial" }],
   rising_punch: [{ frame: 2, ground: "hit_aerial", airborne: "hit_aerial" }],
-  aerial_punch: [{ frame: 3, ground: "hit_aerial", airborne: "hit_aerial" }],
+  // 시퀀스가 2프레임뿐이라 마지막이 곧 idx 1 (3으로 적으면 clamp돼 같은 결과가 나온다)
+  aerial_punch: [{ frame: 1, ground: "hit_aerial", airborne: "hit_aerial" }],
 };
 
 /**
