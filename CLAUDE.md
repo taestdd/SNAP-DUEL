@@ -333,6 +333,13 @@ resolveContext: {
 - `damage_resolve`: HP 바 업데이트 타이밍 (hpAfter, counteredPlayer 포함)
 - `action_end`: 포즈 유지
 
+**히트 타이밍 기본값** — `hitTimings`를 안 적은 **공격 카드**는 `actionTag`별 기본값
+(`DEFAULT_HIT_TIMINGS`)으로 히트를 재생한다. 카드에 적힌 값이 언제나 이기고,
+스킬 카드는 `actionTag`가 있어도 기본값을 받지 않는다(타격이 아니므로).
+임팩트 프레임·피격 강도는 "그 동작의 성질"이라 카드마다 적을 이유가 없다 —
+freeze/zoom이 히트 포즈별 프리셋으로 떨어지는 것과 같은 구조.
+다단 히트는 계속 카드가 직접 적는다. 해석 지점은 `resolveHitTimings` 하나.
+
 **거리(근접/비근접) 연출** — 게임 로직과 무관한 연출 전용 상태:
 - 카드 필드 `meleeAttack`(미지정=true: 비근접이면 돌진 후 공격, 빗나가면 헛스윙 후 복귀=휘핑) / `knockback`(기본 false: 타격 후 양측 홈 복귀)
 - 거리 상태는 **성립한 타격만** 바꾼다 — 휘핑·스킬·카운터은 상태 무변화
