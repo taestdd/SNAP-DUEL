@@ -8,9 +8,26 @@ import { SelectField, NumericField, OptionalNumericField, ItemCard } from "./Adm
 import EffectListEditor, { emptyEffect } from "./EffectListEditor";
 import { CardTagSchema, ActionTagSchema, CardTypeSchema, ConditionCheckSchema, CompareOpSchema, StatTargetSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
-import type { AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
+import type { ActionTag, AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
+import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
+import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
 
 const ACTION_TAGS = ActionTagSchema.options;
+
+/**
+ * 이 액션 태그가 재생하는 프레임 수 (스프라이트 기준, 없으면 null).
+ *
+ * frame은 시트 번호가 아니라 재생 순번이라, 이 길이를 넘기면 makeQueue의 frameToMs가
+ * 조용히 마지막 프레임으로 잘라 버린다 — 적어둔 값과 실제 타격 위치가 어긋난다.
+ * 기준 스프라이트가 없으면 첫 번째 것으로 폴백한다 (포즈 구성은 모두 동일).
+ */
+function poseFrameCount(tag: string): number | null {
+  if (!tag) return null;
+  const pose = ACTION_TAG_TO_POSE[tag as ActionTag];
+  if (!pose) return null;
+  const sprite = CHARACTER_SPRITES["a"] ?? Object.values(CHARACTER_SPRITES)[0];
+  return sprite?.poses[pose]?.frames.length ?? null;
+}
 
 const HIT_POSES = ["hit_weak", "hit_strong", "hit_aerial"] as const;
 const CARD_TAGS = CardTagSchema.options;
@@ -57,6 +74,8 @@ export default function CardEditor({ initial, mode }: Props) {
   const [actionTagAirborne, setActionTagAirborne] = useState<string>(initial?.actionTagAirborne ?? "");
   const [effects, setEffects] = useState<CardEffect[]>(initial?.effects ?? [emptyEffect()]);
   const [hitTimings, setHitTimings] = useState(initial?.hitTimings ?? []);
+  // 이 액션이 몇 프레임짜리인지 — frame 범위 안내·경고에 쓴다
+  const frameCount = poseFrameCount(actionTag);
   const [superFlash, setSuperFlash] = useState(initial?.superFlash ?? false);
   // meleeAttack은 미지정 = true가 기본 (원거리 카드만 false 저장)
   const [meleeAttack, setMeleeAttack] = useState(initial?.meleeAttack ?? true);
@@ -651,11 +670,22 @@ export default function CardEditor({ initial, mode }: Props) {
             <div className={styles.sectionTitle} style={{ marginTop: 16 }}>Hit Timings</div>
             <div className={styles.hintText} style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
               frame = 공격 포즈 재생 순번(0부터). freeze=0이면 강도별 프리셋, zoom=1이면 프리셋.
+              {frameCount !== null && (
+                <> 현재 액션(<code>{actionTag}</code>)은 <b>{frameCount}프레임</b> — frame은 0~{frameCount - 1}.</>
+              )}
+              {cardType === "attack" && hitTimings.length === 0 && (
+                <> 비워 두면 액션별 기본 타이밍이 적용됩니다.</>
+              )}
             </div>
             {hitTimings.map((ht, i) => (
               <ItemCard key={i} title={`Hit Timing #${i + 1}`} onRemove={() => removeHitTiming(i)}>
                 <div className={styles.row}>
                   <NumericField label="frame" min={0} value={ht.frame} onChange={(n) => updateHitTiming(i, { frame: n })} />
+                  {frameCount !== null && ht.frame > frameCount - 1 && (
+                    <div className={styles.hintText} style={{ color: "#e0524f", fontSize: 12, alignSelf: "center" }}>
+                      frame {ht.frame}은 범위 밖 — 재생 시 {frameCount - 1}로 잘립니다
+                    </div>
+                  )}
                   <SelectField label="Ground 포즈" value={ht.ground} onChange={(v) => updateHitTiming(i, { ground: v as "hit_weak" | "hit_strong" | "hit_aerial" })}>
                     {HIT_POSES.map((p) => <option key={p} value={p}>{p}</option>)}
                   </SelectField>
