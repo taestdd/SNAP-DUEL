@@ -188,7 +188,7 @@ export function endTurnCleanup(state: GameState): GameState {
     airborne: { P1: state.P1.airborneStack, AI: state.AI.airborneStack },
   };
 
-  let s: GameState = {
+  const s: GameState = {
     ...state,
     P1: { ...state.P1, queue: [], ready: false },
     AI: { ...state.AI, queue: [], ready: false },

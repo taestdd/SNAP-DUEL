@@ -60,3 +60,24 @@ describe("시간제한 없음 옵션", () => {
     expect(decodeSetupParams(encodeSetupParams(player)).noTimeLimit).toBe(false);
   });
 });
+
+describe("상대 결정 주체(opponentType) 옵션", () => {
+  it("기본은 local(규칙 기반 AI)", () => {
+    expect(roundTrip(player, ai).opponentType).toBe("local");
+  });
+
+  it("claude로 지정하면 왕복해도 유지된다", () => {
+    expect(roundTrip(player, ai, { opponentType: "claude" }).opponentType).toBe("claude");
+  });
+
+  it("기본값(local)일 때는 URL을 더럽히지 않는다", () => {
+    expect(encodeSetupParams(player, ai).has("op")).toBe(false);
+    expect(encodeSetupParams(player, ai, { opponentType: "local" }).has("op")).toBe(false);
+    expect(encodeSetupParams(player, ai, { opponentType: "claude" }).get("op")).toBe("claude");
+  });
+
+  it("파라미터가 없거나 값이 이상하면 local로 본다", () => {
+    expect(decodeSetupParams(new URLSearchParams()).opponentType).toBe("local");
+    expect(decodeSetupParams(new URLSearchParams({ op: "gpt" })).opponentType).toBe("local");
+  });
+});

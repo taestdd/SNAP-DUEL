@@ -1,10 +1,12 @@
 import type { CharacterId, SetupConfig } from "@/game/engine/types";
 
+export type OpponentType = "local" | "claude";
+
 export function encodeSetupParams(
   player: SetupConfig,
   ai?: SetupConfig,
   /** AI 대전 옵션 — 기본값과 같으면 URL에 싣지 않는다 */
-  options?: { noTimeLimit?: boolean },
+  options?: { noTimeLimit?: boolean; opponentType?: OpponentType },
 ): URLSearchParams {
   const p = new URLSearchParams();
   p.set("pd", player.deckId);
@@ -14,6 +16,7 @@ export function encodeSetupParams(
     p.set("ac", ai.characters.join(","));
   }
   if (options?.noTimeLimit) p.set("nt", "1");
+  if (options?.opponentType === "claude") p.set("op", "claude");
   return p;
 }
 
@@ -22,6 +25,8 @@ export function decodeSetupParams(params: URLSearchParams): {
   ai: SetupConfig | null;
   /** 시간제약 해제 여부 — 파라미터가 없으면 false(=제한 있음)가 기본 */
   noTimeLimit: boolean;
+  /** 상대 결정 주체 — 파라미터가 없으면 "local"(규칙 기반 AI)이 기본 */
+  opponentType: OpponentType;
 } {
   const pd = params.get("pd");
   const pc = params.get("pc")?.split(",");
@@ -38,5 +43,10 @@ export function decodeSetupParams(params: URLSearchParams): {
       ? { deckId: ad, characters: ac as [CharacterId, CharacterId] }
       : null;
 
-  return { player, ai, noTimeLimit: params.get("nt") === "1" };
+  return {
+    player,
+    ai,
+    noTimeLimit: params.get("nt") === "1",
+    opponentType: params.get("op") === "claude" ? "claude" : "local",
+  };
 }
