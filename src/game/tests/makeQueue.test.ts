@@ -14,7 +14,7 @@ import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
  *  - 동일 입력 → 동일 출력 (온라인 양측 결정론)
  */
 
-// attack_weak_punch 포즈: frames 3개, fps 10 → 프레임당 100ms (스프라이트 'a' 기준)
+// attack_weak_punch 포즈: frames 3개, fps 6(모든 포즈 공통) → 프레임당 round(1000/6)=167ms (스프라이트 'a' 기준)
 // meleeAttack: false — 타이밍 검증이 대시 지연과 섞이지 않도록 원거리로 고정
 function attackCard(hitTimings: Card["hitTimings"]): Card {
   return {
@@ -73,21 +73,21 @@ describe("가드 히트 (landed / connected 분리)", () => {
 });
 
 describe("frame → ms 환산", () => {
-  it("frame 1은 fps 10 포즈에서 100ms에 발화한다", () => {
+  it("frame 1은 6fps 포즈에서 167ms에 발화한다", () => {
     const card = attackCard([{ frame: 1, ground: "hit_weak", airborne: "hit_weak", freeze: 100, zoom: 1.1 }]);
     const events = makeQueue(card, null, "player", 0, 0, 0, 0, "a", "a");
     const hits = visualHits(events);
     expect(hits).toHaveLength(1);
-    expect(hits[0].delay).toBe(100);
+    expect(hits[0].delay).toBe(167);
     expect(hits[0].freezeMs).toBe(100);
     expect(hits[0].zoom).toBe(1.1);
   });
 
   it("포즈 프레임 수를 넘는 frame은 마지막 프레임으로 clamp된다", () => {
-    // attack_weak_punch는 3프레임(idx 0~2) → frame 9는 idx 2 = 200ms
+    // attack_weak_punch는 3프레임(idx 0~2) → frame 9는 idx 2 = round(2000/6) = 333ms
     const card = attackCard([{ frame: 9, ground: "hit_weak", airborne: "hit_weak", freeze: 100 }]);
     const events = makeQueue(card, null, "player", 0, 0, 0, 0, "a", "a");
-    expect(visualHits(events)[0].delay).toBe(200);
+    expect(visualHits(events)[0].delay).toBe(333);
   });
 });
 
@@ -100,10 +100,10 @@ describe("히트스탑 인지 다단히트", () => {
     const events = makeQueue(card, null, "player", 0, 0, 0, 0, "a", "a");
     const hits = visualHits(events);
     expect(hits).toHaveLength(2);
-    // hit1: 100ms(frame) + 0(acc)
-    expect(hits[0].delay).toBe(100);
-    // hit2: 100ms(frame) + 100(앞선 freeze)
-    expect(hits[1].delay).toBe(200);
+    // hit1: 167ms(frame) + 0(acc)
+    expect(hits[0].delay).toBe(167);
+    // hit2: 167ms(frame) + 100(앞선 freeze)
+    expect(hits[1].delay).toBe(267);
     expect(hits[1].freezeMs).toBe(200);
   });
 
@@ -172,7 +172,7 @@ describe("대시-인 (근접공격)", () => {
     expect(dash[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, motion: "dash", delay: 0 });
     // 포즈·히트가 대시 시간만큼 뒤로 밀림
     expect(events.find((e) => e.type === "action_start")!.delay).toBe(DASH_MS);
-    expect(visualHits(events)[0].delay).toBe(DASH_MS + 100);
+    expect(visualHits(events)[0].delay).toBe(DASH_MS + 167);
   });
 
   it("근접 상태(이전 턴 대시 상태 보존)면 대시하지 않는다", () => {
@@ -203,12 +203,12 @@ describe("대시-인 (근접공격)", () => {
     expect(mv).toHaveLength(2);
     // 돌진은 동일하게 발생
     expect(mv[0]).toMatchObject({ subject: "P1", toOffset: HOME_OFFSET.AI + CLOSE_OVERLAP_PX, motion: "dash", delay: 0 });
-    // 임팩트 프레임(100ms) 직후 복귀 — bgPush 없음 (아무것도 맞지 않았으므로)
+    // 임팩트 프레임(167ms) 직후 복귀 — bgPush 없음 (아무것도 맞지 않았으므로)
     expect(mv[1]).toMatchObject({
       subject: "P1",
       toOffset: HOME_OFFSET.P1,
       motion: "recover",
-      delay: DASH_MS + 100 + WHIFF_RETURN_MS,
+      delay: DASH_MS + 167 + WHIFF_RETURN_MS,
     });
     expect(mv[1].bgPush).toBeUndefined();
     // 헛침이므로 피격 연출은 없음
