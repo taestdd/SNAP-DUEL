@@ -6,6 +6,7 @@ import { CardSchema } from "@/game/engine/cardSchema";
 import type { CardSchemaType } from "@/game/engine/cardSchema";
 import { CharacterDefSchema } from "@/game/engine/characterSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
+import { parseCardCsv, CSV_COLUMNS } from "./cardBulkCsv";
 import styles from "./BulkImportModal.module.css";
 
 export type ImportKind = "cards" | "characters";
@@ -52,15 +53,37 @@ const KINDS: Record<ImportKind, {
 };
 
 type ParsedItem =
-  | { status: "ok"; id: string; name: string; summary: string; data: unknown }
+  | {
+      status: "ok"; id: string; name: string; summary: string; data: unknown;
+      /** 이미 존재하는 id인가 (있으면 갱신 경로) */
+      exists: boolean;
+      /** 입력에 실제로 적힌 필드 — 갱신 시 이 키만 덮어쓴다 */
+      touched: string[];
+    }
   | { status: "error"; raw: unknown; message: string };
 
 type ImportResult =
-  | { status: "ok"; id: string }
+  | { status: "ok"; id: string; updated?: boolean; fields?: string[] }
   | { status: "skip"; id: string; reason: string }
   | { status: "error"; id: string; reason: string };
 
 type Stage = "edit" | "preview" | "importing" | "done";
+
+/** 구 필드명으로 적어도 갱신 대상이 되도록 새 이름으로 옮긴다 (읽기 스키마와 동일 규칙) */
+const LEGACY_KEY: Record<string, string> = { speed: "delay", gain: "advantage" };
+
+/**
+ * 입력 객체에 **실제로 적힌** 키 목록.
+ *
+ * Zod 검증 결과를 쓰면 안 된다 — `effects`처럼 기본값이 있는 필드가 채워져 나와서,
+ * 적지도 않은 필드로 기존 값을 덮어쓰게 된다.
+ */
+function touchedKeys(raw: unknown): string[] {
+  if (!raw || typeof raw !== "object") return [];
+  return Object.keys(raw as Record<string, unknown>)
+    .map((k) => LEGACY_KEY[k] ?? k)
+    .filter((k) => k !== "id");
+}
 
 export default function BulkImportModal({
   kind = "cards",
@@ -76,77 +99,9 @@ export default function BulkImportModal({
   const [stage, setStage] = useState<Stage>("edit");
   const [items, setItems] = useState<ParsedItem[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
+  const [existing, setExisting] = useState<Record<string, Record<string, unknown>>>({});
   const [progress, setProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  function parseCSV(text: string): string {
-    const lines = text.split(/\r?\n/).filter((l) => l.trim());
-    if (lines.length < 2) return "[]";
-
-    function splitCSVLine(line: string): string[] {
-      const result: string[] = [];
-      let cur = "";
-      let inQuote = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
-          else inQuote = !inQuote;
-        } else if (ch === "," && !inQuote) {
-          result.push(cur); cur = "";
-        } else {
-          cur += ch;
-        }
-      }
-      result.push(cur);
-      return result;
-    }
-
-    const headers = splitCSVLine(lines[0]);
-    const cards: Record<string, unknown>[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const vals = splitCSVLine(lines[i]);
-      const row: Record<string, string> = {};
-      headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] ?? "").trim(); });
-      if (!row.id) continue;
-
-      const card: Record<string, unknown> = {
-        id: row.id,
-        name: row.name,
-        cost: Number(row.cost || 0),
-        // 구 CSV 헤더(speed/gain)도 수용 — 저장은 항상 새 키(delay/advantage)
-        delay: Number(row.delay ?? row.speed ?? 0),
-        advantage: Number(row.advantage ?? row.gain ?? 0),
-        text: row.text || "",
-      };
-
-      if (row.cardType) card.cardType = row.cardType;
-      if (row.groundAttack) card.groundAttack = Number(row.groundAttack);
-      if (row.antiAirAttack) card.antiAirAttack = Number(row.antiAirAttack);
-      if (row.useCondition) card.useCondition = row.useCondition;
-      if (row.tags) {
-        const tags = row.tags.split(",").map((t) => t.trim()).filter(Boolean);
-        if (tags.length) card.tags = tags;
-      }
-
-      // "dack" 오타 자동 수정
-      const fixTypo = (s: string) => s.replace(/dack/g, "deck");
-
-      try { card.effects = row.effects ? JSON.parse(fixTypo(row.effects)) : []; }
-      catch { card.effects = []; }
-      if (row.statModifiers) {
-        try { card.statModifiers = JSON.parse(row.statModifiers); } catch { /* skip */ }
-      }
-      if (row.altCost) {
-        try { card.altCost = JSON.parse(fixTypo(row.altCost)); } catch { /* skip */ }
-      }
-
-      cards.push(card);
-    }
-
-    return JSON.stringify(cards, null, 2);
-  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -154,12 +109,14 @@ export default function BulkImportModal({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = (ev.target?.result as string) ?? "";
-      setJson(config.supportsCsv && file.name.endsWith(".csv") ? parseCSV(text) : text);
+      setJson(config.supportsCsv && file.name.endsWith(".csv")
+        ? JSON.stringify(parseCardCsv(text), null, 2)
+        : text);
     };
     reader.readAsText(file, "utf-8");
   }
 
-  function handleParse() {
+  async function handleParse() {
     let raw: unknown;
     try {
       raw = JSON.parse(json);
@@ -168,10 +125,32 @@ export default function BulkImportModal({
       return;
     }
 
+    // 기존 문서를 미리 받아 신규/갱신을 구분한다. 실패하면 전부 신규로 보고 진행
+    // (등록 단계에서 409가 나면 그때 스킵으로 떨어진다)
+    let existingMap: Record<string, Record<string, unknown>> = {};
+    try {
+      const r = await fetch(config.endpoint);
+      if (r.ok) {
+        const list = await r.json();
+        const arr2 = Array.isArray(list) ? list : Object.values(list ?? {});
+        for (const c of arr2 as Record<string, unknown>[]) {
+          if (c && typeof c.id === "string") existingMap[c.id] = c;
+        }
+      }
+    } catch { existingMap = {}; }
+    setExisting(existingMap);
+
     const arr = Array.isArray(raw) ? raw : [raw];
     const parsed: ParsedItem[] = arr.map((item) => {
       const result = config.parse(item);
-      if (result.success) return { status: "ok", ...config.describe(result.data), data: result.data };
+      if (result.success) {
+        const info = config.describe(result.data);
+        return {
+          status: "ok", ...info, data: result.data,
+          exists: Boolean(existingMap[info.id]),
+          touched: touchedKeys(item),
+        };
+      }
       const msg = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
       return { status: "error", raw: item, message: msg };
     });
@@ -189,18 +168,39 @@ export default function BulkImportModal({
     for (let i = 0; i < valid.length; i++) {
       const item = valid[i];
       try {
-        const r = await fetch(config.endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item.data),
-        });
-        if (r.status === 201) {
-          res.push({ status: "ok", id: item.id });
-        } else if (r.status === 409) {
-          res.push({ status: "skip", id: item.id, reason: "이미 존재" });
+        if (item.exists) {
+          // 갱신 — 입력에 적힌 필드만 기존 문서 위에 덮는다.
+          // PUT은 문서를 통째로 교체하므로 병합은 여기서 끝내고 보내야 한다.
+          const base = existing[item.id] ?? {};
+          const incoming = item.data as Record<string, unknown>;
+          const merged: Record<string, unknown> = { ...base };
+          for (const k of item.touched) merged[k] = incoming[k];
+
+          const r = await fetch(`${config.endpoint}/${encodeURIComponent(item.id)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(merged),
+          });
+          if (r.ok) {
+            res.push({ status: "ok", id: item.id, updated: true, fields: item.touched });
+          } else {
+            const data = await r.json().catch(() => ({}));
+            res.push({ status: "error", id: item.id, reason: JSON.stringify(data.error ?? "수정 실패") });
+          }
         } else {
-          const data = await r.json().catch(() => ({}));
-          res.push({ status: "error", id: item.id, reason: JSON.stringify(data.error ?? "저장 실패") });
+          const r = await fetch(config.endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(item.data),
+          });
+          if (r.status === 201) {
+            res.push({ status: "ok", id: item.id });
+          } else if (r.status === 409) {
+            res.push({ status: "skip", id: item.id, reason: "이미 존재 (새로고침 후 다시 시도)" });
+          } else {
+            const data = await r.json().catch(() => ({}));
+            res.push({ status: "error", id: item.id, reason: JSON.stringify(data.error ?? "저장 실패") });
+          }
         }
       } catch {
         res.push({ status: "error", id: item.id, reason: "네트워크 오류" });
@@ -215,6 +215,8 @@ export default function BulkImportModal({
 
   const validCount = items.filter((i) => i.status === "ok").length;
   const errorCount = items.filter((i) => i.status === "error").length;
+  const updateCount = items.filter((i) => i.status === "ok" && i.exists).length;
+  const newCount = validCount - updateCount;
 
   return (
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -231,6 +233,14 @@ export default function BulkImportModal({
               {config.supportsCsv
                 ? "JSON 배열 또는 CSV 파일을 업로드하세요. CSV는 자동으로 JSON으로 변환됩니다."
                 : `${config.label} JSON 배열을 붙여넣거나 .json 파일을 업로드하세요.`}
+              {" "}이미 있는 id는 <b>적어 넣은 필드만 갱신</b>됩니다.
+              {config.supportsCsv && (
+                <div className={styles.csvCols}>
+                  CSV 인식 컬럼 — {CSV_COLUMNS.join(" · ")}
+                  <br />
+                  effects · statModifiers · altCost · additionalCost · hitTimings는 셀에 JSON을 넣습니다.
+                </div>
+              )}
             </div>
             <div className={styles.fileRow}>
               <input
@@ -268,17 +278,29 @@ export default function BulkImportModal({
           <>
             <div className={styles.summary}>
               총 {items.length}개 &nbsp;|&nbsp;
-              <span className={styles.ok}>✓ 유효 {validCount}개</span>
+              <span className={styles.ok}>✓ 신규 {newCount}개</span>
+              &nbsp;|&nbsp;
+              <span className={styles.skip}>↻ 갱신 {updateCount}개</span>
               {errorCount > 0 && <>&nbsp;|&nbsp;<span className={styles.err}>✗ 오류 {errorCount}개</span></>}
             </div>
+            {updateCount > 0 && (
+              <div className={styles.hint}>
+                이미 있는 {updateCount}개는 <b>적어 넣은 필드만</b> 덮어씁니다. 적지 않은 필드는 그대로 유지됩니다
+                (필드를 지우려면 편집 화면에서 직접 비워야 합니다).
+              </div>
+            )}
             <div className={styles.previewList}>
               {items.map((item, i) =>
                 item.status === "ok" ? (
                   <div key={i} className={`${styles.previewItem} ${styles.previewOk}`}>
-                    <span className={styles.previewIcon}>✓</span>
+                    <span className={styles.previewIcon}>{item.exists ? "↻" : "✓"}</span>
                     <span className={styles.previewId}>{item.id}</span>
                     <span className={styles.previewName}>{item.name}</span>
-                    <span className={styles.previewMeta}>{item.summary}</span>
+                    <span className={styles.previewMeta}>
+                      {item.exists
+                        ? `갱신 · ${item.touched.length > 0 ? item.touched.join(", ") : "변경 없음"}`
+                        : item.summary}
+                    </span>
                   </div>
                 ) : (
                   <div key={i} className={`${styles.previewItem} ${styles.previewErr}`}>
@@ -296,7 +318,11 @@ export default function BulkImportModal({
                 disabled={validCount === 0}
                 onClick={handleImport}
               >
-                {validCount}개 등록 시작
+                {newCount > 0 && updateCount > 0
+                  ? `신규 ${newCount} · 갱신 ${updateCount} 진행`
+                  : updateCount > 0
+                    ? `${updateCount}개 갱신 시작`
+                    : `${newCount}개 등록 시작`}
               </button>
             </div>
           </>
@@ -319,7 +345,10 @@ export default function BulkImportModal({
         {stage === "done" && (
           <>
             <div className={styles.summary}>
-              <span className={styles.ok}>✓ 성공 {results.filter((r) => r.status === "ok").length}개</span>
+              <span className={styles.ok}>
+                ✓ 신규 {results.filter((r) => r.status === "ok" && !r.updated).length}개
+                &nbsp;·&nbsp; ↻ 갱신 {results.filter((r) => r.status === "ok" && r.updated).length}개
+              </span>
               &nbsp;|&nbsp;
               <span className={styles.skip}>↷ 스킵 {results.filter((r) => r.status === "skip").length}개</span>
               &nbsp;|&nbsp;
@@ -336,9 +365,14 @@ export default function BulkImportModal({
                   }`}
                 >
                   <span className={styles.previewIcon}>
-                    {r.status === "ok" ? "✓" : r.status === "skip" ? "↷" : "✗"}
+                    {r.status === "ok" ? (r.updated ? "↻" : "✓") : r.status === "skip" ? "↷" : "✗"}
                   </span>
                   <span className={styles.previewId}>{r.id}</span>
+                  {r.status === "ok" && r.updated && (
+                    <span className={styles.previewMeta}>
+                      갱신 · {r.fields && r.fields.length > 0 ? r.fields.join(", ") : "변경 없음"}
+                    </span>
+                  )}
                   {r.status !== "ok" && <span className={styles.previewErrMsg}>{r.reason}</span>}
                 </div>
               ))}
