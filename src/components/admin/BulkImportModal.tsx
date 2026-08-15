@@ -55,35 +55,17 @@ const KINDS: Record<ImportKind, {
 type ParsedItem =
   | {
       status: "ok"; id: string; name: string; summary: string; data: unknown;
-      /** 이미 존재하는 id인가 (있으면 갱신 경로) */
+      /** 이미 존재하는 id인가 (있으면 덮어쓰기 경로) */
       exists: boolean;
-      /** 입력에 실제로 적힌 필드 — 갱신 시 이 키만 덮어쓴다 */
-      touched: string[];
     }
   | { status: "error"; raw: unknown; message: string };
 
 type ImportResult =
-  | { status: "ok"; id: string; updated?: boolean; fields?: string[] }
+  | { status: "ok"; id: string; updated?: boolean }
   | { status: "skip"; id: string; reason: string }
   | { status: "error"; id: string; reason: string };
 
 type Stage = "edit" | "preview" | "importing" | "done";
-
-/** 구 필드명으로 적어도 갱신 대상이 되도록 새 이름으로 옮긴다 (읽기 스키마와 동일 규칙) */
-const LEGACY_KEY: Record<string, string> = { speed: "delay", gain: "advantage" };
-
-/**
- * 입력 객체에 **실제로 적힌** 키 목록.
- *
- * Zod 검증 결과를 쓰면 안 된다 — `effects`처럼 기본값이 있는 필드가 채워져 나와서,
- * 적지도 않은 필드로 기존 값을 덮어쓰게 된다.
- */
-function touchedKeys(raw: unknown): string[] {
-  if (!raw || typeof raw !== "object") return [];
-  return Object.keys(raw as Record<string, unknown>)
-    .map((k) => LEGACY_KEY[k] ?? k)
-    .filter((k) => k !== "id");
-}
 
 export default function BulkImportModal({
   kind = "cards",
@@ -99,7 +81,6 @@ export default function BulkImportModal({
   const [stage, setStage] = useState<Stage>("edit");
   const [items, setItems] = useState<ParsedItem[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
-  const [existing, setExisting] = useState<Record<string, Record<string, unknown>>>({});
   const [progress, setProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -125,20 +106,19 @@ export default function BulkImportModal({
       return;
     }
 
-    // 기존 문서를 미리 받아 신규/갱신을 구분한다. 실패하면 전부 신규로 보고 진행
-    // (등록 단계에서 409가 나면 그때 스킵으로 떨어진다)
-    let existingMap: Record<string, Record<string, unknown>> = {};
+    // 기존 id를 미리 받아 신규/덮어쓰기를 구분한다. 조회에 실패하면 전부 신규로 보고
+    // 진행한다 — 등록 단계에서 409가 나면 그때 스킵으로 떨어진다
+    const existingIds = new Set<string>();
     try {
       const r = await fetch(config.endpoint);
       if (r.ok) {
         const list = await r.json();
-        const arr2 = Array.isArray(list) ? list : Object.values(list ?? {});
-        for (const c of arr2 as Record<string, unknown>[]) {
-          if (c && typeof c.id === "string") existingMap[c.id] = c;
+        const rows = Array.isArray(list) ? list : Object.values(list ?? {});
+        for (const c of rows as Record<string, unknown>[]) {
+          if (c && typeof c.id === "string") existingIds.add(c.id);
         }
       }
-    } catch { existingMap = {}; }
-    setExisting(existingMap);
+    } catch { /* 조회 실패 시 전부 신규 취급 */ }
 
     const arr = Array.isArray(raw) ? raw : [raw];
     const parsed: ParsedItem[] = arr.map((item) => {
@@ -147,8 +127,7 @@ export default function BulkImportModal({
         const info = config.describe(result.data);
         return {
           status: "ok", ...info, data: result.data,
-          exists: Boolean(existingMap[info.id]),
-          touched: touchedKeys(item),
+          exists: existingIds.has(info.id),
         };
       }
       const msg = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
@@ -169,20 +148,15 @@ export default function BulkImportModal({
       const item = valid[i];
       try {
         if (item.exists) {
-          // 갱신 — 입력에 적힌 필드만 기존 문서 위에 덮는다.
-          // PUT은 문서를 통째로 교체하므로 병합은 여기서 끝내고 보내야 한다.
-          const base = existing[item.id] ?? {};
-          const incoming = item.data as Record<string, unknown>;
-          const merged: Record<string, unknown> = { ...base };
-          for (const k of item.touched) merged[k] = incoming[k];
-
+          // 덮어쓰기 — 입력을 그대로 보내 문서를 통째로 교체한다.
+          // 입력에 없는 선택 필드(hitTimings·tags·statModifiers 등)는 그대로 사라진다.
           const r = await fetch(`${config.endpoint}/${encodeURIComponent(item.id)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(merged),
+            body: JSON.stringify(item.data),
           });
           if (r.ok) {
-            res.push({ status: "ok", id: item.id, updated: true, fields: item.touched });
+            res.push({ status: "ok", id: item.id, updated: true });
           } else {
             const data = await r.json().catch(() => ({}));
             res.push({ status: "error", id: item.id, reason: JSON.stringify(data.error ?? "수정 실패") });
@@ -233,7 +207,7 @@ export default function BulkImportModal({
               {config.supportsCsv
                 ? "JSON 배열 또는 CSV 파일을 업로드하세요. CSV는 자동으로 JSON으로 변환됩니다."
                 : `${config.label} JSON 배열을 붙여넣거나 .json 파일을 업로드하세요.`}
-              {" "}이미 있는 id는 <b>적어 넣은 필드만 갱신</b>됩니다.
+              {" "}이미 있는 id는 <b>통째로 덮어씁니다</b> — 카드의 전체 내용을 담아야 합니다.
               {config.supportsCsv && (
                 <div className={styles.csvCols}>
                   CSV 인식 컬럼 — {CSV_COLUMNS.join(" · ")}
@@ -280,13 +254,14 @@ export default function BulkImportModal({
               총 {items.length}개 &nbsp;|&nbsp;
               <span className={styles.ok}>✓ 신규 {newCount}개</span>
               &nbsp;|&nbsp;
-              <span className={styles.skip}>↻ 갱신 {updateCount}개</span>
+              <span className={styles.skip}>↻ 덮어씀 {updateCount}개</span>
               {errorCount > 0 && <>&nbsp;|&nbsp;<span className={styles.err}>✗ 오류 {errorCount}개</span></>}
             </div>
             {updateCount > 0 && (
-              <div className={styles.hint}>
-                이미 있는 {updateCount}개는 <b>적어 넣은 필드만</b> 덮어씁니다. 적지 않은 필드는 그대로 유지됩니다
-                (필드를 지우려면 편집 화면에서 직접 비워야 합니다).
+              <div className={styles.warnBox}>
+                이미 있는 <b>{updateCount}개는 문서를 통째로 교체</b>합니다.
+                입력에 없는 선택 필드(hitTimings · tags · statModifiers · actionTag 등)는 <b>사라집니다</b>.
+                되돌릴 수 없으니 각 카드의 전체 내용을 담았는지 확인하세요.
               </div>
             )}
             <div className={styles.previewList}>
@@ -297,9 +272,7 @@ export default function BulkImportModal({
                     <span className={styles.previewId}>{item.id}</span>
                     <span className={styles.previewName}>{item.name}</span>
                     <span className={styles.previewMeta}>
-                      {item.exists
-                        ? `갱신 · ${item.touched.length > 0 ? item.touched.join(", ") : "변경 없음"}`
-                        : item.summary}
+                      {item.exists ? `덮어씀 · ${item.summary}` : item.summary}
                     </span>
                   </div>
                 ) : (
@@ -319,9 +292,9 @@ export default function BulkImportModal({
                 onClick={handleImport}
               >
                 {newCount > 0 && updateCount > 0
-                  ? `신규 ${newCount} · 갱신 ${updateCount} 진행`
+                  ? `신규 ${newCount} · 덮어쓰기 ${updateCount} 진행`
                   : updateCount > 0
-                    ? `${updateCount}개 갱신 시작`
+                    ? `${updateCount}개 덮어쓰기 시작`
                     : `${newCount}개 등록 시작`}
               </button>
             </div>
@@ -347,7 +320,7 @@ export default function BulkImportModal({
             <div className={styles.summary}>
               <span className={styles.ok}>
                 ✓ 신규 {results.filter((r) => r.status === "ok" && !r.updated).length}개
-                &nbsp;·&nbsp; ↻ 갱신 {results.filter((r) => r.status === "ok" && r.updated).length}개
+                &nbsp;·&nbsp; ↻ 덮어씀 {results.filter((r) => r.status === "ok" && r.updated).length}개
               </span>
               &nbsp;|&nbsp;
               <span className={styles.skip}>↷ 스킵 {results.filter((r) => r.status === "skip").length}개</span>
@@ -369,9 +342,7 @@ export default function BulkImportModal({
                   </span>
                   <span className={styles.previewId}>{r.id}</span>
                   {r.status === "ok" && r.updated && (
-                    <span className={styles.previewMeta}>
-                      갱신 · {r.fields && r.fields.length > 0 ? r.fields.join(", ") : "변경 없음"}
-                    </span>
+                    <span className={styles.previewMeta}>덮어씀</span>
                   )}
                   {r.status !== "ok" && <span className={styles.previewErrMsg}>{r.reason}</span>}
                 </div>

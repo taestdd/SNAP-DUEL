@@ -80,11 +80,11 @@ describe("애니메이션 컬럼", () => {
   });
 });
 
-/* ── 갱신(병합)을 위한 계약 ─────────────────────────────────────────── */
+/* ── 빈 칸 처리 ──────────────────────────────────────────────────────── */
 describe("빈 컬럼은 키를 만들지 않는다", () => {
-  it("갱신 시 '적지 않은 필드'와 '빈 값'이 구분되어야 한다", () => {
-    // 병합 경로는 입력에 실제로 있는 키만 덮어쓴다. 빈 칸이 키로 들어오면
-    // 의도치 않게 기존 값을 지우게 된다.
+  it("빈 칸이 NaN이나 빈 배열로 새어 들어가지 않는다", () => {
+    // 빈 칸을 그대로 넣으면 groundAttack: NaN, tags: [] 같은 값이 저장된다.
+    // 키를 만들지 않아야 스키마 기본값(미지정)이 그대로 유지된다.
     const [c] = parseCardCsv(`${H},groundAttack,tags,actionTag\njab,잽,1,2,0,x,,,`);
     expect(c).not.toHaveProperty("groundAttack");
     expect(c).not.toHaveProperty("tags");
@@ -92,7 +92,9 @@ describe("빈 컬럼은 키를 만들지 않는다", () => {
     expect(Object.keys(c).sort()).toEqual(["advantage", "cost", "delay", "id", "name", "text"]);
   });
 
-  it("hitTimings만 담은 CSV는 그 키만 만든다 (타이밍만 갱신하는 용도)", () => {
+  it("hitTimings만 담은 CSV는 그 키만 만든다", () => {
+    // 덮어쓰기 경로에서는 이런 부분 입력이 필수 필드 누락으로 검증에서 걸린다.
+    // 파서 단계에서는 적힌 것만 담는 것이 맞다.
     const [c] = parseCardCsv(
       `id,hitTimings\nst01_008,"[{""frame"":2,""ground"":""hit_weak"",""airborne"":""hit_aerial""}]"`);
     expect(Object.keys(c).sort()).toEqual(["hitTimings", "id"]);
