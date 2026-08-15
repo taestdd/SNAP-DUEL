@@ -49,12 +49,11 @@ const DEFAULT_SHEET: SheetSpec = {
 };
 
 /**
- * 모든 포즈가 6fps로 통일되어 있다 — frame(재생 순번) → ms 환산이
- * 포즈마다 다른 fps를 따로 기억할 필요 없이 `순번 × (1000/6)` 하나로 계산된다.
- * (1000/6 ≈ 166.67ms/프레임 — 정수는 아니지만 카드마다 다른 fps를 고려하던
- * 것보다 "어느 동작이든 같은 식" 쪽이 히트 타이밍 설계에서 더 다루기 쉽다)
+ * 모든 포즈가 5fps로 통일되어 있다 — frame(재생 순번) → ms 환산이
+ * 포즈마다 다른 fps를 따로 기억할 필요 없이 `순번 × 200ms` 하나로 계산된다.
+ * (1000/5 = 200 — 나머지 없이 딱 떨어져서 암산으로도 바로 나온다)
  */
-const POSE_FPS = 6;
+const POSE_FPS = 5;
 
 const DEFAULT_POSES: Record<FighterPose, PoseEntry> = {
   idle:               { frames: [0],                                  fps: POSE_FPS, hold: false },
