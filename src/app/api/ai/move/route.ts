@@ -114,7 +114,10 @@ async function callClaudeTool(
   properties: Record<string, unknown>,
   required: string[],
 ): Promise<Record<string, unknown> | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error(`[ai/move] ANTHROPIC_API_KEY 미설정 — ${toolName} 폴백`);
+    return null;
+  }
 
   try {
     const client = getAnthropicClient();
@@ -135,10 +138,15 @@ async function callClaudeTool(
     );
 
     const toolUse = res.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") return null;
+    if (!toolUse || toolUse.type !== "tool_use") {
+      console.error(`[ai/move] ${toolName}: tool_use 블록 없음 — stop_reason=${res.stop_reason}`);
+      return null;
+    }
     return toolUse.input as Record<string, unknown>;
-  } catch {
-    return null; // 타임아웃·네트워크 오류·API 오류 — 전부 폴백으로
+  } catch (e) {
+    // 타임아웃·네트워크 오류·API 오류 — 전부 폴백으로 떨어지되, 원인은 로그에 남긴다
+    console.error(`[ai/move] ${toolName} 호출 실패 — 폴백:`, e instanceof Error ? e.message : e);
+    return null;
   }
 }
 
