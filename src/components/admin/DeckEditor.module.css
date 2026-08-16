@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
-  background: #0f0f0f;
-  color: #e0e0e0;
+  background: var(--muted);
+  color: var(--foreground);
   font-family: monospace;
   padding: 24px;
 }
@@ -17,12 +17,12 @@
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 16px;
 }
 
 .backLink {
-  color: #7c7cff;
+  color: var(--primary);
   text-decoration: none;
   font-size: 14px;
 }
@@ -32,7 +32,7 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
 }
 
 /* 상단 기본정보 */
@@ -51,29 +51,29 @@
 
 .label {
   font-size: 11px;
-  color: #888;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .input {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 2px;
-  color: #e0e0e0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
   font-family: monospace;
   font-size: 14px;
   padding: 7px 10px;
   outline: none;
 }
 
-.input:focus { border-color: #5555ff; }
+.input:focus { border-color: var(--ring); }
 
 /* 캐릭터 선택 */
 .charSection {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 14px;
   margin-bottom: 16px;
 }
@@ -81,7 +81,7 @@
 .sectionTitle {
   font-size: 11px;
   font-weight: 700;
-  color: #7c7cff;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 10px;
@@ -95,24 +95,24 @@
 
 .charSlot {
   flex: 1;
-  background: #0f0f0f;
-  border: 1px dashed #333;
-  border-radius: 2px;
+  background: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px;
   text-align: center;
   font-size: 13px;
-  color: #666;
+  color: var(--muted-foreground);
 }
 
 .charSlotFilled {
-  border-color: #5555ff;
+  border-color: var(--ring);
   border-style: solid;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .charSlotLabel {
   font-size: 10px;
-  color: #555;
+  color: var(--clr-text-dim);
   margin-bottom: 4px;
   text-transform: uppercase;
 }
@@ -123,7 +123,7 @@
 }
 
 .slotArrow {
-  color: #444;
+  color: var(--clr-text-dim);
   font-size: 18px;
 }
 
@@ -135,21 +135,21 @@
 }
 
 .charBtn {
-  background: #111;
-  border: 1px solid #333;
-  color: #aaa;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--clr-text-2);
   font-size: 13px;
   padding: 6px 12px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
 }
 
 .charBtnActive {
-  background: #1a1a3a;
-  border-color: #5555ff;
-  color: #fff;
+  background: var(--primary-bg);
+  border-color: var(--ring);
+  color: var(--foreground);
 }
 
 /* 2단 레이아웃 */
@@ -162,9 +162,9 @@
 }
 
 .panel {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -172,7 +172,7 @@
 
 .panelHeader {
   padding: 12px 14px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -182,25 +182,25 @@
 .panelTitle {
   font-size: 12px;
   font-weight: 700;
-  color: #7c7cff;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .panelCount {
   font-size: 12px;
-  color: #666;
+  color: var(--muted-foreground);
 }
 
 .panelCountWarn {
-  color: #ff6b6b;
+  color: var(--destructive-fg);
 }
 
 .searchInput {
-  background: #111;
+  background: var(--muted);
   border: none;
-  border-bottom: 1px solid #2a2a2a;
-  color: #e0e0e0;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
   font-family: monospace;
   font-size: 13px;
   padding: 8px 14px;
@@ -221,13 +221,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.1s;
   gap: 8px;
 }
 
-.cardRow:hover { background: #222; }
+.cardRow:hover { background: var(--secondary); }
 
 .cardRowInfo {
   flex: 1;
@@ -236,7 +236,7 @@
 
 .cardRowName {
   font-size: 13px;
-  color: #e0e0e0;
+  color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -244,18 +244,18 @@
 
 .cardRowMeta {
   font-size: 11px;
-  color: #555;
+  color: var(--clr-text-dim);
   margin-top: 2px;
 }
 
 .addBtn {
-  background: #1e2a1e;
-  color: #6dbe6d;
-  border: 1px solid #2a3d2a;
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border: 1px solid var(--success-border);
   font-size: 16px;
   width: 26px;
   height: 26px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -264,7 +264,7 @@
   transition: background 0.1s;
 }
 
-.addBtn:hover { background: #243024; }
+.addBtn:hover { background: var(--success-bg-hover); }
 
 /* 덱 패널 카드 행 */
 .deckCardRow {
@@ -272,16 +272,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 7px 10px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   gap: 8px;
 }
 
-.deckCardRow:hover { background: #222; }
+.deckCardRow:hover { background: var(--secondary); }
 
 .deckCardName {
   flex: 1;
   font-size: 13px;
-  color: #e0e0e0;
+  color: var(--foreground);
 }
 
 .countCtrl {
@@ -291,9 +291,9 @@
 }
 
 .countBtn {
-  background: #111;
-  border: 1px solid #333;
-  color: #aaa;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--clr-text-2);
   width: 22px;
   height: 22px;
   border-radius: 0;
@@ -305,11 +305,11 @@
   transition: all 0.1s;
 }
 
-.countBtn:hover { background: #222; color: #fff; }
+.countBtn:hover { background: var(--secondary); color: var(--foreground); }
 
 .countNum {
   font-size: 13px;
-  color: #fff;
+  color: var(--foreground);
   min-width: 18px;
   text-align: center;
 }
@@ -324,36 +324,36 @@
 }
 
 .cancelLink {
-  background: #1a1a1a;
-  color: #888;
-  border: 1px solid #333;
+  background: var(--card);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
   padding: 9px 20px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: monospace;
   text-decoration: none;
 }
 
 .submitBtn {
-  background: #3a3aff;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   border: none;
   padding: 9px 28px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: monospace;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.submitBtn:hover:not(:disabled) { background: #5555ff; }
+.submitBtn:hover:not(:disabled) { background: var(--primary-hover); }
 .submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .errorBox {
-  background: #1e0f0f;
-  border: 1px solid #5a2a2a;
-  color: #ff8080;
-  border-radius: 2px;
+  background: var(--destructive-bg);
+  border: 1px solid var(--destructive-border);
+  color: var(--destructive-fg);
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 12px;
@@ -361,10 +361,10 @@
 }
 
 .successBox {
-  background: #0f1e0f;
-  border: 1px solid #2a5a2a;
-  color: #80ff80;
-  border-radius: 2px;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-fg);
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 12px;
@@ -372,7 +372,7 @@
 
 .emptyDeck {
   text-align: center;
-  color: #444;
+  color: var(--clr-text-dim);
   padding: 40px 0;
   font-size: 13px;
 }
@@ -384,16 +384,16 @@
 .poolToggle {
   font-size: 11px;
   padding: 7px 14px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 .poolHint {
-  color: #666;
+  color: var(--muted-foreground);
 }
 
 .poolToggle {
-  color: #888;
+  color: var(--muted-foreground);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -412,9 +412,9 @@
 }
 
 .addBtn:disabled {
-  background: #1a1a1a;
-  color: #444;
-  border-color: #2a2a2a;
+  background: var(--card);
+  color: var(--clr-text-dim);
+  border-color: var(--border);
   cursor: not-allowed;
 }
 
@@ -425,48 +425,48 @@
   font-weight: 700;
   line-height: 1;
   padding: 3px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   margin-right: 6px;
   vertical-align: 1px;
 }
 
 .typeBadgeAttack {
-  background: #3a1c1c;
-  color: #ff8a7a;
-  border: 1px solid #5a2a2a;
+  background: var(--destructive-border);
+  color: var(--destructive-fg);
+  border: 1px solid var(--destructive-border);
 }
 
 .typeBadgeSkill {
-  background: #17263a;
-  color: #7ab6ff;
-  border: 1px solid #274058;
+  background: var(--primary-border);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
 }
 
 /* 두 캐릭터 중 한쪽만 쓸 수 있는 카드 (태그 교체가 필요하다는 신호) */
 .charOnlyBadge {
   font-size: 10px;
-  color: #c9a227;
-  border: 1px solid #4a3d12;
-  background: #2a2410;
-  border-radius: 2px;
+  color: var(--warning-fg);
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  border-radius: var(--radius-sm);
   padding: 2px 5px;
   margin-left: 6px;
 }
 
 /* 덱에 담겨 있는데 지정 캐릭터가 못 쓰는 카드 */
 .deckCardRowWarn {
-  background: #2a1616;
+  background: var(--destructive-border);
 }
 
 .deckCardRowWarn:hover {
-  background: #331a1a;
+  background: var(--destructive-border);
 }
 
 .unusableBadge {
   font-size: 10px;
-  color: #ff8a7a;
-  border: 1px solid #5a2a2a;
-  border-radius: 2px;
+  color: var(--destructive-fg);
+  border: 1px solid var(--destructive-border);
+  border-radius: var(--radius-sm);
   padding: 2px 5px;
   margin-left: 6px;
 }
@@ -476,32 +476,32 @@
   display: flex;
   gap: 4px;
   padding: 8px 14px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 .typeFilterBtn {
   flex: 1;
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  color: #777;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
   font-family: inherit;
   font-size: 11px;
   padding: 5px 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
 }
 
 .typeFilterBtn:hover {
-  background: #1c1c1c;
-  color: #aaa;
+  background: var(--card);
+  color: var(--clr-text-2);
 }
 
 .typeFilterBtnActive {
-  background: #1e2438;
-  border-color: #3a4668;
-  color: #9db4ff;
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary);
 }
 
 .typeFilterCount {
@@ -518,33 +518,33 @@
 }
 
 .bulkOpenBtn {
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  color: #9db4ff;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--primary);
   font-family: inherit;
   font-size: 11px;
   padding: 4px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.bulkOpenBtn:hover { background: #1e2438; }
+.bulkOpenBtn:hover { background: var(--primary-bg); }
 
 .bulkPanel {
   padding: 10px 14px;
-  border-bottom: 1px solid #2a2a2a;
-  background: #0e0e0e;
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
   flex-shrink: 0;
 }
 
 .bulkTextarea {
   width: 100%;
   box-sizing: border-box;
-  background: #111;
-  border: 1px solid #2a2a2a;
-  border-radius: 2px;
-  color: #e0e0e0;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
   font-family: monospace;
   font-size: 12px;
   line-height: 1.5;
@@ -553,7 +553,7 @@
   resize: vertical;
 }
 
-.bulkTextarea:focus { border-color: #3a4668; }
+.bulkTextarea:focus { border-color: var(--primary-border); }
 
 .bulkSummary {
   display: flex;
@@ -564,10 +564,10 @@
   line-height: 1.4;
 }
 
-.bulkSummaryOk { color: #6dbe6d; }
+.bulkSummaryOk { color: var(--success-fg); }
 
 .bulkSummaryErr {
-  color: #ff8a7a;
+  color: var(--destructive-fg);
   word-break: break-all;
 }
 
@@ -578,35 +578,35 @@
 
 .bulkApplyBtn {
   flex: 1;
-  background: #1e2a1e;
-  border: 1px solid #2a3d2a;
-  color: #6dbe6d;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-fg);
   font-family: inherit;
   font-size: 12px;
   padding: 6px 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.bulkApplyBtn:hover:not(:disabled) { background: #243024; }
+.bulkApplyBtn:hover:not(:disabled) { background: var(--success-bg-hover); }
 
 .bulkApplyBtn:disabled {
-  background: #1a1a1a;
-  border-color: #2a2a2a;
-  color: #444;
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--clr-text-dim);
   cursor: not-allowed;
 }
 
 .bulkCancelBtn {
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  color: #777;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
   font-family: inherit;
   font-size: 12px;
   padding: 6px 12px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
-.bulkCancelBtn:hover { background: #1c1c1c; }
+.bulkCancelBtn:hover { background: var(--card); }

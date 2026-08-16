@@ -41,6 +41,8 @@
 
   /* Radius — 기존 CSS Modules는 2/3/4px에 몰려 있다 (2px 59회, 4px 31회, 3px 17회) */
   --radius:        4px;
+  --radius-sm:     2px;
+  --radius-lg:     8px;
 
   /* Gradients */
   --grad-primary:  linear-gradient(135deg, var(--clr-cyan), var(--clr-purple));
@@ -95,6 +97,30 @@
   --border:                var(--clr-border);
   --input:                 var(--clr-border);
   --ring:                  var(--clr-cyan);
+}
+
+/* ── 상태 변형 (배경 틴트 / 보더 / 전경) ──
+   어드민이 상태 계열마다 3단(연한 배경·보더·밝은 글자)을 손으로 찍어 쓰고 있었다.
+   값을 다시 적지 않고 액센트와 배경을 color-mix 로 섞어 파생시킨다 —
+   팔레트를 바꾸면 틴트 27종이 같이 따라온다. */
+:root {
+  --primary-bg:        color-mix(in oklab, var(--clr-cyan)   12%, var(--clr-bg));
+  --primary-bg-hover:  color-mix(in oklab, var(--clr-cyan)   20%, var(--clr-bg));
+  --primary-border:    color-mix(in oklab, var(--clr-cyan)   35%, var(--clr-bg));
+  --primary-hover:     color-mix(in oklab, var(--clr-cyan)   82%, #fff);
+
+  --destructive-bg:    color-mix(in oklab, var(--clr-danger) 14%, var(--clr-bg));
+  --destructive-border:color-mix(in oklab, var(--clr-danger) 38%, var(--clr-bg));
+  --destructive-fg:    color-mix(in oklab, var(--clr-danger) 72%, #fff);
+
+  --success-bg:        color-mix(in oklab, var(--clr-green)  12%, var(--clr-bg));
+  --success-bg-hover:  color-mix(in oklab, var(--clr-green)  20%, var(--clr-bg));
+  --success-border:    color-mix(in oklab, var(--clr-green)  34%, var(--clr-bg));
+  --success-fg:        color-mix(in oklab, var(--clr-green)  70%, #fff);
+
+  --warning-bg:        color-mix(in oklab, var(--clr-orange) 13%, var(--clr-bg));
+  --warning-border:    color-mix(in oklab, var(--clr-orange) 36%, var(--clr-bg));
+  --warning-fg:        color-mix(in oklab, var(--clr-orange) 74%, #fff);
 }
 
 /* Tailwind 유틸리티로 노출 (bg-card, text-muted-foreground, border-border …).
