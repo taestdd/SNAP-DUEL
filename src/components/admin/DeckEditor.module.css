@@ -56,19 +56,6 @@
   letter-spacing: 0.05em;
 }
 
-.input {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--foreground);
-  font-family: monospace;
-  font-size: 14px;
-  padding: 7px 10px;
-  outline: none;
-}
-
-.input:focus { border-color: var(--ring); }
-
 /* 캐릭터 선택 */
 .charSection {
   background: var(--card);

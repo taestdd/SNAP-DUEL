@@ -9,6 +9,8 @@ import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { parseCardCsv, CSV_COLUMNS } from "./cardBulkCsv";
 import styles from "./BulkImportModal.module.css";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export type ImportKind = "cards" | "characters";
 
@@ -194,12 +196,23 @@ export default function BulkImportModal({
   const newCount = validCount - updateCount;
 
   return (
-    <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={styles.modal}>
-        <div className={styles.header}>
-          <span className={styles.title}>{config.label} 일괄 등록</span>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
-        </div>
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        // importing 은 Firestore 쓰기가 진행 중이다 — 이 단계에서는 닫히면 안 된다.
+        // (예전 오버레이는 단계와 무관하게 바깥 클릭만으로 닫혔다)
+        if (!next && stage !== "importing") onClose();
+      }}
+    >
+      <DialogContent
+        showCloseButton={stage !== "importing"}
+        onEscapeKeyDown={(e) => { if (stage === "importing") e.preventDefault(); }}
+        onInteractOutside={(e) => { if (stage === "importing") e.preventDefault(); }}
+        className="flex max-h-[90vh] w-full max-w-[680px] flex-col gap-0 overflow-hidden bg-muted p-0 font-mono"
+      >
+        <DialogHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-5 py-4">
+          <DialogTitle className="text-[15px] font-bold">{config.label} 일괄 등록</DialogTitle>
+        </DialogHeader>
 
         {/* ── 1. 편집 단계 ── */}
         {stage === "edit" && (
@@ -225,9 +238,9 @@ export default function BulkImportModal({
                 className={styles.fileInput}
                 onChange={handleFileChange}
               />
-              <button className={styles.fileBtn} onClick={() => fileRef.current?.click()}>
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                 {config.supportsCsv ? "파일 선택 (JSON / CSV)" : "파일 선택 (JSON)"}
-              </button>
+              </Button>
               {fileRef.current?.files?.[0] && (
                 <span className={styles.fileName}>{fileRef.current.files[0].name}</span>
               )}
@@ -239,10 +252,10 @@ export default function BulkImportModal({
               spellCheck={false}
             />
             <div className={styles.footer}>
-              <button className={styles.cancelBtn} onClick={onClose}>취소</button>
-              <button className={styles.primaryBtn} disabled={!json.trim()} onClick={handleParse}>
+              <Button type="button" variant="ghost" size="sm" onClick={onClose}>취소</Button>
+              <Button type="button" size="sm" disabled={!json.trim()} onClick={handleParse}>
                 파싱 & 검증 →
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -285,9 +298,10 @@ export default function BulkImportModal({
               )}
             </div>
             <div className={styles.footer}>
-              <button className={styles.cancelBtn} onClick={() => setStage("edit")}>← 돌아가기</button>
-              <button
-                className={styles.primaryBtn}
+              <Button type="button" variant="ghost" size="sm" onClick={() => setStage("edit")}>← 돌아가기</Button>
+              <Button
+                type="button"
+                size="sm"
                 disabled={validCount === 0}
                 onClick={handleImport}
               >
@@ -296,7 +310,7 @@ export default function BulkImportModal({
                   : updateCount > 0
                     ? `${updateCount}개 덮어쓰기 시작`
                     : `${newCount}개 등록 시작`}
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -349,11 +363,11 @@ export default function BulkImportModal({
               ))}
             </div>
             <div className={styles.footer}>
-              <button className={styles.primaryBtn} onClick={onClose}>닫기</button>
+              <Button type="button" size="sm" onClick={onClose}>닫기</Button>
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

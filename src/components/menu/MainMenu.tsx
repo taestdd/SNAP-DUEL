@@ -9,6 +9,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { encodeSetupParams } from "@/lib/setupConfig";
 import type { CharacterId, DeckDef, SetupConfig } from "@/game/engine/types";
 import styles from "./MainMenu.module.css";
+import { Button } from "@/components/ui/button";
 
 /* ── 덱 + 캐릭터 순서 선택 블록 ── */
 function DeckPicker({
@@ -67,7 +68,7 @@ function DeckPicker({
               </button>
             );
           })}
-          <button type="button" className={styles.swapBtn} onClick={onSwap} disabled={!charOrder}>↔</button>
+          <Button type="button" variant="outline" size="icon-sm" onClick={onSwap} disabled={!charOrder} aria-label="선발·후발 교체">↔</Button>
         </div>
       )}
     </div>
@@ -167,35 +168,47 @@ export default function MainMenu() {
         {/* 튜토리얼 */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>처음이신가요?</h2>
-          <Link href="/tutorial" className={styles.tutorialBtn}>
-            튜토리얼 시작
-          </Link>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full border-success-border bg-success-bg text-success-fg hover:bg-success-bg-hover hover:text-success-fg"
+          >
+            <Link href="/tutorial">튜토리얼 시작</Link>
+          </Button>
         </section>
 
         {/* 모드 선택 */}
         <section className={`${styles.section} ${!playerReady ? styles.sectionLocked : ""}`}>
           <h2 className={styles.sectionTitle}>모드 선택</h2>
           <div className={styles.modeList}>
-            <button
+            <Button
               type="button"
-              className={`${styles.modeBtn} ${showAi ? styles.modeBtnActive : ""}`}
+              variant={showAi ? "default" : "outline"}
+              aria-pressed={showAi}
               disabled={!playerReady}
               onClick={() => setShowAi((v) => !v)}
+              className="h-auto w-full justify-start py-3.5 text-[15px] font-bold"
             >
               AI 대전
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className={styles.modeBtn}
+              variant="outline"
               disabled={!playerReady}
               onClick={goOnline}
+              className="h-auto w-full justify-start py-3.5 text-[15px] font-bold"
             >
               온라인 대전
-            </button>
-            <button type="button" className={styles.modeBtn} disabled>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="h-auto w-full justify-between py-3.5 text-[15px] font-bold"
+            >
               랭크 대전
               <span className={styles.soon}>준비 중</span>
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -223,14 +236,15 @@ export default function MainMenu() {
               </span>
             </label>
 
-            <button
+            <Button
               type="button"
-              className={`${styles.startBtn} ${!aiReady ? styles.startBtnDisabled : ""}`}
+              size="lg"
               disabled={!aiReady}
               onClick={startAiGame}
+              className="self-end px-8 font-extrabold"
             >
               게임 시작
-            </button>
+            </Button>
           </section>
         )}
 

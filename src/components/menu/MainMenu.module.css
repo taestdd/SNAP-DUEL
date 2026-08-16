@@ -197,69 +197,11 @@
   opacity: 0.55;
 }
 
-.swapBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 16px;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 120ms ease;
-}
-
-.swapBtn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--foreground);
-}
-
-.swapBtn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 /* ── 모드 버튼 ── */
 .modeList {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.modeBtn {
-  width: 100%;
-  padding: 14px 18px;
-  border-radius: var(--radius);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--foreground);
-  font-size: 15px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modeBtn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.modeBtn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.modeBtnActive {
-  border-color: color-mix(in srgb, var(--clr-cyan-2) 50%, transparent);
-  background: color-mix(in srgb, var(--clr-cyan-2) 8%, transparent);
 }
 
 .soon {
@@ -274,51 +216,8 @@
 }
 
 /* ── 게임 시작 버튼 ── */
-.startBtn {
-  align-self: flex-end;
-  padding: 12px 32px;
-  border-radius: var(--radius);
-  border: 1px solid color-mix(in srgb, var(--clr-cyan-2) 40%, transparent);
-  background: color-mix(in srgb, var(--clr-cyan-2) 12%, transparent);
-  color: var(--primary);
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-  letter-spacing: 0.3px;
-}
-
-.startBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: color-mix(in srgb, var(--clr-cyan-2) 20%, transparent);
-  border-color: color-mix(in srgb, var(--clr-cyan-2) 65%, transparent);
-}
-
-.startBtnDisabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
 
 /* ── 튜토리얼 버튼 ── */
-.tutorialBtn {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  text-align: center;
-  background: var(--success-bg);
-  border: 1px solid var(--success-border);
-  border-radius: 6px;
-  color: var(--success-fg);
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.tutorialBtn:hover {
-  background: var(--success-bg);
-  color: var(--success-fg);
-}
 
 /* ── 어드민 링크 ── */
 .adminLink {

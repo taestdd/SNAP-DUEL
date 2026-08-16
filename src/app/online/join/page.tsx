@@ -6,6 +6,8 @@ import { joinRoom, saveGuestConfig, subscribeRoom } from "@/lib/roomService";
 import type { RoomData } from "@/lib/roomService";
 import { decodeSetupParams } from "@/lib/setupConfig";
 import styles from "./page.module.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type Stage = "input" | "joining" | "waitingHost" | "error";
 
@@ -86,8 +88,7 @@ function JoinForm() {
         <p className={styles.sub}>호스트에게 받은 6자리 코드를 입력하세요</p>
 
         <div className={styles.inputWrap}>
-          <input
-            className={styles.input}
+          <Input
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -96,28 +97,33 @@ function JoinForm() {
             disabled={stage === "joining"}
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
             autoFocus
+            aria-label="방 코드"
+            aria-invalid={!!error}
+            className="h-auto bg-primary-bg py-3 text-center text-3xl font-bold tracking-[0.3em] uppercase md:text-3xl"
           />
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={styles.error} role="alert">{error}</p>}
 
-        <button
+        <Button
           type="button"
-          className={styles.joinBtn}
+          size="lg"
+          className="w-full"
           disabled={stage === "joining" || code.length !== 6}
           onClick={() => handleJoin()}
         >
           {stage === "joining" ? "연결 중..." : "참여하기"}
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
-          className={styles.backBtn}
+          variant="ghost"
+          size="sm"
           onClick={() => router.push("/online")}
           disabled={stage === "joining"}
         >
           돌아가기
-        </button>
+        </Button>
       </div>
     </div>
   );

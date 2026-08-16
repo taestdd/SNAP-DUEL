@@ -116,38 +116,6 @@
   border-radius: var(--radius-sm);
 }
 
-.input,
-.select,
-.textarea {
-  background: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--foreground);
-  font-family: monospace;
-  font-size: 14px;
-  padding: 7px 10px;
-  outline: none;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-}
-
-.input,
-.select {
-  height: 36px;
-  line-height: 1;
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-  border-color: var(--ring);
-}
-
-.textarea {
-  resize: vertical;
-  min-height: 70px;
-}
-
 .select {
   cursor: pointer;
 }

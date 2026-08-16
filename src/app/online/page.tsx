@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./page.module.css";
+import { Button } from "@/components/ui/button";
 
 function OnlineLobbyInner() {
   const router = useRouter();
@@ -16,32 +17,35 @@ function OnlineLobbyInner() {
         <p className={styles.sub}>방을 만들거나 코드로 참여하세요</p>
 
         <div className={styles.btnGroup}>
-          <button
+          <Button
             type="button"
-            className={styles.btn}
+            variant="outline"
             onClick={() => router.push(`/online/host${qs}`)}
+            className="h-auto flex-col gap-1 bg-primary-bg py-5 text-lg font-semibold"
           >
             방 만들기
             <span className={styles.btnSub}>코드 생성 후 친구 초대</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className={styles.btn}
+            variant="outline"
             onClick={() => router.push(`/online/join${qs}`)}
+            className="h-auto flex-col gap-1 bg-primary-bg py-5 text-lg font-semibold"
           >
             방 참여
             <span className={styles.btnSub}>6자리 코드로 입장</span>
-          </button>
+          </Button>
         </div>
 
-        <button
+        <Button
           type="button"
-          className={styles.backBtn}
+          variant="ghost"
+          size="sm"
           onClick={() => router.push("/")}
         >
           돌아가기
-        </button>
+        </Button>
       </div>
     </div>
   );

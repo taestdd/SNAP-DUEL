@@ -34,71 +34,10 @@
   width: 100%;
 }
 
-.input {
-  width: 100%;
-  text-align: center;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  padding: 0.8rem 1rem;
-  background: var(--primary-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--foreground);
-  outline: none;
-  box-sizing: border-box;
-  caret-color: var(--foreground);
-  text-transform: uppercase;
-}
-
-.input:focus {
-  border-color: var(--clr-border-2);
-}
-
-.input::placeholder {
-  color: var(--clr-text-dim);
-  letter-spacing: 0.3em;
-}
-
 .error {
   color: var(--destructive-fg);
   font-size: 0.88rem;
   margin: -0.5rem 0 0;
-}
-
-.joinBtn {
-  width: 100%;
-  padding: 0.9rem;
-  background: var(--primary);
-  border: none;
-  border-radius: var(--radius);
-  color: var(--primary-foreground);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.joinBtn:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.joinBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.backBtn {
-  background: none;
-  border: none;
-  color: var(--clr-text-dim);
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-}
-
-.backBtn:hover {
-  color: var(--clr-text-2);
 }
 
 .waiting {

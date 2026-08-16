@@ -9,6 +9,7 @@ import { createInitialState } from "@/game/engine/state";
 import { decodeSetupParams } from "@/lib/setupConfig";
 import type { SetupConfig } from "@/game/engine/types";
 import styles from "./page.module.css";
+import { Button } from "@/components/ui/button";
 
 type Stage = "creating" | "waiting" | "waitingGuest" | "starting";
 
@@ -89,7 +90,7 @@ function HostPageInner() {
     return (
       <div className={styles.center}>
         <p className={styles.error}>{error}</p>
-        <button type="button" className={styles.backBtn} onClick={() => router.push("/online")}>돌아가기</button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/online")}>돌아가기</Button>
       </div>
     );
   }
@@ -114,7 +115,7 @@ function HostPageInner() {
             </div>
           )}
           <p className={styles.waiting}>게스트 연결 대기 중...</p>
-          <button type="button" className={styles.backBtn} onClick={() => router.push("/online")}>취소</button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/online")}>취소</Button>
         </div>
       </div>
     );
