@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
 import { getBenchChar, isSetupTurnOf } from "@/game/engine/stateHelpers";
+import { getCard } from "@/game/engine/cards";
 import { shuffle } from "@/game/engine/rng";
+import type { ClaudeDecisionEntry } from "@/hooks/useClaudeOpponent";
 import { useArenaAnimation } from "@/game/animation/useArenaAnimation";
 import { useGameTransitions } from "@/hooks/useGameTransitions";
 import styles from "./GameScreen.module.css";
@@ -34,6 +36,7 @@ export default function GameScreen({
   onRetry,
   topInset = 0,
   turnTimer = null,
+  claudeDecisionLog,
 }: {
   state: GameState;
   dispatch: React.Dispatch<Action>;
@@ -47,6 +50,8 @@ export default function GameScreen({
   topInset?: number;
   /** 턴 시간제약 표시 (null이면 비표시). isMyTimer: 내 결정 창인지 */
   turnTimer?: { remainingMs: number; isMyTimer: boolean } | null;
+  /** Claude 상대 모드일 때만 제공 — "로그 저장"에 판단 근거를 함께 싣는다 */
+  claudeDecisionLog?: ClaudeDecisionEntry[];
 }) {
   const isGameOver = state.phase === "GAME_OVER";
   const isSetup = state.phase === "SETUP_INIT" || state.phase === "SETUP_OTHER";
@@ -263,7 +268,7 @@ export default function GameScreen({
         />
       )}
 
-      {state.phase === "WAITING_DISCARD" && state.pendingDiscard && (
+      {state.phase === "WAITING_DISCARD" && state.pendingDiscard && state.pendingDiscard.player === "P1" && (
         <DiscardModal
           count={state.pendingDiscard.count}
           candidates={state.pendingDiscard.candidates}
@@ -283,9 +288,21 @@ export default function GameScreen({
               type="button"
               className={styles.gameOverMenuBtn}
               onClick={() => {
+                // turnLog는 카드 id만 갖고 있어 나중에 다시 보기 힘들다 — 이름을 같이 싣는다
+                const nameOf = (id: string | null) => (id ? getCard(id)?.name ?? id : null);
+                const namesOf = (ids: string[]) => ids.map((id) => getCard(id)?.name ?? id);
+                const turns = state.turnLog.map((t) => ({
+                  ...t,
+                  P1: { ...t.P1, cardName: nameOf(t.P1.card) },
+                  AI: { ...t.AI, cardName: nameOf(t.AI.card) },
+                  // hands: 그 턴 SETUP 시작 시점에 실제로 낼 수 있었던 카드들 (낸 카드 포함)
+                  hands: { P1: namesOf(t.hands.P1), AI: namesOf(t.hands.AI) },
+                }));
                 const log = {
                   winner: state.winner,
-                  turns: state.turnLog,
+                  turns,
+                  // Claude 상대일 때만 채워짐 — 각 결정과 Claude가 남긴 판단 근거
+                  claudeDecisions: claudeDecisionLog ?? undefined,
                 };
                 const blob = new Blob([JSON.stringify(log, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);

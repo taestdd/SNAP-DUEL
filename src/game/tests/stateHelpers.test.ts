@@ -15,7 +15,6 @@ import {
   moveHandToTrash,
   moveCooldownToTrash,
   areBothPlayersExhausted,
-  discardAIExcess,
   didDirectAttackHit,
   clearAttackBuff,
 } from "@/game/engine/stateHelpers";
@@ -183,12 +182,6 @@ describe("기타 헬퍼", () => {
   it("areBothPlayersExhausted", () => {
     expect(areBothPlayersExhausted(makeState({ P1: { status: { exhausted: true } }, AI: { status: { exhausted: true } } }))).toBe(true);
     expect(areBothPlayersExhausted(makeState({ P1: { status: { exhausted: true } } }))).toBe(false);
-  });
-  it("discardAIExcess: 핸드 10장 초과분을 trash로", () => {
-    const hand = Array.from({ length: 12 }, (_, i) => `c${i}`);
-    const s = discardAIExcess(makeState({ AI: { hand } }));
-    expect(s.AI.hand).toHaveLength(10);
-    expect(s.AI.trash).toHaveLength(2);
   });
   it("clearAttackBuff: attackBuff 0으로", () => {
     const s = clearAttackBuff(makeState({ P1: { status: { attackBuff: 5 } } }), "P1");

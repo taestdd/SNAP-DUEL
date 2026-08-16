@@ -6,7 +6,7 @@
 import type { Buff, Card, CardZone, Combatant, DeckInsertPosition, GameState, PlayerId, PoisonTick, ScalingModifier, StatModifier, StatSource, StatTarget, Status, ThresholdModifier } from "./types";
 import { getCard } from "./cards";
 import { shuffleSeeded, randomInt } from "./rng";
-import { LOG_LIMIT, HAND_LIMIT } from "./constants";
+import { LOG_LIMIT } from "./constants";
 
 export { LOG_LIMIT };
 
@@ -509,19 +509,6 @@ export function moveCooldownToTrash(state: GameState, player: PlayerId): GameSta
   const me = state[player];
   if (me.cooldown.length === 0) return state;
   return updateCombatant(state, player, { cooldown: [], trash: [...me.trash, ...me.cooldown] });
-}
-
-export function discardAIExcess(state: GameState): GameState {
-  const excess = state.AI.hand.length - HAND_LIMIT;
-  if (excess <= 0) return state;
-
-  const newHand = state.AI.hand.slice(0, HAND_LIMIT);
-  const discarded = state.AI.hand.slice(HAND_LIMIT);
-  const s: GameState = {
-    ...state,
-    AI: { ...state.AI, hand: newHand, trash: [...state.AI.trash, ...discarded] },
-  };
-  return pushLog(s, `AI discards ${excess} card(s) to hand limit`);
 }
 
 /* ── 공격 적중 판정 ─────────────────────────────── */

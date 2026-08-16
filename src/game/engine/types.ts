@@ -681,12 +681,15 @@ export type AnimScriptEntry = {
 };
 
 /**
- * 턴 종료 시 핸드 사이즈 초과로 인한 버리기 대기 상태
+ * 턴 종료 시 핸드 사이즈 초과로 인한 버리기 대기 상태.
+ * player가 버릴 당사자 — AI도 P1과 같은 경로(WAITING_DISCARD)로 처리해
+ * "밖에서 결정 → 액션 디스패치" 패턴을 SETUP/선택효과/드래프트와 통일한다.
  */
 export type PendingDiscard = {
+  player: PlayerId;
   /** 버려야 할 카드 수 */
   count: number;
-  /** 현재 P1 핸드 카드 목록 (선택 대상) */
+  /** 현재 해당 플레이어 핸드 카드 목록 (선택 대상) */
   candidates: string[];
 };
 
@@ -842,6 +845,13 @@ export type GameState = {
   /** 플레이 로그: 턴별 요약 (게임 종료 후 JSON 다운로드용) */
   turnLog: TurnLogEntry[];
 
+  /**
+   * 이번 턴 SETUP 시작 시점의 손패 스냅샷 (beginTurn이 기록, endTurnCleanup이 소비).
+   * turnLog에 "그때 실제로 낼 수 있었던 카드들"을 남기기 위한 중계용 — 리졸브 중
+   * 손패가 바뀌므로 턴 끝에 가서는 이 값이 없으면 되짚을 수 없다.
+   */
+  turnStartHands: { P1: string[]; AI: string[] } | null;
+
   /** 튜토리얼 전용: 턴별 AI 행동 스크립트. index = turn-1. 빈 배열 = 패스 */
   tutorialAiScript?: string[][];
 };
@@ -854,6 +864,8 @@ export type TurnLogEntry = {
   AI: { card: string | null; countered: boolean };
   hp: { P1: number; AI: number };
   airborne: { P1: number; AI: number };
+  /** 이번 턴 SETUP 시작 시점의 손패 (그 카드를 낼 때 실제로 있던 선택지) */
+  hands: { P1: string[]; AI: string[] };
 };
 
 /** 덱 정의 */
@@ -879,6 +891,13 @@ export type Action =
   | { type: "CARD/SELECT"; cardId: string; handIndex: number }
   | { type: "PLAYER/READY"; player: PlayerId; cardId?: string; handIndex?: number }
   | { type: "AI/SETUP_AUTO" }
+  /**
+   * 외부(예: Claude)에서 이미 계산한 SETUP 결정을 그대로 적용.
+   * AI/SETUP_AUTO와 달리 "무엇을 할지"는 리듀서가 계산하지 않는다 —
+   * 리듀서는 순수 동기 함수라 여기서 네트워크 호출을 할 수 없기 때문에,
+   * 결정 자체는 리듀서 밖(훅)에서 만들어 액션에 실어 보낸다.
+   */
+  | { type: "AI/SETUP_DECIDE"; tag: boolean; play: { id: string; idx: number } | null }
   | { type: "AI/GUEST_READY"; cardId?: string; handIndex?: number }
   | { type: "AI/GUEST_TAG" }
   | { type: "RESOLVE/STEP" }

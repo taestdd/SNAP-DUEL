@@ -59,6 +59,14 @@ describe("beginTurn", () => {
     expect(s.P1.airborneStack).toBe(1);
     expect(s.AI.airborneStack).toBe(0);
   });
+  it("SETUP 시작 전 손패를 turnStartHands에 스냅샷한다", () => {
+    const s = beginTurn(makeState({
+      phase: "TURN_START",
+      P1: { hand: ["jab", "heavy"] },
+      AI: { hand: ["swift"] },
+    }));
+    expect(s.turnStartHands).toEqual({ P1: ["jab", "heavy"], AI: ["swift"] });
+  });
 });
 
 /* ── endTurnCleanup ────────────────────────────────────────────────── */
@@ -69,11 +77,38 @@ describe("endTurnCleanup", () => {
     expect(s.turnLog).toHaveLength(1);
     expect(s.turnLog[0].turn).toBe(2);
   });
+  it("turnLog에 turnStartHands 스냅샷을 싣는다 (리졸브로 바뀐 현재 손패가 아니라)", () => {
+    const s = endTurnCleanup(makeState({
+      turnLog: [],
+      turnStartHands: { P1: ["jab", "heavy"], AI: ["swift"] },
+      // 리졸브 후 손패는 이미 바뀐 상태 (jab을 냈다고 가정)
+      P1: { hand: ["heavy"] },
+      AI: { hand: ["swift"] },
+    }));
+    expect(s.turnLog[0].hands).toEqual({ P1: ["jab", "heavy"], AI: ["swift"] });
+  });
+  it("turnStartHands가 없으면(직접 호출 등) 현재 손패로 대체한다", () => {
+    const s = endTurnCleanup(makeState({ turnLog: [], turnStartHands: null, P1: { hand: ["jab"] } }));
+    expect(s.turnLog[0].hands.P1).toEqual(["jab"]);
+  });
   it("P1 핸드가 10장 초과면 WAITING_DISCARD", () => {
     const hand = Array.from({ length: 11 }, (_, i) => `c${i}`);
     const s = endTurnCleanup(makeState({ P1: { hand } }));
     expect(s.phase).toBe("WAITING_DISCARD");
-    expect(s.pendingDiscard?.count).toBe(1);
+    expect(s.pendingDiscard).toMatchObject({ player: "P1", count: 1 });
+  });
+  it("AI 핸드가 10장 초과면 (자동 처리하지 않고) WAITING_DISCARD로 뺀다", () => {
+    const hand = Array.from({ length: 12 }, (_, i) => `c${i}`);
+    const s = endTurnCleanup(makeState({ AI: { hand } }));
+    expect(s.phase).toBe("WAITING_DISCARD");
+    expect(s.pendingDiscard).toMatchObject({ player: "AI", count: 2 });
+    expect(s.AI.hand).toHaveLength(12); // 아직 실제로 버려지지 않음 — DISCARD/CONFIRM이 처리
+  });
+  it("양쪽 다 초과면 AI를 먼저 대기시킨다", () => {
+    const p1Hand = Array.from({ length: 11 }, (_, i) => `p${i}`);
+    const aiHand = Array.from({ length: 13 }, (_, i) => `a${i}`);
+    const s = endTurnCleanup(makeState({ P1: { hand: p1Hand }, AI: { hand: aiHand } }));
+    expect(s.pendingDiscard).toMatchObject({ player: "AI", count: 3 });
   });
   it("양쪽 모두 exhausted면 라운드 종료 (round<3 → 다음 라운드 ROUND_DRAFT)", () => {
     const s = endTurnCleanup(makeState({

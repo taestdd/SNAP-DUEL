@@ -125,6 +125,60 @@ describe("AI/SETUP_AUTO", () => {
   });
 });
 
+/* ── AI/SETUP_DECIDE ───────────────────────────────────────────────── */
+describe("AI/SETUP_DECIDE", () => {
+  it("외부에서 넘어온 결정대로 카드를 큐에 올린다", () => {
+    const s = gameReducer(
+      makeState({ phase: "SETUP_INIT", initiative: "AI", AI: { hand: ["jab"], deck: [] } }),
+      { type: "AI/SETUP_DECIDE", tag: false, play: { id: "jab", idx: 0 } },
+    );
+    expect(s.AI.ready).toBe(true);
+    expect(s.AI.queue).toEqual(["jab"]);
+    expect(s.phase).toBe("SETUP_OTHER");
+  });
+
+  it("play가 null이면 패스 + 1드로우", () => {
+    const s = gameReducer(
+      makeState({ phase: "SETUP_INIT", initiative: "AI", AI: { hand: [], deck: ["d1"] } }),
+      { type: "AI/SETUP_DECIDE", tag: false, play: null },
+    );
+    expect(s.AI.ready).toBe(true);
+    expect(s.AI.queue).toEqual([]);
+    expect(s.AI.hand).toEqual(["d1"]);
+  });
+
+  it("유효하지 않은 play(핸드에 없는 카드)는 조용히 무시하고 패스로 처리", () => {
+    const s = gameReducer(
+      makeState({ phase: "SETUP_INIT", initiative: "AI", AI: { hand: ["jab"], deck: ["d1"] } }),
+      { type: "AI/SETUP_DECIDE", tag: false, play: { id: "nonexistent", idx: 0 } },
+    );
+    expect(s.AI.queue).toEqual([]);
+    expect(s.AI.hand).toContain("d1"); // 패스 폴백으로 드로우됨
+    expect(s.AI.ready).toBe(true);
+  });
+
+  it("tag:true여도 airborneStack>=2면 태그를 무시한다 (합법성 재검증)", () => {
+    const s = gameReducer(
+      makeState({
+        phase: "SETUP_INIT", initiative: "AI",
+        AI: { hand: [], deck: ["d1"], airborneStack: 2, characterHp: { ai_main: 20, ai_sub: 20 } },
+      }),
+      { type: "AI/SETUP_DECIDE", tag: true, play: null },
+    );
+    expect(s.AI.activeCharacter).toBe("ai_main");
+    expect(s.aiTaggedThisTurn).toBe(false);
+  });
+
+  it("튜토리얼 스크립트 진행 중에는 무시한다", () => {
+    const before = makeState({
+      phase: "SETUP_INIT", initiative: "AI",
+      AI: { hand: ["jab"], deck: [] },
+      tutorialAiScript: [[]],
+    });
+    expect(gameReducer(before, { type: "AI/SETUP_DECIDE", tag: false, play: { id: "jab", idx: 0 } })).toBe(before);
+  });
+});
+
 /* ── RESOLVE/STEP ──────────────────────────────────────────────────── */
 describe("RESOLVE/STEP", () => {
   it("RESOLVE에서 호출하면 해결 후 ANIMATING으로", () => {

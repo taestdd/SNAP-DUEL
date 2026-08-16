@@ -1,5 +1,5 @@
 import type { Action, GameState } from "./types";
-import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, LOG_LIMIT, getBenchChar } from "./rules";
+import { beginTurn, queueCard, resumeResolve, resumeCostPayment, draw, canUseCard, enterResolving, endTurnCleanup, applyTagSwitch, submitDraft, resolveHandLimits, LOG_LIMIT, getBenchChar } from "./rules";
 import { getCard } from "./cards";
 import { selectCard, shouldTag } from "./ai";
 import { isSetupTurnOf } from "./stateHelpers";
@@ -14,6 +14,41 @@ function advanceSetupPhase(s: GameState): GameState {
   if (s.phase === "SETUP_INIT") return { ...s, phase: "SETUP_OTHER" };
   if (s.phase === "SETUP_OTHER") return { ...s, phase: "RESOLVE" };
   return s;
+}
+
+/**
+ * SETUP에서 AI가 낼 결정을 적용한다 — 결정의 출처(로컬 규칙 / Claude 등)와
+ * 무관하게 여기 하나로 모은다. 태그 합법성(airborne·벤치 HP)은 결정을
+ * 신뢰하지 않고 여기서 다시 검사한다 — 잘못된/오래된 결정이 들어와도
+ * 상태가 깨지지 않고 조용히 그 부분만 무시된다.
+ */
+function applySetupDecision(
+  state: GameState,
+  decision: { tag: boolean; play: { id: string; idx: number } | null },
+): GameState {
+  let s = state;
+
+  if (decision.tag) {
+    const me = s.AI;
+    const canTag = me.airborneStack < 2 && me.characterHp[getBenchChar(me)] > 0;
+    if (canTag) {
+      s = applyTagSwitch(s, "AI");
+      if (s.phase === "GAME_OVER") return s;
+      s = { ...s, aiTaggedThisTurn: true };
+    }
+  }
+
+  if (decision.play) {
+    s = queueCard(s, "AI", decision.play.id, decision.play.idx);
+  }
+  // queueCard는 조건 불충족 시 조용히 무시하므로, 실제로 큐에 올랐는지로 성공 여부를 판단한다
+  if (s.AI.queue.length === 0) {
+    s = draw(s, "AI", 1);
+    if (s.phase === "GAME_OVER") return s;
+  }
+
+  s = { ...s, AI: { ...s.AI, ready: true } };
+  return advanceSetupPhase(s);
 }
 
 export function gameReducer(state: GameState, action: Action): GameState {
@@ -223,25 +258,19 @@ export function gameReducer(state: GameState, action: Action): GameState {
         return advanceSetupPhase(s);
       }
 
-      // AI 태그: shouldTag 판단 (ai.ts와 동일 로직)
-      if (shouldTag(s, "AI")) {
-        s = applyTagSwitch(s, "AI");
-        if (s.phase === "GAME_OVER") return s;
-        s = { ...s, aiTaggedThisTurn: true };
-      }
+      // 로컬 규칙(ai.ts)으로 결정 → 적용은 AI/SETUP_DECIDE와 같은 경로를 탄다
+      return applySetupDecision(s, { tag: shouldTag(s, "AI"), play: selectCard(s, "AI") });
+    }
 
-      // 태그 여부와 무관하게 카드 선택 또는 패스
-      const pick = selectCard(s, "AI");
-      if (pick) {
-        s = queueCard(s, "AI", pick.id, pick.idx);
-      } else {
-        s = draw(s, "AI", 1);
-        if (s.phase === "GAME_OVER") return s;
-      }
+    case "AI/SETUP_DECIDE": {
+      // 외부(Claude 등)에서 이미 계산해 온 결정을 적용. 리듀서는 순수 동기라
+      // 여기서 직접 API를 호출할 수 없으므로, 이 액션은 훅이 비동기로 받아온
+      // 결정을 실어 보내는 용도다 — "무엇을 할지"는 이미 정해져서 들어온다.
+      if (state.phase !== "SETUP_INIT" && state.phase !== "SETUP_OTHER") return state;
+      if (state.AI.ready) return state;
+      if (state.tutorialAiScript) return state; // 튜토리얼은 스크립트 전용
 
-      s = { ...s, AI: { ...s.AI, ready: true } };
-
-      return advanceSetupPhase(s);
+      return applySetupDecision(state, { tag: action.tag, play: action.play });
     }
 
     case "RESOLVE/STEP": {
@@ -295,7 +324,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       // discardCards는 "cardId::handIndex" 형식 키 배열
       const discardIndices = new Set(discardCards.map((key) => Number(key.split("::")[1])));
-      const me = state.P1;
+      const me = state[pd.player];
       const remainingHand: string[] = [];
       const discardedIds: string[] = [];
 
@@ -309,17 +338,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
       const s: GameState = {
         ...state,
-        P1: {
+        [pd.player]: {
           ...me,
           hand: remainingHand,
           trash: [...me.trash, ...discardedIds],
         },
         pendingDiscard: null,
-        phase: "TURN_END",
-        log: [`P1 discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, LOG_LIMIT),
-      };
+        log: [`${pd.player} discards ${discardedIds.length} card(s) to hand limit`, ...state.log].slice(0, LOG_LIMIT),
+      } as GameState;
 
-      return s;
+      // 한쪽이 방금 처리됐어도 다른 쪽이 아직 초과 상태일 수 있다 — 다시 확인
+      return resolveHandLimits(s);
     }
 
     case "TURN/END": {
@@ -397,9 +426,10 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
         // 버리기 만료 → 핸드 앞에서부터 자동 버리기 (DISCARD/CONFIRM 경로 재사용)
         case "WAITING_DISCARD": {
-          if (player !== "P1" || !state.pendingDiscard) return state;
-          const keys = state.P1.hand
-            .slice(0, state.pendingDiscard.count)
+          const pd = state.pendingDiscard;
+          if (!pd || pd.player !== player) return state;
+          const keys = state[pd.player].hand
+            .slice(0, pd.count)
             .map((id, idx) => `${id}::${idx}`);
           return gameReducer(state, { type: "DISCARD/CONFIRM", discardCards: keys });
         }

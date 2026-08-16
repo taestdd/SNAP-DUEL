@@ -135,7 +135,7 @@ describe("TURN/TIMEOUT — WAITING_* 페이즈", () => {
       makeState({
         phase: "WAITING_DISCARD",
         P1: { hand },
-        pendingDiscard: { count: 2, candidates: hand },
+        pendingDiscard: { player: "P1", count: 2, candidates: hand },
       }),
       { type: "TURN/TIMEOUT", player: "P1" },
     );
@@ -143,6 +143,15 @@ describe("TURN/TIMEOUT — WAITING_* 페이즈", () => {
     expect(s.P1.trash).toEqual(["c0", "c1"]);
     expect(s.pendingDiscard).toBeNull();
     expect(s.phase).toBe("TURN_END");
+  });
+  it("WAITING_DISCARD가 AI 소유면 P1 타임아웃은 무시", () => {
+    const hand = ["c0", "c1"];
+    const base = makeState({
+      phase: "WAITING_DISCARD",
+      AI: { hand },
+      pendingDiscard: { player: "AI", count: 1, candidates: hand },
+    });
+    expect(gameReducer(base, { type: "TURN/TIMEOUT", player: "P1" })).toBe(base);
   });
 
   it("시간제약 대상이 아닌 페이즈에서는 무시", () => {
@@ -163,7 +172,8 @@ describe("useTurnTimer 순수 헬퍼", () => {
   });
 
   it("getTimedActor: WAITING_*는 결정 주체, 그 외 페이즈는 null", () => {
-    expect(getTimedActor(makeState({ phase: "WAITING_DISCARD", pendingDiscard: { count: 1, candidates: [] } }))).toBe("P1");
+    expect(getTimedActor(makeState({ phase: "WAITING_DISCARD", pendingDiscard: { player: "P1", count: 1, candidates: [] } }))).toBe("P1");
+    expect(getTimedActor(makeState({ phase: "WAITING_DISCARD", pendingDiscard: { player: "AI", count: 1, candidates: [] } }))).toBe("AI");
     expect(getTimedActor(makeState({ phase: "RESOLVE" }))).toBeNull();
     expect(getTimedActor(makeState({ phase: "ANIMATING" }))).toBeNull();
     expect(getTimedActor(makeState({ phase: "TURN_END" }))).toBeNull();

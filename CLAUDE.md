@@ -374,6 +374,68 @@ freeze/zoom이 히트 포즈별 프리셋으로 떨어지는 것과 같은 구�
 
 ---
 
+## Claude 상대 (AI 대전)
+
+AI 대전에서 상대 결정 주체를 규칙 기반 `ai.ts` 대신 Claude API로 바꿀 수 있다.
+메뉴의 "Claude 상대" 체크박스 → `opponentType: "local" | "claude"`가 `/game` URL(`op=claude`)에 실려
+`GameApp`(`app/game/page.tsx`)에서 갈린다.
+
+**AI가 결정해야 하는 4개 지점** — 전부 "밖에서 결정 → 완성된 액션을 디스패치" 모양으로 통일되어 있다
+(리듀서는 순수 동기 함수라 그 안에서 네트워크 호출을 할 수 없기 때문):
+
+| 지점 | 로컬 규칙 (기존) | Claude 모드 |
+|---|---|---|
+| SETUP 카드+태그 | 리듀서가 `selectCard`/`shouldTag` 직접 호출 (`AI/SETUP_AUTO`) | 훅이 결정을 받아와 `AI/SETUP_DECIDE { tag, play }`로 디스패치 |
+| WAITING_SELECTION | `page.tsx` 훅이 즉시 첫 N장 선택 | 같은 훅이 API 결과로 `SELECTION/CONFIRM`/`SKIP` |
+| ROUND_DRAFT | `GameScreen.tsx` 훅이 랜덤 3장 | 같은 자리, `disableAiDraft`로 로컬 훅을 끄고 Claude 훅이 대신 처리 |
+| WAITING_DISCARD(AI) | `page.tsx` 훅이 `selectDiscards`로 즉시 처리 | 같은 자리, API 결과로 처리 |
+
+이 통일 작업 과정에서 AI의 초과 버리기도 리듀서 내부(`discardAIExcess`, 삭제됨)에서
+P1과 같은 `WAITING_DISCARD` 경로로 옮겨졌다 — `PendingDiscard.player`로 누구 차례인지 구분하고,
+`DISCARD/CONFIRM` 처리 후 `resolveHandLimits`가 남은 쪽의 초과 여부를 다시 확인해 양쪽이
+동시에 초과해도 순차 처리한다.
+
+**`useClaudeOpponent`**(`hooks/useClaudeOpponent.ts`)가 위 4곳에서 `POST /api/ai/move`를 호출한다.
+로컬 규칙 효과들과 정확히 같은 트리거 조건 위에서 동작하며, 두 경로는 `isClaude`로 상호 배타적이다.
+
+**서버 라우트**(`app/api/ai/move/route.ts`):
+- `kind: "setup" | "selection" | "draft" | "discard"` + 그 시점의 `GameState`(AI가 항상 Claude 쪽)를 받는다.
+- `getPlayableCards`/`deriveCardStats` 등 **엔진의 단일 진실원**으로 프롬프트를 구성 —
+  Claude가 보는 숫자가 곧 사람이 핸드에서 보는 숫자와 같다.
+- 응답은 tool use로 강제(`tool_choice`)해 자유 텍스트 파싱을 피한다.
+- 항상 로컬 규칙(`ai.ts`)으로 먼저 폴백 결정을 계산해 두고, Claude 응답을
+  `game/engine/aiMoveValidation.ts`의 순수 함수(`resolveSetupDecision` 등)로 검증한다 —
+  개수 불일치·존재하지 않는 id·타입 불일치 등 조금이라도 이상하면 그 필드만(또는 전체) 폴백으로 떨어진다.
+  fetch 자체가 실패해도(네트워크 단절 등) 클라이언트 훅이 같은 폴백을 즉시 쓴다 —
+  API가 완전히 죽어도 게임이 멈추지 않는다.
+- `ANTHROPIC_API_KEY` 환경변수 필요 (서버 전용, `lib/claude.ts`가 lazy 초기화).
+- 규칙 요약은 `GAME_RULES_SYSTEM_PROMPT`(`lib/claude.ts`) 하나로 고정하고 `cache_control`로 캐싱 —
+  매 결정마다 같은 텍스트를 반복 전송하지 않는다.
+
+**검증 로직을 라우트에서 분리한 이유** — 이 프로젝트의 테스트는 순수 엔진 로직만 다루고
+`app/api/*` 라우트는 테스트하지 않는다(Firestore/외부 API 의존). `aiMoveValidation.ts`는
+네트워크·Firestore 의존 없는 순수 함수라 `aiMoveValidation.test.ts`로 "이상한 응답이 와도
+게임이 안 멈추는지"를 직접 검증할 수 있다 (`cardBulkCsv.ts`와 같은 분리 이유).
+
+**기보 다운로드 — 손패 스냅샷 + Claude 판단 근거 포함**
+`GameScreen.tsx`의 "로그 저장" 버튼(GAME_OVER 화면)이 `state.turnLog`를 JSON으로 내려받는다.
+
+- `TurnLogEntry.hands`: 그 턴 SETUP이 시작되던 시점(=리졸브로 손패가 바뀌기 전)의 양쪽 손패
+  스냅샷 — "그때 실제로 낼 수 있었던 다른 카드들"까지 복기할 수 있다. `beginTurn`이
+  `GameState.turnStartHands`에 찍어 두고 `endTurnCleanup`이 turnLog 항목을 만들 때 소비한다.
+  둘 사이(SETUP·RESOLVE)에 손패가 바뀌므로 턴 끝에 가서는 되짚을 수 없어 중계 필드가 필요했다.
+- Claude 상대 모드에서는 여기에 `claudeDecisions`가 추가로 실린다 — `useClaudeOpponent`가 4개
+  결정 지점마다 tool 응답의 `reasoning` 필드(1~2문장, 시스템 프롬프트가 요청)를 카드 이름 요약과
+  함께 쌓아 두는 `decisionLog`다. 이 로그는 **GameState가 아니라 훅 안에서만** 쌓인다 — 게임
+  결과에 영향을 주지 않는 분석용 부가 데이터라 리듀서/온라인 동기화(flipState)에 태울 이유가
+  없고, Claude 상대 자체가 싱글플레이 전용이라 게스트 뷰 미러링 대상도 아니다.
+  fetch가 실패해 로컬 규칙으로 폴백된 결정은 `reasoning: null`로 남는다.
+- `turnStartHands`/`turnLog.hands`는 P1/AI 절대 키를 가진 값이라 `flipState`에서 교환해야
+  게스트 화면에서 자기 자신이 P1으로 나온다 (`turnLog.initiative`도 마찬가지 — 이번에
+  `turnLog` 전체가 flipState 대상에서 빠져 있던 기존 누락도 함께 고쳤다).
+
+---
+
 ## 어드민 패널
 
 `/admin` — 카드 / 덱 / 캐릭터 탭으로 구성.

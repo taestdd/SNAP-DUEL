@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getDeckRegistry } from "@/game/engine/state";
 import { CHARACTERS } from "@/game/engine/characters";
 import { useGameData } from "@/hooks/useGameData";
-import { encodeSetupParams } from "@/lib/setupConfig";
+import { encodeSetupParams, type OpponentType } from "@/lib/setupConfig";
 import type { CharacterId, DeckDef, SetupConfig } from "@/game/engine/types";
 import styles from "./MainMenu.module.css";
 
@@ -87,6 +87,7 @@ export default function MainMenu() {
   const [aiCharOrder, setAiCharOrder] = useState<[CharacterId, CharacterId] | null>(null);
   // AI 대전 전용 옵션 — 온라인은 양측이 같은 규칙으로 돌아야 하므로 제공하지 않는다
   const [noTimeLimit, setNoTimeLimit] = useState(false);
+  const [opponentType, setOpponentType] = useState<OpponentType>("local");
 
   function pickDeck(who: "player" | "ai", deckId: string) {
     const deck = getDeckRegistry()[deckId];
@@ -117,7 +118,7 @@ export default function MainMenu() {
     if (!playerReady || !aiReady) return;
     const player: SetupConfig = { deckId: playerDeckId!, characters: playerCharOrder! };
     const ai: SetupConfig = { deckId: aiDeckId!, characters: aiCharOrder! };
-    router.push(`/game?${encodeSetupParams(player, ai, { noTimeLimit })}`);
+    router.push(`/game?${encodeSetupParams(player, ai, { noTimeLimit, opponentType })}`);
   }
 
   function goOnline() {
@@ -220,6 +221,18 @@ export default function MainMenu() {
               <span className={styles.optionLabel}>시간제한 없음</span>
               <span className={styles.optionHint}>
                 {noTimeLimit ? "천천히 생각할 수 있습니다" : "선택마다 20초"}
+              </span>
+            </label>
+
+            <label className={styles.optionRow}>
+              <input
+                type="checkbox"
+                checked={opponentType === "claude"}
+                onChange={(e) => setOpponentType(e.target.checked ? "claude" : "local")}
+              />
+              <span className={styles.optionLabel}>Claude 상대</span>
+              <span className={styles.optionHint}>
+                {opponentType === "claude" ? "상대가 매 결정을 생각하는 만큼 시간이 걸립니다" : "규칙 기반 AI와 대전"}
               </span>
             </label>
 

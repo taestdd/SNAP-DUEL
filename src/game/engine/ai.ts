@@ -236,6 +236,31 @@ export function selectCard(
 }
 
 /**
+ * 턴 상황(카운터 위험·HP 우위)과 무관한 카드의 "일반적 가치".
+ * 드래프트(어떤 카드를 뽑을지)와 버리기(어떤 카드를 남길지)가 함께 쓴다 —
+ * 둘 다 "지금 당장 낼 카드"가 아니라 "손에 쥐고 있을 가치"를 묻는 질문이라
+ * scoreCard의 카운터 위험 가중치는 여기 안 맞는다.
+ */
+function generalCardValue(state: GameState, player: PlayerId, card: Card, oppAirborne: number): number {
+  let score = 0;
+  const effDmg = effectiveDamage(state, player, card, oppAirborne);
+  score += effDmg * Math.max(1, 10 - card.cost);
+  score -= card.delay * 1.5;
+  score += (card.advantage ?? 0) * 5;
+  if (card.delay <= 2) score += 6;
+
+  const hasLaunch = card.effects.some(
+    (e) => e.type === "airborne" && e.target === "enemy"
+  );
+  if (hasLaunch) score += 3;
+
+  const hasUtility = card.effects.some((e) => e.type === "move_cards");
+  if (hasUtility) score += 4;
+
+  return score;
+}
+
+/**
  * ROUND_DRAFT 페이즈에서 지정한 플레이어가 덱에서 뽑아올 카드 목록을 선택한다.
  *
  * 전략:
@@ -255,28 +280,36 @@ export function selectDraftCards(
 
   const scored = me.deck.map((id) => {
     const card = getCard(id);
-    if (!card) return { id, score: -Infinity };
-
-    let score = 0;
-    const effDmg = effectiveDamage(state, player, card, oppAirborne);
-    score += effDmg * Math.max(1, 10 - card.cost);
-    score -= card.delay * 1.5;
-    score += (card.advantage ?? 0) * 5;
-    if (card.delay <= 2) score += 6;
-
-    const hasLaunch = card.effects.some(
-      (e) => e.type === "airborne" && e.target === "enemy"
-    );
-    if (hasLaunch) score += 3;
-
-    const hasUtility = card.effects.some((e) => e.type === "move_cards");
-    if (hasUtility) score += 4;
-
-    return { id, score };
+    return { id, score: card ? generalCardValue(state, player, card, oppAirborne) : -Infinity };
   });
 
   scored.sort((a, b) => b.score - a.score);
 
   // 점수 순으로 count장 선택 (덱에 같은 카드가 여러 장 있으면 중복 허용)
   return scored.slice(0, count).map(({ id }) => id);
+}
+
+/**
+ * WAITING_DISCARD에서 핸드 초과분으로 버릴 카드를 고른다.
+ * generalCardValue가 가장 낮은(=남겨 둘 가치가 적은) count장부터 버린다.
+ *
+ * @returns "cardId::handIndex" 형식 키 배열 (DISCARD/CONFIRM이 받는 형식과 동일)
+ */
+export function selectDiscards(
+  state: GameState,
+  player: PlayerId,
+  count: number
+): string[] {
+  const me = state[player];
+  const opp = state[opponentOf(player)];
+  const oppAirborne = opp.airborneStack;
+
+  const scored = me.hand.map((id, idx) => {
+    const card = getCard(id);
+    return { idx, score: card ? generalCardValue(state, player, card, oppAirborne) : -Infinity };
+  });
+
+  scored.sort((a, b) => a.score - b.score);
+
+  return scored.slice(0, count).map(({ idx }) => `${me.hand[idx]}::${idx}`);
 }

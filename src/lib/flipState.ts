@@ -49,6 +49,9 @@ export function flipState(state: GameState): GameState {
           unresolvedPlayers: state.pendingSelection.unresolvedPlayers.map(flipId),
         }
       : null,
+    pendingDiscard: state.pendingDiscard
+      ? { ...state.pendingDiscard, player: flipId(state.pendingDiscard.player) }
+      : null,
     resolveContext: {
       queue: state.resolveContext.queue.map((item) => ({ ...item, player: flipId(item.player) })),
       index: state.resolveContext.index,
@@ -81,5 +84,19 @@ export function flipState(state: GameState): GameState {
     // 태그 플래그 교환 → 게스트 화면의 Tag 버튼 잠금(p1TaggedThisTurn 참조)이 올바르게 동작
     p1TaggedThisTurn: state.aiTaggedThisTurn,
     aiTaggedThisTurn: state.p1TaggedThisTurn,
+    // 턴 로그(기보 다운로드용) — P1/AI 절대 키를 통째로 교환해야 게스트가 받는
+    // JSON에서 자기 자신이 P1으로 나온다
+    turnLog: state.turnLog.map((e) => ({
+      ...e,
+      initiative: flipId(e.initiative),
+      P1: e.AI,
+      AI: e.P1,
+      hp: { P1: e.hp.AI, AI: e.hp.P1 },
+      airborne: { P1: e.airborne.AI, AI: e.airborne.P1 },
+      hands: { P1: e.hands.AI, AI: e.hands.P1 },
+    })),
+    turnStartHands: state.turnStartHands
+      ? { P1: state.turnStartHands.AI, AI: state.turnStartHands.P1 }
+      : null,
   };
 }
