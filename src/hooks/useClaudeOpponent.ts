@@ -3,6 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import type { Action, GameState } from "@/game/engine/types";
 import { selectCard, shouldTag, selectDraftCards, selectDiscards } from "@/game/engine/ai";
+import { getCard } from "@/game/engine/cards";
+
+/** 기보 다운로드용 — Claude가 내린 결정 하나의 요약 + 판단 근거 */
+export type ClaudeDecisionEntry = {
+  round: number;
+  turn: number;
+  kind: "setup" | "selection" | "draft" | "discard";
+  /** 사람이 읽을 수 있는 결정 요약 (카드 이름 기준) */
+  summary: string;
+  /** Claude가 tool 응답에 남긴 이유. API 실패 등으로 로컬 규칙 폴백된 경우 null */
+  reasoning: string | null;
+};
+
+function cardName(id: string): string {
+  return getCard(id)?.name ?? id;
+}
 
 /**
  * "Claude 상대" 모드 — 4개 AI 결정 지점(SETUP/선택효과/드래프트/버리기)을
@@ -13,13 +29,18 @@ import { selectCard, shouldTag, selectDraftCards, selectDiscards } from "@/game/
  * fetch 자체가 실패(네트워크 단절 등)하면 서버에 닿지도 못하므로 그 경우엔
  * 여기서도 같은 로컬 규칙으로 즉시 폴백한다 — API가 완전히 죽어도 게임이
  * 멈추지 않아야 한다.
+ *
+ * decisionLog는 GameState가 아니라 이 훅 안에서만 쌓인다 — 게임 결과에
+ * 영향을 주지 않는 분석용 부가 데이터라 리듀서/온라인 동기화에 태울 이유가
+ * 없다(Claude 상대는 싱글플레이 전용이라 flipState 미러링 대상도 아니다).
  */
 export function useClaudeOpponent(
   state: GameState,
   dispatch: React.Dispatch<Action>,
   opts: { enabled: boolean; isTagAnimating: boolean },
-): { thinking: boolean } {
+): { thinking: boolean; decisionLog: ClaudeDecisionEntry[] } {
   const [thinking, setThinking] = useState(false);
+  const [decisionLog, setDecisionLog] = useState<ClaudeDecisionEntry[]>([]);
   const activeCount = useRef(0);
   const setupKeyRef = useRef<string | null>(null);
   const selectionKeyRef = useRef<string | null>(null);
@@ -33,6 +54,10 @@ export function useClaudeOpponent(
   function end() {
     activeCount.current = Math.max(0, activeCount.current - 1);
     if (activeCount.current === 0) setThinking(false);
+  }
+
+  function logDecision(entry: ClaudeDecisionEntry) {
+    setDecisionLog((prev) => [...prev, entry]);
   }
 
   async function postMove<T>(body: object): Promise<T> {
@@ -61,11 +86,17 @@ export function useClaudeOpponent(
 
     let cancelled = false;
     begin();
-    postMove<{ tag: boolean; play: { id: string; idx: number } | null }>({ kind: "setup", state })
-      .catch(() => ({ tag: shouldTag(state, "AI"), play: selectCard(state, "AI") }))
+    postMove<{ tag: boolean; play: { id: string; idx: number } | null; reasoning: string | null }>({ kind: "setup", state })
+      .catch(() => ({ tag: shouldTag(state, "AI"), play: selectCard(state, "AI"), reasoning: null }))
       .then((decision) => {
         if (cancelled) return;
         dispatch({ type: "AI/SETUP_DECIDE", tag: decision.tag, play: decision.play });
+        const cardPart = decision.play ? `${cardName(decision.play.id)} 사용` : "패스";
+        logDecision({
+          round: state.round, turn: state.turn, kind: "setup",
+          summary: decision.tag ? `${cardPart} + 태그` : cardPart,
+          reasoning: decision.reasoning,
+        });
       })
       .finally(end);
 
@@ -86,12 +117,17 @@ export function useClaudeOpponent(
 
     let cancelled = false;
     begin();
-    postMove<{ selectedCards: string[] }>({ kind: "selection", state })
-      .catch(() => ({ selectedCards: ps.candidates.slice(0, ps.count) }))
-      .then(({ selectedCards }) => {
+    postMove<{ selectedCards: string[]; reasoning: string | null }>({ kind: "selection", state })
+      .catch(() => ({ selectedCards: ps.candidates.slice(0, ps.count), reasoning: null }))
+      .then(({ selectedCards, reasoning }) => {
         if (cancelled) return;
         if (selectedCards.length > 0) dispatch({ type: "SELECTION/CONFIRM", selectedCards });
         else dispatch({ type: "SELECTION/SKIP" });
+        logDecision({
+          round: state.round, turn: state.turn, kind: "selection",
+          summary: selectedCards.length > 0 ? `선택: ${selectedCards.map(cardName).join(", ")}` : "선택 안 함",
+          reasoning,
+        });
       })
       .finally(end);
 
@@ -112,11 +148,16 @@ export function useClaudeOpponent(
 
     let cancelled = false;
     begin();
-    postMove<{ cardIds: string[] }>({ kind: "draft", state, count: DRAFT_COUNT })
-      .catch(() => ({ cardIds: selectDraftCards(state, "AI", DRAFT_COUNT) }))
-      .then(({ cardIds }) => {
+    postMove<{ cardIds: string[]; reasoning: string | null }>({ kind: "draft", state, count: DRAFT_COUNT })
+      .catch(() => ({ cardIds: selectDraftCards(state, "AI", DRAFT_COUNT), reasoning: null }))
+      .then(({ cardIds, reasoning }) => {
         if (cancelled) return;
         dispatch({ type: "SUBMIT_DRAFT", player: "AI", cardIds });
+        logDecision({
+          round: state.round, turn: state.turn, kind: "draft",
+          summary: `드래프트: ${cardIds.map(cardName).join(", ")}`,
+          reasoning,
+        });
       })
       .finally(end);
 
@@ -137,11 +178,17 @@ export function useClaudeOpponent(
 
     let cancelled = false;
     begin();
-    postMove<{ discardCards: string[] }>({ kind: "discard", state })
-      .catch(() => ({ discardCards: selectDiscards(state, "AI", pd.count) }))
-      .then(({ discardCards }) => {
+    postMove<{ discardCards: string[]; reasoning: string | null }>({ kind: "discard", state })
+      .catch(() => ({ discardCards: selectDiscards(state, "AI", pd.count), reasoning: null }))
+      .then(({ discardCards, reasoning }) => {
         if (cancelled) return;
         dispatch({ type: "DISCARD/CONFIRM", discardCards });
+        const names = discardCards.map((key) => cardName(key.split("::")[0]));
+        logDecision({
+          round: state.round, turn: state.turn, kind: "discard",
+          summary: `버림: ${names.join(", ")}`,
+          reasoning,
+        });
       })
       .finally(end);
 
@@ -149,5 +196,5 @@ export function useClaudeOpponent(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, state.phase, state.pendingDiscard, state.round, state.turn]);
 
-  return { thinking };
+  return { thinking, decisionLog };
 }

@@ -48,7 +48,7 @@ function GameApp({ config, aiConfig, onExit, noTimeLimit = false, opponentType =
   });
 
   // Claude 상대: 4개 결정 지점을 API에 위임 (로컬 규칙 효과들과 상호 배타적)
-  const { thinking: claudeThinking } = useClaudeOpponent(state, dispatch, {
+  const { thinking: claudeThinking, decisionLog: claudeDecisionLog } = useClaudeOpponent(state, dispatch, {
     enabled: isClaude,
     isTagAnimating,
   });
@@ -104,6 +104,7 @@ function GameApp({ config, aiConfig, onExit, noTimeLimit = false, opponentType =
       disableAiDraft={isClaude}
       onExit={onExit}
       turnTimer={turnTimer}
+      claudeDecisionLog={isClaude ? claudeDecisionLog : undefined}
     />
   );
 }

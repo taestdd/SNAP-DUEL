@@ -417,6 +417,15 @@ P1과 같은 `WAITING_DISCARD` 경로로 옮겨졌다 — `PendingDiscard.player
 네트워크·Firestore 의존 없는 순수 함수라 `aiMoveValidation.test.ts`로 "이상한 응답이 와도
 게임이 안 멈추는지"를 직접 검증할 수 있다 (`cardBulkCsv.ts`와 같은 분리 이유).
 
+**기보 다운로드 — Claude 판단 근거 포함**
+`GameScreen.tsx`의 "로그 저장" 버튼(GAME_OVER 화면)이 `state.turnLog`를 JSON으로 내려받는다.
+Claude 상대 모드에서는 여기에 `claudeDecisions`가 추가로 실린다 — `useClaudeOpponent`가 4개
+결정 지점마다 tool 응답의 `reasoning` 필드(1~2문장, 시스템 프롬프트가 요청)를 카드 이름 요약과
+함께 쌓아 두는 `decisionLog`다. 이 로그는 **GameState가 아니라 훅 안에서만** 쌓인다 — 게임
+결과에 영향을 주지 않는 분석용 부가 데이터라 리듀서/온라인 동기화(flipState)에 태울 이유가
+없고, Claude 상대 자체가 싱글플레이 전용이라 게스트 뷰 미러링 대상도 아니다.
+fetch가 실패해 로컬 규칙으로 폴백된 결정은 `reasoning: null`로 남는다.
+
 ---
 
 ## 어드민 패널

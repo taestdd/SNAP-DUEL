@@ -142,6 +142,20 @@ async function callClaudeTool(
   }
 }
 
+/* ── Claude 판단 근거 (기보 다운로드용) ───────────────────────────────────
+ * 게임 결과에는 영향을 주지 않는 부가 데이터라 결정 검증(aiMoveValidation)과는
+ * 분리해 둔다 — reasoning이 비어 있거나 이상해도 결정 자체는 멀쩡히 진행된다.
+ */
+const REASONING_FIELD = {
+  reasoning: { type: "string", description: "이 결정을 내린 이유를 1~2문장으로 (기보에 그대로 기록됨)" },
+};
+
+function extractReasoning(input: Record<string, unknown> | null): string | null {
+  return input && typeof input.reasoning === "string" && input.reasoning.trim()
+    ? input.reasoning.trim()
+    : null;
+}
+
 /* ── kind별 처리 ────────────────────────────────────────────────────────── */
 
 async function handleSetup(state: GameState) {
@@ -162,10 +176,11 @@ async function handleSetup(state: GameState) {
     {
       tag: { type: "boolean", description: "캐릭터를 교체할지" },
       cardId: { type: "string", description: "낼 카드의 id. 패스하려면 빈 문자열" },
+      ...REASONING_FIELD,
     },
-    ["tag", "cardId"],
+    ["tag", "cardId", "reasoning"],
   );
-  return resolveSetupDecision(state, input, fallback);
+  return { ...resolveSetupDecision(state, input, fallback), reasoning: extractReasoning(input) };
 }
 
 async function handleSelection(state: GameState) {
@@ -191,10 +206,11 @@ async function handleSelection(state: GameState) {
     userText, "selection_decision", "카드 선택 효과 결정",
     {
       cardIds: { type: "array", items: { type: "string" }, description: `선택할 카드 id 목록 (최대 ${ps.count}장, 빈 배열 가능)` },
+      ...REASONING_FIELD,
     },
-    ["cardIds"],
+    ["cardIds", "reasoning"],
   );
-  return resolveSelectionDecision(ps.candidates, ps.count, input, fallback);
+  return { ...resolveSelectionDecision(ps.candidates, ps.count, input, fallback), reasoning: extractReasoning(input) };
 }
 
 async function handleDraft(state: GameState, count: number) {
@@ -220,10 +236,11 @@ async function handleDraft(state: GameState, count: number) {
     userText, "draft_decision", "라운드 드래프트 결정",
     {
       cardIds: { type: "array", items: { type: "string" }, description: `덱에서 가져올 카드 id 목록, 정확히 ${count}장` },
+      ...REASONING_FIELD,
     },
-    ["cardIds"],
+    ["cardIds", "reasoning"],
   );
-  return resolveDraftDecision(state.AI.deck, count, input, fallback);
+  return { ...resolveDraftDecision(state.AI.deck, count, input, fallback), reasoning: extractReasoning(input) };
 }
 
 async function handleDiscard(state: GameState) {
@@ -252,10 +269,11 @@ async function handleDiscard(state: GameState) {
         type: "array", items: { type: "string" },
         description: `버릴 카드 id 목록, 정확히 ${pd.count}장. 같은 카드가 손패에 여러 장 있으면 그만큼 반복해서 적는다`,
       },
+      ...REASONING_FIELD,
     },
-    ["cardIds"],
+    ["cardIds", "reasoning"],
   );
-  return resolveDiscardDecision(state.AI.hand, pd.count, input, fallback);
+  return { ...resolveDiscardDecision(state.AI.hand, pd.count, input, fallback), reasoning: extractReasoning(input) };
 }
 
 /* ── 라우트 ─────────────────────────────────────────────────────────────── */
