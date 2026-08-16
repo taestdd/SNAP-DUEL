@@ -1,11 +1,25 @@
+@layer theme, base, components, utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* Tailwind v4 — preflight(전역 리셋)는 의도적으로 빼 두었다.
+   기존 CSS Modules 32개가 자체 리셋 없이 브라우저 기본값 위에 얹혀 있어서,
+   preflight를 켜면 레이아웃이 한 번에 무너진다.
+   CSS Modules를 다 걷어낸 뒤 아래 한 줄을 추가해 켠다:
+     @import "tailwindcss/preflight.css" layer(base); */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@source "../";
 
 /* ── Design Tokens ── */
 :root {
-  /* Backgrounds */
+  /* Backgrounds — 어두운 쪽에서 밝은 쪽으로 4단.
+     bg3(가라앉음) < bg(페이지) < bg2(패널) < bg4(패널 위 강조·hover) */
   --clr-bg:        #0a0e27;
   --clr-bg2:       #151b3d;
   --clr-bg3:       #0f1428;
+  --clr-bg4:       #1c2450;
 
   /* Neon accents */
   --clr-cyan:      #00d9ff;
@@ -15,13 +29,18 @@
   --clr-orange:    #ff8c00;
   --clr-danger:    #ff3860;
 
-  /* Text */
+  /* Text — 4단. 아래로 갈수록 흐려진다 */
   --clr-text:      #ffffff;
   --clr-text-2:    #b0b8d0;
   --clr-text-muted:#6b7280;
+  --clr-text-dim:  #4b5675;
 
   /* Structure */
   --clr-border:    #2a3a5c;
+  --clr-border-2:  #3a4d75;
+
+  /* Radius — 기존 CSS Modules는 2/3/4px에 몰려 있다 (2px 59회, 4px 31회, 3px 17회) */
+  --radius:        4px;
 
   /* Gradients */
   --grad-primary:  linear-gradient(135deg, var(--clr-cyan), var(--clr-purple));
@@ -39,6 +58,73 @@
 
   /* Transitions */
   --transition:    all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── shadcn 시맨틱 토큰 ──
+   값을 새로 만들지 않고 위의 --clr-* 를 가리키기만 한다.
+   팔레트의 단일 진실원은 계속 --clr-* 쪽이고, 이 블록은 이름만 얹는 레이어다.
+   (어드민이 쓰던 뉴트럴 그레이 팔레트는 여기로 흡수돼 네온으로 통일된다) */
+:root {
+  --background:            var(--clr-bg);
+  --foreground:            var(--clr-text);
+
+  --card:                  var(--clr-bg2);
+  --card-foreground:       var(--clr-text);
+
+  --popover:               var(--clr-bg3);
+  --popover-foreground:    var(--clr-text);
+
+  --primary:               var(--clr-cyan);
+  --primary-foreground:    var(--clr-bg);
+
+  --secondary:             var(--clr-bg4);
+  --secondary-foreground:  var(--clr-text);
+
+  --muted:                 var(--clr-bg3);
+  --muted-foreground:      var(--clr-text-muted);
+
+  --accent:                var(--clr-purple);
+  --accent-foreground:     var(--clr-text);
+
+  --destructive:           var(--clr-danger);
+  --destructive-foreground:var(--clr-text);
+
+  --success:               var(--clr-green);
+  --warning:               var(--clr-orange);
+
+  --border:                var(--clr-border);
+  --input:                 var(--clr-border);
+  --ring:                  var(--clr-cyan);
+}
+
+/* Tailwind 유틸리티로 노출 (bg-card, text-muted-foreground, border-border …).
+   inline 이어야 var() 참조가 그대로 유지된다 — 값 복사가 아니라 alias. */
+@theme inline {
+  --color-background:            var(--background);
+  --color-foreground:            var(--foreground);
+  --color-card:                  var(--card);
+  --color-card-foreground:       var(--card-foreground);
+  --color-popover:               var(--popover);
+  --color-popover-foreground:    var(--popover-foreground);
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
+  --color-secondary:             var(--secondary);
+  --color-secondary-foreground:  var(--secondary-foreground);
+  --color-muted:                 var(--muted);
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-accent:                var(--accent);
+  --color-accent-foreground:     var(--accent-foreground);
+  --color-destructive:           var(--destructive);
+  --color-destructive-foreground:var(--destructive-foreground);
+  --color-success:               var(--success);
+  --color-warning:               var(--warning);
+  --color-border:                var(--border);
+  --color-input:                 var(--input);
+  --color-ring:                  var(--ring);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
 }
 
 /* ── Keyframes ── */
