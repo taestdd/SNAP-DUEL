@@ -8,6 +8,7 @@ import { CharacterDefSchema } from "@/game/engine/characterSchema";
 import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { parseCardCsv, CSV_COLUMNS } from "./cardBulkCsv";
 import styles from "./BulkImportModal.module.css";
+import { Textarea } from "@/components/ui/textarea";
 
 export type ImportKind = "cards" | "characters";
 
@@ -231,8 +232,7 @@ export default function BulkImportModal({
                 <span className={styles.fileName}>{fileRef.current.files[0].name}</span>
               )}
             </div>
-            <textarea
-              className={styles.textarea}
+            <Textarea
               placeholder={config.placeholder}
               value={json}
               onChange={(e) => setJson(e.target.value)}

@@ -11,6 +11,10 @@ import type { CardSchemaType } from "@/game/engine/cardSchema";
 import type { ActionTag, AdditionalCost, AltCost, AltCostMoveCards, CardEffect, CardType, CardZone, ModifierCondition, ScalingModifier, StatModifier, StatSource, ThresholdModifier } from "@/game/engine/types";
 import { ACTION_TAG_TO_POSE } from "@/game/engine/types";
 import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
+import { AddButton, RemoveButton, SubmitButton } from "./AdminButtons";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const ACTION_TAGS = ActionTagSchema.options;
 
@@ -244,10 +248,12 @@ export default function CardEditor({ initial, mode }: Props) {
           {mode === "create" ? "새 카드" : initial?.id}
         </h1>
         <div className={styles.headerActions}>
-          <Link href="/admin" className={styles.cancelLink}>취소</Link>
-          <button type="submit" form="card-editor-form" className={styles.submitBtn} disabled={saving}>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin">취소</Link>
+          </Button>
+          <SubmitButton form="card-editor-form" disabled={saving}>
             {saving ? "저장 중..." : mode === "create" ? "카드 생성" : "카드 수정"}
-          </button>
+          </SubmitButton>
         </div>
       </div>
 
@@ -263,8 +269,7 @@ export default function CardEditor({ initial, mode }: Props) {
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>ID *</label>
-                <input
-                  className={styles.input}
+                <Input
                   value={id}
                   onChange={(e) => setId(e.target.value)}
                   placeholder="weak_punch"
@@ -274,8 +279,7 @@ export default function CardEditor({ initial, mode }: Props) {
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>이름 *</label>
-                <input
-                  className={styles.input}
+                <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Weak Punch"
@@ -288,8 +292,7 @@ export default function CardEditor({ initial, mode }: Props) {
             </div>
             <div className={styles.fieldFull}>
               <label className={styles.label}>카드 설명</label>
-              <textarea
-                className={styles.textarea}
+              <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="카드 효과를 설명하는 텍스트"
@@ -421,12 +424,12 @@ export default function CardEditor({ initial, mode }: Props) {
               </ItemCard>
             ))}
             <div className={styles.row}>
-              <button type="button" className={styles.addBtn} onClick={() => addModifier("threshold")}>
+              <AddButton onClick={() => addModifier("threshold")}>
                 + 임계값 보정
-              </button>
-              <button type="button" className={styles.addBtn} onClick={() => addModifier("scaling")}>
+              </AddButton>
+              <AddButton onClick={() => addModifier("scaling")}>
                 + 비례 보정
-              </button>
+              </AddButton>
             </div>
           </div>
 
@@ -496,14 +499,14 @@ export default function CardEditor({ initial, mode }: Props) {
                   </>
                 )}
 
-                <button type="button" className={styles.removeBtn} onClick={() => setAltCost(null)}>
+                <RemoveButton onClick={() => setAltCost(null)}>
                   altCost 제거
-                </button>
+                </RemoveButton>
               </>
             ) : (
-              <button type="button" className={styles.addBtn} onClick={() => setAltCost({ type: "move_cards", fromZone: "hand", toZone: "trash", count: 1 })}>
+              <AddButton onClick={() => setAltCost({ type: "move_cards", fromZone: "hand", toZone: "trash", count: 1 })}>
                 + altCost 추가
-              </button>
+              </AddButton>
             )}
           </div>
 
@@ -528,8 +531,7 @@ export default function CardEditor({ initial, mode }: Props) {
                     <div className={styles.row}>
                       <div className={styles.field}>
                         <label className={styles.label}>카드 ID</label>
-                        <input
-                          className={styles.input}
+                        <Input
                           value={req.cardId}
                           placeholder="arm_shield"
                           onChange={(e) => {
@@ -570,29 +572,25 @@ export default function CardEditor({ initial, mode }: Props) {
                   </SelectField>
                 </div>
                 <div className={styles.row}>
-                  <button
-                    type="button"
-                    className={styles.addBtn}
+                  <AddButton
                     onClick={() => setAdditionalCost({
                       ...additionalCost,
                       requires: [...additionalCost.requires, { cardId: "", zone: "cooldown", count: 1 }],
                     })}
                   >
                     + 요구 카드 추가
-                  </button>
-                  <button type="button" className={styles.removeBtn} onClick={() => setAdditionalCost(null)}>
+                  </AddButton>
+                  <RemoveButton onClick={() => setAdditionalCost(null)}>
                     additionalCost 제거
-                  </button>
+                  </RemoveButton>
                 </div>
               </>
             ) : (
-              <button
-                type="button"
-                className={styles.addBtn}
+              <AddButton
                 onClick={() => setAdditionalCost({ requires: [{ cardId: "", zone: "cooldown", count: 1 }], consumeTo: "trash" })}
               >
                 + additionalCost 추가
-              </button>
+              </AddButton>
             )}
           </div>
 
@@ -699,9 +697,9 @@ export default function CardEditor({ initial, mode }: Props) {
                 </div>
               </ItemCard>
             ))}
-            <button type="button" className={styles.addBtn} onClick={addHitTiming}>
+            <AddButton onClick={addHitTiming}>
               + Hit Timing 추가
-            </button>
+            </AddButton>
           </div>
 
         </form>

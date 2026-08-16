@@ -9,6 +9,9 @@ import { CardTagSchema } from "@/game/engine/cardSchema";
 import { CHARACTER_SPRITES } from "@/game/animation/spriteMap";
 import EffectListEditor from "./EffectListEditor";
 import styles from "./DeckEditor.module.css";
+import { SubmitButton } from "./AdminButtons";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   initial?: CharacterDefSchemaType;
@@ -110,8 +113,7 @@ export default function CharacterEditor({ initial, mode }: Props) {
         <div className={styles.metaRow}>
           <div className={styles.field}>
             <label className={styles.label}>ID * (소문자, 숫자, _)</label>
-            <input
-              className={styles.input}
+            <Input
               value={id}
               onChange={(e) => setId(e.target.value)}
               placeholder="fighter"
@@ -121,8 +123,7 @@ export default function CharacterEditor({ initial, mode }: Props) {
           </div>
           <div className={styles.field}>
             <label className={styles.label}>이름 *</label>
-            <input
-              className={styles.input}
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="길거리 격투가"
@@ -131,8 +132,7 @@ export default function CharacterEditor({ initial, mode }: Props) {
           </div>
           <div className={styles.field}>
             <label className={styles.label}>최대 HP *</label>
-            <input
-              className={styles.input}
+            <Input
               type="number"
               min={1}
               value={maxHp}
@@ -143,7 +143,6 @@ export default function CharacterEditor({ initial, mode }: Props) {
           <div className={styles.field}>
             <label className={styles.label}>스프라이트 *</label>
             <select
-              className={styles.input}
               value={spriteId}
               onChange={(e) => setSpriteId(e.target.value)}
               required
@@ -195,10 +194,12 @@ export default function CharacterEditor({ initial, mode }: Props) {
         </div>
 
         <div className={styles.footer}>
-          <Link href="/admin?tab=characters" className={styles.cancelLink}>취소</Link>
-          <button type="submit" className={styles.submitBtn} disabled={saving}>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin?tab=characters">취소</Link>
+          </Button>
+          <SubmitButton disabled={saving}>
             {saving ? "저장 중..." : mode === "create" ? "캐릭터 생성" : "캐릭터 수정"}
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

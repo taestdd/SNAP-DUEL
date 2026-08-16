@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={inter.variable}>
+    <html lang="ko" className={`dark ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

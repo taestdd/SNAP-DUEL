@@ -248,24 +248,6 @@
   margin-top: 2px;
 }
 
-.addBtn {
-  background: var(--success-bg);
-  color: var(--success-fg);
-  border: 1px solid var(--success-border);
-  font-size: 16px;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.1s;
-}
-
-.addBtn:hover { background: var(--success-bg-hover); }
-
 /* 덱 패널 카드 행 */
 .deckCardRow {
   display: flex;
@@ -322,32 +304,6 @@
   gap: 12px;
   margin-top: 16px;
 }
-
-.cancelLink {
-  background: var(--card);
-  color: var(--muted-foreground);
-  border: 1px solid var(--border);
-  padding: 9px 20px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-family: monospace;
-  text-decoration: none;
-}
-
-.submitBtn {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  padding: 9px 28px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-family: monospace;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.submitBtn:hover:not(:disabled) { background: var(--primary-hover); }
-.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .errorBox {
   background: var(--destructive-bg);
@@ -409,13 +365,6 @@
 
 .cardRowDisabled:hover {
   background: transparent;
-}
-
-.addBtn:disabled {
-  background: var(--card);
-  color: var(--clr-text-dim);
-  border-color: var(--border);
-  cursor: not-allowed;
 }
 
 /* 공격 / 스킬 구분 배지 */

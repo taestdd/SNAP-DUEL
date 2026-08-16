@@ -10,6 +10,9 @@ import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { affinityAllows } from "@/game/engine/rules";
 import type { CardType } from "@/game/engine/types";
 import { parseDeckBulkInput, formatDeckBulkInput } from "./deckBulkInput";
+import { AddButton, SubmitButton } from "./AdminButtons";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const MIN_CARDS = 20;
 
@@ -233,8 +236,7 @@ export default function DeckEditor({ initial, mode }: Props) {
         <div className={styles.metaRow}>
           <div className={styles.field}>
             <label className={styles.label}>ID *</label>
-            <input
-              className={styles.input}
+            <Input
               value={id}
               onChange={(e) => setId(e.target.value)}
               placeholder="MY_DECK"
@@ -244,8 +246,7 @@ export default function DeckEditor({ initial, mode }: Props) {
           </div>
           <div className={styles.field}>
             <label className={styles.label}>덱 이름 *</label>
-            <input
-              className={styles.input}
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Deck"
@@ -295,7 +296,7 @@ export default function DeckEditor({ initial, mode }: Props) {
                   : `${typeFiltered.length}종`}
               </span>
             </div>
-            <input
+            <Input
               className={styles.searchInput}
               placeholder="카드 검색..."
               value={search}
@@ -365,14 +366,12 @@ export default function DeckEditor({ initial, mode }: Props) {
                         {card.effects.length > 0 ? ` · ${card.effects.map((e) => e.type).join(", ")}` : ""}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className={styles.addBtn}
+                    <AddButton
                       disabled={!usable}
                       onClick={(ev) => { ev.stopPropagation(); addCard(card.id); }}
                     >
                       +
-                    </button>
+                    </AddButton>
                   </div>
                 );
               })}
@@ -485,10 +484,12 @@ export default function DeckEditor({ initial, mode }: Props) {
         </div>
 
         <div className={styles.footer}>
-          <Link href="/admin?tab=decks" className={styles.cancelLink}>취소</Link>
-          <button type="submit" className={styles.submitBtn} disabled={saving}>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin?tab=decks">취소</Link>
+          </Button>
+          <SubmitButton disabled={saving}>
             {saving ? "저장 중..." : mode === "create" ? "덱 생성" : "덱 수정"}
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

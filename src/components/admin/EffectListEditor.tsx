@@ -4,6 +4,8 @@ import type { BuffFilter, CardEffect, CardTag, StatTarget } from "@/game/engine/
 import { CardTagSchema, StatTargetSchema, BuffScopeSchema } from "@/game/engine/cardSchema";
 import { SelectField, NumericField, OptionalNumericField, ItemCard } from "./AdminFields";
 import styles from "./AdminForm.module.css";
+import { AddButton, RemoveButton } from "./AdminButtons";
+import { Input } from "@/components/ui/input";
 
 /**
  * 효과 목록 편집기 — 카드의 effects와 캐릭터의 entry/exitEffect가 함께 쓴다.
@@ -78,9 +80,9 @@ function BuffFilterEditor({
 }) {
   if (!filter) {
     return (
-      <button type="button" className={styles.addBtn} onClick={() => onChange({})}>
+      <AddButton onClick={() => onChange({})}>
         + 영향받을 카드 한정
-      </button>
+      </AddButton>
     );
   }
 
@@ -98,9 +100,9 @@ function BuffFilterEditor({
     <div className={styles.effectItem}>
       <div className={styles.effectHeader}>
         <span className={styles.effectIndex}>영향받을 카드 한정</span>
-        <button type="button" className={styles.removeBtn} onClick={() => onChange(undefined)}>
+        <RemoveButton onClick={() => onChange(undefined)}>
           ✕ 한정 해제
-        </button>
+        </RemoveButton>
       </div>
 
       <div className={styles.row}>
@@ -152,18 +154,16 @@ function BuffFilterEditor({
             fallback={9}
             onChange={(n) => patch({ statRange: { ...filter.statRange!, max: n } })}
           />
-          <button type="button" className={styles.removeBtn} onClick={() => patch({ statRange: undefined })}>
+          <RemoveButton onClick={() => patch({ statRange: undefined })}>
             범위 제거
-          </button>
+          </RemoveButton>
         </div>
       ) : (
-        <button
-          type="button"
-          className={styles.addBtn}
+        <AddButton
           onClick={() => patch({ statRange: { stat: "cost", min: 3 } })}
         >
           + 스탯 범위 조건
-        </button>
+        </AddButton>
       )}
 
       <div className={styles.hint}>
@@ -261,8 +261,7 @@ export default function EffectListEditor({
                 />
                 <div className={styles.field}>
                   <label className={styles.label}>표시 이름 (선택)</label>
-                  <input
-                    className={styles.input}
+                  <Input
                     value={effect.label ?? ""}
                     onChange={(e) => update(i, { label: e.target.value || undefined })}
                     placeholder="집중"
@@ -293,8 +292,7 @@ export default function EffectListEditor({
                 </SelectField>
                 <div className={styles.field}>
                   <label className={styles.label}>표시 이름 (선택)</label>
-                  <input
-                    className={styles.input}
+                  <Input
                     value={effect.label ?? ""}
                     onChange={(e) => update(i, { label: e.target.value || undefined })}
                     placeholder="맹독"
@@ -352,8 +350,7 @@ export default function EffectListEditor({
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label}>Card ID *</label>
-                <input
-                  className={styles.input}
+                <Input
                   value={effect.cardId ?? ""}
                   onChange={(e) => update(i, { cardId: e.target.value || undefined })}
                   placeholder="arm_shield"
@@ -392,9 +389,9 @@ export default function EffectListEditor({
         </ItemCard>
       ))}
 
-      <button type="button" className={styles.addBtn} onClick={() => onChange([...effects, emptyEffect()])}>
+      <AddButton onClick={() => onChange([...effects, emptyEffect()])}>
         {addLabel}
-      </button>
+      </AddButton>
     </>
   );
 }

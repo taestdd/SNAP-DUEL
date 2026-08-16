@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import styles from "./AdminForm.module.css";
 
 /**
  * 어드민 폼 공용 입력 컴포넌트.
  * CardEditor·EffectListEditor·CharacterEditor가 같은 모양을 쓰도록 한 곳에 모은다.
+ *
+ * 입력/버튼은 shadcn 프리미티브를 쓰고, 배치(.field/.row)만 CSS Modules에 남긴다.
+ * select는 아직 네이티브다 — shadcn Select는 Radix 기반이라 <option> children을
+ * 받지 못해서, 옮기려면 사용처 80곳을 함께 고쳐야 한다.
  */
 
 export function NumericInput({
@@ -22,7 +29,7 @@ export function NumericInput({
   useEffect(() => { setStr(String(value)); }, [value]);
 
   return (
-    <input
+    <Input
       {...rest}
       type="number"
       className={className}
@@ -52,7 +59,7 @@ export function SelectField({
 } & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">) {
   return (
     <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
+      <Label className={styles.label}>{label}</Label>
       <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
         {children}
       </select>
@@ -68,8 +75,8 @@ export function NumericField({
 } & Omit<React.ComponentProps<typeof NumericInput>, "className">) {
   return (
     <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <NumericInput className={styles.input} {...rest} />
+      <Label className={styles.label}>{label}</Label>
+      <NumericInput {...rest} />
     </div>
   );
 }
@@ -91,17 +98,16 @@ export function OptionalNumericField({
   const enabled = value !== undefined;
   return (
     <div className={styles.field}>
-      <label className={styles.label}>
+      <Label className={styles.label}>
         <input
           type="checkbox"
           checked={enabled}
           onChange={(e) => onChange(e.target.checked ? fallback : undefined)}
         />{" "}
         {label}
-      </label>
+      </Label>
       <NumericInput
         {...rest}
-        className={styles.input}
         value={value ?? fallback}
         onChange={(n) => { if (enabled) onChange(n); }}
         disabled={!enabled}
@@ -119,9 +125,15 @@ export function ItemCard({ title, onRemove, children }: {
     <div className={styles.effectItem}>
       <div className={styles.effectHeader}>
         <span className={styles.effectIndex}>{title}</span>
-        <button type="button" className={styles.removeBtn} onClick={onRemove}>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          onClick={onRemove}
+          className="border-destructive-border text-destructive-fg hover:bg-destructive-bg hover:text-destructive-fg"
+        >
           ✕ 삭제
-        </button>
+        </Button>
       </div>
       {children}
     </div>
