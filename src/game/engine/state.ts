@@ -94,6 +94,7 @@ export function createInitialState(config: SetupConfig, aiConfig?: SetupConfig, 
     comboCount: 0,
     draftSelections: { P1: null, AI: null },
     turnLog: [],
+    turnStartHands: null,
   };
 
   return state;

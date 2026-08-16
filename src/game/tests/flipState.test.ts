@@ -55,6 +55,35 @@ describe("flipState (게스트 뷰 P1↔AI 교환)", () => {
     expect(flipState(makeState({ pendingDiscard: null })).pendingDiscard).toBeNull();
   });
 
+  it("turnLog의 P1/AI(카드·손패 포함)를 통째로 교환한다", () => {
+    const s = flipState(makeState({
+      turnLog: [{
+        turn: 1,
+        initiative: "P1",
+        P1: { card: "jab", countered: false },
+        AI: { card: "heavy", countered: true },
+        hp: { P1: 30, AI: 20 },
+        airborne: { P1: 0, AI: 1 },
+        hands: { P1: ["jab", "swift"], AI: ["heavy"] },
+      }],
+    }));
+    expect(s.turnLog[0]).toEqual({
+      turn: 1,
+      initiative: "AI",
+      P1: { card: "heavy", countered: true },
+      AI: { card: "jab", countered: false },
+      hp: { P1: 20, AI: 30 },
+      airborne: { P1: 1, AI: 0 },
+      hands: { P1: ["heavy"], AI: ["jab", "swift"] },
+    });
+  });
+
+  it("turnStartHands를 교환한다", () => {
+    const s = flipState(makeState({ turnStartHands: { P1: ["jab"], AI: ["heavy", "swift"] } }));
+    expect(s.turnStartHands).toEqual({ P1: ["heavy", "swift"], AI: ["jab"] });
+    expect(flipState(makeState({ turnStartHands: null })).turnStartHands).toBeNull();
+  });
+
   it("태그 플래그를 교환한다 — 게스트 Tag 버튼 잠금용", () => {
     const s = flipState(makeState({ p1TaggedThisTurn: false, aiTaggedThisTurn: true }));
     expect(s.p1TaggedThisTurn).toBe(true);  // 게스트(내부 AI)가 태그함 → 게스트 화면에서 잠김

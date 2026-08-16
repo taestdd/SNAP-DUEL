@@ -144,6 +144,9 @@ export function beginTurn(state: GameState): GameState {
   s = resetTurnFlags(s);
   s = applyTurnStartStatuses(s);
   if (s.phase === "GAME_OVER") return s;
+  // turnLog가 "그때 실제로 낼 수 있었던 카드들"을 남기려면 SETUP이 시작되기
+  // 전(리졸브로 손패가 바뀌기 전)의 스냅샷이 필요하다 — 여기서만 찍을 수 있다.
+  s = { ...s, turnStartHands: { P1: [...s.P1.hand], AI: [...s.AI.hand] } };
   return pushLog(s, `━━ Turn ${s.turn} | Initiative: ${s.initiative} ━━`);
 }
 
@@ -179,6 +182,10 @@ export function endTurnCleanup(state: GameState): GameState {
     ?? (state.recentlyCounteredPlayer === "AI" ? state.recentlyCounteredId : null)
     ?? null;
 
+  // beginTurn이 못 돌고 endTurnCleanup이 바로 불린 경우(직접 호출 테스트 등)를 대비해
+  // 스냅샷이 없으면 현재 손패로 대체한다 — 그 경우엔 어차피 리졸브 전후 차이가 없다.
+  const hands = state.turnStartHands ?? { P1: [...state.P1.hand], AI: [...state.AI.hand] };
+
   const entry = {
     turn: state.turn,
     initiative: state.initiative,
@@ -186,6 +193,7 @@ export function endTurnCleanup(state: GameState): GameState {
     AI: { card: aiCard, countered: state.recentlyCounteredPlayer === "AI" },
     hp: { P1: state.P1.hp, AI: state.AI.hp },
     airborne: { P1: state.P1.airborneStack, AI: state.AI.airborneStack },
+    hands,
   };
 
   const s: GameState = {

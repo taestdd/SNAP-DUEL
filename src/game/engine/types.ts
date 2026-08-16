@@ -845,6 +845,13 @@ export type GameState = {
   /** 플레이 로그: 턴별 요약 (게임 종료 후 JSON 다운로드용) */
   turnLog: TurnLogEntry[];
 
+  /**
+   * 이번 턴 SETUP 시작 시점의 손패 스냅샷 (beginTurn이 기록, endTurnCleanup이 소비).
+   * turnLog에 "그때 실제로 낼 수 있었던 카드들"을 남기기 위한 중계용 — 리졸브 중
+   * 손패가 바뀌므로 턴 끝에 가서는 이 값이 없으면 되짚을 수 없다.
+   */
+  turnStartHands: { P1: string[]; AI: string[] } | null;
+
   /** 튜토리얼 전용: 턴별 AI 행동 스크립트. index = turn-1. 빈 배열 = 패스 */
   tutorialAiScript?: string[][];
 };
@@ -857,6 +864,8 @@ export type TurnLogEntry = {
   AI: { card: string | null; countered: boolean };
   hp: { P1: number; AI: number };
   airborne: { P1: number; AI: number };
+  /** 이번 턴 SETUP 시작 시점의 손패 (그 카드를 낼 때 실제로 있던 선택지) */
+  hands: { P1: string[]; AI: string[] };
 };
 
 /** 덱 정의 */

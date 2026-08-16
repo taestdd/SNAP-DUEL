@@ -59,6 +59,14 @@ describe("beginTurn", () => {
     expect(s.P1.airborneStack).toBe(1);
     expect(s.AI.airborneStack).toBe(0);
   });
+  it("SETUP 시작 전 손패를 turnStartHands에 스냅샷한다", () => {
+    const s = beginTurn(makeState({
+      phase: "TURN_START",
+      P1: { hand: ["jab", "heavy"] },
+      AI: { hand: ["swift"] },
+    }));
+    expect(s.turnStartHands).toEqual({ P1: ["jab", "heavy"], AI: ["swift"] });
+  });
 });
 
 /* ── endTurnCleanup ────────────────────────────────────────────────── */
@@ -68,6 +76,20 @@ describe("endTurnCleanup", () => {
     expect(s.phase).toBe("TURN_END");
     expect(s.turnLog).toHaveLength(1);
     expect(s.turnLog[0].turn).toBe(2);
+  });
+  it("turnLog에 turnStartHands 스냅샷을 싣는다 (리졸브로 바뀐 현재 손패가 아니라)", () => {
+    const s = endTurnCleanup(makeState({
+      turnLog: [],
+      turnStartHands: { P1: ["jab", "heavy"], AI: ["swift"] },
+      // 리졸브 후 손패는 이미 바뀐 상태 (jab을 냈다고 가정)
+      P1: { hand: ["heavy"] },
+      AI: { hand: ["swift"] },
+    }));
+    expect(s.turnLog[0].hands).toEqual({ P1: ["jab", "heavy"], AI: ["swift"] });
+  });
+  it("turnStartHands가 없으면(직접 호출 등) 현재 손패로 대체한다", () => {
+    const s = endTurnCleanup(makeState({ turnLog: [], turnStartHands: null, P1: { hand: ["jab"] } }));
+    expect(s.turnLog[0].hands.P1).toEqual(["jab"]);
   });
   it("P1 핸드가 10장 초과면 WAITING_DISCARD", () => {
     const hand = Array.from({ length: 11 }, (_, i) => `c${i}`);

@@ -121,6 +121,7 @@ export function makeState(o: StateOverrides = {}): GameState {
     comboCount: 0,
     draftSelections: { P1: null, AI: null },
     turnLog: [],
+    turnStartHands: null,
     ...rest,
   };
 }
