@@ -12,9 +12,9 @@
   left: 50%;
   transform: translate(-50%, 0);
   background: rgba(10, 14, 35, 0.88);
-  color: #f0f4ff;
+  color: var(--foreground);
   padding: 8px 28px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.06em;

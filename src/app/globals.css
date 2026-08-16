@@ -23,6 +23,7 @@
 
   /* Neon accents */
   --clr-cyan:      #00d9ff;
+  --clr-cyan-2:    #6ee7ff;
   --clr-pink:      #ff006e;
   --clr-purple:    #b537f2;
   --clr-green:     #00f77d;
@@ -38,6 +39,7 @@
   /* Structure */
   --clr-border:    #2a3a5c;
   --clr-border-2:  #3a4d75;
+  --clr-bg-grad:   #1a2f5f;  /* --grad-card 상단 스톱 */
 
   /* Radius — 기존 CSS Modules는 2/3/4px에 몰려 있다 (2px 59회, 4px 31회, 3px 17회) */
   --radius:        4px;
@@ -49,14 +51,14 @@
   --grad-success:  linear-gradient(135deg, var(--clr-green), var(--clr-cyan));
   --grad-danger:   linear-gradient(135deg, var(--clr-danger), var(--clr-pink));
   --grad-hp:       linear-gradient(90deg, var(--clr-green), var(--clr-cyan));
-  --grad-card:     linear-gradient(180deg, #1a2f5f, var(--clr-bg));
+  --grad-card:     linear-gradient(180deg, var(--clr-bg-grad), var(--clr-bg));
 
   /* Glows */
-  --glow-cyan:     0 0 12px rgba(0, 217, 255, 0.7);
-  --glow-cyan-lg:  0 0 24px rgba(0, 217, 255, 0.8), 0 0 48px rgba(0, 217, 255, 0.3);
-  --glow-green:    0 0 12px rgba(0, 247, 125, 0.6);
-  --glow-pink:     0 0 12px rgba(255, 0, 110, 0.6);
-  --glow-purple:   0 0 20px rgba(181, 55, 242, 0.6);
+  --glow-cyan:     0 0 12px color-mix(in srgb, var(--clr-cyan) 70%, transparent);
+  --glow-cyan-lg:  0 0 24px color-mix(in srgb, var(--clr-cyan) 80%, transparent), 0 0 48px color-mix(in srgb, var(--clr-cyan) 30%, transparent);
+  --glow-green:    0 0 12px color-mix(in srgb, var(--clr-green) 60%, transparent);
+  --glow-pink:     0 0 12px color-mix(in srgb, var(--clr-pink) 60%, transparent);
+  --glow-purple:   0 0 20px color-mix(in srgb, var(--clr-purple) 60%, transparent);
 
   /* Transitions */
   --transition:    all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -116,6 +118,7 @@
   --success-bg:        color-mix(in oklab, var(--clr-green)  12%, var(--clr-bg));
   --success-bg-hover:  color-mix(in oklab, var(--clr-green)  20%, var(--clr-bg));
   --success-border:    color-mix(in oklab, var(--clr-green)  34%, var(--clr-bg));
+  --success-border-hover: color-mix(in oklab, var(--clr-green) 44%, var(--clr-bg));
   --success-fg:        color-mix(in oklab, var(--clr-green)  70%, #fff);
 
   --warning-bg:        color-mix(in oklab, var(--clr-orange) 13%, var(--clr-bg));
@@ -153,15 +156,75 @@
   --radius-lg: calc(var(--radius) + 4px);
 }
 
+/* ── 게임 의미색 ──
+   게임 개념에 묶인 색이다. shadcn 시맨틱(primary/destructive/…)으로 뭉개면
+   "지상 공격"과 "버프"가 같은 초록이 돼 구분이 사라진다. 개념 이름을 그대로 둔다. */
+:root {
+  /* 카드 태그 · 상태 배지 */
+  --clr-ground:         var(--clr-green);
+  --clr-antiair:        #ffb366;
+  --clr-tag:            #d07ff5;
+  --clr-airborne:       #ffcc66;
+  --clr-buff:           #7fd4ff;
+  --clr-debuff:         #d792ea;
+  --clr-poison:         #a5e075;
+  --clr-combo:          #ff6666;
+
+  /* 주도권 · 타이머 · 승자 — 셋 다 같은 골드를 쓴다 */
+  --clr-gold:           #ffcc44;
+  --clr-gold-2:         #f0c040;
+
+  /* 딜레이 증감 — 낮을수록 빠르다(초록), 높을수록 느리다(빨강) */
+  --clr-delay-down:     var(--clr-green);
+  --clr-delay-up:       #ff4466;
+
+  /* 라운드/전투 시작 연출 */
+  --clr-announce-ready: #ffd86b;
+  --clr-announce-fight: #ff5b5b;
+  --clr-announce-turn:  #acd4ff;
+  --clr-announce-clash: #ff9d5b;
+
+  /* 로그 이벤트 — 클래스명이 곧 색 이름이라 개념명을 따로 붙이지 않는다 */
+  --clr-log-red:        #ff8787;
+  --clr-log-green:      #69db7c;
+  --clr-log-blue:       #74c0fc;
+  --clr-log-yellow:     #ffd43b;
+  --clr-log-gray:       #868e96;
+  --clr-log-orange:     #ffa94d;
+  --clr-log-sky:        #66d9e8;
+  --clr-log-purple:     #cc99ff;
+
+  /* ── 카드 톤 ──
+     네온 배경 위에서 카드가 도드라지도록 일부러 채도를 뺀 회색 계열이다.
+     게임 팔레트와 대비시키는 것이 목적이라 네온으로 흡수하지 않는다. */
+  --clr-card-bg:        #17191f;
+  --clr-card-bg-hover:  #1a1d24;
+  --clr-card-bg-off:    #101116;
+  --clr-card-bg-deep:   #0d0e12;
+  --clr-card-panel:     #1b1c20;
+  --clr-card-art:       #131418;
+  --clr-card-ink:       #14171d;
+  --clr-card-border:    #3a3d46;
+  --clr-card-border-hi: #6b7180;
+  --clr-card-chip:      #2f3440;
+  --clr-card-chip-off:  #2a2d36;
+  --clr-card-light:     #cfd3db;
+  --clr-card-light-2:   #aab0bd;
+  --clr-card-text:      #dcdfe5;
+  --clr-card-text-2:    #c8ced8;
+  --clr-card-text-3:    #b6bcc7;
+  --clr-card-text-dim:  #9aa0ab;
+}
+
 /* ── Keyframes ── */
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 217, 255, 0.5); }
-  50%       { box-shadow: 0 0 24px rgba(0, 217, 255, 1), 0 0 48px rgba(0, 217, 255, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--clr-cyan) 50%, transparent); }
+  50%       { box-shadow: 0 0 24px color-mix(in srgb, var(--clr-cyan) 100%, transparent), 0 0 48px color-mix(in srgb, var(--clr-cyan) 40%, transparent); }
 }
 
 @keyframes selectionGlow {
-  0%   { box-shadow: 0 0 5px rgba(0, 217, 255, 0.3); }
-  100% { box-shadow: 0 0 28px rgba(0, 217, 255, 0.9), inset 0 0 18px rgba(0, 217, 255, 0.12); }
+  0%   { box-shadow: 0 0 5px color-mix(in srgb, var(--clr-cyan) 30%, transparent); }
+  100% { box-shadow: 0 0 28px color-mix(in srgb, var(--clr-cyan) 90%, transparent), inset 0 0 18px color-mix(in srgb, var(--clr-cyan) 12%, transparent); }
 }
 
 @keyframes scorePop {

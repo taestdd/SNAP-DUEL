@@ -21,40 +21,40 @@
 }
 
 .badgeAir {
-  background: rgba(255, 180, 50, 0.18);
-  border-color: rgba(255, 180, 50, 0.45);
-  color: #ffcc66;
+  background: color-mix(in srgb, var(--clr-airborne) 18%, transparent);
+  border-color: color-mix(in srgb, var(--clr-airborne) 45%, transparent);
+  color: var(--clr-airborne);
 }
 
 .badgeWarn {
-  background: rgba(255, 200, 50, 0.14);
-  border-color: rgba(255, 200, 50, 0.35);
-  color: #ffcc44;
+  background: color-mix(in srgb, var(--clr-gold) 14%, transparent);
+  border-color: color-mix(in srgb, var(--clr-gold) 35%, transparent);
+  color: var(--clr-gold);
 }
 
 .badgeCombo {
-  background: rgba(255, 80, 80, 0.22);
-  border-color: rgba(255, 80, 80, 0.55);
-  color: #ff6666;
+  background: color-mix(in srgb, var(--clr-combo) 22%, transparent);
+  border-color: color-mix(in srgb, var(--clr-combo) 55%, transparent);
+  color: var(--clr-combo);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .badgeBuff {
-  background: rgba(80, 200, 255, 0.16);
-  border-color: rgba(80, 200, 255, 0.45);
-  color: #7fd4ff;
+  background: color-mix(in srgb, var(--clr-buff) 16%, transparent);
+  border-color: color-mix(in srgb, var(--clr-buff) 45%, transparent);
+  color: var(--clr-buff);
 }
 
 .badgeDebuff {
-  background: rgba(200, 90, 220, 0.16);
-  border-color: rgba(200, 90, 220, 0.45);
-  color: #d792ea;
+  background: color-mix(in srgb, var(--clr-debuff) 16%, transparent);
+  border-color: color-mix(in srgb, var(--clr-debuff) 45%, transparent);
+  color: var(--clr-debuff);
 }
 
 .badgePoison {
-  background: rgba(140, 220, 90, 0.16);
-  border-color: rgba(140, 220, 90, 0.5);
-  color: #a5e075;
+  background: color-mix(in srgb, var(--clr-poison) 16%, transparent);
+  border-color: color-mix(in srgb, var(--clr-poison) 50%, transparent);
+  color: var(--clr-poison);
   font-weight: 600;
 }

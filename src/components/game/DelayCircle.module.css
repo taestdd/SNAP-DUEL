@@ -7,23 +7,23 @@
   font-weight: 700;
   font-size: 11px;
   line-height: 1;
-  background: #ffffff;
-  color: #0a0e27;
+  background: var(--foreground);
+  color: var(--clr-bg);
   font-family: var(--font-inter), 'JetBrains Mono', monospace;
   flex-shrink: 0;
 }
 
 .down {
-  background: #00f77d;
-  color: #0a0e27;
+  background: var(--clr-green);
+  color: var(--clr-bg);
 }
 
 .up {
-  background: #ff4466;
-  color: #ffffff;
+  background: var(--clr-delay-up);
+  color: var(--foreground);
 }
 
 .disabled {
-  background: #2a2e44;
+  background: var(--secondary);
   color: rgba(255, 255, 255, 0.25);
 }

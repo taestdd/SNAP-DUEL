@@ -3,8 +3,8 @@
   display: flex;
   justify-content: center;
   padding: 40px 20px 60px;
-  background: #0b1020;
-  color: #e9ecf5;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 :global(html),
@@ -26,12 +26,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b1020;
-  color: #e9ecf5;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .loadingText { font-size: 14px; opacity: 0.5; }
-.errorText { font-size: 14px; color: #f66; }
+.errorText { font-size: 14px; color: var(--destructive-fg); }
 
 /* ── 헤더 ── */
 .header {
@@ -48,7 +48,7 @@
   font-weight: 900;
   letter-spacing: -0.5px;
   margin: 0;
-  background: linear-gradient(135deg, #7eb8ff 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -97,7 +97,7 @@
 .pickerLabel {
   font-size: 13px;
   font-weight: 700;
-  color: rgba(110, 231, 255, 0.8);
+  color: color-mix(in srgb, var(--clr-cyan-2) 80%, transparent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -106,8 +106,8 @@
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-  color: #e9ecf5;
+  border-radius: var(--radius);
+  color: var(--foreground);
   font-size: 15px;
   font-weight: 600;
   padding: 11px 14px;
@@ -121,12 +121,12 @@
 }
 
 .deckSelect:focus {
-  border-color: rgba(110, 231, 255, 0.6);
+  border-color: color-mix(in srgb, var(--clr-cyan-2) 60%, transparent);
 }
 
 .deckSelect option {
-  background: #0f1628;
-  color: #e9ecf5;
+  background: var(--muted);
+  color: var(--foreground);
 }
 
 /* ── 캐릭터 순서 ── */
@@ -140,7 +140,7 @@
   position: relative;
   flex: 1;
   padding: 12px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
@@ -157,8 +157,8 @@
 }
 
 .charStarter {
-  border-color: rgba(110, 231, 255, 0.7);
-  background: rgba(110, 231, 255, 0.08);
+  border-color: color-mix(in srgb, var(--clr-cyan-2) 70%, transparent);
+  background: color-mix(in srgb, var(--clr-cyan-2) 8%, transparent);
 }
 
 .charBackup {
@@ -172,9 +172,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #6ee7ff;
-  background: rgba(110, 231, 255, 0.15);
-  border: 1px solid rgba(110, 231, 255, 0.3);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--clr-cyan-2) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clr-cyan-2) 30%, transparent);
   padding: 2px 6px;
   border-radius: 3px;
   width: fit-content;
@@ -204,7 +204,7 @@
   font-size: 16px;
   width: 34px;
   height: 34px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
@@ -215,7 +215,7 @@
 
 .swapBtn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: var(--foreground);
 }
 
 .swapBtn:disabled {
@@ -233,10 +233,10 @@
 .modeBtn {
   width: 100%;
   padding: 14px 18px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.05);
-  color: #e9ecf5;
+  color: var(--foreground);
   font-size: 15px;
   font-weight: 700;
   text-align: left;
@@ -258,8 +258,8 @@
 }
 
 .modeBtnActive {
-  border-color: rgba(110, 231, 255, 0.5);
-  background: rgba(110, 231, 255, 0.08);
+  border-color: color-mix(in srgb, var(--clr-cyan-2) 50%, transparent);
+  background: color-mix(in srgb, var(--clr-cyan-2) 8%, transparent);
 }
 
 .soon {
@@ -277,10 +277,10 @@
 .startBtn {
   align-self: flex-end;
   padding: 12px 32px;
-  border-radius: 4px;
-  border: 1px solid rgba(110, 231, 255, 0.4);
-  background: rgba(110, 231, 255, 0.12);
-  color: #6ee7ff;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--clr-cyan-2) 40%, transparent);
+  background: color-mix(in srgb, var(--clr-cyan-2) 12%, transparent);
+  color: var(--primary);
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
@@ -290,8 +290,8 @@
 
 .startBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: rgba(110, 231, 255, 0.2);
-  border-color: rgba(110, 231, 255, 0.65);
+  background: color-mix(in srgb, var(--clr-cyan-2) 20%, transparent);
+  border-color: color-mix(in srgb, var(--clr-cyan-2) 65%, transparent);
 }
 
 .startBtnDisabled {
@@ -305,10 +305,10 @@
   width: 100%;
   padding: 12px;
   text-align: center;
-  background: #1a2a1a;
-  border: 1px solid #2a5a2a;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
   border-radius: 6px;
-  color: #70c070;
+  color: var(--success-fg);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
@@ -316,8 +316,8 @@
 }
 
 .tutorialBtn:hover {
-  background: #243424;
-  color: #90e090;
+  background: var(--success-bg);
+  color: var(--success-fg);
 }
 
 /* ── 어드민 링크 ── */
@@ -347,11 +347,11 @@
 
 .optionLabel {
   font-size: 13px;
-  color: var(--clr-text-1, #ddd);
+  color: var(--clr-text-1, var(--foreground));
 }
 
 .optionHint {
   font-size: 11px;
-  color: var(--clr-text-2, #888);
+  color: var(--clr-text-2, var(--muted-foreground));
   margin-left: auto;
 }

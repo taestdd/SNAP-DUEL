@@ -1,8 +1,8 @@
 .card {
   width: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius);
   border: 1px solid var(--clr-border);
-  background: rgba(21, 27, 61, 0.6);
+  background: color-mix(in srgb, var(--card) 60%, transparent);
   color: inherit;
   padding: 8px;
   cursor: pointer;
@@ -19,8 +19,8 @@
 .card:hover {
   transform: translateY(-2px);
   background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(200, 206, 216, 0.4);
-  box-shadow: 0 0 12px rgba(200, 206, 216, 0.15);
+  border-color: color-mix(in srgb, var(--clr-card-text-2) 40%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--clr-card-text-2) 15%, transparent);
 }
 
 .disabled {
@@ -39,7 +39,7 @@
 .cost {
   width: 20px;
   height: 20px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -88,27 +88,27 @@
 }
 
 .tagGround {
-  background: rgba(0, 247, 125, 0.12);
-  border-color: rgba(0, 247, 125, 0.35);
-  color: #00f77d;
+  background: color-mix(in srgb, var(--clr-green) 12%, transparent);
+  border-color: color-mix(in srgb, var(--clr-green) 35%, transparent);
+  color: var(--clr-green);
 }
 
 .tagAntiAir {
-  background: rgba(255, 150, 60, 0.12);
-  border-color: rgba(255, 150, 60, 0.35);
-  color: #ffb366;
+  background: color-mix(in srgb, var(--clr-antiair) 12%, transparent);
+  border-color: color-mix(in srgb, var(--clr-antiair) 35%, transparent);
+  color: var(--clr-antiair);
 }
 
 .tagTag {
-  background: rgba(181, 55, 242, 0.12);
-  border-color: rgba(181, 55, 242, 0.35);
-  color: #d07ff5;
+  background: color-mix(in srgb, var(--clr-purple) 12%, transparent);
+  border-color: color-mix(in srgb, var(--clr-purple) 35%, transparent);
+  color: var(--clr-tag);
 }
 
 .tagAirborne {
-  background: rgba(255, 180, 50, 0.12);
-  border-color: rgba(255, 180, 50, 0.35);
-  color: #ffcc66;
+  background: color-mix(in srgb, var(--clr-airborne) 12%, transparent);
+  border-color: color-mix(in srgb, var(--clr-airborne) 35%, transparent);
+  color: var(--clr-airborne);
 }
 
 .conditionTag {
@@ -116,15 +116,15 @@
   font-size: 11px;
   padding: 3px 7px;
   border-radius: 3px;
-  background: rgba(0, 217, 255, 0.10);
-  border: 1px solid rgba(0, 217, 255, 0.30);
+  background: color-mix(in srgb, var(--clr-cyan) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clr-cyan) 30%, transparent);
   color: var(--clr-cyan);
 }
 
 .conditionBlocked {
   cursor: not-allowed;
-  border-color: rgba(255, 0, 110, 0.25);
-  background: rgba(255, 0, 110, 0.04);
+  border-color: color-mix(in srgb, var(--clr-pink) 25%, transparent);
+  background: color-mix(in srgb, var(--clr-pink) 4%, transparent);
   color: rgba(255, 255, 255, 0.35);
 }
 
@@ -138,20 +138,20 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  background-color: #17191f;
+  background-color: var(--clr-card-bg);
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
-  border-color: #3a3d46;
+  border-color: var(--clr-card-border);
 }
 
 .handCard:hover {
-  background-color: #1a1d24;
-  border-color: #6b7180;
+  background-color: var(--clr-card-bg-hover);
+  border-color: var(--clr-card-border-hi);
 }
 
 .handCard.disabled {
-  background-color: #101116;
+  background-color: var(--clr-card-bg-off);
   border-color: rgba(255, 255, 255, 0.05);
   filter: grayscale(1) brightness(0.5);
   cursor: not-allowed;
@@ -161,20 +161,20 @@
   transform: none;
   border-color: rgba(255, 255, 255, 0.05);
   box-shadow: none;
-  background-color: #101116;
+  background-color: var(--clr-card-bg-off);
 }
 
 .handCard.disabled .handCardName {
-  background: rgba(16, 17, 22, 0.55);
+  background: color-mix(in srgb, var(--clr-card-bg-off) 55%, transparent);
   color: rgba(255, 255, 255, 0.2);
 }
 
 .handCard.disabled .illustArea {
-  background-color: #0d0e12;
+  background-color: var(--clr-card-bg-deep);
 }
 
 .handCard.disabled .atkStrip {
-  background: #2a2d36;
+  background: var(--clr-card-chip-off);
 }
 
 .handCard.disabled .atkValue,
@@ -195,7 +195,7 @@
   right: 3px;
   font-size: 9px;
   line-height: 1;
-  color: #0a0e27;
+  color: var(--clr-bg);
   pointer-events: none;
 }
 
@@ -205,7 +205,7 @@
   right: 3px;
   font-size: 8px;
   line-height: 1;
-  color: #0a0e27;
+  color: var(--clr-bg);
   pointer-events: none;
 }
 
@@ -220,7 +220,7 @@
   padding: 0 6px;
   display: block;
   line-height: 32px;
-  color: #dcdfe5;
+  color: var(--clr-card-text);
   background: rgba(22, 24, 30, 0.55);
   backdrop-filter: blur(2px);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
@@ -229,13 +229,13 @@
 /* ── 카드 내부 공용 컴포넌트(CostBox/DelayCircle) 그레이 톤 override ──
    QueuePreview/CardListItem 등 다른 사용처는 건드리지 않도록 .handCard로 스코프 */
 .handCard .header > :first-child {
-  background: #2f3440;
-  color: #cfd3db;
+  background: var(--clr-card-chip);
+  color: var(--clr-card-light);
 }
 
 .handCard .illustArea > :first-child {
-  background: #cfd3db;
-  color: #14171d;
+  background: var(--clr-card-light);
+  color: var(--clr-card-ink);
 }
 
 /* 일러스트 영역: 카드 배경(art)이 비치도록 자체 배경은 투명 */
@@ -257,7 +257,7 @@
   bottom: 0;
   left: 0;
   width: 28px;
-  background: #aab0bd;
+  background: var(--clr-card-light-2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -269,14 +269,14 @@
   font-weight: 800;
   font-size: 13px;
   line-height: 1;
-  color: #0a0e27;
+  color: var(--clr-bg);
   font-family: var(--font-inter), 'JetBrains Mono', monospace;
 }
 
 .atkSep {
   font-size: 10px;
   line-height: 1;
-  color: #0a0e27;
+  color: var(--clr-bg);
   font-weight: 700;
 }
 
@@ -285,19 +285,19 @@
 }
 
 .statBoosted {
-  background: #cfd3db;
-  color: #14171d;
+  background: var(--clr-card-light);
+  color: var(--clr-card-ink);
 }
 
 .statNerfed {
-  background: #6b7180;
-  color: #ffffff;
+  background: var(--clr-card-border-hi);
+  color: var(--foreground);
 }
 
 .selected {
   outline: none;
-  border-color: #c8ced8;
-  box-shadow: 0 0 20px rgba(200, 206, 216, 0.45), inset 0 0 14px rgba(200, 206, 216, 0.08);
+  border-color: var(--clr-card-text-2);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--clr-card-text-2) 45%, transparent), inset 0 0 14px color-mix(in srgb, var(--clr-card-text-2) 8%, transparent);
   transform: translateY(-2px);
 }
 

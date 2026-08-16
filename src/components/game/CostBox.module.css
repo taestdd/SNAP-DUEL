@@ -5,7 +5,7 @@
   place-items: center;
   font-weight: 800;
   line-height: 1;
-  background: #1a2240;
+  background: var(--primary-bg);
   color: var(--clr-cyan);
   font-family: var(--font-inter), 'JetBrains Mono', monospace;
   flex-shrink: 0;
@@ -24,6 +24,6 @@
 }
 
 .disabled {
-  background: #111520;
+  background: var(--muted);
   color: rgba(255, 255, 255, 0.2);
 }

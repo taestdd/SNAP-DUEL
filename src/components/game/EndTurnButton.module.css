@@ -1,7 +1,7 @@
 .btn {
   padding: 10px 14px;
   min-height: 44px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   border: 1px solid var(--clr-border);
   background: rgba(255, 255, 255, 0.07);
   color: var(--clr-text);
@@ -13,20 +13,20 @@
 .btn:hover {
   transform: translateY(-1px);
   border-color: var(--clr-cyan);
-  background: rgba(0, 217, 255, 0.1);
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
+  background: color-mix(in srgb, var(--clr-cyan) 10%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--clr-cyan) 30%, transparent);
 }
 
 .primary {
   background: var(--clr-cyan);
   border-color: var(--clr-cyan);
-  color: #0a0e27;
+  color: var(--clr-bg);
 }
 
 .primary:hover {
-  background: #33e5ff;
-  border-color: #33e5ff;
-  box-shadow: 0 0 16px rgba(0, 217, 255, 0.5);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--clr-cyan) 50%, transparent);
   transform: translateY(-1px);
 }
 

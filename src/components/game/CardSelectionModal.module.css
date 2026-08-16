@@ -12,14 +12,14 @@
 .modal {
   background: var(--clr-bg2);
   border: 1px solid var(--clr-border);
-  border-radius: 4px;
+  border-radius: var(--radius);
   padding: 24px;
   width: min(480px, 90vw);
   max-height: 80vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 217, 255, 0.06);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px color-mix(in srgb, var(--clr-cyan) 6%, transparent);
 }
 
 .header {

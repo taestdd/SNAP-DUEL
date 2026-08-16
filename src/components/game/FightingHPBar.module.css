@@ -26,7 +26,7 @@
 
 .portrait {
   position: absolute;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 2px solid rgba(255, 255, 255, 0.18);
   overflow: hidden;
   transition: width 280ms ease, height 280ms ease,
@@ -50,7 +50,7 @@
   left: 0;
   z-index: 2;
   border-color: var(--clr-cyan);
-  box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--clr-cyan) 40%, transparent);
 }
 
 .portraitBench {
@@ -101,9 +101,9 @@
 }
 
 .nameInitiative {
-  color: #ffcc44;
+  color: var(--clr-gold);
   opacity: 1;
-  text-shadow: 0 0 8px rgba(255, 204, 68, 0.55);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--clr-gold) 55%, transparent);
 }
 
 .zoneInfo {
@@ -121,7 +121,7 @@
   border-radius: 3px;
   background: rgba(255, 220, 50, 0.15);
   border: 1px solid rgba(255, 220, 50, 0.35);
-  color: #ffdc32;
+  color: var(--clr-gold);
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -160,7 +160,7 @@
   transform: translateX(-50%);
   background: rgba(10, 14, 30, 0.92);
   border: 1px solid var(--clr-border);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 2px 8px;
   font-size: 11px;
   font-weight: 700;
@@ -219,7 +219,7 @@
 }
 
 .barYellow {
-  background: linear-gradient(90deg, #e6b830, #f5d060);
+  background: linear-gradient(90deg, var(--clr-gold-2), var(--clr-gold));
   box-shadow: 0 0 10px rgba(230, 184, 48, 0.6);
   z-index: 2;
 }

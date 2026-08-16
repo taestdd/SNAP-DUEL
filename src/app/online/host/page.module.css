@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0a0f;
+  background: var(--background);
   padding: 2rem;
 }
 
@@ -23,18 +23,18 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  background: #0a0a0f;
+  background: var(--background);
 }
 
 .title {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
   margin: 0;
 }
 
 .sub {
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 0.85rem;
   text-align: center;
   margin: -0.5rem 0 0;
@@ -45,16 +45,16 @@
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  background: #1a1a2e;
-  border: 1px solid #333;
-  border-radius: 4px;
+  background: var(--primary-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1rem 2rem;
   width: 100%;
 }
 
 .codeLabel {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -62,20 +62,20 @@
 .code {
   font-size: 2.4rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
   letter-spacing: 0.25em;
   font-variant-numeric: tabular-nums;
 }
 
 .qrWrap {
-  background: #0a0a0f;
+  background: var(--background);
   padding: 1rem;
-  border: 1px solid #333;
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .waiting {
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -86,24 +86,24 @@
 }
 
 .loading {
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 1rem;
 }
 
 .error {
-  color: #f87171;
+  color: var(--destructive-fg);
   font-size: 1rem;
 }
 
 .backBtn {
   background: none;
   border: none;
-  color: #555;
+  color: var(--clr-text-dim);
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0.5rem 1rem;
 }
 
 .backBtn:hover {
-  color: #aaa;
+  color: var(--clr-text-2);
 }

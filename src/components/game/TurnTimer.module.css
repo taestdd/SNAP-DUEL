@@ -26,7 +26,7 @@
   font-weight: 700;
   min-width: 1.4em;
   text-align: center;
-  color: #eee;
+  color: var(--foreground);
 }
 
 .theirs {
@@ -34,7 +34,7 @@
 }
 
 .mine .seconds {
-  color: #ffd866;
+  color: var(--clr-gold);
 }
 
 .urgent {
@@ -43,7 +43,7 @@
 }
 
 .urgent .seconds {
-  color: #ff5a5a;
+  color: var(--clr-announce-fight);
 }
 
 @keyframes timerPulse {

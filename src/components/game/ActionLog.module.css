@@ -19,7 +19,7 @@
   font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
   font-size: 11px;
   padding: 4px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   line-height: 1.45;
 }
@@ -52,12 +52,12 @@
 }
 
 /* event colors */
-.red   { color: #ff8787; }
-.green { color: #69db7c; }
-.blue  { color: #74c0fc; }
-.yellow { color: #ffd43b; }
-.gray  { color: #868e96; }
-.orange { color: #ffa94d; }
-.sky   { color: #66d9e8; }
+.red   { color: var(--clr-log-red); }
+.green { color: var(--clr-log-green); }
+.blue  { color: var(--clr-log-blue); }
+.yellow { color: var(--clr-log-yellow); }
+.gray  { color: var(--clr-log-gray); }
+.orange { color: var(--clr-log-orange); }
+.sky   { color: var(--clr-log-sky); }
 .dim   { color: rgba(255, 255, 255, 0.65); }
-.purple { color: #cc99ff; }
+.purple { color: var(--clr-log-purple); }

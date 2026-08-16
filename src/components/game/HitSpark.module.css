@@ -27,8 +27,8 @@
   height: 3px;
   background: linear-gradient(
     90deg,
-    #ffe566 0%,
-    #ff9900 55%,
+    var(--clr-gold) 0%,
+    var(--clr-announce-clash) 55%,
     transparent 100%
   );
   border-radius: 0;
