@@ -6,7 +6,7 @@ import { CharactersRecordSchema } from "@/game/engine/characterSchema";
 import { initCards, getCard } from "@/game/engine/cards";
 import { initCharacters, CHARACTERS } from "@/game/engine/characters";
 import { getPlayableCards, deriveCardStats } from "@/game/engine/rules";
-import { selectCard, shouldTag, selectDraftCards, selectDiscards } from "@/game/engine/ai";
+import { selectCard, shouldTag, selectDraftCards, selectDiscards, oppFastestAttackDelay, dealsDamage } from "@/game/engine/ai";
 import { opponentOf } from "@/game/engine/stateHelpers";
 import {
   resolveSetupDecision,
@@ -71,8 +71,18 @@ function fmtCombatant(state: GameState, player: PlayerId): string {
     parts.push(`중독: ${c.status.poisons!.map((p) => `턴당 ${p.damage} (${p.turns}턴 남음)`).join(", ")}`);
   }
   if (c.queue.length > 0) {
-    const queuedCard = getCard(c.queue[0]);
-    parts.push(`이번 턴 낸 카드: ${queuedCard?.name ?? c.queue[0]}`);
+    const queuedId = c.queue[0];
+    const queuedCard = getCard(queuedId);
+    if (queuedCard) {
+      // 이름만 보여주면 딜레이를 몰라 카운터 위험을 판단할 수 없다 — 실효 스탯까지 보여준다
+      const qStats = deriveCardStats(state, player, queuedId);
+      const atk = qStats.groundAttack > 0 || qStats.antiAirAttack > 0
+        ? ` 공격력(지상${qStats.groundAttack}/대공${qStats.antiAirAttack})`
+        : "";
+      parts.push(`이번 턴 낸 카드: "${queuedCard.name}" [${queuedCard.cardType ?? "skill"}] 딜레이${qStats.delay}${atk}`);
+    } else {
+      parts.push(`이번 턴 낸 카드: ${queuedId}`);
+    }
   }
   return parts.join("\n  ");
 }
@@ -80,6 +90,11 @@ function fmtCombatant(state: GameState, player: PlayerId): string {
 function fmtHand(state: GameState): string {
   const playable = getPlayableCards(state, PLAYER);
   if (playable.length === 0) return "(낼 수 있는 카드 없음 — 패스만 가능)";
+
+  // 로컬 규칙 AI(ai.ts)와 같은 기준으로 "이 공격 카드를 내면 100% 카운터당하는지"를
+  // 미리 계산해 둔다 — Claude가 델레이 숫자를 직접 비교해 추론하게 두면 종종 틀린다.
+  const hasInitiative = state.initiative === PLAYER;
+  const oppFastest = oppFastestAttackDelay(state, PLAYER);
 
   return playable
     .map(({ id }) => {
@@ -89,7 +104,10 @@ function fmtHand(state: GameState): string {
       const atk = stats.groundAttack > 0 || stats.antiAirAttack > 0
         ? ` 공격력(지상${stats.groundAttack}/대공${stats.antiAirAttack})`
         : "";
-      return `- ${id} "${card.name}" [${card.cardType ?? "skill"}] 코스트${stats.cost} 딜레이${stats.delay}${atk} 어드밴티지${stats.advantage} — ${card.text}`;
+      const guaranteedCounter = !hasInitiative && dealsDamage(state, PLAYER, card) && stats.delay > oppFastest
+        ? " ⚠️카운터 확정 — 상대가 먼저 때려 이 카드는 그대로 무효화(트래시행)됩니다"
+        : "";
+      return `- ${id} "${card.name}" [${card.cardType ?? "skill"}] 코스트${stats.cost} 딜레이${stats.delay}${atk} 어드밴티지${stats.advantage} — ${card.text}${guaranteedCounter}`;
     })
     .filter(Boolean)
     .join("\n");
@@ -174,6 +192,8 @@ async function handleSetup(state: GameState) {
     "",
     "지금 SETUP 단계입니다. 이번 턴 낼 카드를 하나 고르거나(손패에서) 패스하세요.",
     "필요하면 캐릭터를 교체(태그)할 수도 있습니다 (벤치 캐릭터 HP가 남아있어야 함).",
+    "⚠️카운터 확정 표시가 붙은 카드는 델레이를 직접 계산할 필요 없이 이미 확정된 결과입니다 —",
+    "특별한 이유(예: 어차피 낼 다른 공격 카드가 없어 손패 회전이 급함)가 없으면 내지 마세요.",
     "",
     "손패:",
     fmtHand(state),

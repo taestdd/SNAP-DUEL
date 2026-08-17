@@ -20,7 +20,7 @@ function getMinAttackDelay(): number {
  * 비례 보정 카드는 base 공격력이 0이고 보정으로만 공격력이 생기므로,
  * base만 보면 "공격 카드가 아니다"로 오판한다.
  */
-function dealsDamage(state: GameState, player: PlayerId, card: Card): boolean {
+export function dealsDamage(state: GameState, player: PlayerId, card: Card): boolean {
   const stats = deriveCardStats(state, player, card.id);
   return (
     stats.groundAttack > 0 ||
@@ -165,7 +165,7 @@ export function shouldTag(state: GameState, player: PlayerId): boolean {
  *   · queue가 비어있음 → 상대가 패스했다는 뜻 → 위협 없음(Infinity)
  * - SETUP_INIT(내가 먼저 선택): 상대 아직 미결정 → hand 기준 최속 추정
  */
-function oppFastestAttackDelay(state: GameState, player: PlayerId): number {
+export function oppFastestAttackDelay(state: GameState, player: PlayerId): number {
   const opp = state[opponentOf(player)];
   const oppBonus = opp.status.delayAdvantage ?? 0;
 

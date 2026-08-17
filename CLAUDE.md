@@ -411,6 +411,11 @@ P1과 같은 `WAITING_DISCARD` 경로로 옮겨졌다 — `PendingDiscard.player
 - `ANTHROPIC_API_KEY` 환경변수 필요 (서버 전용, `lib/claude.ts`가 lazy 초기화).
 - 규칙 요약은 `GAME_RULES_SYSTEM_PROMPT`(`lib/claude.ts`) 하나로 고정하고 `cache_control`로 캐싱 —
   매 결정마다 같은 텍스트를 반복 전송하지 않는다.
+- **카운터 확정 판단은 Claude에게 맡기지 않는다.** 상대가 이미 큐에 올린 카드는 이름만 보여주면
+  delay를 몰라 판단 자체가 불가능하고(`fmtCombatant`가 실효 스탯까지 노출), 손패의 각 공격 카드는
+  `ai.ts`의 `oppFastestAttackDelay`/`dealsDamage`(로컬 규칙 AI와 동일 기준, export됨)로 미리 계산해
+  "⚠️카운터 확정" 여부를 문자열에 박아 넣는다 — LLM이 delay 숫자를 직접 비교해 추론하게 두면
+  종종 오판했다(실제 대전 로그에서 확인).
 
 **검증 로직을 라우트에서 분리한 이유** — 이 프로젝트의 테스트는 순수 엔진 로직만 다루고
 `app/api/*` 라우트는 테스트하지 않는다(Firestore/외부 API 의존). `aiMoveValidation.ts`는
