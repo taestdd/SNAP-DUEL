@@ -876,6 +876,12 @@ export type DeckDef = {
   cards: string[];
   /** [0] = 선발, [1] = 후발 */
   characters: [CharacterId, CharacterId];
+  /**
+   * Claude 상대가 이 덱을 잡았을 때 참고할 전략 지침 (자유 텍스트, 선택).
+   * "판단 원칙"(게임 전체 공통)과 별개로, 이 덱 고유의 노림수를 짧게 적어 두면
+   * /api/ai/move 프롬프트에 그대로 실린다. 로컬 규칙 AI(ai.ts)는 참조하지 않는다.
+   */
+  aiStrategyHint?: string;
 };
 
 /** 게임 시작 전 셋업 설정 */

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useReducer, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { gameReducer } from "@/game/engine/reducer";
-import { createInitialState } from "@/game/engine/state";
+import { createInitialState, getDeckRegistry } from "@/game/engine/state";
 import { selectDiscards } from "@/game/engine/ai";
 import type { PlayerId, SetupConfig } from "@/game/engine/types";
 import GameScreen from "@/components/game/GameScreen";
@@ -48,9 +48,11 @@ function GameApp({ config, aiConfig, onExit, noTimeLimit = false, opponentType =
   });
 
   // Claude 상대: 4개 결정 지점을 API에 위임 (로컬 규칙 효과들과 상호 배타적)
+  const deckHint = aiConfig ? getDeckRegistry()[aiConfig.deckId]?.aiStrategyHint : undefined;
   const { thinking: claudeThinking, decisionLog: claudeDecisionLog } = useClaudeOpponent(state, dispatch, {
     enabled: isClaude,
     isTagAnimating,
+    deckHint,
   });
 
   // 로컬 규칙 AI: SETUP 카드+태그 선택

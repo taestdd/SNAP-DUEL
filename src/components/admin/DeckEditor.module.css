@@ -67,6 +67,24 @@
   outline: none;
 }
 
+.textarea {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 2px;
+  color: #e0e0e0;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  resize: vertical;
+  min-height: 54px;
+}
+
+.hint {
+  font-size: 11px;
+  color: #777;
+}
+
 .input:focus { border-color: #5555ff; }
 
 /* 캐릭터 선택 */

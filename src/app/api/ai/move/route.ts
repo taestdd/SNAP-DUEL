@@ -113,12 +113,15 @@ function fmtHand(state: GameState): string {
     .join("\n");
 }
 
-function fmtCommonHeader(state: GameState): string {
-  return [
+function fmtCommonHeader(state: GameState, deckHint?: string): string {
+  const lines = [
     `라운드 ${state.round} / 턴 ${state.turn} / 주도권: ${state.initiative}`,
     fmtCombatant(state, PLAYER),
     fmtCombatant(state, opponentOf(PLAYER)),
-  ].join("\n");
+  ];
+  // 덱 작성자가 남긴 이 덱 고유의 노림수 — "판단 원칙"(게임 전체 공통)과 별개로 매 요청에 실린다
+  if (deckHint) lines.push(`\n이 덱의 전략 지침: ${deckHint}`);
+  return lines.join("\n");
 }
 
 /* ── Claude 호출 ────────────────────────────────────────────────────────── */
@@ -184,11 +187,11 @@ function extractReasoning(input: Record<string, unknown> | null): string | null 
 
 /* ── kind별 처리 ────────────────────────────────────────────────────────── */
 
-async function handleSetup(state: GameState) {
+async function handleSetup(state: GameState, deckHint?: string) {
   const fallback = { tag: shouldTag(state, PLAYER), play: selectCard(state, PLAYER) };
 
   const userText = [
-    fmtCommonHeader(state),
+    fmtCommonHeader(state, deckHint),
     "",
     "지금 SETUP 단계입니다. 이번 턴 낼 카드를 하나 고르거나(손패에서) 패스하세요.",
     "필요하면 캐릭터를 교체(태그)할 수도 있습니다 (벤치 캐릭터 HP가 남아있어야 함).",
@@ -211,7 +214,7 @@ async function handleSetup(state: GameState) {
   return { ...resolveSetupDecision(state, input, fallback), reasoning: extractReasoning(input) };
 }
 
-async function handleSelection(state: GameState) {
+async function handleSelection(state: GameState, deckHint?: string) {
   const ps = state.pendingSelection!;
   const fallback = { selectedCards: ps.candidates.slice(0, ps.count) };
 
@@ -223,7 +226,7 @@ async function handleSelection(state: GameState) {
     .join("\n");
 
   const userText = [
-    fmtCommonHeader(state),
+    fmtCommonHeader(state, deckHint),
     "",
     `카드 효과로 카드를 선택해야 합니다 (${ps.fromZone} → ${ps.toZone}). 최대 ${ps.count}장, 적게 골라도 됩니다.`,
     "후보:",
@@ -241,7 +244,7 @@ async function handleSelection(state: GameState) {
   return { ...resolveSelectionDecision(ps.candidates, ps.count, input, fallback), reasoning: extractReasoning(input) };
 }
 
-async function handleDraft(state: GameState, count: number) {
+async function handleDraft(state: GameState, count: number, deckHint?: string) {
   const fallback = { cardIds: selectDraftCards(state, PLAYER, count) };
 
   const deckLines = state.AI.deck
@@ -253,7 +256,7 @@ async function handleDraft(state: GameState, count: number) {
     .join("\n");
 
   const userText = [
-    fmtCommonHeader(state),
+    fmtCommonHeader(state, deckHint),
     "",
     `라운드 시작 드래프트입니다. 덱에서 정확히 ${count}장을 골라 손패로 가져오세요.`,
     "덱:",
@@ -271,7 +274,7 @@ async function handleDraft(state: GameState, count: number) {
   return { ...resolveDraftDecision(state.AI.deck, count, input, fallback), reasoning: extractReasoning(input) };
 }
 
-async function handleDiscard(state: GameState) {
+async function handleDiscard(state: GameState, deckHint?: string) {
   const pd = state.pendingDiscard!;
   const fallback = { discardCards: selectDiscards(state, PLAYER, pd.count) };
 
@@ -283,7 +286,7 @@ async function handleDiscard(state: GameState) {
     .join("\n");
 
   const userText = [
-    fmtCommonHeader(state),
+    fmtCommonHeader(state, deckHint),
     "",
     `손패가 한도를 넘어 정확히 ${pd.count}장을 버려야 합니다.`,
     "손패:",
@@ -307,14 +310,14 @@ async function handleDiscard(state: GameState) {
 /* ── 라우트 ─────────────────────────────────────────────────────────────── */
 
 export async function POST(req: Request) {
-  let body: { kind?: string; state?: GameState; count?: number };
+  let body: { kind?: string; state?: GameState; count?: number; deckHint?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "잘못된 요청 본문" }, { status: 400 });
   }
 
-  const { kind, state, count } = body;
+  const { kind, state, count, deckHint } = body;
   if (!state || typeof state !== "object" || !state.AI || !state.P1) {
     return NextResponse.json({ error: "state가 없거나 형식이 잘못됨" }, { status: 400 });
   }
@@ -324,16 +327,16 @@ export async function POST(req: Request) {
 
     switch (kind) {
       case "setup":
-        return NextResponse.json(await handleSetup(state));
+        return NextResponse.json(await handleSetup(state, deckHint));
       case "selection":
         if (!state.pendingSelection) return NextResponse.json({ error: "pendingSelection 없음" }, { status: 400 });
-        return NextResponse.json(await handleSelection(state));
+        return NextResponse.json(await handleSelection(state, deckHint));
       case "draft":
         if (typeof count !== "number" || count <= 0) return NextResponse.json({ error: "count 필요" }, { status: 400 });
-        return NextResponse.json(await handleDraft(state, count));
+        return NextResponse.json(await handleDraft(state, count, deckHint));
       case "discard":
         if (!state.pendingDiscard) return NextResponse.json({ error: "pendingDiscard 없음" }, { status: 400 });
-        return NextResponse.json(await handleDiscard(state));
+        return NextResponse.json(await handleDiscard(state, deckHint));
       default:
         return NextResponse.json({ error: `알 수 없는 kind: ${kind}` }, { status: 400 });
     }

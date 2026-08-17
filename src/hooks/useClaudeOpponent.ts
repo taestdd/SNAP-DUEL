@@ -37,7 +37,12 @@ function cardName(id: string): string {
 export function useClaudeOpponent(
   state: GameState,
   dispatch: React.Dispatch<Action>,
-  opts: { enabled: boolean; isTagAnimating: boolean },
+  opts: {
+    enabled: boolean;
+    isTagAnimating: boolean;
+    /** 이 판에서 AI가 쓰는 덱의 전략 지침 (DeckDef.aiStrategyHint) — 있으면 매 요청에 함께 실린다 */
+    deckHint?: string;
+  },
 ): { thinking: boolean; decisionLog: ClaudeDecisionEntry[] } {
   const [thinking, setThinking] = useState(false);
   const [decisionLog, setDecisionLog] = useState<ClaudeDecisionEntry[]>([]);
@@ -64,13 +69,13 @@ export function useClaudeOpponent(
     const res = await fetch("/api/ai/move", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(deckHint ? { ...body, deckHint } : body),
     });
     if (!res.ok) throw new Error(`ai/move ${res.status}`);
     return res.json();
   }
 
-  const { enabled, isTagAnimating } = opts;
+  const { enabled, isTagAnimating, deckHint } = opts;
 
   // ── SETUP: 카드 선택 + 태그 ──────────────────────────────────────────────
   useEffect(() => {

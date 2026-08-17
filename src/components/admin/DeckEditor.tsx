@@ -28,6 +28,7 @@ export default function DeckEditor({ initial, mode }: Props) {
 
   const [id, setId] = useState(initial?.id ?? "");
   const [name, setName] = useState(initial?.name ?? "");
+  const [aiStrategyHint, setAiStrategyHint] = useState(initial?.aiStrategyHint ?? "");
   const [chars, setChars] = useState<[string | null, string | null]>([
     initial?.characters[0] ?? null,
     initial?.characters[1] ?? null,
@@ -184,6 +185,7 @@ export default function DeckEditor({ initial, mode }: Props) {
       name,
       characters: [chars[0], chars[1]],
       cards: buildCardArray(),
+      ...(aiStrategyHint.trim() ? { aiStrategyHint: aiStrategyHint.trim() } : {}),
     };
 
     try {
@@ -252,6 +254,21 @@ export default function DeckEditor({ initial, mode }: Props) {
               required
             />
           </div>
+        </div>
+
+        {/* Claude 상대 전략 지침 */}
+        <div className={styles.field} style={{ marginBottom: 16 }}>
+          <label className={styles.label}>Claude 상대 전략 지침 (선택)</label>
+          <textarea
+            className={styles.textarea}
+            value={aiStrategyHint}
+            onChange={(e) => setAiStrategyHint(e.target.value)}
+            placeholder="예: 초반엔 저코스트 카드로 카운터를 유도하고, 중독 카드가 잡히면 우선 사용해 장기전으로 끌고 간다."
+            rows={3}
+          />
+          <span className={styles.hint}>
+            AI 대전에서 이 덱을 Claude 상대가 잡았을 때만 프롬프트에 실린다. 로컬 규칙 AI는 참조하지 않음.
+          </span>
         </div>
 
         {/* 캐릭터 선택 */}

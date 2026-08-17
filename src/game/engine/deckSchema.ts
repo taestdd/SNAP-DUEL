@@ -8,6 +8,7 @@ export const DeckSchema = z.object({
     z.string().min(1),
   ]).refine(([a, b]) => a !== b, "선발과 후발 캐릭터는 달라야 합니다"),
   cards: z.array(z.string().min(1)).min(20, "최소 20장 이상이어야 합니다"),
+  aiStrategyHint: z.string().optional(),
 });
 
 export const DecksRecordSchema = z.record(z.string(), DeckSchema);

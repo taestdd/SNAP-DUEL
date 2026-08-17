@@ -417,6 +417,17 @@ P1과 같은 `WAITING_DISCARD` 경로로 옮겨졌다 — `PendingDiscard.player
   "⚠️카운터 확정" 여부를 문자열에 박아 넣는다 — LLM이 delay 숫자를 직접 비교해 추론하게 두면
   종종 오판했다(실제 대전 로그에서 확인).
 
+**덱별 전략 지침 — `DeckDef.aiStrategyHint`**
+덱마다 Claude에게 줄 자유 텍스트 전략 지침을 어드민 `DeckEditor`에서 작성할 수 있다.
+
+- `GameState`/`Combatant`에는 싣지 않는다 — 게임 시작 후에는 `deckId`를 들고 있지 않고,
+  이 값은 애초에 프롬프트 구성 전용 데이터라 엔진 상태로 흘려보낼 이유가 없다.
+- 대신 클라이언트에서만 흐른다: `page.tsx`가 `aiConfig.deckId`로 `getDeckRegistry()`를 조회해
+  `deckHint`를 얻고, `useClaudeOpponent`가 이를 4개 결정 지점 전부의 POST 바디에 실어
+  `/api/ai/move`로 보낸다. 라우트는 `fmtCommonHeader`에서 다른 상태 요약 뒤에
+  "이 덱의 전략 지침: ..." 한 줄로 덧붙인다.
+- 비어 있으면(설정 안 함) 아무 것도 추가되지 않는다 — 기존 프롬프트와 동일하게 동작.
+
 **검증 로직을 라우트에서 분리한 이유** — 이 프로젝트의 테스트는 순수 엔진 로직만 다루고
 `app/api/*` 라우트는 테스트하지 않는다(Firestore/외부 API 의존). `aiMoveValidation.ts`는
 네트워크·Firestore 의존 없는 순수 함수라 `aiMoveValidation.test.ts`로 "이상한 응답이 와도
