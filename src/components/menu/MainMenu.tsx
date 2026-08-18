@@ -10,6 +10,7 @@ import { encodeSetupParams } from "@/lib/setupConfig";
 import type { CharacterId, DeckDef, SetupConfig } from "@/game/engine/types";
 import styles from "./MainMenu.module.css";
 import { Button } from "@/components/ui/button";
+import { OptionSelect } from "@/components/OptionSelect";
 
 /* ── 덱 + 캐릭터 순서 선택 블록 ── */
 function DeckPicker({
@@ -34,10 +35,12 @@ function DeckPicker({
     <div className={styles.pickerBlock}>
       {label && <div className={styles.pickerLabel}>{label}</div>}
 
-      <select
-        className={styles.deckSelect}
+      <OptionSelect
+        className="h-auto py-2.5 text-[15px] font-semibold"
+        aria-label="덱 선택"
+        placeholder="덱을 선택하세요"
         value={deckId ?? ""}
-        onChange={(e) => e.target.value && onDeckSelect(e.target.value)}
+        onChange={(v) => v && onDeckSelect(v)}
       >
         <option value="">덱을 선택하세요</option>
         {decks.map((deck) => (
@@ -45,7 +48,7 @@ function DeckPicker({
             {deck.name} ({deck.cards.length}장)
           </option>
         ))}
-      </select>
+      </OptionSelect>
 
       {selectedDeck && (
         <div className={styles.charRow}>

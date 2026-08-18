@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OptionSelect } from "@/components/OptionSelect";
 import { Label } from "@/components/ui/label";
 import styles from "./AdminForm.module.css";
 
@@ -47,22 +48,14 @@ export function NumericInput({
 
 export function SelectField({
   label,
-  value,
-  onChange,
-  children,
   ...rest
 }: {
   label: string;
-  value: string;
-  onChange: (val: string) => void;
-  children: React.ReactNode;
-} & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">) {
+} & Omit<React.ComponentProps<typeof OptionSelect>, "aria-label">) {
   return (
     <div className={styles.field}>
       <Label className={styles.label}>{label}</Label>
-      <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
-        {children}
-      </select>
+      <OptionSelect aria-label={label} {...rest} />
     </div>
   );
 }

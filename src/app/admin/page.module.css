@@ -310,23 +310,6 @@
   border-color: var(--clr-border-2);
 }
 
-.filterSelect {
-  background: var(--muted);
-  border: 1px solid var(--border);
-  color: var(--foreground);
-  font-family: monospace;
-  font-size: 11px;
-  padding: 5px 6px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  outline: none;
-  max-width: 120px;
-}
-
-.filterSelect:focus {
-  border-color: var(--clr-border-2);
-}
-
 .sortGroup {
   display: flex;
   align-items: center;

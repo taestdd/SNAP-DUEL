@@ -9,6 +9,7 @@ import type { CharacterDefSchemaType } from "@/game/engine/characterSchema";
 import { CardTagSchema } from "@/game/engine/cardSchema";
 import BulkImportModal from "@/components/admin/BulkImportModal";
 import type { ImportKind } from "@/components/admin/BulkImportModal";
+import { OptionSelect } from "@/components/OptionSelect";
 
 type Tab = "cards" | "decks" | "characters";
 type SortField = "id" | "name" | "cost" | "delay" | "advantage";
@@ -209,33 +210,63 @@ export default function AdminPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <select className={styles.filterSelect} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <OptionSelect
+              className="max-w-[120px] font-mono text-[11px]"
+              size="sm"
+              aria-label="타입 필터"
+              value={filterType}
+              onChange={setFilterType}
+            >
               <option value="">타입 전체</option>
               <option value="attack">attack</option>
               <option value="skill">skill</option>
-            </select>
-            <select className={styles.filterSelect} value={filterTag} onChange={(e) => setFilterTag(e.target.value)}>
+            </OptionSelect>
+            <OptionSelect
+              className="max-w-[120px] font-mono text-[11px]"
+              size="sm"
+              aria-label="태그 필터"
+              value={filterTag}
+              onChange={setFilterTag}
+            >
               <option value="">태그 전체</option>
               {CARD_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
+            </OptionSelect>
+            <OptionSelect
+              className="max-w-[120px] font-mono text-[11px]"
+              size="sm"
+              aria-label="조건 필터"
+              value={filterCondition}
+              onChange={setFilterCondition}
+            >
               <option value="">조건 전체</option>
               <option value="ground">ground</option>
               <option value="airborne">airborne</option>
-            </select>
-            <select className={styles.filterSelect} value={filterAltCost} onChange={(e) => setFilterAltCost(e.target.value)}>
+            </OptionSelect>
+            <OptionSelect
+              className="max-w-[120px] font-mono text-[11px]"
+              size="sm"
+              aria-label="altCost 필터"
+              value={filterAltCost}
+              onChange={setFilterAltCost}
+            >
               <option value="">altCost 전체</option>
               <option value="yes">altCost 있음</option>
               <option value="no">altCost 없음</option>
-            </select>
+            </OptionSelect>
             <div className={styles.sortGroup}>
-              <select className={styles.filterSelect} value={sortField} onChange={(e) => setSortField(e.target.value as SortField)}>
+              <OptionSelect
+              className="max-w-[120px] font-mono text-[11px]"
+              size="sm"
+              aria-label="정렬 기준"
+              value={sortField}
+              onChange={(v) => setSortField(v as SortField)}
+            >
                 <option value="id">ID</option>
                 <option value="name">이름</option>
                 <option value="cost">코스트</option>
                 <option value="delay">딜레이</option>
                 <option value="advantage">어드밴티지</option>
-              </select>
+              </OptionSelect>
               <button className={styles.sortDirBtn} onClick={toggleSortDir} title="정렬 방향 전환">
                 {sortDir === "asc" ? "↑" : "↓"}
               </button>

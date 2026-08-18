@@ -12,6 +12,7 @@ import styles from "./DeckEditor.module.css";
 import { SubmitButton } from "./AdminButtons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { OptionSelect } from "@/components/OptionSelect";
 
 interface Props {
   initial?: CharacterDefSchemaType;
@@ -142,9 +143,11 @@ export default function CharacterEditor({ initial, mode }: Props) {
           </div>
           <div className={styles.field}>
             <label className={styles.label}>스프라이트 *</label>
-            <select
+            <OptionSelect
               value={spriteId}
-              onChange={(e) => setSpriteId(e.target.value)}
+              onChange={setSpriteId}
+              aria-label="스프라이트"
+              placeholder="선택..."
               required
             >
               <option value="">선택...</option>
@@ -153,7 +156,7 @@ export default function CharacterEditor({ initial, mode }: Props) {
               {spriteId && !SPRITE_IDS.includes(spriteId) && (
                 <option value={spriteId}>{spriteId} (등록되지 않은 스프라이트)</option>
               )}
-            </select>
+            </OptionSelect>
           </div>
         </div>
 

@@ -116,10 +116,6 @@
   border-radius: var(--radius-sm);
 }
 
-.select {
-  cursor: pointer;
-}
-
 .tagGroup {
   display: flex;
   flex-wrap: wrap;
